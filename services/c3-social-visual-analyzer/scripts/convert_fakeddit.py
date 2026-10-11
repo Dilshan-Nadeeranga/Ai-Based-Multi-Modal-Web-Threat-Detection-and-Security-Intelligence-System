@@ -119,6 +119,21 @@ def sample_candidates(rows, wanted: dict[MisinfoType, int], seed: int, spare: in
     return reservoirs
 
 
+def existing_counts(out: Path) -> dict[MisinfoType, int]:
+    """Count Fakeddit folders already in ``out`` per category, so a larger rerun only tops up."""
+    counts: dict[MisinfoType, int] = {}
+    for info in out.glob(f"*/{FOLDER_PREFIX}*/post_info.txt"):
+        for line in info.read_text(encoding="utf-8").splitlines():
+            if line.startswith("misinfo_type:"):
+                try:
+                    category = MisinfoType(line.split(":", 1)[1].strip())
+                except ValueError:
+                    break
+                counts[category] = counts.get(category, 0) + 1
+                break
+    return counts
+
+
 def fetch_image(url: str, max_bytes: int, timeout: float) -> tuple[bytes, str]:
     """Download one image; returns (bytes, final URL). Raises OSError on any failure."""
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
@@ -220,14 +235,15 @@ def main(argv: list[str] | None = None) -> int:
     out = args.out.expanduser().resolve() / "fakeddit"
     max_bytes = int(args.max_image_mb * 1024 * 1024)
     failed_total = 0
+    on_disk = existing_counts(out)
     for category in [MisinfoType.REAL, *fake_types]:
-        created = existing = failed = 0
+        created = failed = 0
+        existing = on_disk.get(category, 0)
         for row in candidates[category]:
             if created + existing >= wanted[category]:
                 break
             folder = out / ("real" if row.is_fake == 0 else "fake") / f"{FOLDER_PREFIX}{row.post_id}"
             if folder.exists():
-                existing += 1
                 continue
             try:
                 if args.images_dir is not None:

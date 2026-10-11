@@ -1,0 +1,286 @@
+"""Convert hand-collected posts into evidence folders for ``import_evidence.py``.
+
+Expected layout (one folder per post, as saved by hand)::
+
+    <manual_dir>/<platform>/<legit...|scam...>/<post>/
+        <any name>.txt   page name, optional timestamp line, then the post text
+        <images>         .jpg / .jpeg / .png / .webp (natural name order)
+
+``<platform>`` is a dataset platform value (facebook, instagram, x, tiktok,
+reddit, ...). The category folder only has to start with ``legi`` or ``scam``.
+A post folder may also contain its own ``post_info.txt``; it is then used as-is
+instead of the generated labels (useful for per-post scam types).
+
+The text file is cleaned: Facebook's scrambled "Sponsored" marker (letters
+joined by U+034F) and lone "..." lines are dropped, the first line is treated as
+the page name when it is followed by a timestamp ("8 October at 17:46",
+"3 July", "16h") or a Sponsored marker, and http(s)/www links are copied into
+``urls:``. Links are written as text only and never visited.
+
+Output: ``<out>/manual/<platform>/legit|scam/<platform>_<legit|scam>_<post>/``
+with ``post_info.txt``, ``caption.txt`` and ``post1.*``, ``post2.*`` ... The
+source folders are only read. Existing output folders are never overwritten.
+Posts reusing an identical image are reported, since they would leak between
+train and test splits.
+
+Remove personal data (private names, phone numbers, comments) from the text
+files before converting; only the post itself belongs in the dataset.
+
+    python scripts/convert_manual_posts.py "D:\\Reasearch\\Datasets\\Manual" "D:\\Reasearch\\ScamTrace_Evidence" --scam-type data_theft
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import re
+import shutil
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+
+from _bootstrap import setup
+
+from app.schemas.dataset_classes import LabelStatus, Platform, ScamType
+from app.utils.url_utils import normalize_evidence_url
+
+IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp")
+RESERVED_TXT = {"post_info.txt", "caption.txt", "imported.txt"}
+SPONSORED_MARK = "\u034f"
+SEPARATOR_CHARS = " \t\u00b7\u2022\u22c5.\ufffd"
+ELLIPSIS_LINES = {"...", "\u2026", "See more", "See more..."}
+_MONTHS = (r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|"
+           r"sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)")
+_TIME = r"(?:\s+at\s+\d{1,2}:\d{2})?"
+TIMESTAMP_RE = re.compile(
+    rf"^(?:\d{{1,2}}\s+{_MONTHS}(?:\s+\d{{4}})?{_TIME}"
+    rf"|{_MONTHS}\s+\d{{1,2}}(?:,?\s+\d{{4}})?{_TIME}"
+    rf"|\d{{1,2}}\s*(?:s|m|min|mins|h|hr|hrs|d|w|y)"
+    rf"|yesterday{_TIME}|just now)\s*[.\u00b7]?\s*$",
+    re.IGNORECASE,
+)
+URL_RE = re.compile(r"(?:https?://|www\.)[^\s<>\"']+", re.IGNORECASE)
+_URL_TRAILING = ".,;:!?)]}'\""
+
+
+@dataclass
+class ParsedPost:
+    page_name: str | None
+    caption: str
+    urls: list[str] = field(default_factory=list)
+
+
+def category(name: str) -> str | None:
+    lowered = name.lower()
+    if lowered.startswith("legi"):
+        return "legit"
+    if lowered.startswith("scam"):
+        return "scam"
+    return None
+
+
+def _natural_key(name: str) -> list:
+    return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", name)]
+
+
+def read_text(path: Path) -> str:
+    data = path.read_bytes()
+    try:
+        return data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return data.decode("cp1252", errors="replace")
+
+
+def extract_urls(text: str) -> list[str]:
+    urls: list[str] = []
+    for match in URL_RE.findall(text):
+        candidate = match.rstrip(_URL_TRAILING)
+        if candidate.lower().startswith("www."):
+            candidate = "https://" + candidate
+        try:
+            url = normalize_evidence_url(candidate)
+        except ValueError:
+            continue
+        if url not in urls:
+            urls.append(url)
+    return urls
+
+
+def parse_post_text(text: str) -> ParsedPost:
+    sponsored = SPONSORED_MARK in text
+    lines: list[str] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if SPONSORED_MARK in line or line in ELLIPSIS_LINES:
+            continue
+        if line and not line.strip(SEPARATOR_CHARS):
+            continue
+        if not line and (not lines or not lines[-1]):
+            continue
+        lines.append(line)
+    while lines and not lines[-1]:
+        lines.pop()
+
+    page_name = None
+    if len(lines) >= 2:
+        following = next((line for line in lines[1:] if line), "")
+        if TIMESTAMP_RE.match(following):
+            page_name = lines[0]
+            lines = lines[1:]
+            lines.remove(following)
+        elif sponsored:
+            page_name = lines[0]
+            lines = lines[1:]
+    while lines and not lines[0]:
+        lines.pop(0)
+
+    caption = "\n".join(lines)
+    return ParsedPost(page_name=page_name, caption=caption, urls=extract_urls(caption))
+
+
+def post_info(parsed: ParsedPost, platform: str, label: str, scam_type: ScamType | None,
+              label_status: LabelStatus, reference: str) -> str:
+    if label == "legit":
+        is_scam, kind, status = "0", ScamType.LEGITIMATE.value, label_status.value
+    elif scam_type is None:
+        is_scam, kind, status = "1", ScamType.UNKNOWN.value, LabelStatus.PROVISIONAL.value
+    else:
+        is_scam, kind, status = "1", scam_type.value, label_status.value
+    notes = "Manually collected post"
+    if parsed.page_name:
+        notes += f"; page name: {parsed.page_name}"
+    lines = [
+        "# Generated by scripts/convert_manual_posts.py - check the labels before importing.",
+        "# Links are copied from the post text: do NOT open scam links.",
+        f"platform: {platform}",
+        f"is_scam: {is_scam}",
+        f"scam_type: {kind}",
+        f"label_status: {status}",
+        f"urls: {' '.join(parsed.urls)}",
+        f"claimed_brand: {(parsed.page_name or '')[:100]}",
+        "collection_method: manual",
+        f"source_reference: {reference}",
+        f"notes: {notes}",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _images(folder: Path) -> list[Path]:
+    return sorted((p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_SUFFIXES),
+                  key=lambda p: _natural_key(p.name))
+
+
+def _text_file(folder: Path) -> Path | None:
+    texts = [p for p in folder.iterdir() if p.is_file() and p.suffix.lower() == ".txt"
+             and p.name.lower() not in RESERVED_TXT]
+    if len(texts) > 1:
+        raise ValueError(f"more than one text file: {', '.join(sorted(p.name for p in texts))}")
+    return texts[0] if texts else None
+
+
+def iter_posts(manual_dir: Path):
+    """Yield (platform, label, category_dir_name, post_folder) in a stable order."""
+    platforms = {p.value for p in Platform}
+    for platform_dir in sorted(p for p in manual_dir.iterdir() if p.is_dir()):
+        platform = platform_dir.name.lower()
+        if platform not in platforms:
+            print(f"SKIP   {platform_dir.name}/: not a platform ({', '.join(sorted(platforms))})", file=sys.stderr)
+            continue
+        for category_dir in sorted(p for p in platform_dir.iterdir() if p.is_dir()):
+            label = category(category_dir.name)
+            if label is None:
+                print(f"SKIP   {platform_dir.name}/{category_dir.name}/: folder name must start with "
+                      "'legi' or 'scam'", file=sys.stderr)
+                continue
+            for post in sorted((p for p in category_dir.iterdir() if p.is_dir()), key=lambda p: _natural_key(p.name)):
+                yield platform, label, category_dir.name, post
+
+
+def convert_post(platform: str, label: str, post: Path, out: Path, reference: str,
+                 scam_type: ScamType | None, label_status: LabelStatus) -> tuple[str, Path, ParsedPost | None]:
+    """Return (status, target, parsed); status is new, exists or empty."""
+    target = out / "manual" / platform / label / f"{platform}_{label}_{post.name}"
+    if target.exists():
+        return "exists", target, None
+    images = _images(post)
+    text_path = _text_file(post)
+    parsed = parse_post_text(read_text(text_path)) if text_path else ParsedPost(page_name=None, caption="")
+    if not images and not parsed.caption:
+        return "empty", target, None
+
+    target.mkdir(parents=True)
+    own_info = post / "post_info.txt"
+    if own_info.is_file():
+        shutil.copyfile(own_info, target / "post_info.txt")
+    else:
+        info = post_info(parsed, platform, label, scam_type, label_status, reference)
+        (target / "post_info.txt").write_text(info, encoding="utf-8")
+    if parsed.caption:
+        (target / "caption.txt").write_text(parsed.caption + "\n", encoding="utf-8")
+    for number, image in enumerate(images, start=1):
+        shutil.copyfile(image, target / f"post{number}{image.suffix.lower()}")
+    return "new", target, parsed
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Convert hand-collected posts into evidence folders.")
+    parser.add_argument("manual_dir", type=Path, help="Folder with <platform>/<legit|scam>/<post>/ subfolders")
+    parser.add_argument("out", type=Path, help="Evidence folder (manual/ is created inside)")
+    parser.add_argument("--scam-type", choices=[t.value for t in ScamType if t not in
+                                                (ScamType.LEGITIMATE, ScamType.UNKNOWN)],
+                        help="Scam type for all scam posts without their own post_info.txt "
+                             "(default: unknown + provisional, fill in per post)")
+    parser.add_argument("--label-status", choices=[LabelStatus.VERIFIED.value, LabelStatus.PROVISIONAL.value],
+                        default=LabelStatus.VERIFIED.value, help="Status for generated labels (default verified)")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Show INFO logs")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    setup(args.verbose)
+    manual_dir = args.manual_dir.expanduser().resolve()
+    if not manual_dir.is_dir():
+        print(f"ERROR: not found: {manual_dir}", file=sys.stderr)
+        return 2
+    out = args.out.expanduser().resolve()
+    scam_type = ScamType(args.scam_type) if args.scam_type else None
+    label_status = LabelStatus(args.label_status)
+
+    counts = {"new": 0, "exists": 0, "empty": 0, "failed": 0}
+    seen_images: dict[str, str] = {}
+    for platform, label, category_dir, post in iter_posts(manual_dir):
+        reference = f"{platform}/{category_dir}/{post.name}"
+        try:
+            status, target, parsed = convert_post(platform, label, post, out, reference, scam_type, label_status)
+        except (OSError, ValueError) as exc:
+            counts["failed"] += 1
+            print(f"FAIL   {reference}: {exc}", file=sys.stderr)
+            continue
+        counts[status] += 1
+        if status == "new":
+            images = len(_images(target))
+            page = f", page: {parsed.page_name}" if parsed.page_name else ""
+            print(f"NEW    {reference} -> {target.relative_to(out).as_posix()} "
+                  f"({images} image(s), {len(parsed.urls)} url(s){page})")
+        elif status == "exists":
+            print(f"SKIP   {reference}: {target.relative_to(out).as_posix()} already exists")
+        else:
+            print(f"EMPTY  {reference}: no text and no image")
+        for image in _images(post):
+            digest = hashlib.sha256(image.read_bytes()).hexdigest()
+            if digest in seen_images:
+                print(f"WARN   {reference}: same image as {seen_images[digest]} ({image.name})")
+            else:
+                seen_images[digest] = reference
+
+    print(f"\n{counts['new']} new, {counts['exists']} already present, {counts['empty']} empty, "
+          f"{counts['failed']} failed")
+    if counts["new"] and scam_type is None:
+        print("Scam posts without --scam-type were labelled 'unknown' + provisional: set scam_type per post.")
+    print(f"Written to {out / 'manual'}\nNext: python scripts/import_evidence.py \"{out / 'manual'}\" --dry-run")
+    return 1 if counts["failed"] else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
