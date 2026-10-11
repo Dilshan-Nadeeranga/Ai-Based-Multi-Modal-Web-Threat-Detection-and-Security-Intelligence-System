@@ -20,13 +20,19 @@ build/
 # Local-only documentation
 README.md
 
-# Dataset images: may be large or contain suspicious material, keep out of Git.
-# Folder placeholders (.gitkeep) stay tracked. Annotation JSON/JSONL files are
-# small text records and are intentionally NOT ignored.
-data/raw/*
-data/processed/*
-data/rejected/*
-!data/raw/.gitkeep
-!data/processed/.gitkeep
-!data/rejected/.gitkeep
+# Dataset files: raw evidence, images and screenshots may be large or contain
+# suspicious material, so they stay out of Git. Folder placeholders (.gitkeep)
+# stay tracked. Annotation JSON/JSONL and statistics are small text records and
+# are intentionally NOT ignored. Test fixtures live in tests/fixtures/.
+data/raw/**
+data/processed/**
+data/rejected/**
+data/webpage_screenshots/**
+!data/raw/**/
+!data/processed/**/
+!data/rejected/**/
+!data/webpage_screenshots/**/
+!data/**/.gitkeep
 data/annotations/*.tmp
+data/annotations/.dataset.lock
+data/statistics/*.tmp

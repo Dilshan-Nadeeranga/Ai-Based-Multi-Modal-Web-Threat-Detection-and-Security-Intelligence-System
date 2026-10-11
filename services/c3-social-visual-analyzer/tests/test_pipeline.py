@@ -15,7 +15,7 @@ from app.exceptions import (
     OcrEngineUnavailableError,
     SampleAlreadyExistsError,
 )
-from app.services.dataset_service import DatasetService
+from app.services.annotation_service import AnnotationService
 from app.services.image_pipeline import ImagePipeline
 from tests.conftest import FakeOcrEngine, make_pattern_image
 
@@ -34,13 +34,13 @@ def test_scenario_a_valid_image_full_pipeline(
     assert result.status == "success"
     record = result.record
     assert record is not None
-    raw_files = list(settings.raw_dir.iterdir())
-    processed_files = list(settings.processed_dir.iterdir())
+    raw_files = list(settings.raw_uploads_dir.iterdir())
+    processed_files = list(settings.processed_images_dir.iterdir())
     assert len(raw_files) == 1 and raw_files[0].name.startswith("SCAM_0001_")
     assert raw_files[0].suffix == ".jpg"
     assert len(processed_files) == 1 and processed_files[0].suffix == ".png"
-    assert record.original_image == f"data/raw/{raw_files[0].name}"
-    assert record.processed_image == f"data/processed/{processed_files[0].name}"
+    assert record.original_image == f"data/raw/uploads/{raw_files[0].name}"
+    assert record.processed_image == f"data/processed/images/{processed_files[0].name}"
 
     with Image.open(processed_files[0]) as processed:
         assert processed.mode == "RGB"
@@ -89,7 +89,7 @@ def test_scenario_b_same_image_uploaded_again(pipeline: ImagePipeline, settings:
     assert lines[1]["duplicate_detection"]["matched_sample_id"] == "SCAM_0001"
     hashes = json.loads(settings.image_hashes_path.read_text(encoding="utf-8"))
     assert hashes["SCAM_0020"]["duplicate_of"] == "SCAM_0001"
-    assert len(list(settings.processed_dir.iterdir())) == 2
+    assert len(list(settings.processed_images_dir.iterdir())) == 2
 
 
 def test_scenario_c_corrupted_image_rejected(
@@ -102,8 +102,8 @@ def test_scenario_c_corrupted_image_rejected(
 
     assert result.status == "rejected"
     assert fake_ocr.calls == []
-    assert list(settings.raw_dir.iterdir()) == []
-    assert list(settings.processed_dir.iterdir()) == []
+    assert list(settings.raw_uploads_dir.iterdir()) == []
+    assert list(settings.processed_images_dir.iterdir()) == []
     rejected = list(settings.rejected_dir.iterdir())
     assert len(rejected) == 1 and rejected[0].name.startswith("SCAM_0009_")
 
@@ -133,7 +133,7 @@ def test_scenario_d_rgba_png(pipeline: ImagePipeline, settings: Settings, write_
     assert result.status == "success"
     assert result.record is not None
     assert result.record.image.original_mode == "RGBA"
-    with Image.open(settings.processed_dir / Path(result.record.processed_image).name) as processed:
+    with Image.open(settings.processed_images_dir / Path(result.record.processed_image).name) as processed:
         assert processed.mode == "RGB"
         assert processed.size == (600, 400)
 
@@ -169,8 +169,8 @@ def test_ocr_unavailable_does_not_commit_sample(settings: Settings, write_image)
         pipeline.process_post_image(write_image("a.png"), "SCAM_0001")
     assert not settings.image_hashes_path.exists()
     assert not settings.ocr_results_path.exists()
-    assert list(settings.processed_dir.iterdir()) == []
-    assert len(list(settings.raw_dir.iterdir())) == 1
+    assert list(settings.processed_images_dir.iterdir()) == []
+    assert len(list(settings.raw_uploads_dir.iterdir())) == 1
 
 
 def test_malformed_hash_database_is_controlled(pipeline: ImagePipeline, settings: Settings, write_image) -> None:
@@ -190,7 +190,7 @@ def test_jsonl_appends_and_repairs_missing_newline(settings: Settings, pipeline:
 def test_dataset_reader_flags_malformed_lines(tmp_path: Path) -> None:
     results = tmp_path / "ocr_results.jsonl"
     results.write_text('{"ok": 1}\nnot-json\n', encoding="utf-8")
-    service = DatasetService(results, tmp_path / "rejected.jsonl")
+    service = AnnotationService(results, tmp_path / "rejected.jsonl")
     with pytest.raises(AnnotationStorageError):
         list(service.iter_ocr_results())
 
@@ -201,8 +201,8 @@ def test_dataset_write_failure_rolls_back_hash(settings: Settings, write_image, 
     def failing(record):
         raise AnnotationStorageError("Failed to write the annotation dataset.")
 
-    monkeypatch.setattr(pipeline.dataset_service, "save_ocr_result", failing)
+    monkeypatch.setattr(pipeline.annotation_service, "save_ocr_result", failing)
     with pytest.raises(AnnotationStorageError):
         pipeline.process_post_image(write_image("a.png"), "SCAM_0001")
     assert json.loads(settings.image_hashes_path.read_text(encoding="utf-8")) == {}
-    assert list(settings.processed_dir.iterdir()) == []
+    assert list(settings.processed_images_dir.iterdir()) == []
