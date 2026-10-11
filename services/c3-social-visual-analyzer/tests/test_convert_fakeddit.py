@@ -23,7 +23,7 @@ COLUMNS = ["author", "clean_title", "created_utc", "domain", "hasImage", "id", "
            "2_way_label", "3_way_label", "6_way_label"]
 SIX_TO_TWO_THREE = {"0": ("1", "0"), "1": ("0", "2"), "2": ("0", "2"), "3": ("0", "2"), "4": ("0", "2"),
                     "5": ("0", "1")}
-ROWS_PER_LABEL = {"0": 8, "1": 3, "2": 3, "3": 3, "4": 3, "5": 3}
+ROWS_PER_LABEL = {"0": 10, "1": 3, "2": 3, "3": 3, "4": 3, "5": 3}
 ALL_IDS = [f"p{six}x{n}" for six, count in ROWS_PER_LABEL.items() for n in range(count)]
 
 
@@ -137,6 +137,19 @@ def test_rerun_keeps_existing_folders(tsv_dir: Path, tmp_path: Path, capsys) -> 
     assert convert_fakeddit.main([str(tsv_dir), str(out), "--per-category", "1", "--images-dir", str(images)]) == 0
     assert "0 new" in capsys.readouterr().out
     assert len(list((out / "fakeddit/fake").iterdir())) == 5
+
+
+def test_larger_rerun_tops_up_to_the_target(tsv_dir: Path, tmp_path: Path, capsys) -> None:
+    images = _images_dir(tmp_path, ALL_IDS)
+    out = tmp_path / "evidence"
+    convert_fakeddit.main([str(tsv_dir), str(out), "--per-category", "1", "--images-dir", str(images)])
+    capsys.readouterr()
+    assert convert_fakeddit.main([str(tsv_dir), str(out), "--per-category", "2", "--images-dir", str(images)]) == 0
+    printed = capsys.readouterr().out
+    assert "real                : 5 new, 5 already present" in printed
+    assert "manipulated_content : 1 new, 1 already present" in printed
+    assert len(list((out / "fakeddit/fake").iterdir())) == 10
+    assert len(list((out / "fakeddit/real").iterdir())) == 10
 
 
 def test_missing_tsv_and_missing_image_source(tmp_path: Path, capsys) -> None:
