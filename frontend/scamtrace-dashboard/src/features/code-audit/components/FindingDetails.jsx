@@ -48,7 +48,9 @@ export default function FindingDetails({ finding, loading, onClose }) {
               ? 'Semgrep'
               : finding.source === 'AST_CODE_QUALITY'
                 ? 'AST Code Quality'
-                : finding.source}
+                : finding.source === 'CUSTOM_WEB_SECURITY_RULE'
+                  ? 'Custom Web Rule'
+                  : finding.source}
           </dd>
         </div>
       </dl>
