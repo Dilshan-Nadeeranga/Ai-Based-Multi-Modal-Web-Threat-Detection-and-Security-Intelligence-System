@@ -12,6 +12,9 @@ numpy>=1.26
 ImageHash>=4.3
 pytesseract>=0.3.10
 
+# Dataset import (scripts/convert_phish360.py reads Parquet files)
+pyarrow>=15.0
+
 # Testing
 pytest>=8.0
 httpx>=0.27

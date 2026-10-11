@@ -97,6 +97,45 @@ def client(settings: Settings, pipeline: ImagePipeline) -> TestClient:
     return TestClient(create_app(settings=settings, pipeline=pipeline))
 
 
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+
+
+@pytest.fixture
+def dataset_settings(tmp_path: Path) -> Settings:
+    """Isolated data directory that permits synthetic_test samples."""
+    test_settings = Settings(_env_file=None, data_dir=tmp_path / "dataset_data", dataset_allow_synthetic=True)
+    test_settings.ensure_directories()
+    return test_settings
+
+
+@pytest.fixture
+def dataset_service(dataset_settings: Settings):
+    from app.services.dataset_service import DatasetService
+
+    return DatasetService(dataset_settings)
+
+
+@pytest.fixture
+def make_request() -> Callable[..., object]:
+    """Build a synthetic NewSampleRequest; keyword arguments override defaults."""
+    from app.services.dataset_service import build_request
+
+    def _make(**overrides: object):
+        fields: dict[str, object] = {
+            "platform": "facebook",
+            "post_text": "Example security information",
+            "embedded_urls": ["https://example.com"],
+            "is_scam": 0,
+            "scam_type": "legitimate",
+            "label_status": "verified",
+            "collection_method": "synthetic_test",
+        }
+        fields.update(overrides)
+        return build_request(**fields)
+
+    return _make
+
+
 @pytest.fixture
 def write_image(tmp_path: Path) -> Callable[..., Path]:
     """Write a synthetic image to ``tmp_path/uploads`` and return its path."""

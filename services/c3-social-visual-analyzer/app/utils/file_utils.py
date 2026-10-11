@@ -95,6 +95,22 @@ def to_record_path(path: Path, data_dir: Path) -> str:
     return resolved.relative_to(data_dir.resolve().parent).as_posix()
 
 
+DATASET_PATH_PREFIX = "data/"
+
+
+def to_dataset_path(path: Path, data_dir: Path) -> str:
+    """Return ``data/<relative path>`` regardless of the physical data folder name."""
+    resolved = ensure_within_directory(path, data_dir)
+    return DATASET_PATH_PREFIX + resolved.relative_to(data_dir.resolve()).as_posix()
+
+
+def from_dataset_path(record_path: str, data_dir: Path) -> Path:
+    """Resolve a ``data/...`` record path inside ``data_dir`` (raises if it escapes)."""
+    if not isinstance(record_path, str) or not record_path.startswith(DATASET_PATH_PREFIX):
+        raise StorageError("Dataset paths must start with 'data/'.")
+    return ensure_within_directory(data_dir / record_path[len(DATASET_PATH_PREFIX):], data_dir)
+
+
 def compute_sha256(path: Path) -> str:
     """Return the SHA-256 hex digest of a file (metadata only, not similarity)."""
     digest = hashlib.sha256()
