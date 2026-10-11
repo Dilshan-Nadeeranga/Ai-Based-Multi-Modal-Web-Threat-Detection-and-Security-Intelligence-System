@@ -59,8 +59,8 @@ def test_preprocess_valid_upload(client: TestClient, settings: Settings) -> None
     assert len(body["duplicate_detection"]["phash"]) == 16
     assert body["ocr"]["text"] == "SAMPLE TEXT"
     assert body["ocr"]["average_confidence"] == 85.0
-    assert body["processed_image"].startswith("data/processed/SCAM_0001_")
-    assert body["original_image"].startswith("data/raw/SCAM_0001_")
+    assert body["processed_image"].startswith("data/processed/images/SCAM_0001_")
+    assert body["original_image"].startswith("data/raw/uploads/SCAM_0001_")
     _assert_no_internal_details(response, settings)
 
     assert settings.ocr_results_path.exists()
@@ -139,7 +139,7 @@ def test_preprocess_rejects_unsafe_sample_id(client: TestClient, settings: Setti
     body = response.json()
     assert body["error"]["code"] == "INVALID_SAMPLE_ID"
     assert body["sample_id"] is None
-    assert list(settings.raw_dir.iterdir()) == []
+    assert list(settings.raw_uploads_dir.iterdir()) == []
 
 
 def test_preprocess_missing_image_field(client: TestClient) -> None:

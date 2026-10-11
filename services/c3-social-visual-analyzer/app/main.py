@@ -9,11 +9,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app import __version__
-from app.api import health_routes, preprocessing_routes
+from app.api import dataset_routes, health_routes, preprocessing_routes
 from app.api.responses import error_response, service_error_response
 from app.config import Settings, get_settings
 from app.exceptions import ServiceError
+from app.services.dataset_service import DatasetService
 from app.services.image_pipeline import ImagePipeline
+from app.services.statistics_service import StatisticsService
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +37,12 @@ def create_app(
 
     app = FastAPI(
         title="ScamTrace - Social Media & Web Visual Threat Analyzer",
-        description="Phase 1: OCR and image preprocessing pipeline.",
+        description="Phase 1: OCR and image preprocessing pipeline, and multimodal dataset preparation.",
         version=__version__,
     )
     app.state.pipeline = pipeline or ImagePipeline.from_settings(settings)
+    app.state.dataset_service = DatasetService(settings)
+    app.state.statistics_service = StatisticsService(settings)
 
     @app.exception_handler(RequestValidationError)
     async def _request_validation_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
@@ -62,6 +66,7 @@ def create_app(
 
     app.include_router(health_routes.router)
     app.include_router(preprocessing_routes.router)
+    app.include_router(dataset_routes.router)
     return app
 
 
