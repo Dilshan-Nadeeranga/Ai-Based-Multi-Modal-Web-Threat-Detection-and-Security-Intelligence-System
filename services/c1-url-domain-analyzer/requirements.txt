@@ -1,0 +1,17 @@
+# ScamTrace C1 - Intelligent URL & Domain Analyzer
+# Phase 1: Layer 1 Lexical & URL Feature Extraction Engine
+
+fastapi>=0.100.0
+uvicorn[standard]>=0.20.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+tldextract>=5.0.0
+idna>=3.4
+dnspython>=2.4.0
+python-whois>=0.8.0; sys_platform != 'win32'
+httpx>=0.25.0
+pymongo>=4.5.0
+
+# Testing & Utilities
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
