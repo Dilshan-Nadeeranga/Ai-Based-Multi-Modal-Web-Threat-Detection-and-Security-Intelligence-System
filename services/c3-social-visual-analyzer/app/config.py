@@ -59,6 +59,13 @@ class Settings(BaseSettings):
     ocr_timeout_seconds: int = Field(default=60, ge=0)
     ocr_max_side: int = Field(default=3000, gt=0)
 
+    dataset_version: str = Field(default="0.1", pattern=r"^\d+\.\d+(\.\d+)?$")
+    dataset_max_images_per_sample: int = Field(default=20, ge=1, le=99)
+    dataset_max_urls_per_sample: int = Field(default=50, ge=1)
+    dataset_max_text_length: int = Field(default=20000, gt=0)
+    dataset_allow_synthetic: bool = False
+    dataset_lock_timeout_seconds: float = Field(default=10, gt=0)
+
     @field_validator("data_dir")
     @classmethod
     def _resolve_data_dir(cls, value: Path) -> Path:
@@ -87,19 +94,65 @@ class Settings(BaseSettings):
 
     @property
     def raw_dir(self) -> Path:
+        """Original, untransformed evidence. Never overwritten by processing."""
         return self.data_dir / "raw"
+
+    @property
+    def raw_images_dir(self) -> Path:
+        """Dataset post images named ``SVT_000001_01.jpg``."""
+        return self.raw_dir / "images"
+
+    @property
+    def raw_posts_dir(self) -> Path:
+        """One submitted-post JSON snapshot per dataset sample."""
+        return self.raw_dir / "posts"
+
+    @property
+    def raw_uploads_dir(self) -> Path:
+        """Uploads received by the preprocessing endpoint."""
+        return self.raw_dir / "uploads"
 
     @property
     def processed_dir(self) -> Path:
         return self.data_dir / "processed"
 
     @property
+    def processed_images_dir(self) -> Path:
+        """Validated, RGB, resized PNGs produced by the preprocessing pipeline."""
+        return self.processed_dir / "images"
+
+    @property
     def rejected_dir(self) -> Path:
         return self.data_dir / "rejected"
 
     @property
+    def webpage_screenshots_dir(self) -> Path:
+        """Destination website screenshots (captured by a future phase)."""
+        return self.data_dir / "webpage_screenshots"
+
+    @property
+    def statistics_dir(self) -> Path:
+        return self.data_dir / "statistics"
+
+    @property
     def annotations_dir(self) -> Path:
         return self.data_dir / "annotations"
+
+    @property
+    def dataset_metadata_path(self) -> Path:
+        return self.annotations_dir / "dataset_metadata.jsonl"
+
+    @property
+    def labels_path(self) -> Path:
+        return self.annotations_dir / "labels.jsonl"
+
+    @property
+    def dataset_lock_path(self) -> Path:
+        return self.annotations_dir / ".dataset.lock"
+
+    @property
+    def dataset_statistics_path(self) -> Path:
+        return self.statistics_dir / "dataset_statistics.json"
 
     @property
     def ocr_results_path(self) -> Path:
@@ -116,10 +169,14 @@ class Settings(BaseSettings):
     def ensure_directories(self) -> None:
         """Create the data directory layout if it does not exist yet."""
         for directory in (
-            self.raw_dir,
-            self.processed_dir,
+            self.raw_images_dir,
+            self.raw_posts_dir,
+            self.raw_uploads_dir,
+            self.processed_images_dir,
             self.rejected_dir,
+            self.webpage_screenshots_dir,
             self.annotations_dir,
+            self.statistics_dir,
         ):
             directory.mkdir(parents=True, exist_ok=True)
 

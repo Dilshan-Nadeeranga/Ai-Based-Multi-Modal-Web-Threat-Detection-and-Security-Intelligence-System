@@ -29,7 +29,7 @@ from app.schemas.pipeline_schema import (
     ProcessingMetadata,
     ValidationSummary,
 )
-from app.services.dataset_service import DatasetService
+from app.services.annotation_service import AnnotationService
 from app.services.duplicate_detector import DuplicateDetector
 from app.services.hash_store import HashStore
 from app.services.image_hash_service import ImageHashService
@@ -63,7 +63,7 @@ class ImagePipeline:
         hash_store: HashStore,
         duplicate_detector: DuplicateDetector,
         ocr_engine: OcrEngine,
-        dataset_service: DatasetService,
+        annotation_service: AnnotationService,
     ) -> None:
         self.settings = settings
         self.validator = validator
@@ -72,7 +72,7 @@ class ImagePipeline:
         self.hash_store = hash_store
         self.duplicate_detector = duplicate_detector
         self.ocr_engine = ocr_engine
-        self.dataset_service = dataset_service
+        self.annotation_service = annotation_service
         self._commit_lock = threading.Lock()
         settings.ensure_directories()
 
@@ -92,7 +92,7 @@ class ImagePipeline:
             hash_store=hash_store,
             duplicate_detector=DuplicateDetector(hash_store, settings.phash_near_duplicate_threshold),
             ocr_engine=ocr_engine or create_ocr_engine(settings),
-            dataset_service=DatasetService(settings.ocr_results_path, settings.rejected_images_path),
+            annotation_service=AnnotationService(settings.ocr_results_path, settings.rejected_images_path),
         )
 
     # ------------------------------------------------------------------ entry points
@@ -103,7 +103,7 @@ class ImagePipeline:
         original_filename: str | None,
         sample_id: str,
     ) -> PipelineResult:
-        """Safely store an uploaded stream in ``data/raw/`` and process it."""
+        """Safely store an uploaded stream in ``data/raw/uploads/`` and process it."""
         sample_id = validate_sample_id(sample_id)
         self._ensure_sample_is_new(sample_id)
         clean_name = sanitize_original_filename(original_filename)
@@ -111,7 +111,7 @@ class ImagePipeline:
 
         filename = generate_safe_filename(sample_id, safe_suffix(clean_name))
         saved = save_stream_exclusive(
-            source, self.settings.raw_dir, filename, self.settings.max_image_size_bytes
+            source, self.settings.raw_uploads_dir, filename, self.settings.max_image_size_bytes
         )
         if saved.exceeded_limit or saved.path is None:
             validation = ImageValidationResult(
@@ -131,12 +131,12 @@ class ImagePipeline:
     ) -> PipelineResult:
         """Process an image file for ``sample_id``.
 
-        Files already inside ``data/raw/`` are processed in place; any other
-        file is first copied into ``data/raw/`` under a generated name.
+        Files already inside ``data/raw/uploads/`` are processed in place; any
+        other file is first copied there under a generated name.
         """
         sample_id = validate_sample_id(sample_id)
         path = Path(image_path)
-        raw_dir = self.settings.raw_dir.resolve()
+        raw_dir = self.settings.raw_uploads_dir.resolve()
 
         if not path.is_file():
             self._ensure_sample_is_new(sample_id)
@@ -181,7 +181,7 @@ class ImagePipeline:
             sha256=sha256,
             created_at=utc_now_iso(),
         )
-        self.dataset_service.save_rejection(rejection)
+        self.annotation_service.save_rejection(rejection)
         logger.error(
             "Image rejected: sample_id=%s code=%s reason=%s",
             sample_id,
@@ -207,7 +207,7 @@ class ImagePipeline:
 
         settings = self.settings
         original_sha256 = compute_sha256(raw_path)
-        processed_path = settings.processed_dir / f"{raw_path.stem}.png"
+        processed_path = settings.processed_images_dir / f"{raw_path.stem}.png"
         images_to_close: list[Image.Image] = []
 
         try:
@@ -300,7 +300,7 @@ class ImagePipeline:
                 processed_path.unlink(missing_ok=True)
                 raise
             try:
-                self.dataset_service.save_ocr_result(record)
+                self.annotation_service.save_ocr_result(record)
             except ServiceError:
                 self.hash_store.remove(sample_id)
                 processed_path.unlink(missing_ok=True)

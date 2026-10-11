@@ -77,3 +77,51 @@ class OcrExecutionError(ServiceError):
     code = "OCR_FAILED"
     status_code = 500
     default_message = "OCR execution failed."
+
+
+# ---------------------------------------------------------------- dataset
+
+
+class InvalidDatasetSampleIdError(ServiceError):
+    code = "INVALID_SAMPLE_ID"
+    status_code = 400
+    default_message = "Dataset sample_id must look like SVT_000001 (SVT_ + six digits, not 000000)."
+
+
+class DatasetValidationError(ServiceError):
+    code = "DATASET_VALIDATION_ERROR"
+    status_code = 422
+    default_message = "The dataset sample is invalid."
+
+
+class SampleNotFoundError(ServiceError):
+    code = "SAMPLE_NOT_FOUND"
+    status_code = 404
+    default_message = "No dataset sample with this sample_id exists."
+
+
+class SourceImageNotFoundError(ServiceError):
+    code = "SOURCE_IMAGE_NOT_FOUND"
+    status_code = 400
+    default_message = "A source image file does not exist or is not a regular file."
+
+
+class UnsupportedImageError(ServiceError):
+    code = "UNSUPPORTED_IMAGE"
+    status_code = 415
+    default_message = "An image is corrupted or is not a supported JPEG, PNG or WebP file."
+
+
+class SyntheticSampleNotAllowedError(ServiceError):
+    code = "SYNTHETIC_NOT_ALLOWED"
+    status_code = 400
+    default_message = (
+        "collection_method 'synthetic_test' is refused for the research dataset. "
+        "Use an isolated DATA_DIR with DATASET_ALLOW_SYNTHETIC=true for tests or demos."
+    )
+
+
+class DatasetLockError(ServiceError):
+    code = "DATASET_BUSY"
+    status_code = 503
+    default_message = "The dataset is locked by another writer. Try again shortly."
