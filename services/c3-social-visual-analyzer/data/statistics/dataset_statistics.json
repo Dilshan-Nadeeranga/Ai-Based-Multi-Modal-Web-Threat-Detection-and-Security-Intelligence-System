@@ -1,60 +1,60 @@
 {
   "dataset_version": "0.1",
-  "generated_at": "2026-10-11T05:55:19Z",
+  "generated_at": "2026-10-11T08:11:03Z",
   "source_file": "data/annotations/dataset_metadata.jsonl",
   "includes_synthetic": false,
-  "total_samples": 0,
+  "total_samples": 1019,
   "excluded_synthetic_samples": 0,
   "skipped_invalid_records": 0,
   "malformed_lines": 0,
   "binary_labels": {
-    "legitimate": 0,
-    "scam": 0,
+    "legitimate": 9,
+    "scam": 10,
     "undecided": 0,
-    "not_annotated": 0
+    "not_annotated": 1000
   },
   "class_balance": {
-    "legitimate_percent": 0.0,
-    "scam_percent": 0.0
+    "legitimate_percent": 47.37,
+    "scam_percent": 52.63
   },
   "class_distribution": {
-    "legitimate": 0,
+    "legitimate": 9,
     "phishing": 0,
     "brand_impersonation": 0,
     "financial_scam": 0,
-    "data_theft": 0,
+    "data_theft": 10,
     "malware": 0,
     "browser_abuse": 0,
     "other_scam": 0,
     "unknown": 0
   },
   "misinformation_labels": {
-    "real": 0,
-    "fake": 0,
+    "real": 500,
+    "fake": 500,
     "undecided": 0,
-    "not_annotated": 0
+    "not_annotated": 19
   },
   "misinformation_balance": {
-    "real_percent": 0.0,
-    "fake_percent": 0.0
+    "real_percent": 50.0,
+    "fake_percent": 50.0
   },
   "misinformation_type_distribution": {
-    "real": 0,
-    "satire_parody": 0,
-    "misleading_content": 0,
-    "imposter_content": 0,
-    "false_connection": 0,
-    "manipulated_content": 0,
+    "real": 500,
+    "satire_parody": 100,
+    "misleading_content": 100,
+    "imposter_content": 100,
+    "false_connection": 100,
+    "manipulated_content": 100,
     "unknown": 0
   },
   "misinformation_label_status": {
     "verified": 0,
-    "provisional": 0,
+    "provisional": 1000,
     "needs_review": 0,
-    "not_annotated": 0
+    "not_annotated": 19
   },
   "platform_distribution": {
-    "facebook": 0,
+    "facebook": 19,
     "instagram": 0,
     "x": 0,
     "tiktok": 0,
@@ -62,33 +62,35 @@
     "linkedin": 0,
     "telegram": 0,
     "whatsapp": 0,
-    "reddit": 0,
+    "reddit": 1000,
     "website": 0,
     "other": 0,
     "unknown": 0
   },
   "collection_method_distribution": {
-    "manual": 0,
-    "public_dataset": 0,
+    "manual": 19,
+    "public_dataset": 1000,
     "api": 0,
     "research_archive": 0,
     "synthetic_test": 0
   },
   "label_status": {
-    "verified": 0,
+    "verified": 19,
     "provisional": 0,
     "needs_review": 0,
-    "not_annotated": 0
+    "not_annotated": 1000
   },
-  "dataset_version_distribution": {},
-  "total_images": 0,
-  "total_embedded_urls": 0,
-  "samples_with_text": 0,
-  "samples_with_images": 0,
+  "dataset_version_distribution": {
+    "0.1": 1019
+  },
+  "total_images": 1019,
+  "total_embedded_urls": 14,
+  "samples_with_text": 1019,
+  "samples_with_images": 1019,
   "samples_without_images": 0,
   "samples_with_multiple_images": 0,
-  "samples_with_urls": 0,
-  "samples_without_urls": 0,
+  "samples_with_urls": 14,
+  "samples_without_urls": 1005,
   "samples_with_multiple_urls": 0,
-  "samples_with_claimed_brand": 0
+  "samples_with_claimed_brand": 9
 }
