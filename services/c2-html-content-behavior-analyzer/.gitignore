@@ -36,6 +36,8 @@ data/processed/**
 data/metadata/candidates.csv
 data/metadata/metadata.csv
 data/metadata/review/
+# Frozen dataset versions (ids, labels, sha256 - no URLs): tracked on purpose
+!data/metadata/manifests/
 # downloaded feed files (malicious URL lists, licensed data)
 data/feeds/**
 !data/feeds/**/

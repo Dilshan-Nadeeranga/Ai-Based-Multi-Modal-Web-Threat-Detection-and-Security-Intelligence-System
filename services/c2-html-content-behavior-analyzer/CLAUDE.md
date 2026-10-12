@@ -51,7 +51,13 @@ Implement one part (or batch) at a time, when asked. See **Progress** below.
   - `dataset/verifier.py` + `scripts/review_labels.py` (`review`, `export-peer`, `import-peer`): text-only review, saves after every decision; peer sheet hides labels/URLs (UTF-8 BOM for Excel); agreement % + Cohen's kappa (sklearn) → `peer_agreement.json`.
   - `dataset/safe_preview.py` + `scripts/safe_preview.py`: sanitized `_safe.html` in `data/metadata/review/` (drops script/iframe/meta/base/link, unwraps object/embed/noscript, strips on* and all URL attributes, CSS url()/@import, strict CSP, red banner).
   - `scripts/deduplicate.py` (`quality`, `dedup`, `all`, each `--dry-run`).
-- [ ] Part 1 – remaining batches (statistics, splits grouped by cluster_id)
+- [x] **Part 1 – Batch D: statistics & dataset versions** (Task 13) → **Part 1 done**
+  - Views (`dataset/views.py::select_view`, shared by stats and manifests): **all** = every row; **usable** = not excluded and `quality_flag` in (ok, redirected_offsite); **clean** = usable and `is_duplicate_of` empty (one row per cluster) = what models train on.
+  - `dataset/statistics.py`: per view counts (label, language, label×language, source, fetch_mode), verification %, quality flags, exclusions, clusters (top 10 with 2+ pages), relabel matrix, imbalance (ratio None if a class is empty), page stats via `page_view` (size/text median+p90, forms, % password, % script; each page parsed once), timeline; readiness of the CLEAN view vs `collection_targets.yaml`; `peer_agreement.json` summary.
+  - `dataset/stats_report.py`: `reports/dataset_stats/dataset_stats.{json,md}` + 6 PNGs in `figures/` (matplotlib `Figure` API → Agg, 150 dpi, never opens a window).
+  - `dataset/manifest.py`: `freeze` writes `data/metadata/manifests/dataset_<version>.{csv,json}` (clean view; sample_id, label, language, cluster_id, sha256, file_path; JSON has counts, git commit (+`-dirty`), notes, fingerprint). Never overwrites; refuses missing/changed files. `verify` re-hashes every file. Manifests have no URLs and are tracked in git. Stats report `dataset_version` = the frozen version whose fingerprint matches the clean view, else `unfrozen`.
+  - `scripts/dataset_stats.py` (`stats [--view]`, `freeze --version [--notes]`, `verify --version`).
+  - **Later parts must read a frozen manifest (not metadata.csv) and record its version.** Train/val/test splits are built in Part 4 from the manifest, grouped by `cluster_id` (the old `split_dataset` stub was removed from statistics.py).
 - [ ] Parts 2–9
 
 ## Conventions

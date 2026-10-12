@@ -12,7 +12,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 
 **Threat classes:** `benign`, `phishing`, `fake_ecommerce`, `crypto_scam`, `malware_delivery`.
 
-> **Status:** Part 1 (dataset preparation) Batches A–C are done: metadata, collection, cleaning and verification. `GET /health` works. Parts 2–9 are still stubs (`NotImplementedError`), implemented part by part.
+> **Status:** Part 1 (dataset preparation) is done: metadata, collection, cleaning, verification, statistics and dataset versions. `GET /health` works. Parts 2–9 are still stubs (`NotImplementedError`), implemented part by part.
 
 ## Implementation parts
 
@@ -100,7 +100,7 @@ The container only sees `data/`, runs as a non-root user and blocks downloads, m
 
 - **Never open fetched HTML in a normal browser** (no double-clicking files in `data/raw/`). Inspect them as text in VS Code.
 - **Rendered mode only inside Docker.** It executes the pages' JavaScript.
-- **Never commit `data/raw/` or the URL lists.** `data/raw/`, `data/feeds/`, `data/metadata/candidates.csv`, `data/metadata/metadata.csv` and `data/metadata/review/` are git-ignored because they contain live scam pages and URLs. Only `dataset_schema.json` and the templates are tracked.
+- **Never commit `data/raw/` or the URL lists.** `data/raw/`, `data/feeds/`, `data/metadata/candidates.csv`, `data/metadata/metadata.csv` and `data/metadata/review/` are git-ignored because they contain live scam pages and URLs. Only `dataset_schema.json`, the templates and `manifests/` (no URLs) are tracked.
 - Windows Defender quarantines many phishing pages. The collector writes pages only inside this project's `data/` folder (`data/tmp/` while saving, then `data/raw/`), never the system Temp folder, so a Defender exclusion for this project's `data\` folder is enough. Never exclude the whole project, your user folder or Temp. Pages Defender still removes are marked `blocked_by_antivirus`; files quarantined later show up as "file not found" in `build_metadata.py validate`.
 - The fetcher never submits forms, never downloads linked resources, and refuses `localhost`/private-network addresses.
 
@@ -157,6 +157,40 @@ python scripts/review_labels.py import-peer --file <their filled sheet.csv>   # 
 
 The sheet has no labels, sources or URLs. It is saved as UTF-8 with BOM, so Excel shows Sinhala and Tamil correctly. `import-peer` writes `peer_agreement.json` with the agreement %, Cohen's kappa (with its Landis & Koch interpretation) and the list of disagreements to re-check.
 
+## Dataset statistics & versions
+
+**Three views** are used everywhere (statistics, manifests, later the splits):
+
+| view | rows |
+|---|---|
+| all | every row in `metadata.csv` |
+| usable | not excluded and `quality_flag` is `ok` or `redirected_offsite` |
+| clean | usable and not a near-duplicate (`is_duplicate_of` empty), one row per cluster. **The models train on this view.** |
+
+```bash
+python scripts/dataset_stats.py stats            # all three views (or --view clean)
+```
+
+`stats` prints the clean label × language table and a readiness line per label (`ready` or e.g. `12 more needed, 5 more si needed`, compared with `configs/collection_targets.yaml`). It writes to `reports/dataset_stats/`:
+- `dataset_stats.json`: everything, machine-readable;
+- `dataset_stats.md`: Markdown tables to paste into the progress report;
+- `figures/`: `label_distribution`, `label_language_heatmap`, `quality_flags`, `text_length_by_label`, `collection_timeline` and `verification_progress` (PNG, 150 dpi).
+
+These contain counts, sample ids and cluster ids, but no URLs.
+
+**Freezing a dataset version.** When a review round is finished, freeze the clean view so every later experiment can name the exact data it used:
+
+```bash
+python scripts/dataset_stats.py freeze --version v0.1 --notes "after first full review"
+python scripts/dataset_stats.py verify --version v0.1     # every file present, sha256 unchanged
+```
+
+- `freeze` writes `data/metadata/manifests/dataset_v0.1.csv` (sample_id, label, language, cluster_id, sha256, file_path) and `dataset_v0.1.json` (created_at, counts per label/language, git commit, notes, fingerprint).
+- A version is never overwritten; a changed dataset gets a new number (v0.2, ...).
+- Freezing refuses if any file is missing or changed (run `build_metadata.py validate` first).
+- Manifests contain no URLs, so **commit them**. Parts 2–6 read a manifest, not `metadata.csv`, and report its version with their results.
+- `dataset_stats.json` shows `dataset_version: v0.1` while the clean view still matches that manifest exactly, and `unfrozen` once anything changed.
+
 ## API
 
 | Method | Path | Status |
@@ -173,7 +207,7 @@ The gateway reaches C2 through its `C2_URL` env var (e.g. `http://localhost:8002
 configs/            YAML config: paths/splits/model params, labels, languages, intent taxonomy, JS rules, sources/sinks
 data/
   raw/<label>/      collected HTML (git-ignored)
-  metadata/         dataset_schema.json, manual_urls_template.csv (tracked); metadata.csv, candidates.csv, review/ (git-ignored)
+  metadata/         dataset_schema.json, manual_urls_template.csv, manifests/ (tracked); metadata.csv, candidates.csv, review/ (git-ignored)
   feeds/            downloaded feed files (git-ignored)
   tmp/              pages being saved by the collector (git-ignored, emptied automatically)
   interim/          after dedup (git-ignored)
