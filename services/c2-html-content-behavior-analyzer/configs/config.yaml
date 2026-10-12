@@ -1,0 +1,51 @@
+# C2 main configuration. Paths are relative to the service root.
+project:
+  name: c2-html-content-behavior-analyzer
+  random_seed: 42
+
+paths:
+  data_dir: data
+  raw_dir: data/raw
+  interim_dir: data/interim
+  processed_dir: data/processed
+  metadata_csv: data/metadata/metadata.csv
+  corpus_dir: data/corpus
+  splits_dir: data/splits
+  model_dir: models
+  reports_dir: reports
+
+split:
+  train: 0.70
+  val: 0.15
+  test: 0.15
+  stratify_by: [label, language]
+
+dedup:
+  minhash_num_perm: 128
+  jaccard_threshold: 0.90
+
+dom_baseline:
+  models:
+    logistic_regression:
+      max_iter: 1000
+      class_weight: balanced
+    random_forest:
+      n_estimators: 300
+      max_depth: null
+      class_weight: balanced
+    xgboost:
+      n_estimators: 300
+      max_depth: 6
+      learning_rate: 0.1
+
+xlmr:
+  model_name: xlm-roberta-base
+  max_length: 512
+  batch_size: 16
+  learning_rate: 2.0e-5
+  epochs: 4
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+
+js_analyzer:
+  max_script_bytes: 500000

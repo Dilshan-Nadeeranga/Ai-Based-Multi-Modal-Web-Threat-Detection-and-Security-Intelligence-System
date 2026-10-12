@@ -16,3 +16,27 @@ build/
 .idea/
 .vscode/
 *.local
+
+# --- C2 additions ---
+.venv*/
+*.egg-info/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Data (keep folder structure via .gitkeep)
+data/raw/**
+!data/raw/**/
+data/interim/**
+!data/interim/**/
+data/processed/**
+!data/processed/**/
+!data/**/.gitkeep
+
+# Model artifacts
+models/**/*.bin
+*.safetensors
+*.pt
+*.pkl
+*.joblib

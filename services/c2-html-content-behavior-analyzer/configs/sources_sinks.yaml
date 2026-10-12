@@ -1,0 +1,23 @@
+# Sensitive sources and dangerous sinks for behavioral mapping (Part 8).
+sources:
+  credential_input: [password_input.value, input.value]
+  cookie: [document.cookie]
+  storage: [localStorage.getItem, sessionStorage.getItem]
+  clipboard_read: [navigator.clipboard.readText]
+  url_params: [location.search, location.hash, document.referrer]
+
+sinks:
+  network: [fetch, XMLHttpRequest.send, navigator.sendBeacon, WebSocket.send, Image.src]
+  form_submit: [form.submit, form.action]
+  navigation: [location.href, location.replace, location.assign, window.open]
+  code_execution: [eval, Function, setTimeout_string]
+  dom_write: [innerHTML, document.write]
+  download: [a.download, URL.createObjectURL]
+  clipboard_write: [navigator.clipboard.writeText, document.execCommand]
+
+patterns:
+  credential_exfiltration: {sources: [credential_input, cookie, storage], sinks: [network, form_submit]}
+  forced_redirect: {sources: [], sinks: [navigation]}
+  clipboard_hijack: {sources: [clipboard_read], sinks: [clipboard_write, network]}
+  drive_by_download: {sources: [], sinks: [download]}
+  obfuscated_execution: {sources: [], sinks: [code_execution]}

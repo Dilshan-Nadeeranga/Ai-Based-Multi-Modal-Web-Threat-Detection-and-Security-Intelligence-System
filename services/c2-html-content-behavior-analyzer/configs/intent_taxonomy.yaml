@@ -1,0 +1,21 @@
+# Social-engineering intents (Part 5). Cue phrases are seed examples only.
+# TODO (Part 5): add Sinhala (si) and Tamil (ta) cue phrases.
+intents:
+  - id: urgency_threat
+    description: Pressure through deadlines, suspension or legal/financial threats.
+    cues: {en: ["account suspended", "within 24 hours", "act now"], si: [], ta: []}
+  - id: fake_reward
+    description: Prizes, lotteries, free gifts or unrealistic discounts.
+    cues: {en: ["you have won", "claim your prize", "90% off"], si: [], ta: []}
+  - id: credential_request
+    description: Requests for passwords, OTPs, card or bank details.
+    cues: {en: ["verify your password", "enter OTP", "confirm card details"], si: [], ta: []}
+  - id: investment_lure
+    description: Guaranteed returns, crypto doubling, get-rich-quick schemes.
+    cues: {en: ["guaranteed profit", "double your bitcoin", "daily returns"], si: [], ta: []}
+  - id: fake_security_warning
+    description: Fake virus alerts, tech-support scams, forced "updates".
+    cues: {en: ["your device is infected", "call support now", "update required"], si: [], ta: []}
+  - id: benign
+    description: No social-engineering intent.
+    cues: {en: [], si: [], ta: []}

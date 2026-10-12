@@ -1,0 +1,9 @@
+languages:
+  en:
+    name: English
+  si:
+    name: Sinhala
+    unicode_ranges: [["0D80", "0DFF"]]
+  ta:
+    name: Tamil
+    unicode_ranges: [["0B80", "0BFF"]]
