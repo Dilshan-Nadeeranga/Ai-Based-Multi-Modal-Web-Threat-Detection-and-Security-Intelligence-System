@@ -38,6 +38,8 @@ Implement one part (or batch) at a time, when asked. See **Progress** below.
   - `dataset/collection.py` + `scripts/collect.py` (`download`, `import`, `fetch`, `retry-failed`, `progress`); targets in `configs/collection_targets.yaml`; settings in `configs/config.yaml → collection`.
   - Metadata gained optional `fetch_mode` (static/rendered/manual), `final_url`, `http_status`, `content_type`; old CSV headers are upgraded on load. `urlhaus` added to `configs/sources.yaml`. `constants.py` no longer duplicates config lists.
   - Tests use `httpx.MockTransport` only (no real network). The fetcher Docker image is not yet build-tested.
+  - Windows robustness (after the first real run): pages are written to `data/tmp/` (never system Temp, so a Defender exclusion for `data/` covers them); `collection.process_candidate` never raises for one page (antivirus removal → `failed` + `blocked_by_antivirus: ...`, other errors → `failed` + `<Type>: <msg>`; Ctrl+C still stops); `utils/io.atomic_write_csv` retries `os.replace` on PermissionError (~3 s) then raises `FileSaveError`; `register_file` removes a half-copied file.
+  - `collect.py failures` (reason codes from `collection.reason_code`, also printed after each fetch) and `collect.py repair [--dry-run]` (`dataset/repair.py`; never deletes raw files or edits metadata.csv).
 - [ ] Part 1 – remaining batches (near-duplicate detection, verification, statistics, splits)
 - [ ] Parts 2–9
 

@@ -35,6 +35,9 @@ data/processed/**
 # downloaded feed files (malicious URL lists, licensed data)
 data/feeds/**
 !data/feeds/**/
+# pages being saved by the collector (deleted after registering)
+data/tmp/**
+!data/tmp/**/
 !data/**/.gitkeep
 
 # Model artifacts

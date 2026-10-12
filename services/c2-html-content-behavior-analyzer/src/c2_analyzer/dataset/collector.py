@@ -16,6 +16,7 @@ from pathlib import Path
 from c2_analyzer.dataset.metadata import MetadataStore
 from c2_analyzer.schemas.dataset import SampleMetadata
 from c2_analyzer.utils.hashing import sha256_file
+from c2_analyzer.utils.io import remove_quietly
 
 
 def register_file(
@@ -80,14 +81,24 @@ def register_file(
     store.check_can_add(record)
 
     # 3. Copy the file (never overwrite something that is already there).
-    if not already_in_place:
-        if target.exists():
-            raise FileExistsError(f"{target} already exists but is not registered; run 'validate'")
-        label_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source_file, target)
+    copied = False
+    try:
+        if not already_in_place:
+            if target.exists():
+                raise FileExistsError(
+                    f"{target} already exists but is not registered; run 'validate'"
+                )
+            label_dir.mkdir(parents=True, exist_ok=True)
+            copied = True  # set first: a half-finished copy must be removed too
+            shutil.copy2(source_file, target)
 
-    # 4. Add the metadata row.
-    warnings = store.add(record)
+        # 4. Add the metadata row.
+        warnings = store.add(record)
+    except BaseException:
+        # No row -> no file: never leave an unregistered copy in data/raw.
+        if copied:
+            remove_quietly(target)
+        raise
     return record, warnings
 
 

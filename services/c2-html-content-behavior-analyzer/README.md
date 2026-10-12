@@ -74,10 +74,16 @@ python scripts/collect.py import --feed manual --file data/feeds/manual_urls.csv
 python scripts/collect.py fetch --label phishing --limit 60     # static mode (default)
 python scripts/collect.py retry-failed                          # failed URLs, max 3 attempts
 python scripts/collect.py progress                              # samples per label x language vs configs/collection_targets.yaml
+python scripts/collect.py failures --label malware_delivery     # why candidates failed / were skipped
+python scripts/collect.py repair --dry-run                      # after a crash: check the CSVs agree (drop --dry-run to fix)
 python scripts/build_metadata.py validate                       # dataset health check
 ```
 
-Fetch outcomes: **saved**, **skipped** (not HTML, > 5 MB, local-network address), **failed** (timeout, network error, non-2xx status – retryable), **duplicate** (same content as an existing sample). A scam URL that redirects to another domain is still saved, but its `notes` says `redirected to <host> - check the label`.
+Fetch outcomes: **saved**, **skipped** (not HTML, > 5 MB, local-network address), **failed** (timeout, network error, non-2xx status – retryable), **duplicate** (same content as an existing sample). A scam URL that redirects to another domain is still saved, but its `notes` says `redirected to <host> - check the label`. At the end of a run the skip/fail reasons are counted (e.g. `non_html_content: 31`, `http_404: 12`, `blocked_by_antivirus: 3`).
+
+One bad page never stops a run: any error while saving a page marks that candidate `failed` (retryable) with the reason. If a run was stopped by a crash or a locked file, run `collect.py repair`: it resets candidates whose sample was never saved, links saved samples to their candidates, removes leftover temp files, and lists files in `data/raw/` without a metadata row (it never deletes them).
+
+If a CSV is open in Excel, saving is retried for about 3 seconds, then the command stops with "Could not save ... Close it in Excel". Close the file and run the command again.
 
 **Rendered mode** (runs page JavaScript in headless Chromium) – Docker only:
 
@@ -94,7 +100,7 @@ The container only sees `data/`, runs as a non-root user and blocks downloads, m
 - **Never open fetched HTML in a normal browser** (no double-clicking files in `data/raw/`). Inspect them as text in VS Code.
 - **Rendered mode only inside Docker.** It executes the pages' JavaScript.
 - **Never commit `data/raw/`** (already git-ignored, together with `data/feeds/`).
-- Windows Defender may quarantine phishing kits in `data/raw/`; `build_metadata.py validate` then reports "file not found". If you add a Defender exclusion, limit it to this project's `data\raw` folder.
+- Windows Defender quarantines many phishing pages. The collector writes pages only inside this project's `data/` folder (`data/tmp/` while saving, then `data/raw/`), never the system Temp folder, so a Defender exclusion for this project's `data\` folder is enough. Never exclude the whole project, your user folder or Temp. Pages Defender still removes are marked `blocked_by_antivirus`; files quarantined later show up as "file not found" in `build_metadata.py validate`.
 - The fetcher never submits forms, never downloads linked resources, and refuses `localhost`/private-network addresses.
 
 ## API
@@ -115,6 +121,7 @@ data/
   raw/<label>/      collected HTML (git-ignored)
   metadata/         dataset_schema.json, metadata.csv, candidates.csv, manual_urls_template.csv
   feeds/            downloaded feed files (git-ignored)
+  tmp/              pages being saved by the collector (git-ignored, emptied automatically)
   interim/          after dedup (git-ignored)
   processed/        parsed_html, dom_features, text, js, behavior (git-ignored)
   corpus/{en,si,ta} multilingual text corpus

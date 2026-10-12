@@ -18,6 +18,7 @@ from pathlib import Path
 from c2_analyzer.config import get_labels, get_languages, get_sources
 from c2_analyzer.dataset.collector import register_file
 from c2_analyzer.dataset.metadata import MetadataStore
+from c2_analyzer.utils.io import FileSaveError
 
 EXAMPLES = """examples:
   python scripts/build_metadata.py register --file page.html --label phishing \\
@@ -118,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "validate":
             return cmd_validate(store)
         return cmd_show(store, args)
-    except (ValueError, FileNotFoundError, FileExistsError) as error:
+    except (ValueError, FileNotFoundError, FileExistsError, FileSaveError) as error:
         # Expected user errors (bad value, duplicate, missing file): short message, exit 1.
         print(f"Error: {error}", file=sys.stderr)
         return 1

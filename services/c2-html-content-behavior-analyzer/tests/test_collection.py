@@ -404,10 +404,11 @@ def test_end_to_end_manual_import_then_fetch(tmp_path):
     metadata = MetadataStore(tmp_path / "metadata.csv", tmp_path / "raw")
     candidates.add_many(import_feed("manual", manual).candidates)
 
-    counts = collect(
+    summary = collect(
         candidates.next_pending(), make_fetcher(server), metadata, candidates, show_progress=False
     )
-    assert counts == {"saved": 2, "skipped": 1, "failed": 1, "duplicate": 1}
+    assert summary.counts == {"saved": 2, "skipped": 1, "failed": 1, "duplicate": 1}
+    assert summary.reasons == {"non_html_content": 1, "http_404": 1}
 
     shop = metadata.get("c2_fake_ecommerce_000001")
     assert (shop.label, shop.language, shop.fetch_mode) == ("fake_ecommerce", "si", "static")

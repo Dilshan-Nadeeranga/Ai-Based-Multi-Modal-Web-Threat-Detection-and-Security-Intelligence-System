@@ -230,7 +230,6 @@ class MetadataStore:
                 problems.append(f"duplicate {column} {value} appears in more than one row")
 
         known_ids = set(df["sample_id"])
-        registered_files = {path.replace("\\", "/") for path in df["file_path"]}
 
         # start=2 because line 1 of the CSV is the header
         for line, row in enumerate(df.to_dict("records"), start=2):
@@ -255,16 +254,26 @@ class MetadataStore:
             if record.is_duplicate_of and record.is_duplicate_of not in known_ids:
                 problems.append(f"[{name}] is_duplicate_of {record.is_duplicate_of} does not exist")
 
-        if self.raw_dir.is_dir():
-            for file in sorted(self.raw_dir.rglob("*")):
-                if file.is_file() and file.name != ".gitkeep":
-                    relative = file.relative_to(self.raw_dir).as_posix()
-                    if relative not in registered_files:
-                        problems.append(
-                            f"[unregistered] {relative} is in data/raw but has no metadata row"
-                        )
+        for relative in self.unregistered_files():
+            problems.append(f"[unregistered] {relative} is in data/raw but has no metadata row")
 
         return problems
+
+    def unregistered_files(self) -> list[str]:
+        """Files in data/raw/ without a metadata row, as ``<label>/<file>`` paths.
+
+        They appear e.g. when a run crashed between copying a page and saving its row.
+        """
+        if not self.raw_dir.is_dir():
+            return []
+        registered = {path.replace("\\", "/") for path in self.df["file_path"]}
+        orphans = []
+        for file in sorted(self.raw_dir.rglob("*")):
+            if file.is_file() and file.name != ".gitkeep":
+                relative = file.relative_to(self.raw_dir).as_posix()
+                if relative not in registered:
+                    orphans.append(relative)
+        return orphans
 
     # ---- writing ---------------------------------------------------------
 

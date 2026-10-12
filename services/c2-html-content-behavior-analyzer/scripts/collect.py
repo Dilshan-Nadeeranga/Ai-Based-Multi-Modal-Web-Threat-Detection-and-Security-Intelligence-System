@@ -18,10 +18,16 @@ import pandas as pd
 
 from c2_analyzer.config import get_labels, load_yaml_config, resolve_path
 from c2_analyzer.dataset.candidates import CandidateStore
-from c2_analyzer.dataset.collection import collect, progress_table
+from c2_analyzer.dataset.collection import (
+    collect,
+    progress_table,
+    reason_breakdown,
+    reason_code,
+)
 from c2_analyzer.dataset.feeds import FEED_URLS, FEEDS, download_feed, import_feed
 from c2_analyzer.dataset.fetcher import make_fetcher
 from c2_analyzer.dataset.metadata import MetadataStore
+from c2_analyzer.dataset.repair import repair
 
 EXAMPLES = """examples:
   python scripts/collect.py download --feed openphish
@@ -32,6 +38,8 @@ EXAMPLES = """examples:
   python scripts/collect.py fetch --label phishing --limit 60
   python scripts/collect.py retry-failed
   python scripts/collect.py progress
+  python scripts/collect.py failures --label malware_delivery
+  python scripts/collect.py repair --dry-run
 """
 
 
@@ -73,7 +81,23 @@ def build_parser() -> argparse.ArgumentParser:
             )  # fmt: skip
 
     commands.add_parser("progress", help="show collected samples vs targets")
+
+    failures = commands.add_parser("failures", help="list failed/skipped candidates and why")
+    failures.add_argument("--label", choices=get_labels())
+    failures.add_argument("--status", choices=("failed", "skipped"), help="only this status")
+    failures.add_argument("--limit", type=int, help="list at most N candidates")
+
+    fix = commands.add_parser("repair", help="fix candidates/metadata left inconsistent by a crash")
+    fix.add_argument("--dry-run", action="store_true", help="only report, change nothing")
     return parser
+
+
+def print_reasons(reasons, title: str) -> None:
+    """Print reason codes, most common first (e.g. "non_html_content: 31")."""
+    if reasons:
+        print(title)
+        for code, count in reasons.most_common():
+            print(f"  {code}: {count}")
 
 
 def cmd_download(args: argparse.Namespace) -> int:
@@ -109,9 +133,12 @@ def cmd_fetch(args: argparse.Namespace, candidates: CandidateStore, metadata: Me
 
     print(f"Fetching {len(to_fetch)} candidate(s) in {args.mode} mode...")
     with make_fetcher(args.mode, rate=args.rate) as fetcher:
-        counts = collect(to_fetch, fetcher, metadata, candidates)
-    summary = ", ".join(f"{outcome}: {count}" for outcome, count in counts.items())
-    print(f"Done - {summary}")
+        summary = collect(to_fetch, fetcher, metadata, candidates)
+    counts = ", ".join(f"{outcome}: {count}" for outcome, count in summary.counts.items())
+    print(f"Done - {counts}")
+    print_reasons(summary.reasons, "Skip/fail reasons:")
+    if summary.reasons:
+        print("Details: python scripts/collect.py failures")
     return 0
 
 
@@ -121,6 +148,80 @@ def cmd_progress(candidates: CandidateStore, metadata: MetadataStore) -> int:
         print(progress_table(metadata.df).to_string())
         print("\nCandidates by status")
         print(candidates.status_counts().to_string())
+    return 0
+
+
+def cmd_failures(args: argparse.Namespace, candidates: CandidateStore) -> int:
+    df = candidates.df
+    rows = df[df["status"].isin([args.status] if args.status else ["failed", "skipped"])]
+    if args.label:
+        rows = rows[rows["suggested_label"] == args.label]
+    if rows.empty:
+        print("No failed or skipped candidates.")
+        return 0
+
+    print_reasons(reason_breakdown(rows), f"{len(rows)} candidate(s) by reason:")
+    shown = rows if args.limit is None else rows.head(args.limit)
+    table = pd.DataFrame(
+        {
+            "status": shown["status"],
+            "label": shown["suggested_label"],
+            "reason": shown["last_error"].map(reason_code),
+            "tries": shown["attempts"],
+            "url": shown["url"].str.slice(0, 70),
+            "error": shown["last_error"].str.slice(0, 90),
+        }
+    )
+    with pd.option_context("display.width", 250, "display.max_colwidth", 100):
+        print()
+        print(table.to_string(index=False))
+    if len(shown) < len(rows):
+        print(f"... {len(rows) - len(shown)} more (remove --limit to see all)")
+    return 0
+
+
+def cmd_repair(
+    args: argparse.Namespace, candidates: CandidateStore, metadata: MetadataStore
+) -> int:
+    report = repair(candidates, metadata, dry_run=args.dry_run)
+    if report.is_clean:
+        print("Everything is consistent - nothing to repair.")
+        return 0
+
+    def did(action: str) -> str:  # "Would reset" in a dry run, "Reset" otherwise
+        return f"Would {action}" if args.dry_run else action.capitalize()
+
+    print(
+        f"{did('reset')} {len(report.reset_to_pending)} candidate(s) to pending "
+        "(marked fetched, but the sample is not in metadata.csv)"
+    )
+    for url in report.reset_to_pending:
+        print(f"  {url}")
+    print(f"{did('link')} {len(report.relinked)} candidate(s) to their already-saved sample")
+    for url, sample_id in report.relinked:
+        print(f"  {url} -> {sample_id}")
+    print(f"{did('remove')} {len(report.temp_files)} leftover temp file(s)")
+    for path in report.locked_temp_files:
+        print(f"  could not remove (locked): {path}")
+
+    if report.orphan_raw_files:
+        print()
+        print(f"{len(report.orphan_raw_files)} file(s) in data/raw have no metadata row:")
+        for relative in report.orphan_raw_files:
+            print(f"  {relative}")
+        print("  They were NOT deleted. Register one with:")
+        print(
+            "    python scripts/build_metadata.py register --file data/raw/<label>/<file> "
+            "--label <label> --language <lang> --source <source> --source-url <url>"
+        )
+        print("  or delete it if you cannot tell where it came from.")
+    if report.missing_raw_files:
+        print()
+        print(
+            f"{len(report.missing_raw_files)} metadata row(s) point to a missing file "
+            "(often quarantined by antivirus): " + ", ".join(report.missing_raw_files)
+        )
+        print("  Restore them from quarantine. Details: python scripts/build_metadata.py validate")
     return 0
 
 
@@ -135,6 +236,10 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_import(args, candidates)
         if args.command in ("fetch", "retry-failed"):
             return cmd_fetch(args, candidates, metadata)
+        if args.command == "failures":
+            return cmd_failures(args, candidates)
+        if args.command == "repair":
+            return cmd_repair(args, candidates, metadata)
         return cmd_progress(candidates, metadata)
     except (ValueError, FileNotFoundError, RuntimeError, httpx.HTTPError) as error:
         print(f"Error: {error}", file=sys.stderr)
