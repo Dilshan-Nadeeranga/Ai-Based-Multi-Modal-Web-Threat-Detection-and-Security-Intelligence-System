@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -75,6 +76,7 @@ from app.utils.url_utils import normalize_evidence_url
 logger = logging.getLogger(__name__)
 
 FORMAT_EXTENSIONS: dict[str, str] = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp"}
+_URL_LIST_COMMA = re.compile(r",+(?=https?://)", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -130,7 +132,11 @@ class NewSampleRequest(BaseModel):
     @field_validator("embedded_urls", mode="before")
     @classmethod
     def _split_urls(cls, value: object) -> object:
-        """Accept a list, or a single string separated by newlines/spaces/commas."""
+        """Accept a list, or a single string separated by newlines/spaces/commas.
+
+        A comma only separates URLs when the next part starts a new http(s)
+        URL, because commas are valid inside URL paths and queries.
+        """
         if value is None:
             return []
         if isinstance(value, str):
@@ -139,7 +145,8 @@ class NewSampleRequest(BaseModel):
             urls: list[object] = []
             for item in value:
                 if isinstance(item, str):
-                    urls.extend(part for part in item.replace(",", " ").split() if part)
+                    for token in item.split():
+                        urls.extend(part for part in _URL_LIST_COMMA.split(token.strip(",")) if part)
                 else:
                     urls.append(item)
             return urls

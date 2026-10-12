@@ -66,6 +66,18 @@ class Settings(BaseSettings):
     dataset_allow_synthetic: bool = False
     dataset_lock_timeout_seconds: float = Field(default=10, gt=0)
 
+    web_capture_enabled: bool = True
+    web_capture_timeout_seconds: float = Field(default=30, gt=0, le=300)
+    web_capture_settle_seconds: float = Field(default=2, ge=0, le=30)
+    web_capture_viewport_width: int = Field(default=1366, ge=320, le=3840)
+    web_capture_viewport_height: int = Field(default=768, ge=240, le=2160)
+    web_capture_max_height: int = Field(default=12000, ge=240, le=30000)
+    web_capture_javascript: bool = True
+    web_capture_block_social_media: bool = True
+    web_capture_allow_private_hosts: bool = False
+    web_capture_user_agent: str = ""
+    web_capture_max_title_length: int = Field(default=300, ge=1, le=2000)
+
     @field_validator("data_dir")
     @classmethod
     def _resolve_data_dir(cls, value: Path) -> Path:
@@ -127,8 +139,13 @@ class Settings(BaseSettings):
 
     @property
     def webpage_screenshots_dir(self) -> Path:
-        """Destination website screenshots (captured by a future phase)."""
+        """Destination website screenshots named ``SVT_000001_web_01.png``."""
         return self.data_dir / "webpage_screenshots"
+
+    @property
+    def webpage_captures_path(self) -> Path:
+        """Append-only log of every destination capture attempt (success or failure)."""
+        return self.annotations_dir / "webpage_captures.jsonl"
 
     @property
     def statistics_dir(self) -> Path:
