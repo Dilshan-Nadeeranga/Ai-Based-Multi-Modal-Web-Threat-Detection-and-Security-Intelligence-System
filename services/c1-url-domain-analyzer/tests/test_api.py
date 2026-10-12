@@ -48,3 +48,14 @@ def test_analyze_url_empty_payload():
     assert response.status_code == 400
     data = response.json()
     assert "URL field cannot be empty" in data["detail"]
+
+
+def test_domain_intelligence_endpoint():
+    payload = {"url": "https://example.com"}
+    response = client.post("/api/v1/domain-intelligence", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "registration" in data
+    assert "dns" in data
+    assert "reputation" in data
+    assert "domain_risk_score" in data
