@@ -12,7 +12,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 
 **Threat classes:** `benign`, `phishing`, `fake_ecommerce`, `crypto_scam`, `malware_delivery`.
 
-> **Status:** Part 1 (dataset preparation) is done: metadata, collection, cleaning, verification, statistics and dataset versions. `GET /health` works. Parts 2–9 are still stubs (`NotImplementedError`), implemented part by part.
+> **Status:** Part 1 (dataset preparation) and Part 2 (HTML preprocessing) are done. `GET /health` works. Parts 3–9 are still stubs (`NotImplementedError`), implemented part by part.
 
 ## Implementation parts
 
@@ -191,6 +191,41 @@ python scripts/dataset_stats.py verify --version v0.1     # every file present, 
 - Manifests contain no URLs, so **commit them**. Parts 2–6 read a manifest, not `metadata.csv`, and report its version with their results.
 - `dataset_stats.json` shows `dataset_version: v0.1` while the clean view still matches that manifest exactly, and `unfrozen` once anything changed.
 
+## HTML preprocessing
+
+Part 2 turns each HTML page into one structured JSON file (`ParsedPage`, `src/c2_analyzer/schemas/parsed_page.py`). It **extracts and organizes** facts; it does not decide whether anything is suspicious (Parts 3, 5 and 7/8 do that). It never runs JavaScript, never makes a network request and never downloads external scripts or CSS.
+
+```bash
+python scripts/preprocess_html.py run --version v0.1                 # every sample of a frozen version
+python scripts/preprocess_html.py run --version v0.1 --label phishing --limit 20 --workers 2
+python scripts/preprocess_html.py run --version v0.1 --force         # redo pages that are already done
+python scripts/preprocess_html.py one --sample-id c2_phishing_000081 # what is extracted, as text
+python scripts/preprocess_html.py one --file page.html --url https://example.com/login
+```
+
+What `ParsedPage` contains:
+- **meta**: sample id, page URL, base URL, dataset version, parser used, timing per step, input size and sha256, truncation and errors.
+- **text**: title, meta tags (a meta refresh gets its resolved `redirect_url`), headings with levels, paragraphs, `visible_text` (one line per block) and `hidden_text` (hidden attribute, `aria-hidden`, inline `display:none`/`visibility:hidden`/`opacity:0`/`font-size:0`, `<noscript>`).
+- **forms**: resolved action, its domain, external or not, method; every input with type, label, `hidden`, `required` and a masked prefilled value; buttons. Inputs outside any form are listed too.
+- **links and embedded frames**: absolute URL, registrable domain, external or not, size, and whether the frame is hidden.
+- **JavaScript as text**: inline scripts (≤ 500 KB each), external script references, `on*=` event handlers and `javascript:` URLs. JSON-LD and templates are kept separately as data.
+- **summaries**: CSS (`style=""` attributes stay in the DOM for Part 3) and comments (removed from the text, counted).
+- **dom**: node, element and tag counts, depth, and a skeleton capped at 3000 nodes / depth 40.
+
+Rules worth knowing:
+- **Sinhala and Tamil are kept intact**: NFC normalization, but the zero-width joiner/non-joiner (needed for ශ්‍රී) are never removed. Zero-width spaces, BOMs and control characters are.
+- **PII masking (FR10 / PDPA)**: prefilled input values and URL query/fragment values are masked as `[EMAIL]`, `[PHONE]` (including +94 / 07X numbers), `[CARD]` (Luhn-checked) and `[NIC]` (old and new). Prefilled passwords are stored as `[REDACTED]`. Visible page text is not masked, because the NLP models need it.
+- **Domains**: "external" compares registrable domains (`bank.com.lk`, `x.pages.dev`) using tldextract **offline** (its bundled suffix list, no download). Without tldextract, a simpler built-in rule is used.
+- **Robustness**: a page larger than 5 MB is cut and marked `truncated`. If lxml fails, `html.parser` is used. If one extractor fails, the error goes to `meta.errors` and the rest of the page is still saved.
+
+Outputs (git-ignored):
+- `data/processed/parsed_html/<version>/<sample_id>.json`, plus `.txt` with the visible text only, for Part 5;
+- `one --save` writes to `data/processed/parsed_html/adhoc/`.
+
+A run skips pages whose JSON already matches the source sha256, schema version and domain method. The run refuses to start if `dataset_stats.py verify` fails for that version. It writes `reports/preprocessing/<version>_summary.{json,md}` with these numbers:
+- counts, failures, parser fallbacks, truncated pages and timing;
+- a descriptive per-label table: median text length and % of pages with forms, password inputs, inline/external scripts, iframes and meta refresh.
+
 ## API
 
 | Method | Path | Status |
@@ -211,7 +246,7 @@ data/
   feeds/            downloaded feed files (git-ignored)
   tmp/              pages being saved by the collector (git-ignored, emptied automatically)
   interim/          after dedup (git-ignored)
-  processed/        parsed_html, dom_features, text, js, behavior (git-ignored)
+  processed/        parsed_html/<version>/ (Part 2 JSON + TXT), dom_features, text, js, behavior (git-ignored)
   corpus/{en,si,ta} multilingual text corpus
   splits/           train/val/test
 models/             dom_baseline/, xlmr/ (weights git-ignored)

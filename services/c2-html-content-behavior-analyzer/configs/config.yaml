@@ -80,3 +80,23 @@ collection:
   # Realistic desktop Chrome UA (some phishing kits hide from bots). Update occasionally.
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
   accept_language: "en,si;q=0.9,ta;q=0.8"
+
+# HTML preprocessing (Part 2): scripts/preprocess_html.py
+# Part 2 only extracts and organizes - limits keep one hostile page from
+# producing gigantic outputs or slowing the batch down.
+preprocessing:
+  output_dir: data/processed/parsed_html
+  reports_dir: reports/preprocessing
+  workers: 4
+  max_html_bytes: 5242880         # 5 MB, larger input is truncated (meta.truncated)
+  max_script_chars: 512000        # per inline script (500 KB)
+  max_handler_chars: 2048         # per on*= event handler / javascript: URL (2 KB)
+  max_structured_chars: 50000     # per JSON-LD / template block
+  max_value_chars: 200            # prefilled input value (after PII masking)
+  max_url_chars: 2048
+  max_link_text_chars: 200
+  max_meta_content_chars: 1000
+  comment_samples: 5
+  comment_sample_chars: 200
+  skeleton_max_nodes: 3000
+  skeleton_max_depth: 40

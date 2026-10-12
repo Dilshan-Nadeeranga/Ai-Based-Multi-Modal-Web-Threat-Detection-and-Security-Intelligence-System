@@ -414,3 +414,10 @@ def test_cli_rejects_unknown_label(tmp_path):
         "--language", "en", "--source", "manual", "--source-url", "https://x.example",
     )  # fmt: skip
     assert result.returncode == 2 and "invalid choice" in result.stderr
+
+
+def test_update_works_right_after_the_first_add(store):
+    # Regression (pandas 3): the first row added to an empty store was read-only.
+    store.add(write_sample(store, "phishing", 1, "<p>first</p>"))
+    store.update("c2_phishing_000001", cluster_id="cl_000001")
+    assert store.get("c2_phishing_000001").cluster_id == "cl_000001"

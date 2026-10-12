@@ -8,6 +8,8 @@ httpx>=0.27
 # HTML parsing
 beautifulsoup4>=4.12
 lxml>=5.1
+# registrable domains (used OFFLINE with its bundled public-suffix list)
+tldextract>=5.1
 # Data / ML
 pandas>=2.2
 numpy>=1.26
