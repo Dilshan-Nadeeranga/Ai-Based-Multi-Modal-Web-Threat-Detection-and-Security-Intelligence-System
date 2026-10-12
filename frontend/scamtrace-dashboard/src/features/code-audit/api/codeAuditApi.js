@@ -108,3 +108,33 @@ export function getFinding(findingId) {
     'Unable to load finding details.'
   )
 }
+
+/**
+ * POST /findings/{findingId}/remediation
+ * Generates an UNVALIDATED AI remediation suggestion (never applied automatically).
+ */
+export async function generateRemediation(findingId) {
+  let response
+  try {
+    response = await fetch(
+      `${API_BASE_URL}/findings/${encodeURIComponent(findingId)}/remediation`,
+      { method: 'POST' }
+    )
+  } catch {
+    throw new CodeAuditApiError(
+      'Backend is unavailable. Please make sure the analysis service is running.',
+      0
+    )
+  }
+  let data = null
+  try {
+    data = await response.json()
+  } catch {
+    // non-JSON body
+  }
+  if (!response.ok) {
+    const message = (data && (data.message || data.detail)) || 'Unable to generate a remediation suggestion.'
+    throw new CodeAuditApiError(typeof message === 'string' ? message : 'Unable to generate a remediation suggestion.', response.status)
+  }
+  return data
+}
