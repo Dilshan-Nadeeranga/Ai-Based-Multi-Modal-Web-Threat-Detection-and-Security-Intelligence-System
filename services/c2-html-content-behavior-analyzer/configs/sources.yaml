@@ -5,6 +5,8 @@ sources:
     description: PhishTank verified phishing URLs
   openphish:
     description: OpenPhish phishing feed
+  urlhaus:
+    description: URLhaus (abuse.ch) malware distribution URLs
   tranco:
     description: Tranco top-sites list (benign pages)
   elfw2031:

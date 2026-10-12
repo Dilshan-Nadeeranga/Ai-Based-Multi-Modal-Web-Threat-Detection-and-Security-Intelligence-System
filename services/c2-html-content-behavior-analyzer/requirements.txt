@@ -3,6 +3,8 @@ fastapi>=0.110
 uvicorn[standard]>=0.29
 pydantic>=2.6
 pydantic-settings>=2.2
+# HTTP client (sample collection)
+httpx>=0.27
 # HTML parsing
 beautifulsoup4>=4.12
 lxml>=5.1

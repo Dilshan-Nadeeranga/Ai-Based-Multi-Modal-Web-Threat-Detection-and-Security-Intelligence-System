@@ -59,6 +59,44 @@ docker build -t c2-analyzer .
 docker run -p 8002:8002 c2-analyzer
 ```
 
+## How to collect samples
+
+Collection has two stages, both run with `scripts/collect.py`:
+
+1. **Candidates** – import URL lists into `data/metadata/candidates.csv` (no network).
+2. **Fetch** – download each pending URL, save it to `data/raw/<label>/<sample_id>.html` and register it in `metadata.csv`.
+
+```bash
+python scripts/collect.py download --feed openphish             # optional helper: openphish | urlhaus | tranco
+python scripts/collect.py import --feed openphish --file data/feeds/openphish.txt
+python scripts/collect.py import --feed tranco --file data/feeds/tranco_top1m.csv.zip --top 1000 --sample 60
+python scripts/collect.py import --feed manual --file data/feeds/manual_urls.csv   # template: data/metadata/manual_urls_template.csv
+python scripts/collect.py fetch --label phishing --limit 60     # static mode (default)
+python scripts/collect.py retry-failed                          # failed URLs, max 3 attempts
+python scripts/collect.py progress                              # samples per label x language vs configs/collection_targets.yaml
+python scripts/build_metadata.py validate                       # dataset health check
+```
+
+Fetch outcomes: **saved**, **skipped** (not HTML, > 5 MB, local-network address), **failed** (timeout, network error, non-2xx status – retryable), **duplicate** (same content as an existing sample). A scam URL that redirects to another domain is still saved, but its `notes` says `redirected to <host> - check the label`.
+
+**Rendered mode** (runs page JavaScript in headless Chromium) – Docker only:
+
+```bash
+docker build -f docker/fetcher.Dockerfile -t c2-fetcher .
+docker run --rm --init --shm-size=1g --cap-drop=ALL --security-opt=no-new-privileges \
+  -v "${PWD}/data:/app/data" c2-fetcher fetch --mode rendered --limit 20
+```
+
+The container only sees `data/`, runs as a non-root user and blocks downloads, media, fonts, websockets and browser permissions. Static mode works in the same image (`... c2-fetcher fetch --label phishing`).
+
+### Safety rules
+
+- **Never open fetched HTML in a normal browser** (no double-clicking files in `data/raw/`). Inspect them as text in VS Code.
+- **Rendered mode only inside Docker.** It executes the pages' JavaScript.
+- **Never commit `data/raw/`** (already git-ignored, together with `data/feeds/`).
+- Windows Defender may quarantine phishing kits in `data/raw/`; `build_metadata.py validate` then reports "file not found". If you add a Defender exclusion, limit it to this project's `data\raw` folder.
+- The fetcher never submits forms, never downloads linked resources, and refuses `localhost`/private-network addresses.
+
 ## API
 
 | Method | Path | Status |
@@ -75,7 +113,8 @@ The gateway reaches C2 through its `C2_URL` env var (e.g. `http://localhost:8002
 configs/            YAML config: paths/splits/model params, labels, languages, intent taxonomy, JS rules, sources/sinks
 data/
   raw/<label>/      collected HTML (git-ignored)
-  metadata/         dataset_schema.json + metadata.csv
+  metadata/         dataset_schema.json, metadata.csv, candidates.csv, manual_urls_template.csv
+  feeds/            downloaded feed files (git-ignored)
   interim/          after dedup (git-ignored)
   processed/        parsed_html, dom_features, text, js, behavior (git-ignored)
   corpus/{en,si,ta} multilingual text corpus

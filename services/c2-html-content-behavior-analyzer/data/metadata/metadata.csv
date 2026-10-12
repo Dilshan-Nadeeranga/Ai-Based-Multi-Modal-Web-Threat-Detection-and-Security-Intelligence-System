@@ -1,1 +1,1 @@
-sample_id,file_path,label,language,source,source_url,collection_date,sha256,file_size_bytes,verified,verified_by,verification_date,is_duplicate_of,notes
+sample_id,file_path,label,language,source,source_url,collection_date,sha256,file_size_bytes,fetch_mode,final_url,http_status,content_type,verified,verified_by,verification_date,is_duplicate_of,notes

@@ -18,8 +18,6 @@ Usage::
 
 from __future__ import annotations
 
-import os
-import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -28,13 +26,22 @@ from pydantic import ValidationError
 from c2_analyzer.config import get_labels, get_settings, resolve_path
 from c2_analyzer.schemas.dataset import SAMPLE_ID_PATTERN, SampleMetadata, make_sample_id
 from c2_analyzer.utils.hashing import sha256_file
+from c2_analyzer.utils.io import atomic_write_csv, read_csv_as_strings
 
 # CSV column order = field order of the pydantic model (one source of truth).
 COLUMNS: list[str] = list(SampleMetadata.model_fields)
 
 
 class DuplicateSampleError(ValueError):
-    """Raised when a record's sample_id or sha256 is already in the store."""
+    """Raised when a record's sample_id or sha256 is already in the store.
+
+    ``existing_sample_id`` is the sample that already has this content (for
+    sha256 duplicates), so callers can link to it.
+    """
+
+    def __init__(self, message: str, existing_sample_id: str | None = None) -> None:
+        super().__init__(message)
+        self.existing_sample_id = existing_sample_id
 
 
 def record_to_row(record: SampleMetadata) -> dict[str, str]:
@@ -87,15 +94,21 @@ class MetadataStore:
         Returns a *copy*, so callers cannot bypass validation by editing it.
         """
         if not self.csv_path.exists():
-            self._write(pd.DataFrame(columns=COLUMNS))
-        # dtype=str + keep_default_na=False: keep every cell exactly as written
-        # (e.g. "000123" stays a string, empty cells stay "" instead of NaN).
-        df = pd.read_csv(self.csv_path, dtype=str, keep_default_na=False, encoding="utf-8")
+            atomic_write_csv(pd.DataFrame(columns=COLUMNS), self.csv_path, COLUMNS)
+        df = read_csv_as_strings(self.csv_path)
+
         if list(df.columns) != COLUMNS:
-            raise ValueError(
-                f"{self.csv_path} has columns {list(df.columns)}, expected {COLUMNS}. "
-                "Fix the header row before continuing."
-            )
+            unknown = [column for column in df.columns if column not in COLUMNS]
+            missing = [column for column in COLUMNS if column not in df.columns]
+            required_missing = [c for c in missing if SampleMetadata.model_fields[c].is_required()]
+            if unknown or required_missing:
+                raise ValueError(
+                    f"{self.csv_path} has columns {list(df.columns)}, expected {COLUMNS}. "
+                    "Fix the header row before continuing."
+                )
+            # Older file written before new optional fields existed: add them as
+            # empty columns. They are written to disk on the next save().
+            df = df.reindex(columns=COLUMNS, fill_value="")
         self._df = df
         return df.copy()
 
@@ -149,7 +162,8 @@ class MetadataStore:
         if not same_hash.empty:
             raise DuplicateSampleError(
                 f"exact duplicate: this file has the same sha256 as {same_hash.iloc[0]} "
-                "(identical content is stored only once)"
+                "(identical content is stored only once)",
+                existing_sample_id=same_hash.iloc[0],
             )
 
     def add(self, record: SampleMetadata) -> list[str]:
@@ -256,23 +270,4 @@ class MetadataStore:
 
     def save(self) -> None:
         """Write the in-memory table to the CSV (atomically)."""
-        self._write(self.df)
-
-    def _write(self, df: pd.DataFrame) -> None:
-        """Atomic write: write a temp file next to the CSV, then rename it over the CSV.
-
-        ``os.replace`` is atomic on the same disk, so after a crash the CSV is
-        either the old version or the new one - never half-written.
-        """
-        self.csv_path.parent.mkdir(parents=True, exist_ok=True)
-        fd, temp_name = tempfile.mkstemp(
-            prefix=f"{self.csv_path.name}.", suffix=".tmp", dir=self.csv_path.parent
-        )
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8", newline="") as handle:
-                # lineterminator="\n": same file on Windows and Linux (clean git diffs)
-                df.to_csv(handle, index=False, columns=COLUMNS, lineterminator="\n")
-            os.replace(temp_name, self.csv_path)
-        except BaseException:
-            Path(temp_name).unlink(missing_ok=True)
-            raise
+        atomic_write_csv(self.df, self.csv_path, COLUMNS)

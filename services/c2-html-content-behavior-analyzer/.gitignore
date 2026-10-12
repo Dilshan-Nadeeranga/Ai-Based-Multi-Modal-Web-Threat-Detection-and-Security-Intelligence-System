@@ -32,6 +32,9 @@ data/interim/**
 !data/interim/**/
 data/processed/**
 !data/processed/**/
+# downloaded feed files (malicious URL lists, licensed data)
+data/feeds/**
+!data/feeds/**/
 !data/**/.gitkeep
 
 # Model artifacts

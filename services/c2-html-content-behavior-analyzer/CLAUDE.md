@@ -29,6 +29,15 @@ Implement one part (or batch) at a time, when asked. See **Progress** below.
   - `dataset/metadata.py::MetadataStore` — the only code that touches `metadata.csv` (load/add/get/update/filter/next_sample_id/validate_all/save; atomic writes). Exact duplicates (same sha256) are rejected; a repeated `source_url` is only a warning.
   - `dataset/collector.py::register_file` + `scripts/build_metadata.py` (`register`, `validate`, `show`).
   - `file_path` is always `<label>/<file>` relative to `data/raw/`; sample ids are `c2_<label>_<6 digits>` and never reused.
+- [x] **Part 1 – Batch B: sample collection tools** (Tasks 3–9)
+  - Two stages: feeds/manual CSV → `data/metadata/candidates.csv` (`dataset/candidates.py::CandidateStore`, statuses pending/fetched/failed/skipped/duplicate, dedupe by `utils/url.py::normalize_url`) → fetch → `register_file` (all Batch A checks apply).
+  - `dataset/feeds.py`: openphish, phishtank, urlhaus (online only, binary links filtered), tranco (top N, seeded sample, .zip ok), manual (`data/metadata/manual_urls_template.csv`). Importers read local files only; `download_feed` is the separate network helper.
+  - `dataset/fetcher.py`: `StaticFetcher` (httpx; 15 s, 5 redirects, 5 MB streamed, HTML only, charset header→meta→utf-8, rate limit + per-host delay, blocks localhost/private IPs incl. redirects) and optional `RenderedFetcher` (Playwright, Docker only: `docker/fetcher.Dockerfile`, `requirements-fetcher.txt`).
+  - Only 2xx pages are saved; non-benign pages redirected to another domain get a "check the label" note.
+  - `utils/script_detect.py`: Unicode-range language hint (si/ta/en/mixed/unknown, thresholds in `configs/languages.yaml`) — replaced by real language ID in Part 5.
+  - `dataset/collection.py` + `scripts/collect.py` (`download`, `import`, `fetch`, `retry-failed`, `progress`); targets in `configs/collection_targets.yaml`; settings in `configs/config.yaml → collection`.
+  - Metadata gained optional `fetch_mode` (static/rendered/manual), `final_url`, `http_status`, `content_type`; old CSV headers are upgraded on load. `urlhaus` added to `configs/sources.yaml`. `constants.py` no longer duplicates config lists.
+  - Tests use `httpx.MockTransport` only (no real network). The fetcher Docker image is not yet build-tested.
 - [ ] Part 1 – remaining batches (near-duplicate detection, verification, statistics, splits)
 - [ ] Parts 2–9
 

@@ -27,17 +27,30 @@
     },
     "label": {
       "type": "string",
-      "enum": ["benign", "phishing", "fake_ecommerce", "crypto_scam", "malware_delivery"]
+      "enum": [
+        "benign",
+        "phishing",
+        "fake_ecommerce",
+        "crypto_scam",
+        "malware_delivery"
+      ]
     },
     "language": {
       "type": "string",
-      "enum": ["en", "si", "ta", "mixed", "unknown"]
+      "enum": [
+        "en",
+        "si",
+        "ta",
+        "mixed",
+        "unknown"
+      ]
     },
     "source": {
       "type": "string",
       "enum": [
         "phishtank",
         "openphish",
+        "urlhaus",
         "tranco",
         "elfw2031",
         "phish30k",
@@ -62,8 +75,44 @@
       "pattern": "^[0-9a-f]{64}$"
     },
     "file_size_bytes": {
-      "type": ["integer", "null"],
+      "type": [
+        "integer",
+        "null"
+      ],
       "minimum": 0
+    },
+    "fetch_mode": {
+      "type": "string",
+      "enum": [
+        "static",
+        "rendered",
+        "manual"
+      ],
+      "default": "manual",
+      "description": "static = downloaded HTML, rendered = after running JS in a browser, manual = saved by hand."
+    },
+    "final_url": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^https?://",
+      "description": "URL after redirects."
+    },
+    "http_status": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 100,
+      "maximum": 599
+    },
+    "content_type": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Content-Type header of the response."
     },
     "verified": {
       "type": "boolean",
@@ -71,19 +120,31 @@
       "description": "True once a person has checked the label. Requires verified_by."
     },
     "verified_by": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "verification_date": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "format": "date"
     },
     "is_duplicate_of": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "sample_id of the sample this one near-duplicates.",
       "pattern": "^c2_(benign|phishing|fake_ecommerce|crypto_scam|malware_delivery)_[0-9]{6}$"
     },
     "notes": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     }
   },
   "additionalProperties": false

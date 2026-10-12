@@ -12,13 +12,14 @@ import subprocess
 import sys
 from datetime import date, timedelta
 from pathlib import Path
+from typing import get_args
 
 import pytest
 from pydantic import ValidationError
 
 from c2_analyzer.config import get_labels, get_languages, get_sources, project_root
-from c2_analyzer.dataset.metadata import DuplicateSampleError, MetadataStore
-from c2_analyzer.schemas.dataset import SampleMetadata
+from c2_analyzer.dataset.metadata import DuplicateSampleError, MetadataStore, record_to_row
+from c2_analyzer.schemas.dataset import FetchMode, SampleMetadata
 from c2_analyzer.utils.hashing import sha256_bytes, sha256_file
 
 ROOT = project_root()
@@ -102,6 +103,9 @@ def test_sha256_is_normalised_to_lowercase():
         pytest.param({"file_path": "../secret.html"}, id="file-path-escapes"),
         pytest.param({"verified": True}, id="verified-without-verified_by"),
         pytest.param({"lable": "phishing"}, id="unknown-field"),
+        pytest.param({"fetch_mode": "crawler"}, id="unknown-fetch-mode"),
+        pytest.param({"http_status": 999}, id="http-status-out-of-range"),
+        pytest.param({"final_url": "ftp://x.example/"}, id="final-url-not-http"),
     ],
 )
 def test_invalid_record_rejected(overrides):
@@ -123,6 +127,7 @@ def test_json_schema_matches_model_and_configs():
     assert properties["label"]["enum"] == list(get_labels())
     assert properties["language"]["enum"] == list(get_languages())
     assert properties["source"]["enum"] == list(get_sources())
+    assert properties["fetch_mode"]["enum"] == list(get_args(FetchMode))
     for field in ("sample_id", "file_path", "is_duplicate_of"):
         labels_in_pattern = re.search(r"\((.*?)\)", properties[field]["pattern"]).group(1)
         assert labels_in_pattern.split("|") == list(get_labels()), field
@@ -134,6 +139,41 @@ def test_raw_folders_match_labels():
 
 
 # ---- MetadataStore -----------------------------------------------------------
+
+
+def test_fetch_fields_accepted():
+    record = SampleMetadata(
+        **valid_fields(
+            fetch_mode="static",
+            final_url="https://bad.example/login2",
+            http_status=200,
+            content_type="text/html; charset=utf-8",
+        )
+    )
+    assert record.fetch_mode == "static"
+    assert SampleMetadata(**valid_fields()).fetch_mode == "manual"  # default
+
+
+def test_load_upgrades_old_header_without_fetch_columns(store):
+    """A metadata.csv written by Batch A (no fetch_* columns) still loads."""
+    new_fields = ("fetch_mode", "final_url", "http_status", "content_type")
+    old_columns = [c for c in SampleMetadata.model_fields if c not in new_fields]
+    record = write_sample(store, "phishing", 1, "<p>a</p>")
+    row = record_to_row(record)
+    old_csv = ",".join(old_columns) + "\n" + ",".join(row[c] for c in old_columns) + "\n"
+    store.csv_path.parent.mkdir(parents=True)
+    store.csv_path.write_text(old_csv, encoding="utf-8")
+    assert store.get(record.sample_id).fetch_mode == "manual"
+    store.save()
+    header = store.csv_path.read_text(encoding="utf-8").splitlines()[0]
+    assert header.split(",") == list(SampleMetadata.model_fields)
+
+
+def test_load_rejects_unknown_columns(store):
+    store.csv_path.parent.mkdir(parents=True)
+    store.csv_path.write_text("sample_id,whatever\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="Fix the header"):
+        store.load()
 
 
 def test_load_creates_csv_with_header(store):

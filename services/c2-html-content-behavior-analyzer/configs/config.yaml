@@ -49,3 +49,20 @@ xlmr:
 
 js_analyzer:
   max_script_bytes: 500000
+
+# Sample collection (Part 1 Batch B): scripts/collect.py
+collection:
+  candidates_csv: data/metadata/candidates.csv
+  feeds_dir: data/feeds
+  rate_per_second: 1.0       # at most this many requests per second overall
+  per_host_delay_seconds: 5  # minimum gap between two requests to the same host
+  timeout_seconds: 15
+  max_redirects: 5
+  max_bytes: 5242880         # 5 MB
+  rendered_timeout_ms: 20000
+  rendered_wait_ms: 2000
+  tranco_top: 1000
+  max_attempts: 3
+  # Realistic desktop Chrome UA (some phishing kits hide from bots). Update occasionally.
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+  accept_language: "en,si;q=0.9,ta;q=0.8"

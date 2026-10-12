@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import re
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -26,6 +27,10 @@ from c2_analyzer.config import get_labels, get_languages, get_sources
 SAMPLE_ID_PATTERN = re.compile(r"^c2_(?P<label>[a-z_]+)_(?P<number>\d{6})$")
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 MAX_SAMPLE_NUMBER = 999_999
+
+# How the HTML was obtained: downloaded as-is (static), downloaded after running
+# the page's JavaScript in a browser (rendered), or saved by hand (manual).
+FetchMode = Literal["static", "rendered", "manual"]
 
 
 def make_sample_id(label: str, number: int) -> str:
@@ -56,6 +61,10 @@ class SampleMetadata(BaseModel):
     collection_date: date
     sha256: str
     file_size_bytes: int | None = Field(default=None, ge=0)
+    fetch_mode: FetchMode = "manual"
+    final_url: str | None = None  # URL after redirects (fetched samples only)
+    http_status: int | None = Field(default=None, ge=100, le=599)
+    content_type: str | None = None
     verified: bool = False
     verified_by: str | None = None
     verification_date: date | None = None
@@ -100,11 +109,11 @@ class SampleMetadata(BaseModel):
             raise ValueError("sha256 must be exactly 64 hexadecimal characters")
         return value
 
-    @field_validator("source_url")
+    @field_validator("source_url", "final_url")
     @classmethod
-    def _source_url_format(cls, value: str) -> str:
-        if not value.startswith(("http://", "https://")):
-            raise ValueError("source_url must start with http:// or https://")
+    def _url_format(cls, value: str | None) -> str | None:
+        if value is not None and not value.startswith(("http://", "https://")):
+            raise ValueError("URLs must start with http:// or https://")
         return value
 
     @field_validator("collection_date", "verification_date")

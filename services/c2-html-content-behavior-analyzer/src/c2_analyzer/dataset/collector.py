@@ -27,12 +27,19 @@ def register_file(
     source_url: str,
     collection_date: date | None = None,
     notes: str | None = None,
+    fetch_mode: str = "manual",
+    final_url: str | None = None,
+    http_status: int | None = None,
+    content_type: str | None = None,
 ) -> tuple[SampleMetadata, list[str]]:
     """Copy an HTML file into ``data/raw/<label>/<sample_id>.html`` and add its metadata.
 
     If the file is already inside ``data/raw/<label>/`` it is left where it is.
     Nothing is copied unless the record is valid and not a duplicate.
     The change is in memory: call ``store.save()`` afterwards.
+
+    The fetch_* arguments are filled by the automatic fetcher (Batch B); a
+    hand-saved page keeps the defaults (fetch_mode="manual").
 
     Returns the new record and any warnings from ``store.add``.
     """
@@ -63,6 +70,10 @@ def register_file(
         collection_date=collection_date or date.today(),
         sha256=sha256_file(source_file),
         file_size_bytes=source_file.stat().st_size,
+        fetch_mode=fetch_mode,
+        final_url=final_url,
+        http_status=http_status,
+        content_type=content_type,
         notes=notes,
     )
     # 2. Reject duplicates before touching the disk.
