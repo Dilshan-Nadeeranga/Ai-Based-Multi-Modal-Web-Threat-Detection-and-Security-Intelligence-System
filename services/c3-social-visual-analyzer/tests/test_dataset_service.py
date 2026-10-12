@@ -116,6 +116,13 @@ def test_urls_given_as_one_multiline_string(dataset_service, make_request) -> No
     assert sample.post.embedded_urls == ["https://a.example.com", "https://b.example.com"]
 
 
+def test_commas_inside_urls_are_kept(dataset_service, make_request) -> None:
+    sample = dataset_service.add_sample(make_request(
+        embedded_urls="https://a.example.com/p.php?10,11-21, https://b.example.com,https://c.example.com/x,1"))
+    assert sample.post.embedded_urls == [
+        "https://a.example.com/p.php?10,11-21", "https://b.example.com", "https://c.example.com/x,1"]
+
+
 def test_scenario_d_no_url(dataset_service, make_request) -> None:
     sample = dataset_service.add_sample(make_request(embedded_urls=[]), [LEGIT])
     assert sample.post.embedded_urls == []

@@ -26,7 +26,7 @@ that a sample can be relabelled without being renamed.
 | --- | --- | --- |
 | Post image *n* | `data/raw/images/` | `SVT_000001_01.jpg`, `SVT_000001_02.png`, … |
 | Raw post snapshot | `data/raw/posts/` | `SVT_000001.json` |
-| Webpage screenshot *n* (future) | `data/webpage_screenshots/` | `SVT_000001_web_01.png` |
+| Webpage screenshot *n* | `data/webpage_screenshots/` | `SVT_000001_web_01.png` |
 | Phase 1 preprocessing upload | `data/raw/uploads/` | `<sample_id>_<random>.ext` |
 | Phase 1 processed image | `data/processed/images/` | `<sample_id>_<random>.png` |
 
@@ -48,10 +48,11 @@ data/
 ├── processed/
 │   └── images/              Phase 1 normalized PNGs
 ├── rejected/                Phase 1 rejected uploads
-├── webpage_screenshots/     reserved for destination screenshots (future card)
+├── webpage_screenshots/     destination page screenshots (SVT_xxxxxx_web_NN.png)
 ├── annotations/
 │   ├── dataset_metadata.jsonl   one dataset sample per line   (this schema)
 │   ├── labels.jsonl             label history, one event per line
+│   ├── webpage_captures.jsonl   destination capture attempts, one per line (§9)
 │   ├── ocr_results.jsonl        Phase 1 OCR results (unchanged)
 │   └── image_hashes.json        Phase 1 pHash store (unchanged)
 └── statistics/
@@ -130,8 +131,8 @@ are never rewritten by the tools. Example (synthetic, `example.invalid`):
 | `ocr.*` | object | yes | Filled by a later card (OCR on dataset images). `average_confidence` is 0–100. |
 | `brand.claimed_brand` | string \| null | no | Brand the post *claims* to be (annotator input). |
 | `brand.detected_brand`, `brand.confidence` | | no | Reserved for future brand detection; confidence 0–1. |
-| `destination.original_url` | URL \| null | no | First embedded URL; must appear in `post.embedded_urls`. |
-| `destination.final_url`, `domain`, `screenshots` | | no | Reserved for the webpage capture card. Screenshot paths follow §2. |
+| `destination.original_url` | URL \| null | no | Must be one of `post.embedded_urls` or a link written in `post.text`. |
+| `destination.final_url`, `domain`, `screenshots` | | no | Stored records keep these empty; API/readers fill them from `webpage_captures.jsonl` (§9). Screenshot paths follow §2. |
 | `labels.is_scam`, `scam_type`, `label_status`, `notes` | | yes | Scam task. See [`dataset_labels.md`](dataset_labels.md). `label_status` may be `not_annotated`. |
 | `labels.misinformation` | object | no | Fake-news task: `is_fake`, `misinfo_type`, `label_status`, `source_label`. Defaults to `not_annotated`. At least one of the two tasks must be annotated. |
 | `processing.*` | booleans | yes | `ocr_completed` must equal `ocr.completed`; `webpage_captured` requires at least one screenshot. |
@@ -178,8 +179,8 @@ An immutable copy of what the annotator supplied at import time:
 
 | Severity | Codes |
 | --- | --- |
-| error | `INVALID_JSONL`, `REQUIRED_FIELD_MISSING`, `INVALID_LABEL`, `LABEL_INCONSISTENT`, `INVALID_PLATFORM`, `INVALID_SAMPLE_ID`, `INVALID_URL`, `INVALID_IMAGE_PATH`, `SCHEMA_ERROR`, `DUPLICATE_SAMPLE_ID`, `DUPLICATE_IMAGE_PATH`, `UNSAFE_PATH`, `IMAGE_MISSING`, `IMAGE_INVALID`, `SCREENSHOT_MISSING`, `INVALID_LABEL_JSONL`, `LABEL_ORPHAN` |
-| warning | `METADATA_MISSING`, `SNAPSHOT_MISSING`, `VERSION_MISMATCH`, `SYNTHETIC_SAMPLE`, `LABEL_EVENT_MISSING`, `LABEL_MISMATCH`, `ORPHAN_IMAGE_FILE` |
+| error | `INVALID_JSONL`, `REQUIRED_FIELD_MISSING`, `INVALID_LABEL`, `LABEL_INCONSISTENT`, `INVALID_PLATFORM`, `INVALID_SAMPLE_ID`, `INVALID_URL`, `INVALID_IMAGE_PATH`, `SCHEMA_ERROR`, `DUPLICATE_SAMPLE_ID`, `DUPLICATE_IMAGE_PATH`, `UNSAFE_PATH`, `IMAGE_MISSING`, `IMAGE_INVALID`, `SCREENSHOT_MISSING`, `INVALID_LABEL_JSONL`, `LABEL_ORPHAN`, `INVALID_CAPTURE_JSONL`, `INVALID_CAPTURE`, `CAPTURE_ORPHAN`, `CAPTURE_URL_MISMATCH`, `DUPLICATE_SCREENSHOT_PATH`, `SCREENSHOT_INVALID`, `SCREENSHOT_MODIFIED` |
+| warning | `METADATA_MISSING`, `SNAPSHOT_MISSING`, `VERSION_MISMATCH`, `SYNTHETIC_SAMPLE`, `LABEL_EVENT_MISSING`, `LABEL_MISMATCH`, `ORPHAN_IMAGE_FILE`, `ORPHAN_SCREENSHOT_FILE` |
 
 The exit code is `0` when there are no errors and `1` otherwise.
 
@@ -190,4 +191,38 @@ writes `data/statistics/dataset_statistics.json`. Every number is counted from
 schema-valid records; invalid records and malformed lines are skipped and
 reported (`skipped_invalid_records`, `malformed_lines`). `synthetic_test`
 samples are excluded unless `--include-synthetic` is given, and the count of
-excluded samples is reported.
+excluded samples is reported. The `web_captures` section counts capture
+attempts of the counted samples from `webpage_captures.jsonl` (§9).
+
+## 9. `webpage_captures.jsonl` record
+
+One line per capture attempt, appended by `scripts/capture_webpages.py` or
+`POST /api/v1/dataset/samples/{sample_id}/capture`. Sample records are never
+rewritten; the capture links back by `sample_id` + `original_url`.
+
+```json
+{"capture_version":"web-capture-v1","sample_id":"SVT_000002","original_url":"https://itl.ink/6c3177d0",
+ "requested_url":"https://itl.ink/6c3177d0","status":"captured","error_code":null,"error_message":null,
+ "final_url":"https://www.example.com/offer","final_domain":"www.example.com",
+ "final_registered_domain":"example.com","http_status":200,"page_title":"Example offer",
+ "redirect_chain":[{"url":"https://itl.ink/6c3177d0","status":302},{"url":"https://www.example.com/offer","status":200}],
+ "blocked_requests":0,"screenshot":"data/webpage_screenshots/SVT_000002_web_01.png",
+ "screenshot_width":1366,"screenshot_height":2210,"screenshot_sha256":"…","screenshot_truncated":false,
+ "browser":"chromium 153.0.8010.12","started_at":"2026-10-11T08:00:00Z","duration_ms":4120}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `original_url` | URL exactly as in the post (`post.embedded_urls` or a link in `post.text`). |
+| `requested_url` | URL opened; Facebook/Instagram click-tracking links (`l.facebook.com/l.php?u=…`) are unwrapped. |
+| `status` | `captured` (screenshot, HTTP < 400), `http_error` (screenshot of an HTTP ≥ 400 page), `failed` (could not be loaded), `skipped` (refused before opening). |
+| `error_code` | `INVALID_URL`, `UNSUPPORTED_SCHEME`, `SOCIAL_MEDIA_URL`, `PRIVATE_ADDRESS` (skipped); `NAME_NOT_RESOLVED`, `CONNECTION_FAILED`, `TLS_ERROR`, `TIMEOUT`, `TOO_MANY_REDIRECTS`, `DOWNLOAD_BLOCKED`, `SCREENSHOT_FAILED`, `BROWSER_ERROR` (failed); `HTTP_ERROR`. |
+| `final_url`, `final_domain`, `final_registered_domain` | Address of the page after HTTP, meta-refresh and JavaScript redirects; host; registrable domain (Public Suffix List). |
+| `redirect_chain` | HTTP redirect hops of the final navigation, with status codes (a hop refused by the capture proxy shows status `403`). |
+| `blocked_requests` | Connections of the page refused by the capture proxy (private network or social-media hosts). |
+| `screenshot*` | Full-page PNG, its size and SHA-256; `screenshot_truncated` when the page was taller than `WEB_CAPTURE_MAX_HEIGHT`. |
+
+Reading a sample through the API (or `WebCaptureService.with_destination`)
+fills `destination.original_url`, `final_url`, `domain`, `screenshots` and the
+extra keys `registered_domain`, `page_title`, `http_status`, `captured_at` from
+the latest `captured` attempt, and sets `processing.webpage_captured`.

@@ -50,6 +50,14 @@ def _print_summary(stats: DatasetStatistics) -> None:
           f"{stats.samples_without_images} without, {stats.samples_with_multiple_images} with several")
     print(f"Embedded URLs          : {stats.total_embedded_urls} total; {stats.samples_with_urls} samples with, "
           f"{stats.samples_without_urls} without, {stats.samples_with_multiple_urls} with several")
+    w = stats.web_captures
+    print(f"Web captures           : {w.attempts} attempts; {w.captured} captured, {w.http_error} HTTP error, "
+          f"{w.failed} failed, {w.skipped} blocked/skipped")
+    print(f"Destination screenshots: {w.total_screenshots} files; {w.samples_with_screenshot} samples captured, "
+          f"{w.samples_with_urls_not_captured} with URLs not yet captured; {w.distinct_final_domains} final domains, "
+          f"{w.redirected_captures} redirected")
+    if w.error_codes:
+        print(f"Capture errors         : {nonzero(w.error_codes)}")
 
 
 def main(argv: list[str] | None = None) -> int:

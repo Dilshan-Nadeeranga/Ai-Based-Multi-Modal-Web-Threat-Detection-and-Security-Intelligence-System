@@ -125,3 +125,21 @@ class DatasetLockError(ServiceError):
     code = "DATASET_BUSY"
     status_code = 503
     default_message = "The dataset is locked by another writer. Try again shortly."
+
+
+# ---------------------------------------------------------------- web capture
+
+
+class WebCaptureDisabledError(ServiceError):
+    code = "WEB_CAPTURE_DISABLED"
+    status_code = 503
+    default_message = "Destination web capture is disabled (WEB_CAPTURE_ENABLED=false)."
+
+
+class BrowserUnavailableError(ServiceError):
+    code = "BROWSER_UNAVAILABLE"
+    status_code = 503
+    default_message = (
+        "The capture browser is not available. Install it with: "
+        "pip install -r requirements.txt  and  python -m playwright install chromium"
+    )

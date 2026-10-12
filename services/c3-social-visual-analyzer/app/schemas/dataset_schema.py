@@ -25,7 +25,7 @@ from app.schemas.dataset_classes import (
     check_misinformation_consistency,
 )
 from app.services.sample_id_service import SAMPLE_ID_PATTERN
-from app.utils.url_utils import normalize_evidence_url
+from app.utils.url_utils import extract_urls, normalize_evidence_url
 
 RAW_IMAGES_PREFIX = "data/raw/images/"
 RAW_POSTS_PREFIX = "data/raw/posts/"
@@ -228,8 +228,10 @@ class DatasetSample(_Section):
             if not shot_pattern.fullmatch(path):
                 problems.append(f"screenshot path {path!r} must be {SCREENSHOTS_PREFIX}{self.sample_id}_web_NN.png")
 
-        if self.destination.original_url and self.destination.original_url not in self.post.embedded_urls:
-            problems.append("destination.original_url must be one of post.embedded_urls")
+        if self.destination.original_url and self.destination.original_url not in (
+            *self.post.embedded_urls, *extract_urls(self.post.text)
+        ):
+            problems.append("destination.original_url must be one of post.embedded_urls or a link in post.text")
         if self.processing.ocr_completed != self.ocr.completed:
             problems.append("processing.ocr_completed must match ocr.completed")
         if self.processing.webpage_captured and not self.destination.screenshots:
