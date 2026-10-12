@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes } from 'react-router-dom'
 import heroImg from './assets/hero.png'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import './App.css'
+
+// C1 — Intelligent URL & Domain Analyzer
+import UrlAnalyzer from './features/url-analyzer/pages/UrlAnalyzer.jsx'
 
 // C4 — Code Quality & Vulnerability Auditor
 import AuditProgress from './features/code-audit/pages/AuditProgress.jsx'
@@ -15,6 +18,9 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      {/* C1 — Intelligent URL & Domain Analyzer */}
+      <Route path="/url-analyzer" element={<UrlAnalyzer />} />
+
       {/* C4 — Code Quality & Vulnerability Auditor */}
       <Route path="/code-audit" element={<RepositoryAudit />} />
       <Route path="/code-audit/progress" element={<AuditProgress />} />
@@ -29,6 +35,14 @@ function Home() {
 
   return (
     <>
+      <nav style={{ padding: '16px', background: '#0f172a', display: 'flex', gap: '16px', justifyContent: 'center' }}>
+        <Link to="/url-analyzer" style={{ padding: '8px 16px', background: '#0284c7', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>
+          🛡️ Intelligent URL & Domain Analyzer (C1)
+        </Link>
+        <Link to="/code-audit" style={{ padding: '8px 16px', background: '#334155', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>
+          🔍 Code Audit (C4)
+        </Link>
+      </nav>
       <section id="center">
         <div className="hero">
           <img src={heroImg} className="base" width="170" height="179" alt="" />
