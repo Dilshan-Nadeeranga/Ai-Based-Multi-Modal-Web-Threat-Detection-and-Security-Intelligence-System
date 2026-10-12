@@ -95,3 +95,9 @@ def get_languages(include_special: bool = True) -> tuple[str, ...]:
 def get_sources() -> tuple[str, ...]:
     """Allowed dataset sources, from ``configs/sources.yaml``."""
     return tuple(load_yaml_config("sources")["sources"])
+
+
+@lru_cache
+def get_quality_flags() -> tuple[str, ...]:
+    """Allowed page quality flags, from ``configs/quality_rules.yaml``."""
+    return tuple(load_yaml_config("quality_rules")["quality_flags"])

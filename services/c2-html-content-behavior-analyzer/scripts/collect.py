@@ -24,7 +24,13 @@ from c2_analyzer.dataset.collection import (
     reason_breakdown,
     reason_code,
 )
-from c2_analyzer.dataset.feeds import FEED_URLS, FEEDS, download_feed, import_feed
+from c2_analyzer.dataset.feeds import (
+    FEED_URLS,
+    FEEDS,
+    download_feed,
+    import_feed,
+    prune_candidates,
+)
 from c2_analyzer.dataset.fetcher import make_fetcher
 from c2_analyzer.dataset.metadata import MetadataStore
 from c2_analyzer.dataset.repair import repair
@@ -32,7 +38,7 @@ from c2_analyzer.dataset.repair import repair
 EXAMPLES = """examples:
   python scripts/collect.py download --feed openphish
   python scripts/collect.py import --feed openphish --file data/feeds/openphish.txt
-  python scripts/collect.py import --feed tranco --file data/feeds/tranco_top1m.csv.zip \
+  python scripts/collect.py import --feed tranco --file data/feeds/tranco_top1m.csv.zip \\
       --top 1000 --sample 60
   python scripts/collect.py import --feed manual --file data/feeds/manual_urls.csv
   python scripts/collect.py fetch --label phishing --limit 60
@@ -40,6 +46,7 @@ EXAMPLES = """examples:
   python scripts/collect.py progress
   python scripts/collect.py failures --label malware_delivery
   python scripts/collect.py repair --dry-run
+  python scripts/collect.py prune --label malware_delivery
 """
 
 
@@ -86,6 +93,11 @@ def build_parser() -> argparse.ArgumentParser:
     failures.add_argument("--label", choices=get_labels())
     failures.add_argument("--status", choices=("failed", "skipped"), help="only this status")
     failures.add_argument("--limit", type=int, help="list at most N candidates")
+
+    prune = commands.add_parser(
+        "prune", help="re-apply the import filters to pending candidates (marks them skipped)"
+    )
+    prune.add_argument("--label", choices=get_labels())
 
     fix = commands.add_parser("repair", help="fix candidates/metadata left inconsistent by a crash")
     fix.add_argument("--dry-run", action="store_true", help="only report, change nothing")
@@ -180,6 +192,19 @@ def cmd_failures(args: argparse.Namespace, candidates: CandidateStore) -> int:
     return 0
 
 
+def cmd_prune(args: argparse.Namespace, candidates: CandidateStore) -> int:
+    pruned = prune_candidates(candidates, label=args.label)
+    candidates.save()
+    print_reasons(pruned, f"Pruned {sum(pruned.values())} pending candidate(s) (now skipped):")
+    pending = candidates.df[candidates.df["status"] == "pending"]
+    if args.label:
+        pending = pending[pending["suggested_label"] == args.label]
+    print(
+        f"{len(pending)} pending candidate(s) remain" + (f" for {args.label}" if args.label else "")
+    )
+    return 0
+
+
 def cmd_repair(
     args: argparse.Namespace, candidates: CandidateStore, metadata: MetadataStore
 ) -> int:
@@ -238,6 +263,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_fetch(args, candidates, metadata)
         if args.command == "failures":
             return cmd_failures(args, candidates)
+        if args.command == "prune":
+            return cmd_prune(args, candidates)
         if args.command == "repair":
             return cmd_repair(args, candidates, metadata)
         return cmd_progress(candidates, metadata)

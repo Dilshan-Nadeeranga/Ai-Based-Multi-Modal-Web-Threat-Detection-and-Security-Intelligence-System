@@ -16,8 +16,14 @@ import pytest
 
 from c2_analyzer.config import project_root
 from c2_analyzer.dataset.candidates import Candidate, CandidateStore
-from c2_analyzer.dataset.collection import build_notes, collect, progress_table
-from c2_analyzer.dataset.feeds import import_feed, parse_tranco
+from c2_analyzer.dataset.collection import build_notes, collect, progress_table, reason_code
+from c2_analyzer.dataset.feeds import (
+    import_feed,
+    parse_tags,
+    parse_tranco,
+    prune_candidates,
+    urlhaus_filter_reason,
+)
 from c2_analyzer.dataset.fetcher import (
     BlockedHostError,
     FetchResult,
@@ -107,8 +113,66 @@ def test_urlhaus_keeps_online_html_pages_only():
         "http://drive-by.example/download",
     ]
     assert all(c.suggested_label == "malware_delivery" for c in result.candidates)
-    assert result.filtered == {"direct link to a binary file": 2, "not online": 1}
+    assert result.filtered == {
+        "binary tag 'exe'": 1,
+        "binary tag 'apk'": 1,
+        "binary file extension 'mipsel'": 1,
+        "bare IP with a file name": 1,
+        "binary tag 'elf'": 1,
+        "not online": 1,
+    }
     assert "ClearFake" in result.candidates[0].notes
+
+
+@pytest.mark.parametrize(
+    ("url", "tags", "reason"),
+    [
+        ("http://45.1.2.3/bins/sora.x86_64", [], "binary file extension 'x86_64'"),
+        ("http://45.1.2.3/bins/armv7l", [], "binary file extension 'armv7l'"),
+        ("http://45.1.2.3/payload.SH4", [], "binary file extension 'sh4'"),
+        ("http://45.1.2.3/sora", [], "bare IP with a file name"),
+        ("http://45.1.2.3/login.php", [], None),  # bare IP but a web page: kept
+        ("http://45.1.2.3/", [], None),
+        ("http://site.example/invoice", ["mozi"], "binary tag 'mozi'"),
+        ("http://site.example/update.html", ["clickfix"], None),
+        ("http://site.example/download", [], None),
+    ],
+)
+def test_urlhaus_filter_reason(url, tags, reason):
+    assert urlhaus_filter_reason(url, tags) == reason
+
+
+def test_parse_tags_from_feed_column_and_notes():
+    assert parse_tags("elf,Mirai, ") == ["elf", "mirai"]
+    assert parse_tags("urlhaus threat=malware_download tags=elf,mozi") == ["elf", "mozi"]
+    assert parse_tags("urlhaus threat=x tags=") == [] and parse_tags(None) == []
+
+
+def test_prune_marks_pending_urlhaus_candidates_skipped(tmp_path):
+    store = CandidateStore(tmp_path / "candidates.csv")
+    store.add_many(
+        [
+            Candidate(url="http://45.1.2.3/sora.arm7", suggested_label="malware_delivery",
+                      source="urlhaus", notes="urlhaus threat=x tags="),
+            Candidate(url="http://iot.example/a", suggested_label="malware_delivery",
+                      source="urlhaus", notes="urlhaus threat=x tags=elf"),
+            Candidate(url="http://ok.example/update.html", suggested_label="malware_delivery",
+                      source="urlhaus", notes="urlhaus threat=x tags=html"),
+            Candidate(url="http://45.1.2.9/kit", suggested_label="phishing", source="manual"),
+        ]
+    )  # fmt: skip
+    store.mark("http://iot.example/a", "failed", error="timeout after 15s")  # not pending
+
+    pruned = prune_candidates(store, label="malware_delivery")
+
+    assert pruned == {"binary file extension 'arm7'": 1}
+    pruned_row = store.get("http://45.1.2.3/sora.arm7")
+    assert pruned_row.status == "skipped" and pruned_row.attempts == 0
+    assert pruned_row.last_error == "pruned_by_filter: binary file extension 'arm7'"
+    assert reason_code(pruned_row.last_error) == "pruned_by_filter"
+    assert store.get("http://ok.example/update.html").status == "pending"
+    assert store.get("http://45.1.2.9/kit").status == "pending"  # not URLhaus: never pruned
+    assert store.get("http://iot.example/a").status == "failed"
 
 
 def test_tranco_top_n_and_sample():
@@ -456,7 +520,7 @@ def test_cli_import_progress_and_empty_fetch(tmp_path):
     )
     assert imported.returncode == 0, imported.stderr
     assert "Imported 2 new candidate(s)" in imported.stdout
-    assert "direct link to a binary file" in imported.stdout
+    assert "binary tag 'elf'" in imported.stdout
 
     progress = run_cli(tmp_path, "progress")
     assert progress.returncode == 0, progress.stderr

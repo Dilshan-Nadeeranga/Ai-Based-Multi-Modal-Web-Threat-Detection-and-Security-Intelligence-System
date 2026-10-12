@@ -32,6 +32,10 @@ data/interim/**
 !data/interim/**/
 data/processed/**
 !data/processed/**/
+# Live scam/malware URLs - never commit (data/metadata/ keeps the schema + templates tracked)
+data/metadata/candidates.csv
+data/metadata/metadata.csv
+data/metadata/review/
 # downloaded feed files (malicious URL lists, licensed data)
 data/feeds/**
 !data/feeds/**/

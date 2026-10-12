@@ -116,6 +116,7 @@ class CandidateStore:
             csv_path = Path(load_yaml_config("config")["collection"]["candidates_csv"])
         self.csv_path = resolve_path(Path(csv_path))
         self._df: pd.DataFrame | None = None
+        self._url_index: dict[str, int] | None = None  # normalized url -> row (built lazily)
 
     @property
     def df(self) -> pd.DataFrame:
@@ -131,6 +132,7 @@ class CandidateStore:
         if list(df.columns) != COLUMNS:
             raise ValueError(f"{self.csv_path} has columns {list(df.columns)}, expected {COLUMNS}")
         self._df = df
+        self._url_index = None
         return df.copy()
 
     def save(self) -> None:
@@ -159,6 +161,7 @@ class CandidateStore:
         if new_rows:
             new = pd.DataFrame(new_rows, columns=COLUMNS)
             self._df = new if self.df.empty else pd.concat([self.df, new], ignore_index=True)
+            self._url_index = None
         return len(new_rows), duplicates
 
     # ---- querying ------------------------------------------------------------
@@ -224,8 +227,13 @@ class CandidateStore:
         return updated
 
     def _index_of(self, url: str):
-        key = normalize_url(url)
-        matches = self.df.index[self.df["url"].map(normalize_url) == key]
-        if len(matches) == 0:
+        # Normalizing thousands of URLs on every lookup is slow, so the
+        # normalized-url -> row index is built once and reused until rows change.
+        if self._url_index is None:
+            self._url_index = {}
+            for index, row_url in zip(self.df.index, self.df["url"], strict=True):
+                self._url_index.setdefault(normalize_url(row_url), index)
+        index = self._url_index.get(normalize_url(url))
+        if index is None:
             raise KeyError(f"No candidate with url {url!r}")
-        return matches[0]
+        return index

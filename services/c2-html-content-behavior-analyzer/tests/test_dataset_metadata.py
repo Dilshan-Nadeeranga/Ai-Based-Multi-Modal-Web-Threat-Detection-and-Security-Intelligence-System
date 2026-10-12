@@ -17,7 +17,13 @@ from typing import get_args
 import pytest
 from pydantic import ValidationError
 
-from c2_analyzer.config import get_labels, get_languages, get_sources, project_root
+from c2_analyzer.config import (
+    get_labels,
+    get_languages,
+    get_quality_flags,
+    get_sources,
+    project_root,
+)
 from c2_analyzer.dataset.metadata import DuplicateSampleError, MetadataStore, record_to_row
 from c2_analyzer.schemas.dataset import FetchMode, SampleMetadata
 from c2_analyzer.utils.hashing import sha256_bytes, sha256_file
@@ -106,6 +112,17 @@ def test_sha256_is_normalised_to_lowercase():
         pytest.param({"fetch_mode": "crawler"}, id="unknown-fetch-mode"),
         pytest.param({"http_status": 999}, id="http-status-out-of-range"),
         pytest.param({"final_url": "ftp://x.example/"}, id="final-url-not-http"),
+        pytest.param({"quality_flag": "broken"}, id="unknown-quality-flag"),
+        pytest.param({"cluster_id": "cluster7"}, id="bad-cluster-id"),
+        pytest.param({"excluded": True}, id="excluded-without-reason"),
+        pytest.param({"exclusion_reason": "empty"}, id="reason-without-excluded"),
+        pytest.param({"label_original": "phishing"}, id="label_original-same-as-label"),
+        pytest.param({"label_original": "spam"}, id="unknown-label_original"),
+        pytest.param(  # relabelled, but the id does not come from label_original
+            {"label": "benign", "file_path": "benign/c2_phishing_000001.html",
+             "label_original": "crypto_scam"},
+            id="relabel-id-mismatch",
+        ),  # fmt: skip
     ],
 )
 def test_invalid_record_rejected(overrides):
@@ -128,6 +145,8 @@ def test_json_schema_matches_model_and_configs():
     assert properties["language"]["enum"] == list(get_languages())
     assert properties["source"]["enum"] == list(get_sources())
     assert properties["fetch_mode"]["enum"] == list(get_args(FetchMode))
+    assert properties["quality_flag"]["enum"] == list(get_quality_flags())
+    assert properties["label_original"]["enum"] == [*get_labels(), None]
     for field in ("sample_id", "file_path", "is_duplicate_of"):
         labels_in_pattern = re.search(r"\((.*?)\)", properties[field]["pattern"]).group(1)
         assert labels_in_pattern.split("|") == list(get_labels()), field
@@ -152,6 +171,38 @@ def test_fetch_fields_accepted():
     )
     assert record.fetch_mode == "static"
     assert SampleMetadata(**valid_fields()).fetch_mode == "manual"  # default
+
+
+def test_batch_c_fields_defaults_and_relabelled_sample():
+    record = SampleMetadata(**valid_fields())
+    assert (record.quality_flag, record.excluded, record.cluster_id) == ("ok", False, None)
+
+    relabelled = SampleMetadata(
+        **valid_fields(
+            label="benign",
+            file_path="benign/c2_phishing_000001.html",  # file moved, id kept
+            label_original="phishing",
+            cluster_id="cl_000007",
+            excluded=True,
+            exclusion_reason="error_page",
+        )
+    )
+    assert relabelled.sample_id == "c2_phishing_000001" and relabelled.label == "benign"
+
+
+def test_load_upgrades_batch_b_header_with_defaults(store):
+    """A metadata.csv written by Batch B (no cleaning columns) loads with defaults."""
+    new_fields = ("cluster_id", "quality_flag", "excluded", "exclusion_reason", "label_original")
+    old_columns = [c for c in SampleMetadata.model_fields if c not in new_fields]
+    record = write_sample(store, "phishing", 1, "<p>a</p>")
+    row = record_to_row(record)
+    old_csv = ",".join(old_columns) + "\n" + ",".join(row[c] for c in old_columns) + "\n"
+    store.csv_path.parent.mkdir(parents=True)
+    store.csv_path.write_text(old_csv, encoding="utf-8")
+
+    assert store.df.loc[0, "quality_flag"] == "ok" and store.df.loc[0, "excluded"] == "false"
+    assert store.get(record.sample_id).quality_flag == "ok"
+    assert store.validate_all() == []
 
 
 def test_load_upgrades_old_header_without_fetch_columns(store):

@@ -12,7 +12,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 
 **Threat classes:** `benign`, `phishing`, `fake_ecommerce`, `crypto_scam`, `malware_delivery`.
 
-> **Status:** skeleton only. `GET /health` works; every other module is a stub (`NotImplementedError`) to be implemented part by part.
+> **Status:** Part 1 (dataset preparation) Batches A–C are done: metadata, collection, cleaning and verification. `GET /health` works. Parts 2–9 are still stubs (`NotImplementedError`), implemented part by part.
 
 ## Implementation parts
 
@@ -76,6 +76,7 @@ python scripts/collect.py retry-failed                          # failed URLs, m
 python scripts/collect.py progress                              # samples per label x language vs configs/collection_targets.yaml
 python scripts/collect.py failures --label malware_delivery     # why candidates failed / were skipped
 python scripts/collect.py repair --dry-run                      # after a crash: check the CSVs agree (drop --dry-run to fix)
+python scripts/collect.py prune --label malware_delivery        # re-apply import filters (configs/url_filters.yaml) to pending URLs
 python scripts/build_metadata.py validate                       # dataset health check
 ```
 
@@ -99,9 +100,62 @@ The container only sees `data/`, runs as a non-root user and blocks downloads, m
 
 - **Never open fetched HTML in a normal browser** (no double-clicking files in `data/raw/`). Inspect them as text in VS Code.
 - **Rendered mode only inside Docker.** It executes the pages' JavaScript.
-- **Never commit `data/raw/`** (already git-ignored, together with `data/feeds/`).
+- **Never commit `data/raw/` or the URL lists.** `data/raw/`, `data/feeds/`, `data/metadata/candidates.csv`, `data/metadata/metadata.csv` and `data/metadata/review/` are git-ignored because they contain live scam pages and URLs. Only `dataset_schema.json` and the templates are tracked.
 - Windows Defender quarantines many phishing pages. The collector writes pages only inside this project's `data/` folder (`data/tmp/` while saving, then `data/raw/`), never the system Temp folder, so a Defender exclusion for this project's `data\` folder is enough. Never exclude the whole project, your user folder or Temp. Pages Defender still removes are marked `blocked_by_antivirus`; files quarantined later show up as "file not found" in `build_metadata.py validate`.
 - The fetcher never submits forms, never downloads linked resources, and refuses `localhost`/private-network addresses.
+
+## Cleaning & verifying the dataset
+
+Three steps after collecting. None of them deletes a file; they only set fields in `metadata.csv`.
+
+**1. Quality check** sets `quality_flag`. It flags pages that are not the page we wanted:
+- `empty`: a JavaScript app shell with no inputs;
+- `parked_domain`, `error_page` (404, default server pages, directory listings), `bot_challenge` (Cloudflare "Just a moment..."), `suspended_hosting`;
+- `login_wall`: benign samples only;
+- `redirected_offsite`: from the collector's note.
+
+Rules and phrases live in `configs/quality_rules.yaml`. Pages flagged with anything except `ok` or `redirected_offsite` are proposed for exclusion in the review.
+
+**2. Near-duplicate clustering** sets `cluster_id` and `is_duplicate_of`. The same phishing kit on many domains is grouped into one cluster:
+- How pages are compared:
+  - text word 5-grams plus HTML-tag 4-grams;
+  - MinHash/LSH finds candidate pairs, then exact Jaccard decides;
+  - thresholds are in `configs/config.yaml → dedup`.
+- In each cluster, one representative is kept and the others point to it.
+- A cluster with **different labels** is reported as a *label conflict* and not marked; one of the labels is wrong.
+- Train/test splits (Parts 4/6) are grouped by `cluster_id`, so near-copies never leak from training into testing.
+- Only usable pages are compared (not excluded, flag `ok` or `redirected_offsite`); the others become single-page clusters.
+- Reports: `reports/dataset_stats/dedup_report.json` and `.csv`.
+
+```bash
+python scripts/deduplicate.py all --dry-run   # quality + dedup, show results, save nothing
+python scripts/deduplicate.py all             # save flags, clusters and reports
+python scripts/deduplicate.py quality         # or run one step: quality | dedup
+```
+
+**3. Manual review** shows one sample at a time as **text only**: metadata, quality flag, cluster, title, the first 600 characters of visible text, forms with their action and input types, script/iframe counts, and the top external domains.
+
+```bash
+python scripts/review_labels.py review --reviewer <your name> --only-flagged       # decide exclusions first
+python scripts/review_labels.py review --reviewer <your name> --cluster-representatives-only --label phishing
+python scripts/safe_preview.py c2_phishing_000042    # sanitized copy, only when text is not enough
+```
+
+Keys: `[c]` confirm, `[r]` relabel, `[l]` fix language, `[x]` exclude, `[s]` skip, `[b]` back, `[q]` quit.
+- Every decision is saved immediately, so you can quit and resume at any time.
+- Other filters: `--label`, `--language`, `--include-verified`, `--random --seed N`, `--limit N`.
+- **Relabelling keeps the sample_id.** The file moves to the new label folder and the old label is stored in `label_original`. Keeping the id means nothing that refers to the sample (duplicates, candidates.csv, reports) has to change.
+
+`safe_preview.py` writes `data/metadata/review/<id>_safe.html`, a copy with every script, frame, link target, form action, event handler and outside resource removed. It also gets a strict Content-Security-Policy and a red banner. Open **only** the `_safe.html` file, never the original in `data/raw/`.
+
+**Peer verification (for the report).** A second person labels a random 10% of your verified samples without seeing your labels:
+
+```bash
+python scripts/review_labels.py export-peer --fraction 0.1 --seed 42   # -> reports/dataset_stats/peer_review_sheet.csv
+python scripts/review_labels.py import-peer --file <their filled sheet.csv>   # agreement % + Cohen's kappa
+```
+
+The sheet has no labels, sources or URLs. It is saved as UTF-8 with BOM, so Excel shows Sinhala and Tamil correctly. `import-peer` writes `peer_agreement.json` with the agreement %, Cohen's kappa (with its Landis & Koch interpretation) and the list of disagreements to re-check.
 
 ## API
 
@@ -119,7 +173,7 @@ The gateway reaches C2 through its `C2_URL` env var (e.g. `http://localhost:8002
 configs/            YAML config: paths/splits/model params, labels, languages, intent taxonomy, JS rules, sources/sinks
 data/
   raw/<label>/      collected HTML (git-ignored)
-  metadata/         dataset_schema.json, metadata.csv, candidates.csv, manual_urls_template.csv
+  metadata/         dataset_schema.json, manual_urls_template.csv (tracked); metadata.csv, candidates.csv, review/ (git-ignored)
   feeds/            downloaded feed files (git-ignored)
   tmp/              pages being saved by the collector (git-ignored, emptied automatically)
   interim/          after dedup (git-ignored)

@@ -8,3 +8,6 @@
 "3100003","2026-10-01 10:02:00","http://apk.example/bank.APK","online","2026-10-01 12:00:00","malware_download","apk","https://urlhaus.abuse.ch/url/3100003/","reporter2"
 "3100004","2026-10-01 10:03:00","http://gone.example/landing","offline","2026-09-30 12:00:00","malware_download","","https://urlhaus.abuse.ch/url/3100004/","reporter2"
 "3100005","2026-10-01 10:04:00","http://drive-by.example/download","online","2026-10-01 12:00:00","malware_download","","https://urlhaus.abuse.ch/url/3100005/","reporter3"
+"3100006","2026-10-01 10:05:00","http://45.198.224.34/bins/sora.mipsel","online","2026-10-01 12:00:00","malware_download","","https://urlhaus.abuse.ch/url/3100006/","reporter3"
+"3100007","2026-10-01 10:06:00","http://45.198.224.35/snype","online","2026-10-01 12:00:00","malware_download","","https://urlhaus.abuse.ch/url/3100007/","reporter3"
+"3100008","2026-10-01 10:07:00","http://iot.example/x","online","2026-10-01 12:00:00","malware_download","elf,Mirai","https://urlhaus.abuse.ch/url/3100008/","reporter3"

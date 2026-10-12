@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "c2-html-content-behavior-analyzer/dataset_schema.json",
   "title": "C2 dataset sample metadata",
-  "description": "One row of data/metadata/metadata.csv. Enums must match configs/labels.yaml, configs/languages.yaml and configs/sources.yaml; tests/test_dataset_metadata.py fails if they drift. The Python twin of this schema is c2_analyzer.schemas.dataset.SampleMetadata.",
+  "description": "One row of data/metadata/metadata.csv. Enums must match configs/labels.yaml, configs/languages.yaml, configs/sources.yaml and configs/quality_rules.yaml; tests/test_dataset_metadata.py fails if they drift. The Python twin of this schema is c2_analyzer.schemas.dataset.SampleMetadata.",
   "type": "object",
   "required": [
     "sample_id",
@@ -17,7 +17,7 @@
   "properties": {
     "sample_id": {
       "type": "string",
-      "description": "c2_<label>_<6-digit number>, e.g. c2_phishing_000001. The label part must equal `label`.",
+      "description": "c2_<label>_<6-digit number>, e.g. c2_phishing_000001. The label part equals `label`, or `label_original` after a reviewer relabelled the sample (ids never change).",
       "pattern": "^c2_(benign|phishing|fake_ecommerce|crypto_scam|malware_delivery)_[0-9]{6}$"
     },
     "file_path": {
@@ -137,8 +137,59 @@
         "string",
         "null"
       ],
-      "description": "sample_id of the sample this one near-duplicates.",
+      "description": "sample_id of the cluster representative this sample near-duplicates (set by deduplicate.py).",
       "pattern": "^c2_(benign|phishing|fake_ecommerce|crypto_scam|malware_delivery)_[0-9]{6}$"
+    },
+    "cluster_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^cl_[0-9]{6}$",
+      "description": "Near-duplicate group; samples in one cluster must never be split across train and test."
+    },
+    "quality_flag": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "empty",
+        "parked_domain",
+        "error_page",
+        "bot_challenge",
+        "login_wall",
+        "suspended_hosting",
+        "redirected_offsite",
+        "other"
+      ],
+      "default": "ok",
+      "description": "Set by the quality check (configs/quality_rules.yaml)."
+    },
+    "excluded": {
+      "type": "boolean",
+      "default": false,
+      "description": "True = the file is kept but never used for training. Requires exclusion_reason."
+    },
+    "exclusion_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Why the sample was excluded; only allowed when excluded is true."
+    },
+    "label_original": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "benign",
+        "phishing",
+        "fake_ecommerce",
+        "crypto_scam",
+        "malware_delivery",
+        null
+      ],
+      "description": "Label before a reviewer corrected it; must differ from label."
     },
     "notes": {
       "type": [

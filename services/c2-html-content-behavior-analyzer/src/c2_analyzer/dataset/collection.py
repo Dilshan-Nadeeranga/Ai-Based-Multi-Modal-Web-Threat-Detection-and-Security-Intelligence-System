@@ -82,6 +82,7 @@ def is_antivirus_block(error: OSError) -> bool:
 # (text in the error message, short reason code) - first match wins.
 REASON_PATTERNS = [
     (ANTIVIRUS_PREFIX, ANTIVIRUS_PREFIX),
+    ("pruned_by_filter", "pruned_by_filter"),
     ("not HTML", "non_html_content"),
     ("larger than", "too_large"),
     ("too large", "too_large"),

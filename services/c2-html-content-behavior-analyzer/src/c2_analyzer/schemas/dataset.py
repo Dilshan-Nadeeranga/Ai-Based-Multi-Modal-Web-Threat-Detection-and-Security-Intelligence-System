@@ -8,8 +8,16 @@ model is the single gatekeeper - a record that passes ``SampleMetadata``
 validation is safe to write to ``metadata.csv``. Bad labels, malformed ids or
 impossible dates are rejected *before* they can pollute the training data.
 
-It mirrors ``data/metadata/dataset_schema.json``. Allowed labels, languages and
-sources are read from ``configs/*.yaml`` so they are defined in one place only.
+It mirrors ``data/metadata/dataset_schema.json``. Allowed labels, languages,
+sources and quality flags are read from ``configs/*.yaml`` so they are defined
+in one place only.
+
+Relabelling (Batch C): a sample keeps its sample_id forever, even when a
+reviewer corrects its label. The old label is stored in ``label_original``, so
+an id such as c2_phishing_000003 with label=benign is valid only if
+label_original=phishing. Keeping the id is simpler than issuing a new one:
+nothing that refers to the sample (is_duplicate_of, candidates.csv, cluster
+reports, peer-review sheets) has to be rewritten.
 """
 
 from __future__ import annotations
@@ -20,12 +28,13 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from c2_analyzer.config import get_labels, get_languages, get_sources
+from c2_analyzer.config import get_labels, get_languages, get_quality_flags, get_sources
 
 # c2_<label>_<6 digits>. The label part may itself contain "_" (fake_ecommerce);
 # that is fine because the number is always the last 6 digits.
 SAMPLE_ID_PATTERN = re.compile(r"^c2_(?P<label>[a-z_]+)_(?P<number>\d{6})$")
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+CLUSTER_ID_PATTERN = re.compile(r"^cl_\d{6}$")
 MAX_SAMPLE_NUMBER = 999_999
 
 # How the HTML was obtained: downloaded as-is (static), downloaded after running
@@ -69,6 +78,12 @@ class SampleMetadata(BaseModel):
     verified_by: str | None = None
     verification_date: date | None = None
     is_duplicate_of: str | None = None
+    # ---- Batch C: cleaning and verification ----
+    cluster_id: str | None = None  # near-duplicate group, e.g. "cl_000123"
+    quality_flag: str = "ok"  # see configs/quality_rules.yaml
+    excluded: bool = False  # True = keep the file, but never use it for training
+    exclusion_reason: str | None = None
+    label_original: str | None = None  # label before a reviewer corrected it
     notes: str | None = None
 
     # ---- single-field checks -------------------------------------------
@@ -87,6 +102,23 @@ class SampleMetadata(BaseModel):
     @classmethod
     def _source_is_known(cls, value: str) -> str:
         return _check_allowed(value, get_sources(), "source")
+
+    @field_validator("quality_flag")
+    @classmethod
+    def _quality_flag_is_known(cls, value: str) -> str:
+        return _check_allowed(value, get_quality_flags(), "quality_flag")
+
+    @field_validator("label_original")
+    @classmethod
+    def _original_label_is_known(cls, value: str | None) -> str | None:
+        return value if value is None else _check_allowed(value, get_labels(), "label_original")
+
+    @field_validator("cluster_id")
+    @classmethod
+    def _cluster_id_format(cls, value: str | None) -> str | None:
+        if value is not None and not CLUSTER_ID_PATTERN.match(value):
+            raise ValueError(f"{value!r} is not a valid cluster id; expected cl_<6 digits>")
+        return value
 
     @field_validator("sample_id", "is_duplicate_of")
     @classmethod
@@ -135,8 +167,15 @@ class SampleMetadata(BaseModel):
 
     @model_validator(mode="after")
     def _fields_are_consistent(self) -> SampleMetadata:
-        if not self.sample_id.startswith(f"c2_{self.label}_"):
-            raise ValueError(f"sample_id {self.sample_id} does not match label {self.label!r}")
+        # The id was made from the first label; after a relabel that is label_original.
+        if self.label_original == self.label:
+            raise ValueError("label_original must differ from label (leave it empty instead)")
+        id_label = self.label_original or self.label
+        if not self.sample_id.startswith(f"c2_{id_label}_"):
+            raise ValueError(
+                f"sample_id {self.sample_id} does not match label {id_label!r}"
+                + (" (label_original)" if self.label_original else "")
+            )
 
         folder, _, file_name = self.file_path.partition("/")
         if folder != self.label or not file_name or "/" in file_name:
@@ -153,4 +192,9 @@ class SampleMetadata(BaseModel):
 
         if self.verification_date and self.verification_date < self.collection_date:
             raise ValueError("verification_date cannot be before collection_date")
+
+        if self.excluded and not self.exclusion_reason:
+            raise ValueError("excluded=True requires exclusion_reason")
+        if self.exclusion_reason and not self.excluded:
+            raise ValueError("exclusion_reason is only allowed when excluded=True")
         return self

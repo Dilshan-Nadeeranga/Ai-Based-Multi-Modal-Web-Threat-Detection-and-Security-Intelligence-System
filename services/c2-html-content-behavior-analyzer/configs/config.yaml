@@ -20,9 +20,23 @@ split:
   test: 0.15
   stratify_by: [label, language]
 
+# Near-duplicate clustering (Part 1 Batch C): scripts/deduplicate.py
+# Two pages are near-duplicates if
+#   text_similarity >= text_threshold
+#   OR (dom_similarity >= dom_threshold AND text_similarity >= dom_min_text_similarity)
+# Similarity = Jaccard of shingle sets (text word 5-grams / tag 4-grams).
 dedup:
   minhash_num_perm: 128
-  jaccard_threshold: 0.90
+  text_shingle_size: 5
+  tag_shingle_size: 4
+  text_threshold: 0.90
+  dom_threshold: 0.95
+  dom_min_text_similarity: 0.70
+  # MinHash-LSH only finds CANDIDATE pairs (then exact Jaccard decides). Every
+  # duplicate pair has text similarity >= 0.70, so searching from 0.60 leaves a
+  # safety margin for the LSH approximation.
+  lsh_threshold: 0.60
+  reports_dir: reports/dataset_stats
 
 dom_baseline:
   models:

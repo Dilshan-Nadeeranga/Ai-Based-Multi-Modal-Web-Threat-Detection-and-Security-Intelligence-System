@@ -18,10 +18,12 @@ network - the optional ``download_feed`` helper is separate and explicit.
 from __future__ import annotations
 
 import csv
+import ipaddress
 import random
 import zipfile
 from collections import Counter
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -29,7 +31,9 @@ import httpx
 from pydantic import ValidationError
 
 from c2_analyzer.config import load_yaml_config
-from c2_analyzer.dataset.candidates import Candidate
+from c2_analyzer.dataset.candidates import Candidate, CandidateStore
+
+PRUNE_PREFIX = "pruned_by_filter"
 
 FEEDS = ("openphish", "phishtank", "urlhaus", "tranco", "manual")
 
@@ -47,12 +51,60 @@ FEED_FILENAMES = {
 }
 DOWNLOAD_TIMEOUT_SECONDS = 60
 
-# URLhaus links that point straight at a file (not a web page) are useless for
-# an HTML analyzer, so they are filtered out.
-BINARY_EXTENSIONS = (
-    ".exe", ".apk", ".zip", ".rar", ".msi", ".dll", ".bin", ".sh", ".jar", ".js",
-    ".doc", ".docx", ".xls", ".xlsx", ".pdf", ".iso", ".7z",
-)  # fmt: skip
+
+# ---- URLhaus filter (lists in configs/url_filters.yaml) ---------------------------
+
+
+@lru_cache
+def _urlhaus_rules() -> tuple[frozenset[str], frozenset[str], frozenset[str]]:
+    """(drop_tags, drop_extensions, page_extensions), lower-case, read once."""
+    rules = load_yaml_config("url_filters")["urlhaus"]
+    return tuple(
+        frozenset(str(item).lower() for item in rules[key])
+        for key in ("drop_tags", "drop_extensions", "page_extensions")
+    )
+
+
+def parse_tags(text: str | None) -> list[str]:
+    """URLhaus tags "elf,Mirai" -> ["elf", "mirai"]. Also reads our notes "... tags=a,b"."""
+    if not text:
+        return []
+    if "tags=" in text:
+        text = text.split("tags=", 1)[1]
+    return [tag.strip().lower() for tag in text.split(",") if tag.strip()]
+
+
+def urlhaus_filter_reason(url: str, tags: list[str]) -> str | None:
+    """Why a URLhaus link is NOT a web page we want, or None to keep it.
+
+    1. a botnet/binary tag (elf, mirai, ...)
+    2. the last path segment has a binary/CPU-architecture extension (sora.mipsel)
+    3. a bare IP address plus one file name that is not a web page (http://1.2.3.4/sora)
+    """
+    drop_tags, drop_extensions, page_extensions = _urlhaus_rules()
+    for tag in tags:
+        if tag in drop_tags:
+            return f"binary tag '{tag}'"
+
+    parts = urlsplit(url)
+    segments = [segment for segment in parts.path.split("/") if segment]
+    last = segments[-1].lower() if segments else ""
+    extension = last.rsplit(".", 1)[1] if "." in last else ""
+    if extension in drop_extensions or last in drop_extensions:
+        return f"binary file extension '{extension or last}'"
+
+    host = parts.hostname or ""
+    if _is_ip_address(host) and len(segments) == 1 and extension not in page_extensions:
+        return "bare IP with a file name"
+    return None
+
+
+def _is_ip_address(host: str) -> bool:
+    try:
+        ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        return False
 
 
 @dataclass
@@ -144,7 +196,7 @@ def parse_phishtank(path: Path) -> ImportResult:
 
 
 def parse_urlhaus(path: Path) -> ImportResult:
-    """URLhaus CSV: keep url_status == online and skip direct links to binary files.
+    """URLhaus CSV: keep url_status == online and skip links to files (see urlhaus_filter_reason).
 
     URLhaus puts its header inside a comment ("# id,dateadded,url,url_status,...").
     """
@@ -168,8 +220,9 @@ def parse_urlhaus(path: Path) -> ImportResult:
         if row.get("url_status", "").lower() != "online":
             result.filtered["not online"] += 1
             continue
-        if urlsplit(row.get("url", "")).path.lower().endswith(BINARY_EXTENSIONS):
-            result.filtered["direct link to a binary file"] += 1
+        reason = urlhaus_filter_reason(row.get("url", ""), parse_tags(row.get("tags")))
+        if reason:
+            result.filtered[reason] += 1
             continue
         notes = f"urlhaus threat={row.get('threat', '')} tags={row.get('tags', '')}"
         result.add(
@@ -256,6 +309,31 @@ def import_feed(
     if feed == "manual":
         return parse_manual(path)
     raise ValueError(f"unknown feed {feed!r}; choose from {', '.join(FEEDS)}")
+
+
+def prune_candidates(candidates: CandidateStore, label: str | None = None) -> Counter:
+    """Re-apply the import filters to PENDING candidates already in candidates.csv.
+
+    Needed when the filters get stricter after URLs were imported. Removed
+    candidates are kept (for the record) but marked "skipped" with
+    "pruned_by_filter: <reason>". Only URLhaus candidates have filters.
+    Changes are in memory: call ``candidates.save()`` afterwards.
+    Returns the number pruned per reason.
+    """
+    df = candidates.df
+    rows = df[(df["status"] == "pending") & (df["source"] == "urlhaus")]
+    if label is not None:
+        rows = rows[rows["suggested_label"] == label]
+
+    pruned: Counter = Counter()
+    for row in rows.to_dict("records"):
+        reason = urlhaus_filter_reason(row["url"], parse_tags(row["notes"]))
+        if reason:
+            candidates.mark(
+                row["url"], "skipped", error=f"{PRUNE_PREFIX}: {reason}", count_attempt=False
+            )
+            pruned[reason] += 1
+    return pruned
 
 
 # ---- optional download helper (the only network code in this file) ---------------

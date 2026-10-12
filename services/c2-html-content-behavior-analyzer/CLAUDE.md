@@ -40,7 +40,18 @@ Implement one part (or batch) at a time, when asked. See **Progress** below.
   - Tests use `httpx.MockTransport` only (no real network). The fetcher Docker image is not yet build-tested.
   - Windows robustness (after the first real run): pages are written to `data/tmp/` (never system Temp, so a Defender exclusion for `data/` covers them); `collection.process_candidate` never raises for one page (antivirus removal → `failed` + `blocked_by_antivirus: ...`, other errors → `failed` + `<Type>: <msg>`; Ctrl+C still stops); `utils/io.atomic_write_csv` retries `os.replace` on PermissionError (~3 s) then raises `FileSaveError`; `register_file` removes a half-copied file.
   - `collect.py failures` (reason codes from `collection.reason_code`, also printed after each fetch) and `collect.py repair [--dry-run]` (`dataset/repair.py`; never deletes raw files or edits metadata.csv).
-- [ ] Part 1 – remaining batches (near-duplicate detection, verification, statistics, splits)
+  - URLhaus import filters (botnet tags, binary/CPU-arch extensions, bare-IP file links) live in `configs/url_filters.yaml`; `collect.py prune [--label]` re-applies them to pending candidates (→ `skipped`, `pruned_by_filter: ...`). `CandidateStore` caches its normalized-URL index.
+- [x] **Part 1 – Batch C: cleaning & verification** (Tasks 11, 12)
+  - Git: `data/metadata/{candidates.csv,metadata.csv,review/}` and `data/feeds/` are ignored (live scam URLs); only `dataset_schema.json` + templates are tracked.
+  - Metadata gained `cluster_id` (`cl_<6 digits>`), `quality_flag` (enum in `configs/quality_rules.yaml`, read via `config.get_quality_flags`), `excluded` + `exclusion_reason` (both or neither), `label_original`. Old CSV headers are upgraded with each field's default.
+  - **Relabel rule:** a sample keeps its `sample_id` forever; after a relabel the id's label part must equal `label_original` (the file moves to the new label folder). Chosen over new ids because nothing referencing the sample has to change.
+  - `dataset/page_view.py`: one text-only parse per page (title, visible text, tag sequence, forms, external domains) shared by quality/dedup/review; `terminal_safe` strips control/bidi chars before printing page text.
+  - `dataset/quality.py`: keyword/pattern rules from `configs/quality_rules.yaml`, first match wins, each rule limited to short pages; only sets `quality_flag`. Pages with inputs are never `empty`; captcha widgets and Cloudflare's injected `/cdn-cgi/challenge-platform` script are deliberately NOT challenge markers (real phishing pages carry them).
+  - `dataset/deduplicator.py`: text word 5-grams + tag 4-grams, MinHash-LSH (threshold 0.6) for candidates, exact Jaccard + rule `text ≥ 0.90 or (dom ≥ 0.95 and text ≥ 0.70)` (config `dedup`), union-find clusters, representative = verified > longest text > oldest; mixed-label clusters = conflicts (not marked). Only usable pages (not excluded, flag ok/redirected_offsite) are compared; dedup recomputes and owns `is_duplicate_of`. Reports in `reports/dataset_stats/dedup_report.{json,csv}`. **Splits in Part 4/6 must group by `cluster_id`.**
+  - `dataset/verifier.py` + `scripts/review_labels.py` (`review`, `export-peer`, `import-peer`): text-only review, saves after every decision; peer sheet hides labels/URLs (UTF-8 BOM for Excel); agreement % + Cohen's kappa (sklearn) → `peer_agreement.json`.
+  - `dataset/safe_preview.py` + `scripts/safe_preview.py`: sanitized `_safe.html` in `data/metadata/review/` (drops script/iframe/meta/base/link, unwraps object/embed/noscript, strips on* and all URL attributes, CSS url()/@import, strict CSP, red banner).
+  - `scripts/deduplicate.py` (`quality`, `dedup`, `all`, each `--dry-run`).
+- [ ] Part 1 – remaining batches (statistics, splits grouped by cluster_id)
 - [ ] Parts 2–9
 
 ## Conventions

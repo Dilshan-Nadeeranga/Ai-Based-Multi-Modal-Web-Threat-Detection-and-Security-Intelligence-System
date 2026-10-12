@@ -44,17 +44,23 @@ class DuplicateSampleError(ValueError):
         self.existing_sample_id = existing_sample_id
 
 
+def to_cell(value: object) -> str:
+    """One value as a CSV cell string (None -> "", bools -> "true"/"false")."""
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+
+def default_cell(column: str) -> str:
+    """CSV cell for an optional field's default value (used when upgrading old files)."""
+    return to_cell(SampleMetadata.model_fields[column].get_default(call_default_factory=True))
+
+
 def record_to_row(record: SampleMetadata) -> dict[str, str]:
-    """Convert a record to CSV cell strings (None -> "", bools -> "true"/"false")."""
-    row: dict[str, str] = {}
-    for name, value in record.model_dump(mode="json").items():
-        if value is None:
-            row[name] = ""
-        elif isinstance(value, bool):
-            row[name] = "true" if value else "false"
-        else:
-            row[name] = str(value)
-    return row
+    """Convert a record to CSV cell strings."""
+    return {name: to_cell(value) for name, value in record.model_dump(mode="json").items()}
 
 
 def row_to_record(row: dict[str, str]) -> SampleMetadata:
@@ -106,9 +112,12 @@ class MetadataStore:
                     f"{self.csv_path} has columns {list(df.columns)}, expected {COLUMNS}. "
                     "Fix the header row before continuing."
                 )
-            # Older file written before new optional fields existed: add them as
-            # empty columns. They are written to disk on the next save().
-            df = df.reindex(columns=COLUMNS, fill_value="")
+            # Older file written before new optional fields existed: add them
+            # filled with each field's default ("" for None, "ok", "false", ...).
+            # They are written to disk on the next save().
+            df = df.reindex(columns=COLUMNS)
+            for column in missing:
+                df[column] = default_cell(column)
         self._df = df
         return df.copy()
 
