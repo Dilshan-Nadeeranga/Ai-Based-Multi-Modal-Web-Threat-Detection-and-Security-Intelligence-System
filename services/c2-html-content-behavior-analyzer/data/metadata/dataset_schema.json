@@ -1,6 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "c2-html-content-behavior-analyzer/dataset_schema.json",
   "title": "C2 dataset sample metadata",
+  "description": "One row of data/metadata/metadata.csv. Enums must match configs/labels.yaml, configs/languages.yaml and configs/sources.yaml; tests/test_dataset_metadata.py fails if they drift. The Python twin of this schema is c2_analyzer.schemas.dataset.SampleMetadata.",
   "type": "object",
   "required": [
     "sample_id",
@@ -8,70 +10,80 @@
     "label",
     "language",
     "source",
-    "sha256",
-    "verified"
+    "source_url",
+    "collection_date",
+    "sha256"
   ],
   "properties": {
     "sample_id": {
-      "type": "string"
+      "type": "string",
+      "description": "c2_<label>_<6-digit number>, e.g. c2_phishing_000001. The label part must equal `label`.",
+      "pattern": "^c2_(benign|phishing|fake_ecommerce|crypto_scam|malware_delivery)_[0-9]{6}$"
     },
     "file_path": {
       "type": "string",
-      "description": "Path relative to the service root"
+      "description": "Path relative to data/raw/, always <label>/<file name>, e.g. phishing/c2_phishing_000001.html.",
+      "pattern": "^(benign|phishing|fake_ecommerce|crypto_scam|malware_delivery)/[^/\\\\]+$"
     },
     "label": {
       "type": "string",
-      "enum": [
-        "benign",
-        "phishing",
-        "fake_ecommerce",
-        "crypto_scam",
-        "malware_delivery"
-      ]
+      "enum": ["benign", "phishing", "fake_ecommerce", "crypto_scam", "malware_delivery"]
     },
     "language": {
       "type": "string",
-      "enum": [
-        "en",
-        "si",
-        "ta"
-      ]
+      "enum": ["en", "si", "ta", "mixed", "unknown"]
     },
     "source": {
       "type": "string",
-      "description": "Dataset/feed the sample came from"
-    },
-    "source_url": {
-      "type": [
-        "string",
-        "null"
+      "enum": [
+        "phishtank",
+        "openphish",
+        "tranco",
+        "elfw2031",
+        "phish30k",
+        "manual",
+        "social_media_report",
+        "other"
       ]
     },
+    "source_url": {
+      "type": "string",
+      "description": "Original URL of the webpage.",
+      "pattern": "^https?://"
+    },
     "collection_date": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "format": "date"
+      "type": "string",
+      "format": "date",
+      "description": "ISO date YYYY-MM-DD; must not be in the future."
     },
     "sha256": {
       "type": "string",
-      "pattern": "^[a-f0-9]{64}$"
+      "description": "SHA-256 of the raw file bytes (lowercase hex).",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "file_size_bytes": {
+      "type": ["integer", "null"],
+      "minimum": 0
     },
     "verified": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": false,
+      "description": "True once a person has checked the label. Requires verified_by."
     },
     "verified_by": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": ["string", "null"]
+    },
+    "verification_date": {
+      "type": ["string", "null"],
+      "format": "date"
+    },
+    "is_duplicate_of": {
+      "type": ["string", "null"],
+      "description": "sample_id of the sample this one near-duplicates.",
+      "pattern": "^c2_(benign|phishing|fake_ecommerce|crypto_scam|malware_delivery)_[0-9]{6}$"
     },
     "notes": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": ["string", "null"]
     }
   },
   "additionalProperties": false

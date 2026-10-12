@@ -19,7 +19,18 @@ Threat classes: `benign`, `phishing`, `fake_ecommerce`, `crypto_scam`, `malware_
 8. Behavioral intent mapping → `behavior/` (rules in `configs/sources_sinks.yaml`)
 9. Fusion + API → `fusion/`, `api/`
 
-Status: skeleton only — `GET /health` is the only implemented logic. Implement one part at a time, when asked.
+Implement one part (or batch) at a time, when asked. See **Progress** below.
+
+## Progress
+- [x] Skeleton — all packages/stubs, `GET /health`.
+- [x] **Part 1 – Batch A: dataset metadata foundation** (Tasks 1, 2, 10)
+  - `data/metadata/dataset_schema.json` (JSON Schema 2020-12) ↔ `schemas/dataset.py::SampleMetadata` (pydantic twin). `tests/test_dataset_metadata.py` fails if the schema, model and configs drift apart.
+  - Allowed values come only from `configs/labels.yaml`, `configs/languages.yaml` (`languages` + `special_values: mixed, unknown`) and `configs/sources.yaml`, via `config.get_labels/get_languages/get_sources`.
+  - `dataset/metadata.py::MetadataStore` — the only code that touches `metadata.csv` (load/add/get/update/filter/next_sample_id/validate_all/save; atomic writes). Exact duplicates (same sha256) are rejected; a repeated `source_url` is only a warning.
+  - `dataset/collector.py::register_file` + `scripts/build_metadata.py` (`register`, `validate`, `show`).
+  - `file_path` is always `<label>/<file>` relative to `data/raw/`; sample ids are `c2_<label>_<6 digits>` and never reused.
+- [ ] Part 1 – remaining batches (near-duplicate detection, verification, statistics, splits)
+- [ ] Parts 2–9
 
 ## Conventions
 - Python ≥ 3.11, src layout, package `c2_analyzer`. Absolute imports (`from c2_analyzer.x import y`).

@@ -1,3 +1,5 @@
+# Languages C2 analyzes. Keys under `languages` are real languages
+# (used by language ID and per-language XLM-R metrics).
 languages:
   en:
     name: English
@@ -7,3 +9,8 @@ languages:
   ta:
     name: Tamil
     unicode_ranges: [["0B80", "0BFF"]]
+
+# Extra values allowed in dataset metadata only (not real languages):
+#   mixed   - page clearly contains more than one of en/si/ta
+#   unknown - language could not be determined
+special_values: [mixed, unknown]
