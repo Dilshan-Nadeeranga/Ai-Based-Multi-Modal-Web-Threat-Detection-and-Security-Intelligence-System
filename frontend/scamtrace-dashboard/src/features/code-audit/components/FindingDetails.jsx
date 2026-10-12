@@ -1,3 +1,4 @@
+import RemediationSuggestion from './RemediationSuggestion.jsx'
 import SeverityBadge from './SeverityBadge.jsx'
 
 /** Detail panel for a single selected finding. */
@@ -132,9 +133,13 @@ export default function FindingDetails({ finding, loading, onClose }) {
         </div>
       )}
 
-      <p className="ca-detail__note">
-        AI-assisted remediation will be available in a later phase.
-      </p>
+      {finding.context_id ? (
+        <RemediationSuggestion key={finding.finding_id} findingId={finding.finding_id} />
+      ) : (
+        <p className="ca-detail__note">
+          AI remediation is available for security findings with grounded repository context.
+        </p>
+      )}
     </section>
   )
 }
