@@ -548,6 +548,30 @@
   font-style: italic;
 }
 
+.ca-remediation h5 {
+  margin: 12px 0 4px;
+  font-size: 13px;
+}
+
+.ca-remediation__button {
+  font-size: 14px;
+  padding: 9px 18px;
+}
+
+.ca-remediation__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.ca-badge--unvalidated {
+  color: #f5b942;
+  background: rgba(245, 185, 66, 0.12);
+  border: 1px solid rgba(245, 185, 66, 0.4);
+}
+
 .ca-context {
   margin-top: 4px;
 }
