@@ -1,0 +1,7 @@
+# Threat classes (ids are stable - do not renumber after training).
+labels:
+  - {id: 0, name: benign}
+  - {id: 1, name: phishing}
+  - {id: 2, name: fake_ecommerce}
+  - {id: 3, name: crypto_scam}
+  - {id: 4, name: malware_delivery}

@@ -1,0 +1,26 @@
+# Dangerous JavaScript APIs detected statically (Part 7).
+categories:
+  code_execution:
+    severity: high
+    apis: [eval, Function, setTimeout_string, setInterval_string]
+  dom_injection:
+    severity: medium
+    apis: [document.write, document.writeln, innerHTML, outerHTML, insertAdjacentHTML]
+  network:
+    severity: medium
+    apis: [fetch, XMLHttpRequest, navigator.sendBeacon, WebSocket]
+  form_manipulation:
+    severity: high
+    apis: [form.submit, form.action]
+  redirect:
+    severity: medium
+    apis: [window.location, location.href, location.replace, location.assign, window.open]
+  storage:
+    severity: medium
+    apis: [document.cookie, localStorage, sessionStorage]
+  clipboard:
+    severity: high
+    apis: [navigator.clipboard.writeText, navigator.clipboard.readText, document.execCommand]
+  obfuscation:
+    severity: low
+    apis: [atob, unescape, String.fromCharCode, decodeURIComponent]

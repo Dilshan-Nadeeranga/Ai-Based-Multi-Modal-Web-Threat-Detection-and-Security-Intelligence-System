@@ -1,0 +1,111 @@
+# URL filters for candidate import (Part 1 Batch B/C): scripts/collect.py import / prune.
+# An HTML analyzer needs web PAGES. URLhaus mostly lists direct links to malware
+# files (router botnets, Windows droppers); fetching them only wastes time and
+# brings binaries onto the disk. These lists decide what is dropped.
+# Matching is case-insensitive.
+
+urlhaus:
+  # URLhaus tags (the "tags" column) that mean "this URL serves a binary, not a page".
+  drop_tags:
+    # Linux/IoT botnets and their CPU-architecture tags
+    - elf
+    - mirai
+    - mozi
+    - gafgyt
+    - bashlite
+    - hajime
+    - tsunami
+    - sshdkit
+    - ua-wget        # only served to the wget user agent (botnet loaders)
+    - coinminer
+    - 32-bit
+    - 64-bit
+    - mips
+    - arm
+    - x86
+    # Windows payload formats
+    - exe
+    - dll
+    - msi
+    - apk
+
+  # Extensions of the LAST path segment (e.g. /bins/sora.mipsel -> "mipsel").
+  # A segment that is exactly one of these names (e.g. /bins/x86_64) also matches.
+  drop_extensions:
+    # CPU architectures (Mirai-style builds)
+    - mips
+    - mipsel
+    - mpsl
+    - arm
+    - arm4
+    - arm5
+    - arm6
+    - arm7
+    - armv4l
+    - armv5l
+    - armv6l
+    - armv7l
+    - aarch64
+    - x86
+    - x86_64
+    - x64
+    - i386
+    - i486
+    - i586
+    - i686
+    - m68k
+    - ppc
+    - powerpc
+    - sh4
+    - spc
+    - sparc
+    - arc
+    # executables and scripts
+    - elf
+    - bin
+    - so
+    - sh
+    - exe
+    - dll
+    - scr
+    - lnk
+    - msi
+    - apk
+    - jar
+    - js
+    - vbs
+    - ps1
+    - bat
+    - cmd
+    - hta
+    - sys
+    # archives and documents
+    - zip
+    - rar
+    - 7z
+    - gz
+    - tar
+    - iso
+    - doc
+    - docx
+    - xls
+    - xlsx
+    - pdf
+    # images / text used to smuggle encoded payloads
+    - png
+    - jpg
+    - jpeg
+    - gif
+    - txt
+    - dat
+
+  # A bare-IP host with a single file name (http://1.2.3.4/sora) is almost always
+  # a payload. It is kept only if that file name looks like a web page:
+  page_extensions:
+    - html
+    - htm
+    - php
+    - asp
+    - aspx
+    - jsp
+    - shtml

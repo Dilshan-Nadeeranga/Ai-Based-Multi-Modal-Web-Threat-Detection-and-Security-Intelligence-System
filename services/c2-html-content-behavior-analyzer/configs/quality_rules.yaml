@@ -1,0 +1,158 @@
+# Page quality rules (Part 1 Batch C): src/c2_analyzer/dataset/quality.py
+# A collected page is not always the page we wanted: a dead phishing link often
+# returns a parking page, a hosting "account suspended" page or a Cloudflare
+# challenge. Such pages would teach the models the wrong thing, so they are
+# flagged here and proposed for exclusion in the review tool. The quality check
+# never deletes anything; it only sets metadata.quality_flag.
+
+# Allowed values of metadata.quality_flag (JSON Schema enum must match - tested).
+quality_flags:
+  - ok
+  - empty
+  - parked_domain
+  - error_page
+  - bot_challenge
+  - login_wall
+  - suspended_hosting
+  - redirected_offsite
+  - other
+
+# Flags that still count as usable pages (near-duplicate clustering uses only
+# these). Every other flag is proposed for exclusion in the review tool.
+usable_flags:
+  - ok
+  - redirected_offsite
+
+# Reasons offered by the review tool's [x] exclude key.
+exclusion_reasons:
+  - empty
+  - parked_domain
+  - error_page
+  - bot_challenge
+  - login_wall
+  - suspended_hosting
+  - near_duplicate
+  - unclear_label
+  - not_a_webpage
+  - other
+
+# empty: almost no visible text AND very few HTML elements AND no input fields
+# (e.g. a JavaScript app shell that a static fetch could not render). A bare
+# login form has little text too, but it is a real page, so inputs rule it out.
+empty:
+  max_text_chars: 50
+  max_elements: 25
+
+# Batch B adds this text to notes when a scam URL redirected to another domain.
+redirected_offsite_note: "check the label"
+
+# Checked in this order; the first matching rule sets the flag.
+#   phrases        searched in the page title + visible text (lower-case)
+#   html_patterns  searched in the raw HTML (lower-case), e.g. provider scripts
+#   max_text_chars the rule only applies to pages with at most this much visible
+#                  text: an error page is short, while a real article that just
+#                  mentions "page not found" is long.
+#   labels         (optional) only check samples with these labels
+#   needs_password_field (optional) only pages with an <input type=password>
+rules:
+  - flag: bot_challenge
+    max_text_chars: 1500
+    phrases:
+      - "just a moment..."
+      - "checking your browser"
+      - "checking if the site connection is secure"
+      - "verify you are human"
+      - "verifying you are human"
+      - "please complete the security check"
+      - "attention required! | cloudflare"
+      - "ddos protection by"
+      - "please enable javascript and cookies to continue"
+      - "please turn javascript on and reload the page"
+    # Only markers of Cloudflare's interstitial page itself. NOT used on purpose:
+    # "/cdn-cgi/challenge-platform" (Cloudflare injects it into every proxied
+    # page) and captcha widgets like g-recaptcha / cf-turnstile (real phishing
+    # pages embed them next to the fake login form).
+    html_patterns:
+      - "cf-browser-verification"
+      - "cf_chl_opt"
+
+  - flag: suspended_hosting
+    max_text_chars: 3000
+    phrases:
+      - "account suspended"
+      - "account has been suspended"
+      - "this site has been suspended"
+      - "website has been suspended"
+      - "this website is suspended"
+      - "site suspended"
+      - "this site has been disabled"
+      - "this account has been disabled"
+      - "this site is temporarily unavailable"
+      - "this deployment has been disabled"
+    html_patterns:
+      - "/cgi-sys/suspendedpage.cgi"
+      - "suspendedpage"
+
+  - flag: parked_domain
+    max_text_chars: 5000
+    phrases:
+      - "this domain is for sale"
+      - "domain is for sale"
+      - "this domain may be for sale"
+      - "buy this domain"
+      - "make an offer on this domain"
+      - "the domain name is for sale"
+      - "this domain is parked"
+      - "domain parking"
+      - "parked free"
+      - "this domain has been registered"
+      - "get this domain"
+    html_patterns:
+      - "sedoparking"
+      - "sedo.com"
+      - "parkingcrew"
+      - "bodis.com"
+      - "dan.com/"
+      - "afternic"
+      - "hugedomains"
+      - "parklogic"
+      - "above.com"
+      - "domainmarket"
+
+  # Includes default server pages and directory listings: no real content.
+  - flag: error_page
+    max_text_chars: 2000
+    phrases:
+      - "404 not found"
+      - "403 forbidden"
+      - "500 internal server error"
+      - "502 bad gateway"
+      - "503 service unavailable"
+      - "error 404"
+      - "page not found"
+      - "the requested url was not found on this server"
+      - "the page you are looking for"
+      - "this page isn't working"
+      - "apache2 ubuntu default page"
+      - "apache2 debian default page"
+      - "test page for the apache"
+      - "welcome to nginx!"
+      - "iis windows server"
+      - "web server's default page"
+      - "index of /"
+      - "site not found"
+      - "deployment not found"
+      - "no such app"
+
+  # A benign site that shows only a login form. Phishing pages ARE login pages,
+  # so this rule is limited to benign samples. Such pages can still be useful
+  # "hard negatives" - the reviewer decides.
+  - flag: login_wall
+    labels: [benign]
+    needs_password_field: true
+    max_text_chars: 600
+    phrases:
+      - "sign in"
+      - "log in"
+      - "login"
+      - "signin"

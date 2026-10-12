@@ -1,0 +1,5 @@
+url,label,language_hint,source,notes
+# lines starting with # are ignored
+https://cheap-phones-lk.example/deals,fake_ecommerce,si,social_media_report,Facebook ad
+https://btc-double.example/invest,crypto_scam,,,"Guaranteed returns, Telegram"
+https://bad-label.example/,spam,en,manual,
