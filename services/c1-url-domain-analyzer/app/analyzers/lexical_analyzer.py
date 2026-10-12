@@ -145,7 +145,13 @@ def extract_tld_structure(hostname: str) -> Tuple[str, str, str, int]:
     if _HAS_TLDEXTRACT:
         extracted = tldextract.extract(hostname)
         subdomain = extracted.subdomain
-        registered_domain = getattr(extracted, "top_domain_under_public_suffix", "") or extracted.registered_domain
+        top_domain = getattr(extracted, "top_domain_under_public_suffix", "")
+        if top_domain:
+            registered_domain = top_domain
+        elif extracted.suffix:
+            registered_domain = f"{extracted.domain}.{extracted.suffix}"
+        else:
+            registered_domain = extracted.domain
         tld = extracted.suffix
     else:
         # Fallback naive parsing if tldextract is not installed
