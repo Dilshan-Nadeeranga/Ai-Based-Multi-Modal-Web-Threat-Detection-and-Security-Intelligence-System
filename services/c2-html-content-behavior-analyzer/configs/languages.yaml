@@ -1,0 +1,23 @@
+# Languages C2 analyzes. Keys under `languages` are real languages
+# (used by language ID and per-language XLM-R metrics).
+languages:
+  en:
+    name: English
+  si:
+    name: Sinhala
+    unicode_ranges: [["0D80", "0DFF"]]
+  ta:
+    name: Tamil
+    unicode_ranges: [["0B80", "0BFF"]]
+
+# Extra values allowed in dataset metadata only (not real languages):
+#   mixed   - page clearly contains more than one of en/si/ta
+#   unknown - language could not be determined
+special_values: [mixed, unknown]
+
+# Lightweight script-based language hint used while collecting samples
+# (c2_analyzer.utils.script_detect). Real language ID is Part 5.
+script_detect:
+  min_letters: 20          # fewer letters than this -> "unknown"
+  native_min_share: 0.30   # si/ta share needed to call a page si/ta (English menus are common)
+  english_min_share: 0.80  # Latin share needed to call a page "en"; otherwise "mixed"

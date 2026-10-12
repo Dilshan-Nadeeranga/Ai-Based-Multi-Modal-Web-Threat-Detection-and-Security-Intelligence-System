@@ -1,0 +1,8 @@
+url,label,language_hint,source,notes
+# Copy this file to data/feeds/manual_urls.csv, add one row per page, then:
+#   python scripts/collect.py import --feed manual --file data/feeds/manual_urls.csv
+# label: benign | phishing | fake_ecommerce | crypto_scam | malware_delivery
+# language_hint: en | si | ta | unknown      source: see configs/sources.yaml
+# Lines starting with # are ignored. Example rows:
+# https://cheap-phones-lk.example/deals,fake_ecommerce,si,social_media_report,Facebook ad - 90% discount
+# https://btc-double.example/invest,crypto_scam,en,manual,"Guaranteed daily returns, Telegram contact"

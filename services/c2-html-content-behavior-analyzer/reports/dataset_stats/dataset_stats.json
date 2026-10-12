@@ -1,0 +1,851 @@
+{
+  "generated_at": "2026-10-12T21:25:14+05:30",
+  "dataset_version": "unfrozen",
+  "latest_frozen_version": null,
+  "clean_fingerprint": "9098c1ebc998962294fb0856b2c0727ee462880f42e810bc1bed8d140c376b0e",
+  "definitions": {
+    "all": "every row in metadata.csv",
+    "usable": "not excluded AND quality_flag in (ok, redirected_offsite)",
+    "clean": "usable AND is_duplicate_of is empty (one row per cluster) - used for training"
+  },
+  "views": {
+    "all": {
+      "total": 373,
+      "per_label": {
+        "benign": 138,
+        "phishing": 132,
+        "fake_ecommerce": 0,
+        "crypto_scam": 2,
+        "malware_delivery": 101
+      },
+      "per_language": {
+        "en": 322,
+        "si": 9,
+        "ta": 3,
+        "mixed": 0,
+        "unknown": 39
+      },
+      "label_by_language": {
+        "benign": {
+          "en": 119,
+          "si": 9,
+          "ta": 3,
+          "mixed": 0,
+          "unknown": 7
+        },
+        "phishing": {
+          "en": 116,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 16
+        },
+        "fake_ecommerce": {
+          "en": 0,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 0
+        },
+        "crypto_scam": {
+          "en": 2,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 0
+        },
+        "malware_delivery": {
+          "en": 85,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 16
+        }
+      },
+      "per_source": {
+        "phishtank": 0,
+        "openphish": 132,
+        "urlhaus": 101,
+        "tranco": 99,
+        "elfw2031": 0,
+        "phish30k": 0,
+        "manual": 39,
+        "social_media_report": 0,
+        "other": 2
+      },
+      "per_fetch_mode": {
+        "static": 373,
+        "rendered": 0,
+        "manual": 0
+      },
+      "verification": {
+        "benign": {
+          "verified": 137,
+          "unverified": 1,
+          "percent_verified": 99.3
+        },
+        "phishing": {
+          "verified": 105,
+          "unverified": 27,
+          "percent_verified": 79.5
+        },
+        "fake_ecommerce": {
+          "verified": 0,
+          "unverified": 0,
+          "percent_verified": 0.0
+        },
+        "crypto_scam": {
+          "verified": 2,
+          "unverified": 0,
+          "percent_verified": 100.0
+        },
+        "malware_delivery": {
+          "verified": 96,
+          "unverified": 5,
+          "percent_verified": 95.0
+        }
+      },
+      "quality_flags": {
+        "ok": 289,
+        "empty": 38,
+        "parked_domain": 3,
+        "error_page": 12,
+        "bot_challenge": 4,
+        "login_wall": 0,
+        "suspended_hosting": 1,
+        "redirected_offsite": 26,
+        "other": 0
+      },
+      "excluded": 0,
+      "excluded_by_reason": {},
+      "clusters": {
+        "clusters": 336,
+        "multi_page_clusters": 20,
+        "rows_without_cluster": 0,
+        "largest": [
+          {
+            "cluster_id": "cl_000236",
+            "label": "phishing",
+            "size": 11
+          },
+          {
+            "cluster_id": "cl_000250",
+            "label": "phishing",
+            "size": 5
+          },
+          {
+            "cluster_id": "cl_000183",
+            "label": "malware_delivery",
+            "size": 4
+          },
+          {
+            "cluster_id": "cl_000140",
+            "label": "malware_delivery",
+            "size": 3
+          },
+          {
+            "cluster_id": "cl_000154",
+            "label": "malware_delivery",
+            "size": 3
+          },
+          {
+            "cluster_id": "cl_000278",
+            "label": "phishing",
+            "size": 3
+          },
+          {
+            "cluster_id": "cl_000125",
+            "label": "benign",
+            "size": 2
+          },
+          {
+            "cluster_id": "cl_000158",
+            "label": "malware_delivery",
+            "size": 2
+          },
+          {
+            "cluster_id": "cl_000233",
+            "label": "phishing",
+            "size": 2
+          },
+          {
+            "cluster_id": "cl_000245",
+            "label": "phishing",
+            "size": 2
+          }
+        ],
+        "duplicates_per_label": {
+          "benign": 1,
+          "phishing": 28,
+          "fake_ecommerce": 0,
+          "crypto_scam": 0,
+          "malware_delivery": 8
+        }
+      },
+      "relabels": {
+        "relabelled": 0,
+        "matrix": {}
+      },
+      "imbalance": {
+        "majority": "benign",
+        "minority": "fake_ecommerce",
+        "ratio": null,
+        "percent": {
+          "benign": 37.0,
+          "phishing": 35.4,
+          "fake_ecommerce": 0.0,
+          "crypto_scam": 0.5,
+          "malware_delivery": 27.1
+        }
+      },
+      "page_stats": {
+        "benign": {
+          "pages": 138,
+          "missing_files": 0,
+          "file_size_median": 218249.0,
+          "file_size_p90": 907344.0,
+          "text_chars_median": 4940.5,
+          "text_chars_p90": 17389.3,
+          "forms_mean": 1.33,
+          "percent_with_password": 2.9,
+          "percent_with_script": 95.7
+        },
+        "phishing": {
+          "pages": 132,
+          "missing_files": 0,
+          "file_size_median": 40547.0,
+          "file_size_p90": 174352.4,
+          "text_chars_median": 703.5,
+          "text_chars_p90": 6299.8,
+          "forms_mean": 0.56,
+          "percent_with_password": 25.0,
+          "percent_with_script": 93.2
+        },
+        "fake_ecommerce": {
+          "pages": 0,
+          "missing_files": 0,
+          "file_size_median": null,
+          "file_size_p90": null,
+          "text_chars_median": null,
+          "text_chars_p90": null,
+          "forms_mean": null,
+          "percent_with_password": 0.0,
+          "percent_with_script": 0.0
+        },
+        "crypto_scam": {
+          "pages": 2,
+          "missing_files": 0,
+          "file_size_median": 42728.5,
+          "file_size_p90": 75572.1,
+          "text_chars_median": 198.0,
+          "text_chars_p90": 327.6,
+          "forms_mean": 0.0,
+          "percent_with_password": 0.0,
+          "percent_with_script": 100.0
+        },
+        "malware_delivery": {
+          "pages": 101,
+          "missing_files": 0,
+          "file_size_median": 39940.0,
+          "file_size_p90": 185160.0,
+          "text_chars_median": 182.0,
+          "text_chars_p90": 5523.0,
+          "forms_mean": 0.52,
+          "percent_with_password": 3.0,
+          "percent_with_script": 80.2
+        }
+      },
+      "timeline": {
+        "2026-10-12": {
+          "benign": 138,
+          "phishing": 132,
+          "fake_ecommerce": 0,
+          "crypto_scam": 2,
+          "malware_delivery": 101
+        }
+      }
+    },
+    "usable": {
+      "total": 315,
+      "per_label": {
+        "benign": 133,
+        "phishing": 115,
+        "fake_ecommerce": 0,
+        "crypto_scam": 0,
+        "malware_delivery": 67
+      },
+      "per_language": {
+        "en": 292,
+        "si": 9,
+        "ta": 3,
+        "mixed": 0,
+        "unknown": 11
+      },
+      "label_by_language": {
+        "benign": {
+          "en": 116,
+          "si": 9,
+          "ta": 3,
+          "mixed": 0,
+          "unknown": 5
+        },
+        "phishing": {
+          "en": 111,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 4
+        },
+        "fake_ecommerce": {
+          "en": 0,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 0
+        },
+        "crypto_scam": {
+          "en": 0,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 0
+        },
+        "malware_delivery": {
+          "en": 65,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 2
+        }
+      },
+      "per_source": {
+        "phishtank": 0,
+        "openphish": 115,
+        "urlhaus": 67,
+        "tranco": 96,
+        "elfw2031": 0,
+        "phish30k": 0,
+        "manual": 37,
+        "social_media_report": 0,
+        "other": 0
+      },
+      "per_fetch_mode": {
+        "static": 315,
+        "rendered": 0,
+        "manual": 0
+      },
+      "verification": {
+        "benign": {
+          "verified": 132,
+          "unverified": 1,
+          "percent_verified": 99.2
+        },
+        "phishing": {
+          "verified": 88,
+          "unverified": 27,
+          "percent_verified": 76.5
+        },
+        "fake_ecommerce": {
+          "verified": 0,
+          "unverified": 0,
+          "percent_verified": 0.0
+        },
+        "crypto_scam": {
+          "verified": 0,
+          "unverified": 0,
+          "percent_verified": 0.0
+        },
+        "malware_delivery": {
+          "verified": 62,
+          "unverified": 5,
+          "percent_verified": 92.5
+        }
+      },
+      "quality_flags": {
+        "ok": 289,
+        "empty": 0,
+        "parked_domain": 0,
+        "error_page": 0,
+        "bot_challenge": 0,
+        "login_wall": 0,
+        "suspended_hosting": 0,
+        "redirected_offsite": 26,
+        "other": 0
+      },
+      "excluded": 0,
+      "excluded_by_reason": {},
+      "clusters": {
+        "clusters": 278,
+        "multi_page_clusters": 20,
+        "rows_without_cluster": 0,
+        "largest": [
+          {
+            "cluster_id": "cl_000236",
+            "label": "phishing",
+            "size": 11
+          },
+          {
+            "cluster_id": "cl_000250",
+            "label": "phishing",
+            "size": 5
+          },
+          {
+            "cluster_id": "cl_000183",
+            "label": "malware_delivery",
+            "size": 4
+          },
+          {
+            "cluster_id": "cl_000140",
+            "label": "malware_delivery",
+            "size": 3
+          },
+          {
+            "cluster_id": "cl_000154",
+            "label": "malware_delivery",
+            "size": 3
+          },
+          {
+            "cluster_id": "cl_000278",
+            "label": "phishing",
+            "size": 3
+          },
+          {
+            "cluster_id": "cl_000125",
+            "label": "benign",
+            "size": 2
+          },
+          {
+            "cluster_id": "cl_000158",
+            "label": "malware_delivery",
+            "size": 2
+          },
+          {
+            "cluster_id": "cl_000233",
+            "label": "phishing",
+            "size": 2
+          },
+          {
+            "cluster_id": "cl_000245",
+            "label": "phishing",
+            "size": 2
+          }
+        ],
+        "duplicates_per_label": {
+          "benign": 1,
+          "phishing": 28,
+          "fake_ecommerce": 0,
+          "crypto_scam": 0,
+          "malware_delivery": 8
+        }
+      },
+      "relabels": {
+        "relabelled": 0,
+        "matrix": {}
+      },
+      "imbalance": {
+        "majority": "benign",
+        "minority": "fake_ecommerce",
+        "ratio": null,
+        "percent": {
+          "benign": 42.2,
+          "phishing": 36.5,
+          "fake_ecommerce": 0.0,
+          "crypto_scam": 0.0,
+          "malware_delivery": 21.3
+        }
+      },
+      "page_stats": {
+        "benign": {
+          "pages": 133,
+          "missing_files": 0,
+          "file_size_median": 219391.0,
+          "file_size_p90": 923114.0,
+          "text_chars_median": 5233.0,
+          "text_chars_p90": 18094.8,
+          "forms_mean": 1.38,
+          "percent_with_password": 3.0,
+          "percent_with_script": 97.0
+        },
+        "phishing": {
+          "pages": 115,
+          "missing_files": 0,
+          "file_size_median": 78279.0,
+          "file_size_p90": 193348.6,
+          "text_chars_median": 719.0,
+          "text_chars_p90": 6444.0,
+          "forms_mean": 0.64,
+          "percent_with_password": 28.7,
+          "percent_with_script": 93.9
+        },
+        "fake_ecommerce": {
+          "pages": 0,
+          "missing_files": 0,
+          "file_size_median": null,
+          "file_size_p90": null,
+          "text_chars_median": null,
+          "text_chars_p90": null,
+          "forms_mean": null,
+          "percent_with_password": 0.0,
+          "percent_with_script": 0.0
+        },
+        "crypto_scam": {
+          "pages": 0,
+          "missing_files": 0,
+          "file_size_median": null,
+          "file_size_p90": null,
+          "text_chars_median": null,
+          "text_chars_p90": null,
+          "forms_mean": null,
+          "percent_with_password": 0.0,
+          "percent_with_script": 0.0
+        },
+        "malware_delivery": {
+          "pages": 67,
+          "missing_files": 0,
+          "file_size_median": 96691.0,
+          "file_size_p90": 185244.8,
+          "text_chars_median": 199.0,
+          "text_chars_p90": 5664.4,
+          "forms_mean": 0.75,
+          "percent_with_password": 4.5,
+          "percent_with_script": 79.1
+        }
+      },
+      "timeline": {
+        "2026-10-12": {
+          "benign": 133,
+          "phishing": 115,
+          "fake_ecommerce": 0,
+          "crypto_scam": 0,
+          "malware_delivery": 67
+        }
+      }
+    },
+    "clean": {
+      "total": 278,
+      "per_label": {
+        "benign": 132,
+        "phishing": 87,
+        "fake_ecommerce": 0,
+        "crypto_scam": 0,
+        "malware_delivery": 59
+      },
+      "per_language": {
+        "en": 255,
+        "si": 9,
+        "ta": 3,
+        "mixed": 0,
+        "unknown": 11
+      },
+      "label_by_language": {
+        "benign": {
+          "en": 115,
+          "si": 9,
+          "ta": 3,
+          "mixed": 0,
+          "unknown": 5
+        },
+        "phishing": {
+          "en": 83,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 4
+        },
+        "fake_ecommerce": {
+          "en": 0,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 0
+        },
+        "crypto_scam": {
+          "en": 0,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 0
+        },
+        "malware_delivery": {
+          "en": 57,
+          "si": 0,
+          "ta": 0,
+          "mixed": 0,
+          "unknown": 2
+        }
+      },
+      "per_source": {
+        "phishtank": 0,
+        "openphish": 87,
+        "urlhaus": 59,
+        "tranco": 96,
+        "elfw2031": 0,
+        "phish30k": 0,
+        "manual": 36,
+        "social_media_report": 0,
+        "other": 0
+      },
+      "per_fetch_mode": {
+        "static": 278,
+        "rendered": 0,
+        "manual": 0
+      },
+      "verification": {
+        "benign": {
+          "verified": 132,
+          "unverified": 0,
+          "percent_verified": 100.0
+        },
+        "phishing": {
+          "verified": 87,
+          "unverified": 0,
+          "percent_verified": 100.0
+        },
+        "fake_ecommerce": {
+          "verified": 0,
+          "unverified": 0,
+          "percent_verified": 0.0
+        },
+        "crypto_scam": {
+          "verified": 0,
+          "unverified": 0,
+          "percent_verified": 0.0
+        },
+        "malware_delivery": {
+          "verified": 59,
+          "unverified": 0,
+          "percent_verified": 100.0
+        }
+      },
+      "quality_flags": {
+        "ok": 256,
+        "empty": 0,
+        "parked_domain": 0,
+        "error_page": 0,
+        "bot_challenge": 0,
+        "login_wall": 0,
+        "suspended_hosting": 0,
+        "redirected_offsite": 22,
+        "other": 0
+      },
+      "excluded": 0,
+      "excluded_by_reason": {},
+      "clusters": {
+        "clusters": 278,
+        "multi_page_clusters": 0,
+        "rows_without_cluster": 0,
+        "largest": [],
+        "duplicates_per_label": {
+          "benign": 0,
+          "phishing": 0,
+          "fake_ecommerce": 0,
+          "crypto_scam": 0,
+          "malware_delivery": 0
+        }
+      },
+      "relabels": {
+        "relabelled": 0,
+        "matrix": {}
+      },
+      "imbalance": {
+        "majority": "benign",
+        "minority": "fake_ecommerce",
+        "ratio": null,
+        "percent": {
+          "benign": 47.5,
+          "phishing": 31.3,
+          "fake_ecommerce": 0.0,
+          "crypto_scam": 0.0,
+          "malware_delivery": 21.2
+        }
+      },
+      "page_stats": {
+        "benign": {
+          "pages": 132,
+          "missing_files": 0,
+          "file_size_median": 221056.5,
+          "file_size_p90": 926268.0,
+          "text_chars_median": 5413.5,
+          "text_chars_p90": 18235.9,
+          "forms_mean": 1.39,
+          "percent_with_password": 3.0,
+          "percent_with_script": 97.0
+        },
+        "phishing": {
+          "pages": 87,
+          "missing_files": 0,
+          "file_size_median": 34120.0,
+          "file_size_p90": 266668.6,
+          "text_chars_median": 776.0,
+          "text_chars_p90": 6544.4,
+          "forms_mean": 0.74,
+          "percent_with_password": 32.2,
+          "percent_with_script": 92.0
+        },
+        "fake_ecommerce": {
+          "pages": 0,
+          "missing_files": 0,
+          "file_size_median": null,
+          "file_size_p90": null,
+          "text_chars_median": null,
+          "text_chars_p90": null,
+          "forms_mean": null,
+          "percent_with_password": 0.0,
+          "percent_with_script": 0.0
+        },
+        "crypto_scam": {
+          "pages": 0,
+          "missing_files": 0,
+          "file_size_median": null,
+          "file_size_p90": null,
+          "text_chars_median": null,
+          "text_chars_p90": null,
+          "forms_mean": null,
+          "percent_with_password": 0.0,
+          "percent_with_script": 0.0
+        },
+        "malware_delivery": {
+          "pages": 59,
+          "missing_files": 0,
+          "file_size_median": 125006.0,
+          "file_size_p90": 185259.6,
+          "text_chars_median": 189.0,
+          "text_chars_p90": 5942.6,
+          "forms_mean": 0.69,
+          "percent_with_password": 5.1,
+          "percent_with_script": 79.7
+        }
+      },
+      "timeline": {
+        "2026-10-12": {
+          "benign": 132,
+          "phishing": 87,
+          "fake_ecommerce": 0,
+          "crypto_scam": 0,
+          "malware_delivery": 59
+        }
+      }
+    }
+  },
+  "readiness": {
+    "all_ready": false,
+    "labels": {
+      "benign": {
+        "have": 132,
+        "target": 50,
+        "languages": {
+          "si": {
+            "have": 9,
+            "target": 20
+          },
+          "ta": {
+            "have": 3,
+            "target": 0
+          }
+        },
+        "ready": false,
+        "status": "11 more si needed"
+      },
+      "phishing": {
+        "have": 87,
+        "target": 50,
+        "languages": {
+          "si": {
+            "have": 0,
+            "target": 20
+          },
+          "ta": {
+            "have": 0,
+            "target": 0
+          }
+        },
+        "ready": false,
+        "status": "20 more si needed"
+      },
+      "fake_ecommerce": {
+        "have": 0,
+        "target": 50,
+        "languages": {
+          "si": {
+            "have": 0,
+            "target": 20
+          },
+          "ta": {
+            "have": 0,
+            "target": 0
+          }
+        },
+        "ready": false,
+        "status": "50 more needed, 20 more si needed"
+      },
+      "crypto_scam": {
+        "have": 0,
+        "target": 50,
+        "languages": {
+          "si": {
+            "have": 0,
+            "target": 20
+          },
+          "ta": {
+            "have": 0,
+            "target": 0
+          }
+        },
+        "ready": false,
+        "status": "50 more needed, 20 more si needed"
+      },
+      "malware_delivery": {
+        "have": 59,
+        "target": 50,
+        "languages": {
+          "si": {
+            "have": 0,
+            "target": 0
+          },
+          "ta": {
+            "have": 0,
+            "target": 0
+          }
+        },
+        "ready": true,
+        "status": "ready"
+      }
+    },
+    "language_coverage": {
+      "si": {
+        "name": "Sinhala",
+        "samples": 9,
+        "percent_of_clean": 3.2,
+        "per_label": {
+          "benign": 9,
+          "phishing": 0,
+          "fake_ecommerce": 0,
+          "crypto_scam": 0,
+          "malware_delivery": 0
+        }
+      },
+      "ta": {
+        "name": "Tamil",
+        "samples": 3,
+        "percent_of_clean": 1.1,
+        "per_label": {
+          "benign": 3,
+          "phishing": 0,
+          "fake_ecommerce": 0,
+          "crypto_scam": 0,
+          "malware_delivery": 0
+        }
+      }
+    },
+    "mixed_language_samples": 0
+  },
+  "peer_agreement": null,
+  "figures": [
+    "figures/label_distribution.png",
+    "figures/label_language_heatmap.png",
+    "figures/quality_flags.png",
+    "figures/text_length_by_label.png",
+    "figures/collection_timeline.png",
+    "figures/verification_progress.png"
+  ]
+}

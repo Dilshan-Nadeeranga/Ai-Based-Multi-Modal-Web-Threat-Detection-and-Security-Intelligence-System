@@ -1,0 +1,23 @@
+# Collection goals shown by `scripts/collect.py progress`.
+# overall: registered samples per label (any language).
+overall:
+  benign: 50
+  phishing: 50
+  fake_ecommerce: 50
+  crypto_scam: 50
+  malware_delivery: 50
+
+# Minimum samples per label for a specific language. 0 = no target.
+per_language:
+  si:
+    benign: 20
+    phishing: 20
+    fake_ecommerce: 20
+    crypto_scam: 20
+    malware_delivery: 0   # Sinhala malware-delivery pages are rare - not realistic
+  ta:                     # optional for now
+    benign: 0
+    phishing: 0
+    fake_ecommerce: 0
+    crypto_scam: 0
+    malware_delivery: 0

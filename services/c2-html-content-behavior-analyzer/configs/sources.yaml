@@ -1,0 +1,21 @@
+# Where a dataset sample came from (metadata `source` field).
+# Add new sources here - the schema, CLI and tests read this file.
+sources:
+  phishtank:
+    description: PhishTank verified phishing URLs
+  openphish:
+    description: OpenPhish phishing feed
+  urlhaus:
+    description: URLhaus (abuse.ch) malware distribution URLs
+  tranco:
+    description: Tranco top-sites list (benign pages)
+  elfw2031:
+    description: ELFW2031 dataset
+  phish30k:
+    description: Phish30K dataset
+  manual:
+    description: Collected and labelled manually by the team
+  social_media_report:
+    description: Scam reported on social media (Facebook, WhatsApp, ...)
+  other:
+    description: Anything else - explain in `notes`

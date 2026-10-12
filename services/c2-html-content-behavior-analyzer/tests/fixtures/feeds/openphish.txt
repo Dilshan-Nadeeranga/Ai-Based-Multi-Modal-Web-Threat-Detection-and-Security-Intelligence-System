@@ -1,0 +1,5 @@
+https://login-paypa1.example/signin
+https://LOGIN-PAYPA1.example/signin/#step2
+not a url at all
+
+https://secure-bank-verify.example/account

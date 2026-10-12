@@ -16,3 +16,39 @@ build/
 .idea/
 .vscode/
 *.local
+
+# --- C2 additions ---
+.venv*/
+*.egg-info/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Data (keep folder structure via .gitkeep)
+data/raw/**
+!data/raw/**/
+data/interim/**
+!data/interim/**/
+data/processed/**
+!data/processed/**/
+# Live scam/malware URLs - never commit (data/metadata/ keeps the schema + templates tracked)
+data/metadata/candidates.csv
+data/metadata/metadata.csv
+data/metadata/review/
+# Frozen dataset versions (ids, labels, sha256 - no URLs): tracked on purpose
+!data/metadata/manifests/
+# downloaded feed files (malicious URL lists, licensed data)
+data/feeds/**
+!data/feeds/**/
+# pages being saved by the collector (deleted after registering)
+data/tmp/**
+!data/tmp/**/
+!data/**/.gitkeep
+
+# Model artifacts
+models/**/*.bin
+*.safetensors
+*.pt
+*.pkl
+*.joblib
