@@ -133,10 +133,13 @@ def create_sample(
 @router.get("/samples/{sample_id}", responses=_ERRORS)
 def get_sample(
     sample_id: str,
+    request: Request,
     service: Annotated[DatasetService, Depends(get_dataset_service)],
 ) -> dict[str, Any]:
+    """The sample record; ``destination`` is filled from its latest successful web capture."""
     sample: DatasetSample = service.get_sample(sample_id)
-    return sample.model_dump(mode="json")
+    captures = request.app.state.capture_service
+    return captures.with_destination(sample, captures.captures_for(sample.sample_id)).model_dump(mode="json")
 
 
 @router.get("/statistics", response_model=DatasetStatistics, responses=_ERRORS)

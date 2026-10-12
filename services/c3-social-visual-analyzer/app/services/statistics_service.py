@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from collections import Counter
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from app.config import Settings
 from app.schemas.dataset_classes import (
@@ -22,8 +22,10 @@ from app.schemas.dataset_classes import (
     Platform,
     ScamType,
 )
+from app.schemas.capture_schema import CaptureStatus, WebpageCapture
 from app.schemas.dataset_schema import DatasetSample, utc_now
-from app.services.metadata_service import MetadataStore
+from app.services.capture_service import candidate_urls
+from app.services.metadata_service import MetadataStore, read_jsonl
 from app.utils.file_utils import atomic_write_json
 
 logger = logging.getLogger(__name__)
@@ -57,6 +59,22 @@ class MisinformationBalance(BaseModel):
     fake_percent: float = 0.0
 
 
+class WebCaptureCounts(BaseModel):
+    """Destination capture attempts of the counted samples (``webpage_captures.jsonl``)."""
+
+    attempts: int = 0
+    captured: int = 0
+    http_error: int = 0
+    failed: int = 0
+    skipped: int = 0
+    samples_with_screenshot: int = 0
+    samples_with_urls_not_captured: int = 0
+    total_screenshots: int = 0
+    distinct_final_domains: int = 0
+    redirected_captures: int = 0
+    error_codes: dict[str, int] = Field(default_factory=dict)
+
+
 class DatasetStatistics(BaseModel):
     dataset_version: str
     generated_at: str
@@ -87,6 +105,31 @@ class DatasetStatistics(BaseModel):
     samples_without_urls: int
     samples_with_multiple_urls: int
     samples_with_claimed_brand: int
+    web_captures: WebCaptureCounts = Field(default_factory=WebCaptureCounts)
+
+
+def _capture_counts(counted: list[DatasetSample], captures: list[WebpageCapture]) -> WebCaptureCounts:
+    ids = {s.sample_id for s in counted}
+    mine = [c for c in captures if c.sample_id in ids]
+    statuses = Counter(c.status for c in mine)
+    shots = [c for c in mine if c.screenshot]
+    with_screenshot = {c.sample_id for c in mine if c.status is CaptureStatus.CAPTURED}
+    with_urls = {s.sample_id for s in counted if candidate_urls(s)}
+    return WebCaptureCounts(
+        attempts=len(mine),
+        captured=statuses[CaptureStatus.CAPTURED],
+        http_error=statuses[CaptureStatus.HTTP_ERROR],
+        failed=statuses[CaptureStatus.FAILED],
+        skipped=statuses[CaptureStatus.SKIPPED],
+        samples_with_screenshot=len(with_screenshot),
+        samples_with_urls_not_captured=len(with_urls - with_screenshot),
+        total_screenshots=len(shots),
+        distinct_final_domains=len({c.final_registered_domain or c.final_domain for c in shots
+                                    if c.final_registered_domain or c.final_domain}),
+        redirected_captures=sum(1 for c in shots if c.final_url and c.requested_url
+                                and c.final_url.rstrip("/") != c.requested_url.rstrip("/")),
+        error_codes=dict(sorted(Counter(c.error_code.value for c in mine if c.error_code).items())),
+    )
 
 
 def _zero_filled(counter: Counter[str], keys: list[str]) -> dict[str, int]:
@@ -104,6 +147,7 @@ def compute_statistics(
     include_synthetic: bool = False,
     skipped_invalid_records: int = 0,
     malformed_lines: int = 0,
+    captures: list[WebpageCapture] | None = None,
 ) -> DatasetStatistics:
     """Aggregate counts for ``samples`` (pure function, easy to test)."""
     counted = [s for s in samples if include_synthetic or not s.is_synthetic]
@@ -178,6 +222,7 @@ def compute_statistics(
         samples_without_urls=sum(1 for n in url_counts if n == 0),
         samples_with_multiple_urls=sum(1 for n in url_counts if n > 1),
         samples_with_claimed_brand=sum(1 for s in counted if s.brand.claimed_brand),
+        web_captures=_capture_counts(counted, captures or []),
     )
 
 
@@ -213,7 +258,17 @@ class StatisticsService:
             include_synthetic=include_synthetic,
             skipped_invalid_records=invalid,
             malformed_lines=len(metadata.issues),
+            captures=self._read_captures(),
         )
+
+    def _read_captures(self) -> list[WebpageCapture]:
+        captures: list[WebpageCapture] = []
+        for line, row in read_jsonl(self.settings.webpage_captures_path).rows:
+            try:
+                captures.append(WebpageCapture.model_validate(row))
+            except ValidationError:
+                logger.warning("Statistics skipped invalid capture record at line %d (run validate_dataset.py)", line)
+        return captures
 
     def generate(self, include_synthetic: bool = False) -> DatasetStatistics:
         """Compute and write ``data/statistics/dataset_statistics.json``."""
