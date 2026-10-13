@@ -1,0 +1,6 @@
+requests
+beautifulsoup4
+playwright
+python-dotenv
+psycopg[binary]
+truststore

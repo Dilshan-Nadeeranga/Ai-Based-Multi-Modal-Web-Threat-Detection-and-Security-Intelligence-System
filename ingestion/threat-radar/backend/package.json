@@ -1,0 +1,50 @@
+{
+
+  "name": "threatradar-backend",
+
+  "version": "1.0.0",
+
+  "private": true,
+
+  "type": "module",
+
+  "scripts": {
+
+    "dev": "node --watch server.js",
+
+    "start": "node server.js",
+
+    "download": "node scripts/download.js",
+
+    "reddit:login": "node scripts/reddit-browser-login.js",
+
+    "reddit:encode": "node scripts/encode-reddit-session.js",
+
+    "build": "npm run build:telegram && npm run build:reddit",
+
+    "build:telegram": "python3 -m venv scraper/.venv && scraper/.venv/bin/pip install -r scraper/requirements.txt --quiet --disable-pip-version-check",
+
+    "build:reddit": "python3 -m venv reddit_scraper/.venv && reddit_scraper/.venv/bin/pip install -r reddit_scraper/requirements.txt --quiet --disable-pip-version-check",
+
+    "playwright:install": "node scripts/install-playwright.js --required"
+
+  },
+
+  "dependencies": {
+
+    "cors": "^2.8.5",
+
+    "dotenv": "^16.4.7",
+
+    "express": "^4.21.2",
+
+    "node-cron": "^4.2.1",
+
+    "pg": "^8.23.1",
+
+    "playwright": "1.48.2"
+
+  }
+
+}
+

@@ -1,0 +1,38 @@
+# Secrets
+.env
+backend/.env
+frontend/.env.local
+
+# Node
+node_modules/
+.next/
+dist/
+
+# Backend downloads (large files)
+backend/data/
+
+# Python scraper (lives in backend/scraper/)
+scraper/.env
+backend/scraper/.env
+backend/scraper/__pycache__/
+backend/scraper/*.session
+backend/scraper/*.session-journal
+backend/scraper/scraper_session*
+backend/scraper/.venv/
+backend/scraper/.scraper.lock
+
+# Reddit scraper
+backend/reddit_scraper/.env
+backend/reddit_scraper/__pycache__/
+backend/reddit_scraper/.venv/
+
+# Playwright Chromium (downloaded at build/runtime)
+backend/.playwright-browsers/
+
+# Any Python venv / cache
+**/.venv/
+**/__pycache__/
+
+# IDE
+.idea/
+.vscode/
