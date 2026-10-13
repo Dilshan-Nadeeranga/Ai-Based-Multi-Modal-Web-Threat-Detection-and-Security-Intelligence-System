@@ -7,6 +7,7 @@ to prevent training-serving skew and guarantee feature consistency.
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
@@ -39,6 +40,8 @@ FEATURE_NAMES: List[str] = [
     "num_subdomains",
     "path_depth",
     "num_query_params",
+    # Protocol & HTTPS indicator
+    "is_https",
     # Keyword & suspicious flags
     "suspicious_keyword_count",
     "has_suspicious_keyword",
@@ -74,6 +77,11 @@ FEATURE_NAMES: List[str] = [
     "dga_digit_ratio",
     "dga_max_consecutive_consonants",
     "dga_bigram_perplexity",
+    # Domain-level features (integrated when real data is available, imputed when missing)
+    "domain_age_days",
+    "is_nrd",
+    "has_dns_records",
+    "has_domain_data",
 ]
 
 
@@ -88,13 +96,35 @@ class MlFeatureExtractor:
         self.lexical_analyzer = lexical_analyzer or UrlLexicalAnalyzer()
         self.dga_analyzer = dga_analyzer or DgaAnalyzer()
 
-    def extract_dict(self, url: str) -> Dict[str, float]:
+    def extract_dict(
+        self,
+        url: str,
+        domain_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, float]:
         """Extract a dictionary of feature names to float values for a URL."""
         lexical: UrlLexicalFeatures = self.lexical_analyzer.extract_features(url)
         target_domain = lexical.registered_domain or lexical.hostname
 
         # DGA features computed on target domain label
         dga = self.dga_analyzer.analyze(target_domain)
+
+        # Domain-level features: use real telemetry when available; set -1.0 / 0.0 when missing
+        domain_age = -1.0
+        is_nrd_val = 0.0
+        has_dns_val = 0.0
+        has_domain_flag = 0.0
+
+        if domain_data:
+            has_domain_flag = 1.0
+            raw_age = domain_data.get("domain_age_days", domain_data.get("age_days"))
+            if raw_age is not None:
+                domain_age = float(raw_age)
+            if "is_nrd" in domain_data and domain_data["is_nrd"] is not None:
+                is_nrd_val = 1.0 if domain_data["is_nrd"] else 0.0
+            if "has_dns_records" in domain_data and domain_data["has_dns_records"] is not None:
+                has_dns_val = 1.0 if domain_data["has_dns_records"] else 0.0
+            elif "dns_resolved" in domain_data and domain_data["dns_resolved"] is not None:
+                has_dns_val = 1.0 if domain_data["dns_resolved"] else 0.0
 
         return {
             # Length metrics
@@ -117,6 +147,8 @@ class MlFeatureExtractor:
             "num_subdomains": float(lexical.num_subdomains),
             "path_depth": float(lexical.path_depth),
             "num_query_params": float(lexical.num_query_params),
+            # Protocol / HTTPS indicator
+            "is_https": 1.0 if (lexical.scheme or "").lower() == "https" else 0.0,
             # Keyword & suspicious flags
             "suspicious_keyword_count": float(lexical.suspicious_keyword_count),
             "has_suspicious_keyword": 1.0 if lexical.has_suspicious_keyword else 0.0,
@@ -152,14 +184,74 @@ class MlFeatureExtractor:
             "dga_digit_ratio": float(dga.digit_ratio),
             "dga_max_consecutive_consonants": float(dga.max_consecutive_consonants),
             "dga_bigram_perplexity": float(dga.bigram_perplexity),
+            # Domain-level features
+            "domain_age_days": float(domain_age),
+            "is_nrd": float(is_nrd_val),
+            "has_dns_records": float(has_dns_val),
+            "has_domain_data": float(has_domain_flag),
         }
 
-    def extract_vector(self, url: str) -> np.ndarray:
+    def extract_vector(
+        self,
+        url: str,
+        domain_data: Optional[Dict[str, Any]] = None,
+    ) -> np.ndarray:
         """Extract ordered 1D NumPy array of feature values for a single URL."""
-        f_dict = self.extract_dict(url)
+        f_dict = self.extract_dict(url, domain_data=domain_data)
         return np.array([f_dict[name] for name in FEATURE_NAMES], dtype=np.float32)
 
-    def extract_dataframe(self, urls: List[str]) -> pd.DataFrame:
+    def extract_matrix(
+        self,
+        urls: List[str],
+        domain_data_list: Optional[List[Optional[Dict[str, Any]]]] = None,
+        batch_size: int = 10000,
+        show_progress: bool = True,
+    ) -> np.ndarray:
+        """Extract a pre-allocated 2D NumPy array (N, n_features) of float32 features.
+
+        Pre-allocating the matrix avoids intermediate Python object bloat, bounding memory
+        consumption to ~41 MB per 200,000 URLs.
+        """
+        n_samples = len(urls)
+        n_features = len(FEATURE_NAMES)
+        X = np.empty((n_samples, n_features), dtype=np.float32)
+
+        start_time = time.perf_counter()
+        has_domain_list = domain_data_list is not None and len(domain_data_list) == n_samples
+
+        for idx, url in enumerate(urls):
+            dom_data = domain_data_list[idx] if has_domain_list else None
+            f_dict = self.extract_dict(url, domain_data=dom_data)
+            for f_idx, fname in enumerate(FEATURE_NAMES):
+                X[idx, f_idx] = f_dict[fname]
+
+            if show_progress and ((idx + 1) % batch_size == 0 or (idx + 1) == n_samples):
+                elapsed = time.perf_counter() - start_time
+                speed = (idx + 1) / max(elapsed, 0.001)
+                remaining = (n_samples - (idx + 1)) / max(speed, 0.001)
+                logger.info(
+                    "Feature extraction progress: %d/%d (%.1f%%) | %.0f URLs/sec | ETA: %.1fs",
+                    idx + 1,
+                    n_samples,
+                    ((idx + 1) / n_samples) * 100.0,
+                    speed,
+                    remaining,
+                )
+
+        return X
+
+    def extract_dataframe(
+        self,
+        urls: List[str],
+        domain_data_list: Optional[List[Optional[Dict[str, Any]]]] = None,
+        batch_size: int = 10000,
+        show_progress: bool = False,
+    ) -> pd.DataFrame:
         """Extract a pandas DataFrame of features for a list of URLs."""
-        rows = [self.extract_dict(u) for u in urls]
-        return pd.DataFrame(rows, columns=FEATURE_NAMES)
+        X = self.extract_matrix(
+            urls,
+            domain_data_list=domain_data_list,
+            batch_size=batch_size,
+            show_progress=show_progress,
+        )
+        return pd.DataFrame(X, columns=FEATURE_NAMES)

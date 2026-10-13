@@ -33,6 +33,13 @@ def main() -> None:
         help="Directory to save models and comparison reports",
     )
     parser.add_argument(
+        "--model-type",
+        type=str,
+        default="random_forest",
+        choices=["random_forest", "decision_tree", "xgboost", "lightgbm", "all"],
+        help="Model architecture to train (default: random_forest)",
+    )
+    parser.add_argument(
         "--test-size",
         type=float,
         default=0.2,
@@ -56,6 +63,24 @@ def main() -> None:
         type=float,
         default=0.05,
         help="Maximum permissible False Positive Rate for threshold tuning (default: 0.05)",
+    )
+    parser.add_argument(
+        "--chunk-size",
+        type=int,
+        default=50000,
+        help="Chunk size for streaming large CSV datasets (default: 50000)",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=10000,
+        help="Batch size for feature extraction (default: 10000)",
+    )
+    parser.add_argument(
+        "--max-samples",
+        type=int,
+        default=None,
+        help="Maximum samples to train on (e.g. 200,000)",
     )
     parser.add_argument(
         "--seed",
@@ -84,6 +109,10 @@ def main() -> None:
             val_size=args.val_size,
             split_strategy=args.split_strategy,
             target_max_fpr=args.max_fpr,
+            model_selection=args.model_type,
+            batch_size=args.batch_size,
+            chunk_size=args.chunk_size,
+            max_samples=args.max_samples,
         )
 
         logger.info("Training complete!")

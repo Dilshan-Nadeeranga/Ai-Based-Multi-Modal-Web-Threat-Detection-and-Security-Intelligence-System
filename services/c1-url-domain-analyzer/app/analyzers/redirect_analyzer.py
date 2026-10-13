@@ -177,14 +177,16 @@ class ControlledRedirectResolver:
         # 1. Validate origin URL against SSRF policy
         is_safe, reason, initial_ips = self.ssrf_validator.validate_url(clean_url)
         if not is_safe:
+            is_ssrf = any(kw in reason.lower() for kw in ["prohibited", "private", "loopback", "metadata", "internal"])
             return self.feature_extractor.extract_features(
                 original_url=clean_url,
                 chain_hops=[],
                 is_shortened=is_shortened,
                 shortener_provider=provider,
-                ssrf_blocked=True,
+                ssrf_blocked=is_ssrf,
                 error_message=reason,
             )
+
 
         visited_urls: Set[str] = set()
         hops: List[RedirectHop] = []
@@ -255,9 +257,10 @@ class ControlledRedirectResolver:
                     # Validate next hop against SSRF & DNS rebinding
                     is_safe_next, next_reason, next_ips = self.ssrf_validator.validate_url(next_url)
                     if not is_safe_next:
-                        ssrf_blocked = True
-                        error_msg = f"Hop {hop_idx + 1} blocked by SSRF policy: {next_reason}"
+                        ssrf_blocked = any(kw in next_reason.lower() for kw in ["prohibited", "private", "loopback", "metadata", "internal"])
+                        error_msg = f"Hop {hop_idx + 1} validation failed: {next_reason}"
                         break
+
 
                     prev_domain = curr_domain
                     current_url = next_url

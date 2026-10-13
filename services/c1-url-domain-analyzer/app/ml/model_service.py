@@ -77,6 +77,7 @@ class MlInferenceService:
         self,
         raw_url: str,
         lexical_features: Optional[UrlLexicalFeatures] = None,
+        domain_data: Optional[Dict[str, Any]] = None,
     ) -> MlPredictionResult:
         """Execute fast, single-URL machine learning inference."""
         if not self.is_loaded or self.model is None or self.preprocessor is None:
@@ -94,8 +95,8 @@ class MlInferenceService:
 
         t0 = time.perf_counter()
 
-        # 1. Extract feature dictionary and vector
-        feat_dict = self.feature_extractor.extract_dict(raw_url)
+        # 1. Extract feature dictionary and vector (incorporating domain data if present)
+        feat_dict = self.feature_extractor.extract_dict(raw_url, domain_data=domain_data)
         df_input = pd.DataFrame([[feat_dict[name] for name in FEATURE_NAMES]], columns=FEATURE_NAMES)
 
         # 2. Transform through fitted preprocessing pipeline

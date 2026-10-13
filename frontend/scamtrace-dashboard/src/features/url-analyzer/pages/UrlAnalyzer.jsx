@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Search, ShieldAlert, ShieldCheck, AlertTriangle, Layers, Globe, Code, Key, Terminal, GitFork, Cpu, Shield, CornerDownRight, ExternalLink, Link2, BrainCircuit } from 'lucide-react';
+import { Search, ShieldAlert, ShieldCheck, AlertTriangle, Layers, Globe, Code, Key, Terminal, GitFork, Cpu, Shield, CornerDownRight, ExternalLink, Link2, BrainCircuit, Scale, Sliders, FileText, CheckCircle2, Info, ArrowLeft } from 'lucide-react';
+
 
 export default function UrlAnalyzer() {
   const [urlInput, setUrlInput] = useState('');
@@ -66,20 +68,29 @@ export default function UrlAnalyzer() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10 font-sans">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen w-full bg-slate-950 text-slate-100 px-4 py-6 sm:px-6 md:px-8 lg:px-10 xl:px-12 font-sans overflow-x-hidden">
+      <div className="w-full max-w-none space-y-8">
         
         {/* Header */}
-        <header className="border-b border-slate-800 pb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Layers className="w-8 h-8 text-cyan-400" />
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              Intelligent URL & Domain Analyzer
-            </h1>
+        <header className="border-b border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Layers className="w-8 h-8 text-cyan-400 shrink-0" />
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                Intelligent URL & Domain Analyzer
+              </h1>
+            </div>
+            <p className="text-slate-400 text-xs sm:text-sm">
+              Component C1 — Multi-Layer URL & Domain Intelligence Framework (Layers 1–4 Inference & Scoring Engine)
+            </p>
           </div>
-          <p className="text-slate-400 text-sm">
-            Component C1 — Multi-Layer URL & Domain Intelligence Framework (Layer 1 Lexical Feature Extraction Engine)
-          </p>
+          <Link
+            to="/"
+            className="self-start sm:self-center px-3.5 py-2 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition flex items-center gap-2 shrink-0 shadow-sm"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            ScamTrace Portal
+          </Link>
         </header>
 
         {/* Input Form */}
@@ -151,8 +162,261 @@ export default function UrlAnalyzer() {
               )}
             </div>
 
+            {/* Explainable Risk Scoring Engine & Factor Attribution Card */}
+            {result.risk_assessment && (
+              <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 space-y-6">
+                
+                {/* Header & Meta Badges */}
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+                      <Scale className="w-5 h-5 text-amber-400" /> Explainable Risk Intelligence & Attribution
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Multi-channel evidence synthesis combining lexical features, domain intelligence, infrastructure, and ML with dynamic weight renormalization.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-mono border border-slate-700">
+                      Engine: {result.risk_assessment.engine_version}
+                    </span>
+                    <span className="px-2.5 py-1 rounded bg-indigo-950/60 text-indigo-300 font-mono border border-indigo-800/40">
+                      ML Model: {result.risk_assessment.model_version || 'None'}
+                    </span>
+                    <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-400 font-mono border border-slate-700">
+                      {new Date(result.risk_assessment.analysis_timestamp).toLocaleTimeString()} UTC
+                    </span>
+                  </div>
+                </div>
+
+                {/* Score vs Model Probability Comparison Banner */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/70 border border-slate-800/80 rounded-xl p-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                    <div>
+                      <div className="text-xs text-slate-400 font-medium">Consolidated Risk Score (R)</div>
+                      <div className="text-xs text-slate-500 mt-0.5">Multi-channel synthesized score</div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-xl font-bold font-mono ${result.risk_assessment.risk_score >= 75 ? 'text-red-400' : result.risk_assessment.risk_score >= 50 ? 'text-orange-400' : result.risk_assessment.risk_score >= 25 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                        {result.risk_assessment.risk_score} / 100
+                      </div>
+                      <span className="text-[10px] text-slate-400 uppercase tracking-wider">{result.risk_assessment.classification}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                    <div>
+                      <div className="text-xs text-indigo-400 font-medium">Supervised Model Probability (P)</div>
+                      <div className="text-xs text-slate-500 mt-0.5">Independent ML feature inference</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-bold font-mono text-indigo-300">
+                        {result.ml_prediction && result.ml_prediction.is_model_loaded 
+                          ? `${(result.ml_prediction.malicious_probability * 100).toFixed(1)}%` 
+                          : 'N/A (Offline)'}
+                      </div>
+                      <span className="text-[10px] text-indigo-400/80 uppercase tracking-wider">
+                        {result.ml_prediction && result.ml_prediction.is_model_loaded ? result.ml_prediction.predicted_label : 'Unloaded'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dynamic Channel Weights & Normalized Sub-scores */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                      <Sliders className="w-4 h-4" /> Active Channels & Dynamic Weights Distribution
+                    </h4>
+                    <span className="text-[11px] text-slate-500 italic">Weights dynamically renormalized over available services</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3">
+                    {[
+                      { key: 'lexical_structural', label: 'Lexical / Structural' },
+                      { key: 'entropy_obfuscation', label: 'Entropy & Evasion' },
+                      { key: 'homoglyph_lookalike', label: 'Homoglyph / Lookalike' },
+                      { key: 'domain_registration', label: 'Registration & Age' },
+                      { key: 'dns_reputation', label: 'DNS & Threat Feeds' },
+                      { key: 'dga', label: 'DGA Algorithmic' },
+                      { key: 'shortener_redirect', label: 'Redirects & SSRF' },
+                      { key: 'machine_learning', label: 'Machine Learning' },
+                    ].map(ch => {
+                      const weight = result.risk_assessment.active_weights[ch.key] || 0;
+                      const score = result.risk_assessment.channel_scores[ch.key] || 0;
+                      const isActive = weight > 0;
+
+                      return (
+                        <div key={ch.key} className={`p-3 rounded-lg border text-xs space-y-1.5 ${isActive ? 'bg-slate-950/70 border-slate-800' : 'bg-slate-950/30 border-slate-800/40 opacity-50'}`}>
+                          <div className="flex justify-between items-center text-[11px]">
+                            <span className="text-slate-300 font-medium truncate">{ch.label}</span>
+                            <span className="font-mono text-cyan-400 font-bold shrink-0">
+                              {isActive ? `${(weight * 100).toFixed(1)}%` : 'Excluded'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-[11px] text-slate-400">
+                            <span>Sub-score</span>
+                            <span className={`font-mono font-semibold ${score >= 60 ? 'text-rose-400' : score >= 30 ? 'text-amber-400' : 'text-slate-300'}`}>
+                              {score.toFixed(1)}
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full transition-all duration-500 ${score >= 60 ? 'bg-rose-500' : score >= 30 ? 'bg-amber-400' : 'bg-cyan-500'}`}
+                              style={{ width: `${Math.min(score, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Top Contributing Risk Factors (Factor Attribution) */}
+                {result.risk_assessment.contributing_factors && result.risk_assessment.contributing_factors.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                      <FileText className="w-4 h-4" /> Top Contributing Risk Factors & Evidence Attribution
+                    </h4>
+                    
+                    <div className="space-y-2">
+                      {result.risk_assessment.contributing_factors.map((factor, idx) => {
+                        const isMitigating = factor.impact_score < 0;
+                        return (
+                          <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 gap-2 text-xs">
+                            <div className="space-y-1 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`font-semibold ${isMitigating ? 'text-emerald-400' : 'text-slate-200'}`}>
+                                  {factor.title}
+                                </span>
+                                <span className={`text-[10px] px-2 py-0.5 rounded font-mono uppercase tracking-wider border ${factor.epistemic_type === 'fact' ? 'bg-cyan-950/40 text-cyan-400 border-cyan-800/40' : factor.epistemic_type === 'heuristic' ? 'bg-amber-950/40 text-amber-400 border-amber-800/40' : 'bg-purple-950/40 text-purple-400 border-purple-800/40'}`}>
+                                  {factor.epistemic_type}
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-mono">
+                                  [{factor.category}]
+                                </span>
+                              </div>
+                              <p className="text-slate-400 text-[11px] leading-relaxed">
+                                {factor.evidence}
+                              </p>
+                            </div>
+
+                            <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shrink-0">
+                              <span className={`font-mono font-bold text-sm ${isMitigating ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {factor.impact_score > 0 ? `+${factor.impact_score.toFixed(1)}` : factor.impact_score.toFixed(1)} pts
+                              </span>
+                              <span className="text-[10px] text-slate-500 uppercase">
+                                Confidence: {factor.confidence}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Epistemological Tier Separation (Facts vs Heuristics vs Predictions) */}
+                {result.risk_assessment.epistemic_breakdown && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                      <BrainCircuit className="w-4 h-4 text-cyan-400" /> Epistemological Evidence Hierarchy
+                    </h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      
+                      {/* Observed Facts */}
+                      <div className="bg-slate-950/70 border border-cyan-900/30 rounded-xl p-4 space-y-2">
+                        <div className="flex items-center justify-between border-b border-cyan-900/30 pb-2">
+                          <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Observed Facts
+                          </span>
+                          <span className="text-[10px] text-cyan-300/70 font-mono">
+                            {result.risk_assessment.epistemic_breakdown.observed_facts.length}
+                          </span>
+                        </div>
+                        <ul className="space-y-1.5 text-[11px] text-slate-300">
+                          {result.risk_assessment.epistemic_breakdown.observed_facts.map((fact, idx) => (
+                            <li key={idx} className="flex items-start gap-1.5 text-cyan-200/90">
+                              <span className="text-cyan-400 font-bold shrink-0">•</span>
+                              <span>{fact}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Heuristic Indicators */}
+                      <div className="bg-slate-950/70 border border-amber-900/30 rounded-xl p-4 space-y-2">
+                        <div className="flex items-center justify-between border-b border-amber-900/30 pb-2">
+                          <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                            <AlertTriangle className="w-3.5 h-3.5" /> Heuristic Indicators
+                          </span>
+                          <span className="text-[10px] text-amber-300/70 font-mono">
+                            {result.risk_assessment.epistemic_breakdown.heuristic_indicators.length}
+                          </span>
+                        </div>
+                        {result.risk_assessment.epistemic_breakdown.heuristic_indicators.length > 0 ? (
+                          <ul className="space-y-1.5 text-[11px] text-slate-300">
+                            {result.risk_assessment.epistemic_breakdown.heuristic_indicators.map((heur, idx) => (
+                              <li key={idx} className="flex items-start gap-1.5 text-amber-200/90">
+                                <span className="text-amber-400 font-bold shrink-0">•</span>
+                                <span>{heur}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="text-[11px] text-slate-500 italic p-2 text-center">
+                            No heuristic anomaly thresholds breached.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Model Predictions */}
+                      <div className="bg-slate-950/70 border border-purple-900/30 rounded-xl p-4 space-y-2">
+                        <div className="flex items-center justify-between border-b border-purple-900/30 pb-2">
+                          <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider flex items-center gap-1">
+                            <Cpu className="w-3.5 h-3.5" /> Model Predictions
+                          </span>
+                          <span className="text-[10px] text-purple-300/70 font-mono">
+                            {result.risk_assessment.epistemic_breakdown.model_predictions.length}
+                          </span>
+                        </div>
+                        <ul className="space-y-1.5 text-[11px] text-slate-300">
+                          {result.risk_assessment.epistemic_breakdown.model_predictions.map((pred, idx) => (
+                            <li key={idx} className="flex items-start gap-1.5 text-purple-200/90">
+                              <span className="text-purple-400 font-bold shrink-0">•</span>
+                              <span>{pred}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Analysis Limitations Banner */}
+                {result.risk_assessment.analysis_limitations && result.risk_assessment.analysis_limitations.length > 0 && (
+                  <div className="bg-blue-950/20 border border-blue-900/40 rounded-xl p-4 space-y-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+                      <Info className="w-4 h-4" /> Service Limitations & Telemetry Fallbacks ({result.risk_assessment.analysis_limitations.length})
+                    </h4>
+                    <ul className="space-y-1 text-xs text-blue-200/80">
+                      {result.risk_assessment.analysis_limitations.map((lim, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5">
+                          <span className="text-blue-400 shrink-0">ℹ</span>
+                          <span>{lim}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+              </div>
+            )}
+
             {/* Feature Extraction Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
               
               {/* Structural & Length Features */}
               <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-3">
