@@ -13,11 +13,13 @@ from app.schemas.url_schema import (
     CompleteUrlDomainAnalysisResult,
     DgaAnalysisFeatures,
     DomainIntelligenceReport,
+    MlPredictionResult,
     RedirectChainFeatures,
     ThreatInfrastructureReport,
     UrlAnalysisRequest,
     UrlLexicalFeatures,
 )
+from app.ml.model_service import get_ml_service
 
 router = APIRouter(tags=["URL, Domain & Threat Infrastructure Intelligence"])
 
@@ -26,6 +28,7 @@ domain_intelligence_analyzer = DomainIntelligenceAnalyzer()
 dga_analyzer = DgaAnalyzer()
 redirect_resolver = ControlledRedirectResolver()
 threat_infra_analyzer = ThreatInfrastructureAnalyzer()
+ml_service = get_ml_service()
 
 
 @router.post(
@@ -147,3 +150,32 @@ async def extract_features(payload: UrlAnalysisRequest) -> UrlLexicalFeatures:
         )
 
     return lexical_analyzer.extract_features(payload.url)
+
+
+@router.post(
+    "/api/v1/ml-predict",
+    response_model=MlPredictionResult,
+    summary="Direct Machine Learning classifier prediction",
+)
+async def ml_predict(payload: UrlAnalysisRequest) -> MlPredictionResult:
+    """Classify a URL using the loaded machine learning model without running full multi-layer scans."""
+    if not payload.url or not payload.url.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="URL field cannot be empty.",
+        )
+
+    return ml_service.predict(payload.url)
+
+
+@router.get(
+    "/api/v1/ml-model-status",
+    summary="Get active ML model metadata and operational status",
+)
+async def ml_model_status():
+    """Retrieve metadata, active algorithm, decision threshold, and performance metrics of the loaded model."""
+    return {
+        "is_model_loaded": ml_service.is_loaded,
+        "model_dir": str(ml_service.model_dir),
+        "metadata": ml_service.metadata,
+    }
