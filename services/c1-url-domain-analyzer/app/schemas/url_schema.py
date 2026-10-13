@@ -231,6 +231,63 @@ class MlPredictionResult(BaseModel):
     top_risk_features: List[str] = Field(default_factory=list, description="Primary features driving the prediction")
 
 
+class ContributingRiskFactor(BaseModel):
+    """Specific evidence-backed factor contributing to the overall risk assessment."""
+    factor_id: str = Field(..., description="Unique technical identifier for the contributing risk factor")
+    title: str = Field(..., description="Human-readable title describing the observed factor")
+    category: str = Field(..., description="Analysis channel (e.g. lexical, registration, dns, dga, ml, redirect)")
+    impact_score: float = Field(..., description="Score contribution (+ points toward risk, - mitigating credits)")
+    evidence: str = Field(..., description="Verifiable empirical evidence backing this observation")
+    confidence: str = Field("medium", description="Confidence level: 'high', 'medium', or 'low'")
+    epistemic_type: str = Field("heuristic", description="Epistemic tier: 'fact', 'heuristic', or 'prediction'")
+
+
+class EpistemicEvidenceBreakdown(BaseModel):
+    """Strict epistemological separation between observed facts, heuristics, and model predictions."""
+    observed_facts: List[str] = Field(
+        default_factory=list,
+        description="Deterministic, empirically verified measurements (DNS records, registration dates, HTTP status)",
+    )
+    heuristic_indicators: List[str] = Field(
+        default_factory=list,
+        description="Rule-based expert indicators (entropy thresholds, keyword matches, confusable scripts)",
+    )
+    model_predictions: List[str] = Field(
+        default_factory=list,
+        description="Statistical model outputs (ML classifier malicious probability, DGA likelihood)",
+    )
+
+
+class ExplainableRiskAssessment(BaseModel):
+    """Comprehensive explainable audit trail detailing multi-channel risk scoring."""
+    risk_score: float = Field(..., ge=0.0, le=100.0, description="Normalized multi-channel risk score (0-100)")
+    classification: str = Field(..., description="Categorical risk classification (Low Risk, Suspicious, Medium Risk, High Risk Scam)")
+    risk_level: str = Field(..., description="Standardized risk level compatible with gateway")
+    engine_version: str = Field("c1-explainable-risk-v1.0.0", description="Scoring engine algorithm version")
+    model_version: Optional[str] = Field(None, description="Active ML classifier version or algorithm")
+    analysis_timestamp: str = Field(..., description="ISO 8601 UTC timestamp when scoring took place")
+    active_weights: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Dynamically renormalized weights across all observable channels (sums to 1.0)",
+    )
+    channel_scores: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Normalized sub-scores (0-100) per intelligence channel",
+    )
+    contributing_factors: List[ContributingRiskFactor] = Field(
+        default_factory=list,
+        description="Ranked list of key factors driving score up or down",
+    )
+    epistemic_breakdown: EpistemicEvidenceBreakdown = Field(
+        ...,
+        description="Classification of findings into facts, heuristics, and statistical predictions",
+    )
+    analysis_limitations: List[str] = Field(
+        default_factory=list,
+        description="Explicit documentation of missing services, rate limits, or unscored channels",
+    )
+
+
 class CompleteUrlDomainAnalysisResult(BaseModel):
     """Integrated multi-layer result containing URL Lexical, Domain Intelligence, Threat Infrastructure, and ML."""
     component: str = "C1_URL_DOMAIN"
@@ -243,5 +300,7 @@ class CompleteUrlDomainAnalysisResult(BaseModel):
     domain_intelligence: DomainIntelligenceReport = Field(..., description="Domain registration, DNS, and reputation intelligence")
     threat_infrastructure: Optional[ThreatInfrastructureReport] = Field(None, description="DGA and redirect chain intelligence")
     ml_prediction: Optional[MlPredictionResult] = Field(None, description="Machine learning classifier inference result")
+    risk_assessment: Optional[ExplainableRiskAssessment] = Field(None, description="Explainable multi-channel risk audit trail")
     risk_indicators: List[str] = Field(default_factory=list, description="Unified list of evidence-based risk indicators")
     explanation: str = Field(..., description="Summary narrative explaining analysis results and evidence")
+
