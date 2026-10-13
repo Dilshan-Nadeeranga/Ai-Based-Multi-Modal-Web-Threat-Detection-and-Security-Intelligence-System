@@ -1,7 +1,7 @@
 {
-  "model_name": "Decision Tree",
-  "model_type": "DecisionTreeClassifier",
-  "optimal_threshold": 0.1,
+  "model_name": "Random Forest (Baseline)",
+  "model_type": "RandomForestClassifier",
+  "optimal_threshold": 0.31,
   "feature_names": [
     "url_length",
     "hostname_length",
@@ -21,6 +21,7 @@
     "num_subdomains",
     "path_depth",
     "num_query_params",
+    "is_https",
     "suspicious_keyword_count",
     "has_suspicious_keyword",
     "is_suspicious_tld",
@@ -49,17 +50,21 @@
     "dga_consonant_ratio",
     "dga_digit_ratio",
     "dga_max_consecutive_consonants",
-    "dga_bigram_perplexity"
+    "dga_bigram_perplexity",
+    "domain_age_days",
+    "is_nrd",
+    "has_dns_records",
+    "has_domain_data"
   ],
-  "feature_count": 47,
+  "feature_count": 52,
   "metrics": {
-    "accuracy": 1.0,
-    "precision": 1.0,
-    "recall": 1.0,
-    "f1_score": 1.0,
-    "roc_auc": 1.0,
-    "false_positive_rate": 0.0,
-    "avg_latency_ms": 0.0172
+    "accuracy": 0.9754,
+    "precision": 0.9889,
+    "recall": 0.9587,
+    "f1_score": 0.9735,
+    "roc_auc": 0.9967,
+    "false_positive_rate": 0.0097,
+    "avg_latency_ms": 0.0007
   },
-  "trained_at": "2026-10-13T05:19:46.786940+00:00"
+  "trained_at": "2026-10-13T14:41:17.304055+00:00"
 }
