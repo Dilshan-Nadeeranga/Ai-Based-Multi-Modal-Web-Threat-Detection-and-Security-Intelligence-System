@@ -1,19 +1,24 @@
-"""Whole-dataset integrity checks for ``dataset_metadata.jsonl``."""
+"""Whole-dataset integrity checks for ``dataset_metadata.jsonl`` and ``webpage_captures.jsonl``."""
 
 from __future__ import annotations
 
+import hashlib
+import io
 import logging
 from collections import Counter
 from pathlib import Path
 from typing import Literal
 
+from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, ValidationError
 
 from app.config import Settings
 from app.exceptions import StorageError
+from app.schemas.capture_schema import WebpageCapture
 from app.schemas.dataset_schema import DatasetSample, LabelEvent
+from app.services.capture_service import candidate_urls
 from app.services.image_validator import ImageValidator
-from app.services.metadata_service import MetadataStore
+from app.services.metadata_service import MetadataStore, read_jsonl
 from app.utils.file_utils import from_dataset_path
 
 logger = logging.getLogger(__name__)
@@ -101,6 +106,7 @@ class DatasetValidator:
             findings.extend(self._check_files(line, sample, referenced_images))
         findings.extend(self._check_labels({s.sample_id: s for _, s in samples}))
         findings.extend(self._check_orphan_images(referenced_images))
+        findings.extend(self._check_captures({s.sample_id: s for _, s in samples}))
 
         errors = sum(1 for f in findings if f.severity == "error")
         warnings = len(findings) - errors
@@ -291,3 +297,78 @@ class DatasetValidator:
                     )
                 )
         return findings
+
+    def _check_captures(self, samples: dict[str, DatasetSample]) -> list[Finding]:
+        """``webpage_captures.jsonl``: schema, sample/URL links and screenshot files."""
+        findings: list[Finding] = []
+        captures = read_jsonl(self.settings.webpage_captures_path)
+        for issue in captures.issues:
+            findings.append(Finding(severity="error", code="INVALID_CAPTURE_JSONL",
+                                    message=f"webpage_captures.jsonl: {issue.message}", line=issue.line))
+        owners: dict[str, int] = {}
+        referenced: set[Path] = set()
+        for line, row in captures.rows:
+            raw_id = row.get("sample_id") if isinstance(row.get("sample_id"), str) else None
+            try:
+                capture = WebpageCapture.model_validate(row)
+            except ValidationError as exc:
+                error = exc.errors()[0]
+                where = ".".join(map(str, error.get("loc", ()))) or "record"
+                findings.append(Finding(
+                    severity="error", code="INVALID_CAPTURE",
+                    message=f"webpage_captures.jsonl line {line}: {where}: "
+                            f"{str(error.get('msg', '')).removeprefix('Value error, ')}",
+                    line=line, sample_id=raw_id,
+                ))
+                continue
+            sid = capture.sample_id
+            sample = samples.get(sid)
+            if sample is None:
+                findings.append(Finding(severity="error", code="CAPTURE_ORPHAN",
+                                        message=f"webpage_captures.jsonl line {line} refers to an unknown sample",
+                                        line=line, sample_id=sid))
+            elif capture.original_url not in candidate_urls(sample):
+                findings.append(Finding(severity="error", code="CAPTURE_URL_MISMATCH",
+                                        message=f"webpage_captures.jsonl line {line}: {capture.original_url} "
+                                                "is not a URL of the post", line=line, sample_id=sid))
+            if not capture.screenshot:
+                continue
+            if capture.screenshot in owners:
+                findings.append(Finding(severity="error", code="DUPLICATE_SCREENSHOT_PATH",
+                                        message=f"{capture.screenshot} is used by lines {owners[capture.screenshot]} "
+                                                f"and {line}", line=line, sample_id=sid))
+            owners.setdefault(capture.screenshot, line)
+            path = self._resolve(capture.screenshot, line, sid, findings)
+            if path is None:
+                continue
+            referenced.add(path)
+            findings.extend(self._check_screenshot_file(path, capture, line))
+
+        directory = self.settings.webpage_screenshots_dir
+        if directory.is_dir():
+            for entry in sorted(directory.iterdir()):
+                if entry.is_file() and entry.name != ".gitkeep" and entry.resolve() not in referenced:
+                    findings.append(Finding(
+                        severity="warning", code="ORPHAN_SCREENSHOT_FILE",
+                        message=f"data/webpage_screenshots/{entry.name} is not referenced by any capture record",
+                    ))
+        return findings
+
+    @staticmethod
+    def _check_screenshot_file(path: Path, capture: WebpageCapture, line: int) -> list[Finding]:
+        sid = capture.sample_id
+        if not path.is_file():
+            return [Finding(severity="error", code="SCREENSHOT_MISSING",
+                            message=f"{capture.screenshot} does not exist", line=line, sample_id=sid)]
+        data = path.read_bytes()
+        try:
+            with Image.open(io.BytesIO(data)) as image:
+                image.verify()
+        except (UnidentifiedImageError, OSError, ValueError) as exc:
+            return [Finding(severity="error", code="SCREENSHOT_INVALID",
+                            message=f"{capture.screenshot} is not a readable image ({exc})", line=line, sample_id=sid)]
+        if capture.screenshot_sha256 and hashlib.sha256(data).hexdigest() != capture.screenshot_sha256:
+            return [Finding(severity="error", code="SCREENSHOT_MODIFIED",
+                            message=f"{capture.screenshot} does not match the recorded sha256",
+                            line=line, sample_id=sid)]
+        return []

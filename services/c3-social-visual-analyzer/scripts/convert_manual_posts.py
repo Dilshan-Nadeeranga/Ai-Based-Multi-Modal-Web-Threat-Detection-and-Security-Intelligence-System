@@ -42,7 +42,7 @@ from pathlib import Path
 from _bootstrap import setup
 
 from app.schemas.dataset_classes import LabelStatus, Platform, ScamType
-from app.utils.url_utils import normalize_evidence_url
+from app.utils.url_utils import extract_urls
 
 IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp")
 RESERVED_TXT = {"post_info.txt", "caption.txt", "imported.txt"}
@@ -59,9 +59,6 @@ TIMESTAMP_RE = re.compile(
     rf"|yesterday{_TIME}|just now)\s*[.\u00b7]?\s*$",
     re.IGNORECASE,
 )
-URL_RE = re.compile(r"(?:https?://|www\.)[^\s<>\"']+", re.IGNORECASE)
-_URL_TRAILING = ".,;:!?)]}'\""
-
 
 @dataclass
 class ParsedPost:
@@ -89,21 +86,6 @@ def read_text(path: Path) -> str:
         return data.decode("utf-8-sig")
     except UnicodeDecodeError:
         return data.decode("cp1252", errors="replace")
-
-
-def extract_urls(text: str) -> list[str]:
-    urls: list[str] = []
-    for match in URL_RE.findall(text):
-        candidate = match.rstrip(_URL_TRAILING)
-        if candidate.lower().startswith("www."):
-            candidate = "https://" + candidate
-        try:
-            url = normalize_evidence_url(candidate)
-        except ValueError:
-            continue
-        if url not in urls:
-            urls.append(url)
-    return urls
 
 
 def parse_post_text(text: str) -> ParsedPost:

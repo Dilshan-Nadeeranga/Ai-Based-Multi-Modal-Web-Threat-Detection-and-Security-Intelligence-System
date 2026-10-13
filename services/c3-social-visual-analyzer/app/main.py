@@ -9,10 +9,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app import __version__
-from app.api import dataset_routes, health_routes, preprocessing_routes
+from app.api import capture_routes, dataset_routes, health_routes, preprocessing_routes
 from app.api.responses import error_response, service_error_response
 from app.config import Settings, get_settings
 from app.exceptions import ServiceError
+from app.services.capture_service import WebCaptureService
 from app.services.dataset_service import DatasetService
 from app.services.image_pipeline import ImagePipeline
 from app.services.statistics_service import StatisticsService
@@ -30,19 +31,21 @@ def configure_logging(level: str) -> None:
 def create_app(
     settings: Settings | None = None,
     pipeline: ImagePipeline | None = None,
+    capture_service: WebCaptureService | None = None,
 ) -> FastAPI:
-    """Application factory; tests inject their own settings/pipeline."""
+    """Application factory; tests inject their own settings/pipeline/capture service."""
     settings = settings or get_settings()
     configure_logging(settings.log_level)
 
     app = FastAPI(
         title="ScamTrace - Social Media & Web Visual Threat Analyzer",
-        description="Phase 1: OCR and image preprocessing pipeline, and multimodal dataset preparation.",
+        description="OCR and image preprocessing, multimodal dataset preparation and destination web capture.",
         version=__version__,
     )
     app.state.pipeline = pipeline or ImagePipeline.from_settings(settings)
     app.state.dataset_service = DatasetService(settings)
     app.state.statistics_service = StatisticsService(settings)
+    app.state.capture_service = capture_service or WebCaptureService(settings)
 
     @app.exception_handler(RequestValidationError)
     async def _request_validation_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
@@ -67,6 +70,7 @@ def create_app(
     app.include_router(health_routes.router)
     app.include_router(preprocessing_routes.router)
     app.include_router(dataset_routes.router)
+    app.include_router(capture_routes.router)
     return app
 
 

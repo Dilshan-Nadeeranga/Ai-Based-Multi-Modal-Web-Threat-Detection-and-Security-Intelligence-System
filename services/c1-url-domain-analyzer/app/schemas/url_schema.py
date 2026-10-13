@@ -218,8 +218,21 @@ class Layer1LexicalAnalysisResult(BaseModel):
     explanation: str = Field(..., description="Summary narrative explaining feature analysis results")
 
 
+class MlPredictionResult(BaseModel):
+    """Machine learning classifier prediction and inference telemetry."""
+    is_model_loaded: bool = Field(False, description="True if trained ML model is loaded and active")
+    model_name: Optional[str] = Field(None, description="Active classifier algorithm name")
+    malicious_probability: float = Field(0.0, description="Predicted probability of being malicious (0.0 to 1.0)")
+    predicted_label: str = Field("legitimate", description="Predicted classification: 'legitimate' or 'malicious'")
+    decision_threshold: float = Field(0.5, description="Calibrated decision threshold applied")
+    confidence: float = Field(0.0, description="Confidence percentage")
+    inference_time_ms: float = Field(0.0, description="Prediction latency in milliseconds")
+    feature_count: int = Field(0, description="Total features evaluated by model")
+    top_risk_features: List[str] = Field(default_factory=list, description="Primary features driving the prediction")
+
+
 class CompleteUrlDomainAnalysisResult(BaseModel):
-    """Integrated multi-layer result containing URL Lexical, Domain Intelligence, and Threat Infrastructure."""
+    """Integrated multi-layer result containing URL Lexical, Domain Intelligence, Threat Infrastructure, and ML."""
     component: str = "C1_URL_DOMAIN"
     layer: str = "Multi_Layer_URL_and_Domain_Intelligence"
     status: str = "success"
@@ -229,5 +242,6 @@ class CompleteUrlDomainAnalysisResult(BaseModel):
     features: UrlLexicalFeatures = Field(..., description="Extracted lexical and structural features")
     domain_intelligence: DomainIntelligenceReport = Field(..., description="Domain registration, DNS, and reputation intelligence")
     threat_infrastructure: Optional[ThreatInfrastructureReport] = Field(None, description="DGA and redirect chain intelligence")
+    ml_prediction: Optional[MlPredictionResult] = Field(None, description="Machine learning classifier inference result")
     risk_indicators: List[str] = Field(default_factory=list, description="Unified list of evidence-based risk indicators")
     explanation: str = Field(..., description="Summary narrative explaining analysis results and evidence")
