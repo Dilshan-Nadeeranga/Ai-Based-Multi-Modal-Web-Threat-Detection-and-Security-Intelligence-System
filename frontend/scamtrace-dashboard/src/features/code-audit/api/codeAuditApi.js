@@ -109,17 +109,10 @@ export function getFinding(findingId) {
   )
 }
 
-/**
- * POST /findings/{findingId}/remediation
- * Generates an UNVALIDATED AI remediation suggestion (never applied automatically).
- */
-export async function generateRemediation(findingId) {
+async function postJson(url, fallbackMessage) {
   let response
   try {
-    response = await fetch(
-      `${API_BASE_URL}/findings/${encodeURIComponent(findingId)}/remediation`,
-      { method: 'POST' }
-    )
+    response = await fetch(url, { method: 'POST' })
   } catch {
     throw new CodeAuditApiError(
       'Backend is unavailable. Please make sure the analysis service is running.',
@@ -133,8 +126,46 @@ export async function generateRemediation(findingId) {
     // non-JSON body
   }
   if (!response.ok) {
-    const message = (data && (data.message || data.detail)) || 'Unable to generate a remediation suggestion.'
-    throw new CodeAuditApiError(typeof message === 'string' ? message : 'Unable to generate a remediation suggestion.', response.status)
+    const message = data && (data.message || data.detail)
+    throw new CodeAuditApiError(typeof message === 'string' ? message : fallbackMessage, response.status)
   }
   return data
+}
+
+/**
+ * POST /findings/{findingId}/remediation
+ * Generates an UNVALIDATED AI remediation suggestion (never applied automatically).
+ */
+export function generateRemediation(findingId) {
+  return postJson(
+    `${API_BASE_URL}/findings/${encodeURIComponent(findingId)}/remediation`,
+    'Unable to generate a remediation suggestion.'
+  )
+}
+
+/** GET /findings/{findingId}/remediations (newest first) */
+export function listRemediations(findingId) {
+  return requestJson(
+    `${API_BASE_URL}/findings/${encodeURIComponent(findingId)}/remediations`,
+    'Unable to load remediation suggestions.'
+  )
+}
+
+/**
+ * POST /remediations/{remediationId}/validate
+ * Runs deterministic static checks on the candidate patch (never applied or executed).
+ */
+export function validateRemediation(remediationId) {
+  return postJson(
+    `${API_BASE_URL}/remediations/${encodeURIComponent(remediationId)}/validate`,
+    'Unable to validate the candidate patch.'
+  )
+}
+
+/** GET /validations/{validationId} */
+export function getValidation(validationId) {
+  return requestJson(
+    `${API_BASE_URL}/validations/${encodeURIComponent(validationId)}`,
+    'Unable to load the validation result.'
+  )
 }
