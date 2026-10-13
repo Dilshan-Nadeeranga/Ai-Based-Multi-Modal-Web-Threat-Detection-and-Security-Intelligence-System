@@ -62,6 +62,7 @@ class ModelEvaluationResult:
     avg_latency_ms: float
     is_baseline: bool
     hyperparameters: Dict[str, Any]
+    training_time_sec: float = 0.0
 
 
 @dataclass
@@ -95,16 +96,24 @@ class MlTrainingPipeline:
         val_size: float = 0.1,
         split_strategy: str = "domain_grouped",
         target_max_fpr: float = 0.05,
+        model_selection: str = "all",
+        batch_size: int = 10000,
+        chunk_size: Optional[int] = None,
+        max_samples: Optional[int] = None,
     ) -> ComparisonReport:
-        """Execute end-to-end training and evaluation pipeline."""
+        """Execute end-to-end training and evaluation pipeline with memory optimization for 200k+ records."""
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        # 1. Load and clean dataset
+        # 1. Load and clean dataset (supporting chunked streaming for 200k+ records)
         logger.info("Loading dataset from: %s", dataset_path)
-        raw_df = self.dataset_loader.load_dataset(dataset_path)
+        raw_df = self.dataset_loader.load_dataset(
+            dataset_path,
+            chunk_size=chunk_size,
+            max_samples=max_samples,
+        )
 
         # 2. Partition dataset into train, validation, test
-        logger.info("Splitting dataset using strategy: '%s'", split_strategy)
+        logger.info("Splitting dataset (%d records) using strategy: '%s'", len(raw_df), split_strategy)
         splits: DatasetSplits = self.dataset_loader.split_dataset(
             raw_df,
             test_size=test_size,
@@ -112,15 +121,39 @@ class MlTrainingPipeline:
             strategy=split_strategy,
         )
 
-        # 3. Extract features using the exact same feature engineering code
+        # 3. Extract features using pre-allocated float32 NumPy matrix (bounds RAM to ~40 MB per 200k)
         logger.info("Extracting %d features across all partitions...", len(FEATURE_NAMES))
-        X_train = self.feature_extractor.extract_dataframe(splits.train_df["url"].tolist())
+
+        domain_cols = [c for c in ["domain_age_days", "is_nrd", "has_dns_records"] if c in splits.train_df.columns]
+        domain_train = splits.train_df[domain_cols].to_dict(orient="records") if domain_cols else None
+        domain_val = splits.val_df[domain_cols].to_dict(orient="records") if domain_cols else None
+        domain_test = splits.test_df[domain_cols].to_dict(orient="records") if domain_cols else None
+
+        logger.info("Extracting training partition features (%d URLs)...", len(splits.train_df))
+        X_train = self.feature_extractor.extract_matrix(
+            splits.train_df["url"].tolist(),
+            domain_data_list=domain_train,
+            batch_size=batch_size,
+            show_progress=True,
+        )
         y_train = splits.train_df["label"].values
 
-        X_val = self.feature_extractor.extract_dataframe(splits.val_df["url"].tolist())
+        logger.info("Extracting validation partition features (%d URLs)...", len(splits.val_df))
+        X_val = self.feature_extractor.extract_matrix(
+            splits.val_df["url"].tolist(),
+            domain_data_list=domain_val,
+            batch_size=batch_size,
+            show_progress=False,
+        )
         y_val = splits.val_df["label"].values
 
-        X_test = self.feature_extractor.extract_dataframe(splits.test_df["url"].tolist())
+        logger.info("Extracting testing partition features (%d URLs)...", len(splits.test_df))
+        X_test = self.feature_extractor.extract_matrix(
+            splits.test_df["url"].tolist(),
+            domain_data_list=domain_test,
+            batch_size=batch_size,
+            show_progress=False,
+        )
         y_test = splits.test_df["label"].values
 
         # 4. Build and fit preprocessor ONLY on training data (Zero Data Leakage)
@@ -128,17 +161,20 @@ class MlTrainingPipeline:
             ("imputer", SimpleImputer(strategy="median")),
             ("scaler", StandardScaler()),
         ])
-        preprocessor.set_output(transform="pandas")
-        logger.info("Fitting preprocessor strictly on training data...")
-        X_train_proc = preprocessor.fit_transform(X_train)
-        X_val_proc = preprocessor.transform(X_val)
-        X_test_proc = preprocessor.transform(X_test)
+        logger.info("Fitting preprocessor strictly on training partition...")
+        X_train_df = pd.DataFrame(X_train, columns=FEATURE_NAMES)
+        X_val_df = pd.DataFrame(X_val, columns=FEATURE_NAMES)
+        X_test_df = pd.DataFrame(X_test, columns=FEATURE_NAMES)
+
+        X_train_proc = preprocessor.fit_transform(X_train_df)
+        X_val_proc = preprocessor.transform(X_val_df)
+        X_test_proc = preprocessor.transform(X_test_df)
 
         # Save fitted preprocessor
         joblib.dump(preprocessor, self.output_dir / "preprocessor.joblib")
 
         # 5. Define candidate models
-        models = self._initialize_models()
+        models = self._initialize_models(model_selection=model_selection)
 
         # 6. Train, evaluate, and calibrate thresholds for each model
         evaluation_results: Dict[str, ModelEvaluationResult] = {}
@@ -146,8 +182,11 @@ class MlTrainingPipeline:
 
         for model_id, (display_name, model_inst, is_baseline) in models.items():
             logger.info("Training %s (%s)...", display_name, model_id)
+            t_fit_start = time.perf_counter()
             model_inst.fit(X_train_proc, y_train)
+            fit_time_sec = time.perf_counter() - t_fit_start
             fitted_models[model_id] = model_inst
+            logger.info("Finished training %s in %.2f seconds.", display_name, fit_time_sec)
 
             # Find optimal decision threshold on validation set
             val_probs = model_inst.predict_proba(X_val_proc)[:, 1] if hasattr(model_inst, "predict_proba") else model_inst.predict(X_val_proc)
@@ -161,6 +200,7 @@ class MlTrainingPipeline:
                 y_test=y_test,
                 threshold=opt_thresh,
                 is_baseline=is_baseline,
+                training_time_sec=fit_time_sec,
             )
             evaluation_results[model_id] = eval_res
             joblib.dump(model_inst, self.output_dir / f"{model_id}.joblib")
@@ -186,14 +226,16 @@ class MlTrainingPipeline:
         self._save_reports(report, preprocessor, evaluation_results[recommended_model_id])
         return report
 
-    def _initialize_models(self) -> Dict[str, Tuple[str, Any, bool]]:
+    def _initialize_models(self, model_selection: str = "all") -> Dict[str, Tuple[str, Any, bool]]:
         """Instantiate models with balanced weights and reproducible seeds."""
-        return {
+        all_models = {
             "random_forest": (
                 "Random Forest (Baseline)",
                 RandomForestClassifier(
                     n_estimators=100,
-                    max_depth=12,
+                    max_depth=15,
+                    min_samples_split=4,
+                    min_samples_leaf=2,
                     class_weight="balanced",
                     random_state=self.random_seed,
                     n_jobs=-1,
@@ -233,6 +275,9 @@ class MlTrainingPipeline:
                 False,
             ),
         }
+        if model_selection in all_models:
+            return {model_selection: all_models[model_selection]}
+        return all_models
 
     def _calibrate_decision_threshold(
         self,
@@ -267,6 +312,7 @@ class MlTrainingPipeline:
         y_test: np.ndarray,
         threshold: float,
         is_baseline: bool,
+        training_time_sec: float = 0.0,
     ) -> ModelEvaluationResult:
         """Evaluate classifier metrics and benchmark inference speed."""
         # 1. Prediction probabilities and labels
@@ -314,6 +360,7 @@ class MlTrainingPipeline:
             avg_latency_ms=round(avg_latency_ms, 4),
             is_baseline=is_baseline,
             hyperparameters=model.get_params(),
+            training_time_sec=round(training_time_sec, 3),
         )
 
     def _select_recommended_model(
@@ -321,14 +368,10 @@ class MlTrainingPipeline:
         results: Dict[str, ModelEvaluationResult],
     ) -> Tuple[str, str]:
         """Rank models based on False Positive Rate, F1-Score, and inference speed."""
-        best_id = "random_forest"
+        best_id = next(iter(results.keys()))
         highest_composite = -100.0
 
         for mid, res in results.items():
-            # Composite scoring formula:
-            # Rewards high F1 (+40) and high ROC-AUC (+30)
-            # Heavily penalizes False Positive Rate (-40 * FPR)
-            # Penalizes high latency (-1 * latency_ms)
             composite = (
                 (res.f1_score * 40.0)
                 + (res.roc_auc * 30.0)
@@ -340,15 +383,16 @@ class MlTrainingPipeline:
                 best_id = mid
 
         winner = results[best_id]
-        baseline = results["random_forest"]
+        baseline = results.get("random_forest", winner)
 
         rationale = (
             f"Model '{winner.model_name}' achieved the strongest operational balance: "
             f"F1-Score: {winner.f1_score:.4f}, ROC-AUC: {winner.roc_auc:.4f}, "
             f"False Positive Rate: {winner.false_positive_rate:.4f}, "
-            f"and Inference Latency: {winner.avg_latency_ms:.4f} ms/sample. "
+            f"and Inference Latency: {winner.avg_latency_ms:.4f} ms/sample "
+            f"(Training Time: {winner.training_time_sec:.2f}s). "
         )
-        if best_id != "random_forest":
+        if best_id != "random_forest" and "random_forest" in results:
             rationale += (
                 f"Outperformed Random Forest baseline (FPR: {baseline.false_positive_rate:.4f}, "
                 f"F1: {baseline.f1_score:.4f}) with lower false alarms and faster evaluation."

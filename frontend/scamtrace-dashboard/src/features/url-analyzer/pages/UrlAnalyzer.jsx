@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Search, ShieldAlert, ShieldCheck, AlertTriangle, Layers, Globe, Code, Key, Terminal, GitFork, Cpu, Shield, CornerDownRight, ExternalLink, Link2, BrainCircuit, Scale, Sliders, FileText, CheckCircle2, Info } from 'lucide-react';
+import { Search, ShieldAlert, ShieldCheck, AlertTriangle, Layers, Globe, Code, Key, Terminal, GitFork, Cpu, Shield, CornerDownRight, ExternalLink, Link2, BrainCircuit, Scale, Sliders, FileText, CheckCircle2, Info, ArrowLeft } from 'lucide-react';
 
 
 export default function UrlAnalyzer() {
@@ -67,20 +68,29 @@ export default function UrlAnalyzer() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10 font-sans">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen w-full bg-slate-950 text-slate-100 px-4 py-6 sm:px-6 md:px-8 lg:px-10 xl:px-12 font-sans overflow-x-hidden">
+      <div className="w-full max-w-none space-y-8">
         
         {/* Header */}
-        <header className="border-b border-slate-800 pb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Layers className="w-8 h-8 text-cyan-400" />
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              Intelligent URL & Domain Analyzer
-            </h1>
+        <header className="border-b border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Layers className="w-8 h-8 text-cyan-400 shrink-0" />
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                Intelligent URL & Domain Analyzer
+              </h1>
+            </div>
+            <p className="text-slate-400 text-xs sm:text-sm">
+              Component C1 — Multi-Layer URL & Domain Intelligence Framework (Layers 1–4 Inference & Scoring Engine)
+            </p>
           </div>
-          <p className="text-slate-400 text-sm">
-            Component C1 — Multi-Layer URL & Domain Intelligence Framework (Layer 1 Lexical Feature Extraction Engine)
-          </p>
+          <Link
+            to="/"
+            className="self-start sm:self-center px-3.5 py-2 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition flex items-center gap-2 shrink-0 shadow-sm"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            ScamTrace Portal
+          </Link>
         </header>
 
         {/* Input Form */}
@@ -221,7 +231,7 @@ export default function UrlAnalyzer() {
                     <span className="text-[11px] text-slate-500 italic">Weights dynamically renormalized over available services</span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3">
                     {[
                       { key: 'lexical_structural', label: 'Lexical / Structural' },
                       { key: 'entropy_obfuscation', label: 'Entropy & Evasion' },

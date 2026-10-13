@@ -52,20 +52,59 @@ class DatasetLoader:
     def __init__(self, random_seed: int = 42) -> None:
         self.random_seed = random_seed
 
+    CANDIDATE_URL_COLS = ["url", "URL", "Url", "phish_url", "domain", "site", "link", "address", "hostname"]
+    CANDIDATE_LABEL_COLS = ["label", "Label", "class", "Class", "result", "type", "target", "status", "is_malicious", "verified"]
+
     def load_dataset(
         self,
         file_path: Union[str, Path],
-        url_col: str = "url",
-        label_col: str = "label",
+        url_col: Optional[str] = "url",
+        label_col: Optional[str] = "label",
         timestamp_col: Optional[str] = "collection_date",
+        chunk_size: Optional[int] = None,
+        max_samples: Optional[int] = None,
     ) -> pd.DataFrame:
-        """Load and sanitize URL dataset from file path."""
+        """Load, sanitize, and validate URL dataset with memory-efficient streaming for large files."""
         path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"Dataset file not found at: {path}")
 
-        # 1. Load raw file by extension
         suffix = path.suffix.lower()
+
+        # Handle chunked CSV/TSV loading for large datasets (e.g. 200,000+ records)
+        if suffix in [".csv", ".tsv"] and chunk_size is not None and chunk_size > 0:
+            sep = "\t" if suffix == ".tsv" else ","
+            cleaned_chunks: List[pd.DataFrame] = []
+            seen_urls: set = set()
+            total_loaded = 0
+
+            logger.info("Streaming large dataset '%s' in chunks of %d...", path.name, chunk_size)
+            for chunk_idx, chunk_df in enumerate(pd.read_csv(path, sep=sep, chunksize=chunk_size)):
+                u_col, l_col = self._resolve_columns(chunk_df, url_col, label_col)
+                chunk_df = chunk_df.rename(columns={u_col: "url", l_col: "label"})
+                cleaned_chunk = self._clean_and_canonicalize(
+                    chunk_df,
+                    timestamp_col=timestamp_col,
+                    seen_urls=seen_urls,
+                )
+                if not cleaned_chunk.empty:
+                    cleaned_chunks.append(cleaned_chunk)
+                    total_loaded += len(cleaned_chunk)
+
+                if max_samples and total_loaded >= max_samples:
+                    logger.info("Reached target limit of %d samples. Stopping stream.", max_samples)
+                    break
+
+            if not cleaned_chunks:
+                raise ValueError(f"No valid records found in dataset '{path}'.")
+
+            df = pd.concat(cleaned_chunks, ignore_index=True)
+            if max_samples and len(df) > max_samples:
+                df = df.iloc[:max_samples].reset_index(drop=True)
+            logger.info("Completed chunked loading: %d valid records ready.", len(df))
+            return df
+
+        # Standard file loading (CSV, Parquet, JSON)
         if suffix in [".csv", ".tsv"]:
             sep = "\t" if suffix == ".tsv" else ","
             df = pd.read_csv(path, sep=sep)
@@ -77,16 +116,45 @@ class DatasetLoader:
         else:
             raise ValueError(f"Unsupported file format '{suffix}'. Supported: .csv, .tsv, .parquet, .json, .jsonl")
 
-        # 2. Validate essential columns exist
-        if url_col not in df.columns:
-            raise ValueError(f"URL column '{url_col}' not present in dataset. Available: {list(df.columns)}")
-        if label_col not in df.columns:
-            raise ValueError(f"Label column '{label_col}' not present in dataset. Available: {list(df.columns)}")
+        # Resolve column names
+        u_col, l_col = self._resolve_columns(df, url_col, label_col)
+        df = df.rename(columns={u_col: "url", l_col: "label"})
 
-        # 3. Clean and sanitize records
-        df = df.rename(columns={url_col: "url", label_col: "label"})
+        if max_samples and len(df) > max_samples * 2:
+            # Pre-filter to reduce memory before cleaning
+            df = df.head(max_samples * 2)
+
         df = self._clean_and_canonicalize(df, timestamp_col=timestamp_col)
+        if max_samples and len(df) > max_samples:
+            df = df.iloc[:max_samples].reset_index(drop=True)
         return df
+
+    def _resolve_columns(
+        self,
+        df: pd.DataFrame,
+        url_col: Optional[str],
+        label_col: Optional[str],
+    ) -> Tuple[str, str]:
+        """Auto-detect URL and label column names from dataset headers."""
+        actual_url = url_col if url_col and url_col in df.columns else None
+        if not actual_url:
+            for candidate in self.CANDIDATE_URL_COLS:
+                if candidate in df.columns:
+                    actual_url = candidate
+                    break
+        if not actual_url:
+            raise ValueError(f"URL column not found. Available columns: {list(df.columns)}")
+
+        actual_label = label_col if label_col and label_col in df.columns else None
+        if not actual_label:
+            for candidate in self.CANDIDATE_LABEL_COLS:
+                if candidate in df.columns:
+                    actual_label = candidate
+                    break
+        if not actual_label:
+            raise ValueError(f"Label column not found. Available columns: {list(df.columns)}")
+
+        return actual_url, actual_label
 
     def _extract_domain(self, url: str) -> str:
         """Extract registered domain for domain-grouped evaluation."""
@@ -111,6 +179,7 @@ class DatasetLoader:
         self,
         df: pd.DataFrame,
         timestamp_col: Optional[str] = None,
+        seen_urls: Optional[set] = None,
     ) -> pd.DataFrame:
         """Remove nulls, malformed records, duplicates, and canonicalize labels."""
         initial_count = len(df)
@@ -125,14 +194,20 @@ class DatasetLoader:
         df = df[df["url"].str.len() >= 4]
         df = df[df["url"].str.len() <= 4096]
 
-        # Canonicalize labels to 0 and 1
+        # Canonicalize labels to 0 and 1 strictly (never invent labels)
         df["normalized_label"] = df["label"].apply(self._map_label)
         df = df.dropna(subset=["normalized_label"])
         df["label"] = df["normalized_label"].astype(int)
         df = df.drop(columns=["normalized_label"])
 
         # Deduplicate identical URLs
-        df = df.drop_duplicates(subset=["url"]).reset_index(drop=True)
+        if seen_urls is not None:
+            # Streaming deduplication across chunks
+            mask = ~df["url"].isin(seen_urls)
+            df = df[mask]
+            seen_urls.update(df["url"].tolist())
+        else:
+            df = df.drop_duplicates(subset=["url"]).reset_index(drop=True)
 
         # Extract registered domain for grouping
         df["registered_domain"] = df["url"].apply(self._extract_domain)
@@ -142,8 +217,8 @@ class DatasetLoader:
             df["timestamp"] = pd.to_datetime(df[timestamp_col], errors="coerce")
 
         final_count = len(df)
-        logger.info(
-            "Dataset cleaned: %d initial records -> %d valid records (%d dropped / deduplicated)",
+        logger.debug(
+            "Cleaned chunk: %d initial records -> %d valid records (%d dropped / deduplicated)",
             initial_count,
             final_count,
             initial_count - final_count,
