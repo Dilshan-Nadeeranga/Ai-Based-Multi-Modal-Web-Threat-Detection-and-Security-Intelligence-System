@@ -24,10 +24,10 @@ def test_feature_extractor_consistency():
     feat_vec = extractor.extract_vector(test_url)
     feat_df = extractor.extract_dataframe([test_url])
 
-    assert len(FEATURE_NAMES) == 47
-    assert len(feat_dict) == 47
-    assert feat_vec.shape == (47,)
-    assert feat_df.shape == (1, 47)
+    assert len(FEATURE_NAMES) == 52
+    assert len(feat_dict) == 52
+    assert feat_vec.shape == (52,)
+    assert feat_df.shape == (1, 52)
 
     # Verify vector matches dict values exactly in order
     for idx, name in enumerate(FEATURE_NAMES):
@@ -87,6 +87,7 @@ def test_pipeline_training_and_reports(tmp_path: Path):
         test_size=0.2,
         val_size=0.1,
         split_strategy="domain_grouped",
+        model_selection="all",
     )
 
     # 1. Verify all 4 required models evaluated
@@ -103,6 +104,7 @@ def test_pipeline_training_and_reports(tmp_path: Path):
         assert len(res.confusion_matrix) == 2
         assert len(res.confusion_matrix[0]) == 2
         assert res.avg_latency_ms >= 0.0
+        assert res.training_time_sec >= 0.0
 
     # 2. Verify files written
     assert (tmp_path / "models" / "preprocessor.joblib").exists()
@@ -110,6 +112,93 @@ def test_pipeline_training_and_reports(tmp_path: Path):
     assert (tmp_path / "models" / "model_metadata.json").exists()
     assert (tmp_path / "models" / "model_comparison_report.json").exists()
     assert (tmp_path / "models" / "model_comparison_report.md").exists()
+
+
+def test_random_forest_dedicated_training(tmp_path: Path):
+    """Verify dedicated Random Forest training pipeline with class-imbalance weighting and latency benchmarking."""
+    benchmark_path = Path("data/benchmark_urls.csv")
+    trainer = MlTrainingPipeline(output_dir=tmp_path / "rf_models", random_seed=42)
+
+    report = trainer.run_training_pipeline(
+        dataset_path=benchmark_path,
+        test_size=0.2,
+        val_size=0.1,
+        split_strategy="domain_grouped",
+        model_selection="random_forest",
+    )
+
+    assert "random_forest" in report.models
+    assert len(report.models) == 1
+    rf_eval = report.models["random_forest"]
+    assert rf_eval.model_name == "Random Forest (Baseline)"
+    assert rf_eval.accuracy >= 0.8
+    assert rf_eval.f1_score >= 0.8
+    assert rf_eval.training_time_sec >= 0.0
+    assert (tmp_path / "rf_models" / "random_forest.joblib").exists()
+
+
+def test_large_dataset_preparer_pipeline(tmp_path: Path):
+    """Verify LargeDatasetPreparer correctly processes, standardizes, deduplicates, and reports on data."""
+    from app.ml.prepare_dataset import LargeDatasetPreparer
+
+    raw_csv = tmp_path / "raw_urls_feed.csv"
+    raw_csv.write_text(
+        "url,status\n"
+        "https://valid-target.com/home,legitimate\n"
+        "https://valid-target.com/home,good\n"  # Duplicate
+        "http://attack-vector.xyz/stealer.exe,malware\n"
+        "http://credential-theft.top/auth,phishing\n"
+        "http://corrupt.com,unknown_category\n"  # Must be dropped (no invented labels)
+        "bad_short_url,malicious\n"  # Malformed URL (< 4 chars / no dots)
+    )
+
+    cleaned_csv = tmp_path / "cleaned_output.csv"
+    report_json = tmp_path / "quality_report.json"
+    preparer = LargeDatasetPreparer(random_seed=42)
+
+    report = preparer.prepare_from_csv(
+        input_csv=raw_csv,
+        output_csv=cleaned_csv,
+        url_col="url",
+        label_col="status",
+        chunk_size=10,
+        report_json_path=report_json,
+    )
+
+    assert report.valid_records_retained == 3
+    assert report.dropped_duplicates == 1
+    assert report.dropped_unknown_labels == 1
+    assert report.legitimate_count == 1
+    assert report.malicious_count == 2
+    assert report.unique_domains == 3
+    assert cleaned_csv.exists()
+    assert report_json.exists()
+
+
+def test_domain_level_features_integration():
+    """Verify feature extractor handles real domain telemetry when available and handles missing telemetry gracefully."""
+    extractor = MlFeatureExtractor()
+
+    # 1. With domain telemetry
+    real_domain_data = {
+        "domain_age_days": 120,
+        "is_nrd": False,
+        "has_dns_records": True,
+    }
+    vec_with_dom = extractor.extract_dict("https://example.com/test", domain_data=real_domain_data)
+    assert vec_with_dom["domain_age_days"] == 120.0
+    assert vec_with_dom["is_nrd"] == 0.0
+    assert vec_with_dom["has_dns_records"] == 1.0
+    assert vec_with_dom["has_domain_data"] == 1.0
+    assert vec_with_dom["is_https"] == 1.0
+
+    # 2. Without domain telemetry (raw URL only)
+    vec_without_dom = extractor.extract_dict("http://example.com/test")
+    assert vec_without_dom["domain_age_days"] == -1.0
+    assert vec_without_dom["is_nrd"] == 0.0
+    assert vec_without_dom["has_dns_records"] == 0.0
+    assert vec_without_dom["has_domain_data"] == 0.0
+    assert vec_without_dom["is_https"] == 0.0
 
 
 def test_model_service_loading_and_inference():
@@ -124,7 +213,7 @@ def test_model_service_loading_and_inference():
     assert legit_res.is_model_loaded is True
     assert legit_res.predicted_label == "legitimate"
     assert legit_res.malicious_probability <= legit_res.decision_threshold
-    assert legit_res.feature_count == 47
+    assert legit_res.feature_count == 52
     assert legit_res.inference_time_ms > 0
 
     # Test malicious phishing URL prediction
@@ -185,7 +274,7 @@ def test_api_endpoints_ml_integration():
     pred_data = pred_resp.json()
     assert pred_data["is_model_loaded"] is True
     assert pred_data["predicted_label"] == "malicious"
-    assert pred_data["feature_count"] == 47
+    assert pred_data["feature_count"] == 52
 
     # 3. Empty URL validation error
     bad_resp = client.post("/api/v1/ml-predict", json={"url": ""})

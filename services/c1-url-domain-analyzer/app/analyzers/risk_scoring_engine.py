@@ -908,6 +908,31 @@ class ExplainableRiskScoringEngine:
                 )
             )
 
+        # Rule 1b: High-Risk TLD + Security Keyword Cluster + ML Alignment (Active even when WHOIS is unavailable)
+        elif lexical_features.suspicious_keyword_count >= 2 and lexical_features.is_suspicious_tld:
+            tld_boost = 15.0 if lexical_features.suspicious_keyword_count == 2 else 25.0
+            evidence_details = [
+                f"high-risk TLD (.{lexical_features.tld})",
+                f"{lexical_features.suspicious_keyword_count} sensitive credential keywords",
+            ]
+            if ml_res and ml_res.is_model_loaded and ml_res.malicious_probability >= 0.80:
+                tld_boost += 20.0
+                evidence_details.append(f"high ML malicious probability ({ml_res.malicious_probability * 100:.0f}%)")
+
+            score += tld_boost
+            contextual_factors.append(
+                ContributingRiskFactor(
+                    factor_id="compound_tld_keyword_phishing_synergy",
+                    title="Compound Synergy: High-Risk TLD + Sensitive Keywords",
+                    category="lexical_structural",
+                    impact_score=tld_boost,
+                    evidence=f"Concentration of risk signals across {', '.join(evidence_details)}.",
+                    confidence="high",
+                    epistemic_type="heuristic",
+                )
+            )
+
+
 
         # Rule 2: Critical Threat Floors:
         # SSRF blocked or verified threat feed match enforces high risk floor

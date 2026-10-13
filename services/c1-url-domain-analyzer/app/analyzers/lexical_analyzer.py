@@ -203,7 +203,7 @@ class UrlLexicalAnalyzer:
 
         scheme = parsed.scheme.lower() if parsed.scheme else "http"
         netloc = parsed.netloc
-        path = parsed.path
+        path = parsed.path or "/"
         query = parsed.query
         fragment = parsed.fragment
 
@@ -269,9 +269,20 @@ class UrlLexicalAnalyzer:
         path_depth = len(path_segments)
         num_query_params = len(query.split('&')) if query else 0
 
-        # Keyword matching
+        # Keyword matching (Avoid false positives when legitimate domain owner matches brand keyword)
         lower_url = normalized_url.lower()
-        found_keywords = [kw for kw in self.settings.suspicious_keywords if kw in lower_url]
+        domain_base = registered_domain.split('.')[0].lower() if registered_domain else ""
+        brand_names = {
+            "google", "microsoft", "paypal", "appleid", "amazon", "netflix",
+            "facebook", "instagram", "chase", "wellsfargo", "apple"
+        }
+        found_keywords = []
+        for kw in self.settings.suspicious_keywords:
+            if kw in lower_url:
+                # If brand keyword matches the registered apex domain base, don't flag as spoofing
+                if kw in brand_names and kw == domain_base:
+                    continue
+                found_keywords.append(kw)
         suspicious_keyword_count = len(found_keywords)
         has_suspicious_keyword = suspicious_keyword_count > 0
 
