@@ -18,6 +18,7 @@ from app.analyzers.dns_analyzer import DnsAnalyzer
 from app.analyzers.lexical_analyzer import UrlLexicalAnalyzer
 from app.analyzers.registration_analyzer import RegistrationAnalyzer
 from app.analyzers.reputation_analyzer import ReputationAnalyzer
+from app.analyzers.risk_scoring_engine import ExplainableRiskScoringEngine
 from app.analyzers.threat_infrastructure import ThreatInfrastructureAnalyzer
 from app.config import get_settings
 from app.schemas.url_schema import (
@@ -26,6 +27,7 @@ from app.schemas.url_schema import (
     DomainIntelligenceReport,
     DomainRegistrationFeatures,
     DomainReputationFeatures,
+    ExplainableRiskAssessment,
     MlPredictionResult,
     ThreatInfrastructureReport,
     UrlLexicalFeatures,
@@ -71,7 +73,9 @@ class DomainIntelligenceAnalyzer:
         self.reputation_analyzer = ReputationAnalyzer()
         self.threat_infra_analyzer = ThreatInfrastructureAnalyzer()
         self.ml_service = get_ml_service()
+        self.risk_scoring_engine = ExplainableRiskScoringEngine(self.settings)
         self.cache = DomainIntelligenceCache(ttl_seconds=self.settings.cache_ttl_seconds)
+
 
     async def analyze_domain(self, domain_name: str) -> DomainIntelligenceReport:
         """Run registration, DNS, and reputation intelligence on domain with caching."""
@@ -157,44 +161,61 @@ class DomainIntelligenceAnalyzer:
         # Layer 4: Machine Learning Classifier Inference
         ml_res = self.ml_service.predict(raw_url, lexical_features)
 
-        # Consolidated Multi-Layer Scoring
-        combined_score, all_indicators, explanation = self._combine_multi_layer_scores(
-            lexical_score=lexical_result.score,
-            lexical_indicators=lexical_result.risk_indicators,
-            domain_score=domain_report.domain_risk_score,
-            domain_indicators=domain_report.domain_risk_indicators,
-            infra_score=infra_report.infrastructure_risk_score,
-            infra_indicators=infra_report.infrastructure_indicators,
+        # Explainable Multi-Channel Risk Scoring Engine Evaluation
+        risk_assessment = self.risk_scoring_engine.evaluate(
+            raw_url=raw_url,
             lexical_features=lexical_features,
             domain_report=domain_report,
             infra_report=infra_report,
             ml_res=ml_res,
         )
 
-        # Determine risk label
-        if combined_score >= 75.0:
-            risk_level = "High Risk Scam"
-        elif combined_score >= 50.0:
-            risk_level = "Medium Risk"
-        elif combined_score >= 25.0:
-            risk_level = "Suspicious"
+        # Build unified human-readable indicators combining factors and observations
+        unified_indicators: List[str] = []
+        for factor in risk_assessment.contributing_factors:
+            if factor.impact_score != 0:
+                unified_indicators.append(f"{factor.title}: {factor.evidence}")
+
+        # Also preserve direct domain observations for backwards compatibility
+        if domain_report.registration.is_nrd and domain_report.registration.age_days is not None:
+            nrd_str = f"Newly registered domain (Age: {domain_report.registration.age_days} days, threshold <= {self.settings.nrd_threshold_days} days)."
+            if nrd_str not in unified_indicators:
+                unified_indicators.append(nrd_str)
+
+        for rep_ind in domain_report.domain_risk_indicators + infra_report.infrastructure_indicators:
+            if rep_ind not in unified_indicators:
+                unified_indicators.append(rep_ind)
+
+        # Top contributing factors narrative explanation
+        top_risks = [f.title for f in risk_assessment.contributing_factors if f.impact_score > 0][:3]
+        if not top_risks:
+            explanation = (
+                f"Explainable multi-layer intelligence evaluated 8 channels and determined a normalized risk score "
+                f"of {risk_assessment.risk_score}/100 ({risk_assessment.risk_level}). No critical scam indicators observed."
+            )
         else:
-            risk_level = "Low Risk"
+            explanation = (
+                f"Explainable risk engine assigned {risk_assessment.risk_score}/100 ({risk_assessment.risk_level}) "
+                f"based on {len(risk_assessment.contributing_factors)} factor(s), primarily driven by: "
+                f"{', '.join(top_risks)}."
+            )
 
         return CompleteUrlDomainAnalysisResult(
             component="C1_URL_DOMAIN",
             layer="Multi_Layer_URL_and_Domain_Intelligence",
             status="success",
             url=lexical_features.original_url,
-            score=combined_score,
-            risk_level=risk_level,
+            score=risk_assessment.risk_score,
+            risk_level=risk_assessment.risk_level,
             features=lexical_features,
             domain_intelligence=domain_report,
             threat_infrastructure=infra_report,
             ml_prediction=ml_res,
-            risk_indicators=all_indicators,
+            risk_assessment=risk_assessment,
+            risk_indicators=unified_indicators,
             explanation=explanation,
         )
+
 
     def _compute_domain_risk_score(
         self,

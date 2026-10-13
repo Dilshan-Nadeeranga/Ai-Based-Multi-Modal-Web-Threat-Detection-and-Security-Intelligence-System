@@ -85,8 +85,68 @@ class Settings(BaseSettings):
         "amazon", "facebook", "instagram", "chase", "wellsfargo"
     }
 
+    # =========================================================================
+    # Explainable Risk Scoring Engine: Configurable Weights & Thresholds
+    # =========================================================================
+    # RATIONALE & CALIBRATION NOTE:
+    # These baseline weights represent empirical heuristic priors derived from
+    # common phishing/threat vector profiles. They are NOT claimed to be
+    # permanently optimal or scientifically validated; they are explicitly
+    # configurable and designed for dynamic calibration against empirical validation data.
+    # Total nominal sum of active baseline weights = 1.00.
+    
+    # 1. Lexical & Structural Analysis (Weight: 0.15)
+    # Rationale: Path depth, query complexity, special symbols, and digit ratios provide
+    # baseline syntax indicators, but legitimate URLs can also be complex.
+    weight_lexical_structural: float = 0.15
+
+    # 2. Entropy & Obfuscation Analysis (Weight: 0.10)
+    # Rationale: Percent-encoding, double-encoding, hex IP formats, and excessive path entropy
+    # indicate active evasion or obfuscation techniques.
+    weight_entropy_obfuscation: float = 0.10
+
+    # 3. Homoglyph & Lookalike Indicators (Weight: 0.10)
+    # Rationale: Confusable scripts (Cyrillic/Latin), Punycode spoofing, and brand imitation
+    # are targeted deception mechanisms with high scam specificity.
+    weight_homoglyph_lookalike: float = 0.10
+
+    # 4. Domain Registration Age & Registrar Metadata (Weight: 0.20)
+    # Rationale: Newly registered domains (<=30 days) and young domains (<=90 days)
+    # account for an overwhelming majority of disposable phishing infrastructure.
+    # Long-established domains (>2 years) receive mitigating credit.
+    weight_domain_registration: float = 0.20
+
+    # 5. DNS & Infrastructure Reputation (Weight: 0.15)
+    # Rationale: Fast-flux rotation, private RFC-1918 resolution, dynamic DNS,
+    # and threat intelligence feed matches represent high-confidence infrastructure signals.
+    weight_dns_reputation: float = 0.15
+
+    # 6. DGA Classification (Weight: 0.05)
+    # Rationale: Algorithmic label randomness (perplexity, vowel-consonant clustering)
+    # is specific to malware C2 / botnet rendezvous. Lower weight for general web phishing.
+    weight_dga: float = 0.05
+
+    # 7. Shortened URLs & Redirect-Chain Indicators (Weight: 0.10)
+    # Rationale: Cloaked shortener destinations, cross-domain redirect hops, loops,
+    # and SSRF attempts conceal final destinations from user inspection.
+    weight_shortener_redirect: float = 0.10
+
+    # 8. Machine Learning Predictions (Weight: 0.15)
+    # Rationale: Supervised classification (Random Forest / XGBoost) captures complex
+    # non-linear multi-feature interactions, complementing deterministic rules.
+    weight_machine_learning: float = 0.15
+
+    # Configurable Risk Classification Thresholds (0.0 to 100.0)
+    risk_threshold_low: float = 25.0       # Scores < 25.0 classified as "Low Risk"
+    risk_threshold_medium: float = 50.0    # Scores 25.0 - 49.9 classified as "Suspicious"
+    risk_threshold_high: float = 75.0      # Scores 50.0 - 74.9: "Medium Risk", >= 75.0: "High Risk Scam"
+
+    # Engine metadata
+    risk_engine_version: str = "c1-explainable-risk-v1.0.0"
+
 
 @lru_cache
 def get_settings() -> Settings:
     """Return process-wide settings singleton."""
     return Settings()
+
