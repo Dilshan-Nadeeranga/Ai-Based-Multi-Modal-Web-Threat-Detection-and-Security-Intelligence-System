@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getValidation, validateRemediation } from '../api/codeAuditApi.js'
+import DiffViewer from './DiffViewer.jsx'
 
 const STATUS_LABELS = {
   NOT_VALIDATED: 'Not Validated',
@@ -41,23 +42,63 @@ export function ValidationBadge({ status }) {
   )
 }
 
-function DiffView({ diff }) {
-  if (!diff) return <p className="ca-detail__note">No differences.</p>
+/** Deterministic check table, failure reasons, warnings and new findings of one validation. */
+export function ValidationChecks({ validation }) {
+  const summary = validation.summary
   return (
-    <pre className="ca-detail__code ca-diff">
-      {diff.split('\n').map((line, index) => {
-        let kind = ''
-        if (line.startsWith('+++') || line.startsWith('---')) kind = 'ca-diff__file'
-        else if (line.startsWith('@@')) kind = 'ca-diff__hunk'
-        else if (line.startsWith('+')) kind = 'ca-diff__add'
-        else if (line.startsWith('-')) kind = 'ca-diff__del'
-        return (
-          <span key={index} className={`ca-diff__line ${kind}`}>
-            {line || ' '}
-          </span>
-        )
-      })}
-    </pre>
+    <>
+      <table className="ca-validation__checks">
+        <tbody>
+          <tr><th>Syntax</th><td>{CHECK_LABELS[summary.syntax]}</td></tr>
+          <tr><th>AST Parse</th><td>{CHECK_LABELS[summary.ast]}</td></tr>
+          <tr><th>Function Signature</th><td>{CHECK_LABELS[summary.signature]}</td></tr>
+          <tr><th>Original Finding ({validation.rule_id})</th><td>{CHECK_LABELS[summary.original_finding]}</td></tr>
+          <tr><th>New Critical Findings</th><td>{summary.new_critical}</td></tr>
+          <tr><th>New High Findings</th><td>{summary.new_high}</td></tr>
+          <tr><th>Other New Findings</th><td>{summary.new_findings - summary.new_critical - summary.new_high}</td></tr>
+          <tr><th>Validation Status</th><td><ValidationBadge status={validation.status} /></td></tr>
+        </tbody>
+      </table>
+
+      {validation.failure_reasons.length > 0 && (
+        <>
+          <h5>{validation.status === 'ERROR' ? 'Validation Could Not Complete' : 'Validation Failed'}</h5>
+          <ul className="ca-validation__issues">
+            {validation.failure_reasons.map((issue) => (
+              <li key={issue.code + issue.message}><strong>{issue.code}</strong>: {issue.message}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {validation.warnings.length > 0 && (
+        <>
+          <h5>Warnings</h5>
+          <ul className="ca-validation__issues">
+            {validation.warnings.map((issue) => (
+              <li key={issue.code + issue.message}><strong>{issue.code}</strong>: {issue.message}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {validation.new_findings.length > 0 && (
+        <>
+          <h5>New Findings in Candidate</h5>
+          <ul className="ca-validation__issues">
+            {validation.new_findings.map((finding) => (
+              <li key={`${finding.rule_id}-${finding.line}`}>
+                {finding.severity} — {finding.title} ({finding.rule_id}, candidate line {finding.line})
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {validation.syntax_validation.errors.length > 0 && (
+        <p className="ca-detail__note">
+          Syntax errors at candidate line(s):{' '}
+          {validation.syntax_validation.errors.map((e) => e.line).join(', ')}
+        </p>
+      )}
+    </>
   )
 }
 
@@ -96,7 +137,6 @@ export default function PatchValidation({ remediation, onValidated }) {
   }
 
   const status = validating ? 'VALIDATING' : validation?.status || remediation.validation_status
-  const summary = validation?.summary
 
   return (
     <div className="ca-validation">
@@ -116,60 +156,10 @@ export default function PatchValidation({ remediation, onValidated }) {
 
       {validation && (
         <>
-          <table className="ca-validation__checks">
-            <tbody>
-              <tr><th>Syntax</th><td>{CHECK_LABELS[summary.syntax]}</td></tr>
-              <tr><th>AST Parse</th><td>{CHECK_LABELS[summary.ast]}</td></tr>
-              <tr><th>Function Signature</th><td>{CHECK_LABELS[summary.signature]}</td></tr>
-              <tr><th>Original Finding ({validation.rule_id})</th><td>{CHECK_LABELS[summary.original_finding]}</td></tr>
-              <tr><th>New Critical Findings</th><td>{summary.new_critical}</td></tr>
-              <tr><th>New High Findings</th><td>{summary.new_high}</td></tr>
-              <tr><th>Other New Findings</th><td>{summary.new_findings - summary.new_critical - summary.new_high}</td></tr>
-              <tr><th>Validation Status</th><td><ValidationBadge status={validation.status} /></td></tr>
-            </tbody>
-          </table>
-
-          {validation.failure_reasons.length > 0 && (
-            <>
-              <h5>{validation.status === 'ERROR' ? 'Validation Could Not Complete' : 'Validation Failed'}</h5>
-              <ul className="ca-validation__issues">
-                {validation.failure_reasons.map((issue) => (
-                  <li key={issue.code + issue.message}><strong>{issue.code}</strong>: {issue.message}</li>
-                ))}
-              </ul>
-            </>
-          )}
-          {validation.warnings.length > 0 && (
-            <>
-              <h5>Warnings</h5>
-              <ul className="ca-validation__issues">
-                {validation.warnings.map((issue) => (
-                  <li key={issue.code + issue.message}><strong>{issue.code}</strong>: {issue.message}</li>
-                ))}
-              </ul>
-            </>
-          )}
-          {validation.new_findings.length > 0 && (
-            <>
-              <h5>New Findings in Candidate</h5>
-              <ul className="ca-validation__issues">
-                {validation.new_findings.map((finding) => (
-                  <li key={`${finding.rule_id}-${finding.line}`}>
-                    {finding.severity} — {finding.title} ({finding.rule_id}, candidate line {finding.line})
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-          {validation.syntax_validation.errors.length > 0 && (
-            <p className="ca-detail__note">
-              Syntax errors at candidate line(s):{' '}
-              {validation.syntax_validation.errors.map((e) => e.line).join(', ')}
-            </p>
-          )}
+          <ValidationChecks validation={validation} />
 
           <h5>Original vs Suggested Patch</h5>
-          <DiffView diff={validation.diff.diff} />
+          <DiffViewer diff={validation.diff.diff} />
           <p className="ca-detail__note">
             +{validation.diff.added_lines} / −{validation.diff.removed_lines} lines ·{' '}
             validated in {validation.validation_duration_ms} ms · {validation.validation_id}

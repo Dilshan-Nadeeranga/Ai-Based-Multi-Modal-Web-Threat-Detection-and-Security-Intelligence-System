@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { generateRemediation, listRemediations } from '../api/codeAuditApi.js'
 import PatchValidation, { ValidationBadge } from './PatchValidation.jsx'
 
 /**
  * Read-only AI remediation suggestion for one finding, with its static patch validation.
- * Suggestions are never applied; human review/accept workflows come in a later phase.
+ * Suggestions are never applied; the analyst decides on the HITL review page.
  */
 export default function RemediationSuggestion({ findingId }) {
   const [suggestion, setSuggestion] = useState(null)
@@ -66,7 +67,17 @@ export default function RemediationSuggestion({ findingId }) {
         <>
           <p className="ca-remediation__status">
             <ValidationBadge status={suggestion.validation_status} />
-            <span>Not reviewed by an analyst</span>
+            <span>
+              {suggestion.review_decision
+                ? `Analyst decision: ${suggestion.review_decision} (not applied)`
+                : 'Not reviewed by an analyst'}
+            </span>
+            <Link
+              className="ca-review__open"
+              to={`/code-audit/remediations/${encodeURIComponent(suggestion.remediation_id)}/review`}
+            >
+              Open Analyst Review →
+            </Link>
             {suggestion.llm_confidence && <span>Model confidence: {suggestion.llm_confidence}</span>}
           </p>
 
@@ -111,7 +122,8 @@ export default function RemediationSuggestion({ findingId }) {
           )}
 
           <p className="ca-detail__note">
-            AI-generated remediation suggestion — not reviewed by an analyst. It has not been
+            AI-generated remediation suggestion
+            {suggestion.review_decision ? '' : ' — not reviewed by an analyst'}. It has not been
             applied to the repository.
           </p>
         </>
