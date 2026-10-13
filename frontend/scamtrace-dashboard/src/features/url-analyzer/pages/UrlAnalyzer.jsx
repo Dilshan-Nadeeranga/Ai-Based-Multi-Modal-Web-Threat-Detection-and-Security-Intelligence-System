@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Search, ShieldAlert, ShieldCheck, AlertTriangle, Layers, Globe, Code, Key, Terminal, GitFork, Cpu, Shield, CornerDownRight, ExternalLink, Link2 } from 'lucide-react';
+import { Search, ShieldAlert, ShieldCheck, AlertTriangle, Layers, Globe, Code, Key, Terminal, GitFork, Cpu, Shield, CornerDownRight, ExternalLink, Link2, BrainCircuit } from 'lucide-react';
 
 export default function UrlAnalyzer() {
   const [urlInput, setUrlInput] = useState('');
@@ -590,6 +590,136 @@ export default function UrlAnalyzer() {
                     </ul>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Machine Learning Layer (Layer 4: Supervised Classifier Inference) */}
+            {result.ml_prediction && result.ml_prediction.is_model_loaded && (
+              <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div className="flex items-center gap-2">
+                    <BrainCircuit className="w-5 h-5 text-indigo-400" />
+                    <h3 className="text-base font-semibold text-slate-100">
+                      Layer 4: Machine Learning Classification Pipeline ({result.ml_prediction.model_name})
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-mono">
+                      Latency: {result.ml_prediction.inference_time_ms} ms
+                    </span>
+                    <span className={`inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full font-bold font-mono ${
+                      result.ml_prediction.predicted_label === 'malicious'
+                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    }`}>
+                      {result.ml_prediction.predicted_label === 'malicious' ? 'CLASSIFIED MALICIOUS' : 'CLASSIFIED LEGITIMATE'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Probability & Calibration */}
+                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+                      Prediction Probabilities
+                    </h4>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-slate-400">Malicious Probability</span>
+                          <span className="font-mono font-bold text-indigo-300">
+                            {(result.ml_prediction.malicious_probability * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-500 ${
+                              result.ml_prediction.malicious_probability >= result.ml_prediction.decision_threshold
+                                ? 'bg-gradient-to-r from-orange-500 to-red-500'
+                                : 'bg-gradient-to-r from-emerald-500 to-cyan-500'
+                            }`}
+                            style={{ width: `${Math.min(result.ml_prediction.malicious_probability * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="text-xs space-y-2 text-slate-300 pt-2 border-t border-slate-800/50">
+                        <div className="flex justify-between py-1 border-b border-slate-800/50">
+                          <span>Decision Threshold</span>
+                          <span className="font-mono text-slate-400">
+                            {result.ml_prediction.decision_threshold.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-slate-800/50">
+                          <span>Confidence Score</span>
+                          <span className="font-mono text-indigo-300 font-bold">
+                            {result.ml_prediction.confidence.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1">
+                          <span>Feature Dimensions</span>
+                          <span className="font-mono text-slate-400">
+                            {result.ml_prediction.feature_count} features
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Operational ML Telemetry */}
+                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                      Model Operational Specs
+                    </h4>
+                    <div className="text-xs space-y-2 text-slate-300">
+                      <div className="flex justify-between py-1 border-b border-slate-800/50">
+                        <span>Active Classifier</span>
+                        <span className="font-mono text-cyan-300">
+                          {result.ml_prediction.model_name}
+                        </span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-slate-800/50">
+                        <span>Pre-trained Model Status</span>
+                        <span className="font-mono text-emerald-400">Loaded in RAM</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-slate-800/50">
+                        <span>Inference Latency</span>
+                        <span className="font-mono text-cyan-300">
+                          {result.ml_prediction.inference_time_ms} ms
+                        </span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-slate-800/50">
+                        <span>Evaluation Strategy</span>
+                        <span className="font-mono text-slate-400">Domain-Grouped (Leak-free)</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span>Re-training Trigger</span>
+                        <span className="font-mono text-slate-500">Scheduled batch</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Top Contributing Risk Features */}
+                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                      Top Contributing Feature Signals
+                    </h4>
+                    {result.ml_prediction.top_risk_features && result.ml_prediction.top_risk_features.length > 0 ? (
+                      <ul className="space-y-1.5 text-xs text-slate-300">
+                        {result.ml_prediction.top_risk_features.map((signal, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5 text-purple-300/90">
+                            <span className="text-purple-400 font-bold shrink-0">•</span>
+                            <span>{signal}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="text-xs text-slate-500 italic p-3 text-center">
+                        No elevated risk signals observed across extracted features.
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
