@@ -1,14 +1,28 @@
-import { useState } from 'react'
-import { generateRemediation } from '../api/codeAuditApi.js'
+import { useEffect, useState } from 'react'
+import { generateRemediation, listRemediations } from '../api/codeAuditApi.js'
+import PatchValidation, { ValidationBadge } from './PatchValidation.jsx'
 
 /**
- * Read-only AI remediation suggestion for one finding.
- * Suggestions are never applied; review/accept workflows come in a later phase.
+ * Read-only AI remediation suggestion for one finding, with its static patch validation.
+ * Suggestions are never applied; human review/accept workflows come in a later phase.
  */
 export default function RemediationSuggestion({ findingId }) {
   const [suggestion, setSuggestion] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let active = true
+    listRemediations(findingId)
+      .then((records) => {
+        const latest = records.find((record) => record.status === 'GENERATED')
+        if (active && latest) setSuggestion(latest)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [findingId])
 
   async function handleGenerate() {
     setLoading(true)
@@ -20,6 +34,14 @@ export default function RemediationSuggestion({ findingId }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  function handleValidated(validation) {
+    setSuggestion((current) => ({
+      ...current,
+      validation_status: validation.status,
+      validation_id: validation.validation_id,
+    }))
   }
 
   const needsContext = suggestion && suggestion.remediation_status !== 'SUCCESS'
@@ -43,8 +65,8 @@ export default function RemediationSuggestion({ findingId }) {
       {suggestion && (
         <>
           <p className="ca-remediation__status">
-            <span className="ca-badge ca-badge--unvalidated">Not Yet Validated</span>
-            <span>Status: UNVALIDATED</span>
+            <ValidationBadge status={suggestion.validation_status} />
+            <span>Not reviewed by an analyst</span>
             {suggestion.llm_confidence && <span>Model confidence: {suggestion.llm_confidence}</span>}
           </p>
 
@@ -79,9 +101,18 @@ export default function RemediationSuggestion({ findingId }) {
               Not confirmed in the repository context: {suggestion.unverified_references.join(', ')}
             </p>
           )}
+
+          {!needsContext && (
+            <PatchValidation
+              key={suggestion.remediation_id}
+              remediation={suggestion}
+              onValidated={handleValidated}
+            />
+          )}
+
           <p className="ca-detail__note">
-            AI-generated remediation suggestion — not yet validated. It has not been applied
-            to the repository.
+            AI-generated remediation suggestion — not reviewed by an analyst. It has not been
+            applied to the repository.
           </p>
         </>
       )}
