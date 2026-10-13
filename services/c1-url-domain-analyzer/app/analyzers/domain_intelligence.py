@@ -18,6 +18,7 @@ from app.analyzers.dns_analyzer import DnsAnalyzer
 from app.analyzers.lexical_analyzer import UrlLexicalAnalyzer
 from app.analyzers.registration_analyzer import RegistrationAnalyzer
 from app.analyzers.reputation_analyzer import ReputationAnalyzer
+from app.analyzers.risk_scoring_engine import ExplainableRiskScoringEngine
 from app.analyzers.threat_infrastructure import ThreatInfrastructureAnalyzer
 from app.config import get_settings
 from app.schemas.url_schema import (
@@ -26,9 +27,12 @@ from app.schemas.url_schema import (
     DomainIntelligenceReport,
     DomainRegistrationFeatures,
     DomainReputationFeatures,
+    ExplainableRiskAssessment,
+    MlPredictionResult,
     ThreatInfrastructureReport,
     UrlLexicalFeatures,
 )
+from app.ml.model_service import get_ml_service
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +72,10 @@ class DomainIntelligenceAnalyzer:
         self.dns_analyzer = DnsAnalyzer()
         self.reputation_analyzer = ReputationAnalyzer()
         self.threat_infra_analyzer = ThreatInfrastructureAnalyzer()
+        self.ml_service = get_ml_service()
+        self.risk_scoring_engine = ExplainableRiskScoringEngine(self.settings)
         self.cache = DomainIntelligenceCache(ttl_seconds=self.settings.cache_ttl_seconds)
+
 
     async def analyze_domain(self, domain_name: str) -> DomainIntelligenceReport:
         """Run registration, DNS, and reputation intelligence on domain with caching."""
@@ -151,42 +158,64 @@ class DomainIntelligenceAnalyzer:
         # Layer 3: Threat-Infrastructure Analysis (DGA & Redirect Chains)
         infra_report = await self.threat_infra_analyzer.analyze(raw_url, target_domain)
 
-        # Consolidated Multi-Layer Scoring
-        combined_score, all_indicators, explanation = self._combine_multi_layer_scores(
-            lexical_score=lexical_result.score,
-            lexical_indicators=lexical_result.risk_indicators,
-            domain_score=domain_report.domain_risk_score,
-            domain_indicators=domain_report.domain_risk_indicators,
-            infra_score=infra_report.infrastructure_risk_score,
-            infra_indicators=infra_report.infrastructure_indicators,
+        # Layer 4: Machine Learning Classifier Inference
+        ml_res = self.ml_service.predict(raw_url, lexical_features)
+
+        # Explainable Multi-Channel Risk Scoring Engine Evaluation
+        risk_assessment = self.risk_scoring_engine.evaluate(
+            raw_url=raw_url,
             lexical_features=lexical_features,
             domain_report=domain_report,
             infra_report=infra_report,
+            ml_res=ml_res,
         )
 
-        # Determine risk label
-        if combined_score >= 75.0:
-            risk_level = "High Risk Scam"
-        elif combined_score >= 50.0:
-            risk_level = "Medium Risk"
-        elif combined_score >= 25.0:
-            risk_level = "Suspicious"
+        # Build unified human-readable indicators combining factors and observations
+        unified_indicators: List[str] = []
+        for factor in risk_assessment.contributing_factors:
+            if factor.impact_score != 0:
+                unified_indicators.append(f"{factor.title}: {factor.evidence}")
+
+        # Also preserve direct domain observations for backwards compatibility
+        if domain_report.registration.is_nrd and domain_report.registration.age_days is not None:
+            nrd_str = f"Newly registered domain (Age: {domain_report.registration.age_days} days, threshold <= {self.settings.nrd_threshold_days} days)."
+            if nrd_str not in unified_indicators:
+                unified_indicators.append(nrd_str)
+
+        for rep_ind in domain_report.domain_risk_indicators + infra_report.infrastructure_indicators:
+            if rep_ind not in unified_indicators:
+                unified_indicators.append(rep_ind)
+
+        # Top contributing factors narrative explanation
+        top_risks = [f.title for f in risk_assessment.contributing_factors if f.impact_score > 0][:3]
+        if not top_risks:
+            explanation = (
+                f"Explainable multi-layer intelligence evaluated 8 channels and determined a normalized risk score "
+                f"of {risk_assessment.risk_score}/100 ({risk_assessment.risk_level}). No critical scam indicators observed."
+            )
         else:
-            risk_level = "Low Risk"
+            explanation = (
+                f"Explainable risk engine assigned {risk_assessment.risk_score}/100 ({risk_assessment.risk_level}) "
+                f"based on {len(risk_assessment.contributing_factors)} factor(s), primarily driven by: "
+                f"{', '.join(top_risks)}."
+            )
 
         return CompleteUrlDomainAnalysisResult(
             component="C1_URL_DOMAIN",
             layer="Multi_Layer_URL_and_Domain_Intelligence",
             status="success",
             url=lexical_features.original_url,
-            score=combined_score,
-            risk_level=risk_level,
+            score=risk_assessment.risk_score,
+            risk_level=risk_assessment.risk_level,
             features=lexical_features,
             domain_intelligence=domain_report,
             threat_infrastructure=infra_report,
-            risk_indicators=all_indicators,
+            ml_prediction=ml_res,
+            risk_assessment=risk_assessment,
+            risk_indicators=unified_indicators,
             explanation=explanation,
         )
+
 
     def _compute_domain_risk_score(
         self,
@@ -257,18 +286,34 @@ class DomainIntelligenceAnalyzer:
         lexical_features: UrlLexicalFeatures,
         domain_report: DomainIntelligenceReport,
         infra_report: ThreatInfrastructureReport,
+        ml_res: Optional[MlPredictionResult] = None,
     ) -> Tuple[float, List[str], str]:
-        """Combine Layer 1 lexical, Layer 2 domain intelligence, and Layer 3 infrastructure scores."""
+        """Combine Layer 1 lexical, Layer 2 domain intelligence, Layer 3 infrastructure, and Layer 4 ML scores."""
         unified_indicators: List[str] = []
 
         for ind in lexical_indicators + domain_indicators + infra_indicators:
             if ind not in unified_indicators:
                 unified_indicators.append(ind)
 
+        # Incorporate ML classification indicator if model active
+        ml_score = 0.0
+        has_ml = ml_res is not None and ml_res.is_model_loaded
+        if has_ml:
+            ml_score = ml_res.malicious_probability * 100.0
+            if ml_res.predicted_label == "malicious":
+                unified_indicators.append(
+                    f"Machine Learning Classifier ({ml_res.model_name}) classified URL as malicious "
+                    f"(probability: {ml_res.malicious_probability:.2f}, confidence: {ml_res.confidence}%)."
+                )
+
         # Weighted composite score
         if domain_report.registration.is_data_available or domain_report.dns.dns_resolved:
-            # When active domain intelligence is present
-            combined = (lexical_score * 0.40) + (domain_score * 0.40) + (infra_score * 0.20)
+            # Active domain intelligence available
+            if has_ml:
+                combined = (lexical_score * 0.30) + (domain_score * 0.30) + (infra_score * 0.15) + (ml_score * 0.25)
+            else:
+                combined = (lexical_score * 0.40) + (domain_score * 0.40) + (infra_score * 0.20)
+
             # High-confidence correlation booster:
             # If domain is newly registered AND contains credential/login keywords
             if domain_report.registration.is_nrd and lexical_features.has_suspicious_keyword:
@@ -278,8 +323,11 @@ class DomainIntelligenceAnalyzer:
                     "High-risk correlation: Newly registered domain combined with security/login keywords."
                 )
         else:
-            # Domain registration data unavailable, combine lexical and infrastructure
-            combined = (lexical_score * 0.65) + (infra_score * 0.35)
+            # Domain registration data unavailable, combine lexical, infrastructure, and ML
+            if has_ml:
+                combined = (lexical_score * 0.45) + (infra_score * 0.25) + (ml_score * 0.30)
+            else:
+                combined = (lexical_score * 0.65) + (infra_score * 0.35)
 
         # Critical threat triggers (SSRF violation or DGA + Phishing)
         if infra_report.redirect_chain.ssrf_blocked:
