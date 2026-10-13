@@ -26,6 +26,7 @@ function App() {
       <Route path="/code-audit/progress" element={<AuditProgress />} />
       <Route path="/code-audit/report" element={<VulnerabilityReport />} />
       <Route path="/code-audit/patches" element={<PatchReview />} />
+      <Route path="/code-audit/remediations/:remediationId/review" element={<PatchReview />} />
     </Routes>
   )
 }
