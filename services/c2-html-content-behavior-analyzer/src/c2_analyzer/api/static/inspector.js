@@ -552,7 +552,7 @@ registerTab({
 // descriptions, per-label medians from reports/dom_features) and the DomResult of
 // this page (dev endpoint for samples, POST /api/v1/dom-features for pasted HTML).
 
-const domCache = { dictionary: new Map(), results: new WeakMap() };
+const domCache = { dictionary: new Map(), results: new WeakMap(), predictions: new WeakMap() };
 const SEVERITY_KIND = { high: "danger", medium: "warn", info: "info" };
 
 function cached(map, key, load) {
@@ -583,6 +583,60 @@ function domResult(ctx) {
       body: JSON.stringify({ html: ctx.html || "", url: ctx.url || null }),
     }).then((r) => ({ data: r.data, source: "api" }));
   });
+}
+
+function domPrediction(ctx) {
+  return cached(domCache.predictions, ctx, () =>
+    api(`/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/dom-prediction` + query({ version: ctx.version }))
+      .then((r) => r.data));
+}
+
+function fmtPct(p) {
+  return typeof p === "number" ? (100 * p).toFixed(1) + " %" : "—";
+}
+
+// Part 4: the DOM baseline's answer for a dataset sample (best model by CV macro-F1).
+// Fetched separately, so a missing model only shows a note and never breaks the tab.
+async function renderPrediction(ctx, box) {
+  const title = "DOM baseline prediction (Part 4)";
+  if (ctx.kind !== "sample") {
+    fill(box, section(title, el("p", { cls: "muted", text: "Shown for dataset samples (the models of that version); pasted HTML has no prediction here." })));
+    return;
+  }
+  fill(box, el("p", { cls: "muted", text: "Loading DOM baseline prediction…" }));
+  let p;
+  try {
+    p = await domPrediction(ctx);
+  } catch (error) {
+    if (state.ctx !== ctx || !box.isConnected) return;
+    fill(clear(box), section(title, el("p", { cls: "note", text: error.status === 404 ? error.message : "Prediction failed: " + error.message })));
+    return;
+  }
+  if (state.ctx !== ctx || !box.isConnected) return;
+  const best = (p.models || []).find((m) => m.model === p.best_model) || {};
+  const matches = p.true_label ? p.true_label === p.predicted : null;
+  const probabilities = Object.entries(p.probabilities || {}).sort((a, b) => b[1] - a[1]);
+  const pushes = p.contributions || [];
+  fill(clear(box), section(title, el("div", { cls: "card" },
+    el("h3", {},
+      "Predicted", labelChip(p.predicted), el("strong", { text: fmtPct(p.probabilities[p.predicted]) }),
+      badge(`${show(best.display_name)} · best by CV macro-F1 ${fmtValue(best.cv_macro_f1)}`, "info"),
+      p.pilot ? badge(`PILOT model (${p.dataset_version}, ${p.classes.length} classes)`, "warn") : null,
+      matches === null ? null : badge(matches ? "matches the label" : `label is ${p.true_label}`, matches ? "ok" : "danger"),
+      p.split ? badge(`split: ${p.split}`, p.split === "test" ? "info" : null) : null,
+      p.misclassified_test ? badge("misclassified (test)", "danger") : null),
+    (() => { const b = bars(probabilities, fmtPct); b.classList.add("wide"); return b; })(),
+    el("h3", { cls: "heading" }, `Top ${pushes.length} contributing features`, badge(pushes.length ? pushes[0].method : "—")),
+    pushes.length
+      ? table(["feature", "value", "push", `on "${p.predicted}"`], pushes, (c) => [
+        el("span", { text: c.name, title: c.description }),
+        fmtValue(c.value),
+        badge(c.direction === "towards" ? "pushes towards" : "pushes away from", c.direction === "towards" ? "info" : null),
+        (c.contribution > 0 ? "+" : "") + fmtValue(c.contribution),
+      ])
+      : el("p", { cls: "muted", text: "No feature moves this prediction." }),
+    el("p", { cls: "muted", text: "All models: " + (p.models || []).map((m) => `${m.display_name} → ${m.predicted} (${fmtPct(m.probabilities[m.predicted])})`).join(" · ") }),
+    p.pilot ? el("p", { cls: "note", text: `Pilot: trained on ${p.classes.join(", ")} only - it cannot answer ${Object.keys(p.excluded_classes || {}).join(", ") || "other classes"}.` }) : null)));
 }
 
 function fmtValue(value) {
@@ -628,6 +682,11 @@ registerTab({
       Object.keys(medians).length ? null
         : el("p", { cls: "note", text: `No label medians yet - run: python scripts/extract_dom_features.py run --version ${ctx.version || "<version>"}` }),
     );
+
+    const predictionBox = el("div");
+    fill(box, predictionBox);
+    renderPrediction(ctx, predictionBox).catch((error) =>
+      fill(clear(predictionBox), el("div", { cls: "error-box", text: "Prediction card failed: " + error.message })));
 
     // Evidence first: the "why" in words, most severe first.
     const evidence = r.evidence || [];
@@ -841,6 +900,7 @@ async function loadSamples() {
       q: $("search-input").value.trim(),
       has_password: $("password-filter").checked ? "true" : "",
       external_form_action: $("external-filter").checked ? "true" : "",
+      misclassified: $("misclassified-filter").checked ? "true" : "",
     }));
     if (token !== state.loadToken) return; // a newer filter change is already loading
     state.samples = data;
@@ -863,6 +923,7 @@ function sampleItem(s) {
   el("span", { cls: "sub" }, el("span", { text: s.sample_id }), el("span", { text: s.language }),
     s.has_password ? badge("password", "warn") : null,
     s.external_form_action ? badge("ext form", "danger") : null,
+    s.misclassified ? badge("misclassified", "danger") : null,
     s.processed ? null : badge("not processed")));
   return el("li", {}, button);
 }
@@ -990,7 +1051,7 @@ async function start() {
     loadSamples();
     writeHash();
   });
-  for (const id of ["label-filter", "language-filter", "password-filter", "external-filter"]) {
+  for (const id of ["label-filter", "language-filter", "password-filter", "external-filter", "misclassified-filter"]) {
     $(id).addEventListener("change", loadSamples);
   }
   $("search-input").addEventListener("input", debounce(loadSamples, 250));

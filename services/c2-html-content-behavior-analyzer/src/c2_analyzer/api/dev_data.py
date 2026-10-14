@@ -10,11 +10,16 @@ sample, so it reads the same files the pipeline uses:
     data/raw/<label>/<file>.html                            the original page
     data/processed/dom_features/<version>/<sample_id>.json  Part 3 stored DomResult
     reports/dom_features/<version>_summary.json             Part 3 per-label medians
+    data/splits/<version>/split.csv                         shared split (Part 4)
+    models/dom_baseline/<version>/*.joblib                  Part 4 trained baselines
+    reports/dom_baseline/<version>/misclassified.csv        Part 4 test mistakes
 
 Rules:
 - READ ONLY: nothing here writes to data/ (a page processed on the fly is not
   saved; ``preprocess_html.py run`` stays the only writer).
 - Never fetches anything: the page URL is only used to resolve relative links.
+- Saved models are joblib (pickle) files: only the project's own
+  models/dom_baseline/<version>/ files are loaded, from a validated version name.
 - Untrusted input (version, sample id) never reaches a file path unchecked:
   versions must match the manifest pattern, sample ids the id pattern AND be
   listed in that version's manifest, and every raw path must stay inside data/raw.
@@ -30,12 +35,16 @@ import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+import joblib
 import pandas as pd
 
+from c2_analyzer.classifiers.dom_baseline.common import MODEL_NAMES, BaselineConfig
+from c2_analyzer.classifiers.dom_baseline.predict import predict_features
 from c2_analyzer.dataset.manifest import list_versions, manifest_paths, manifests_dir
 from c2_analyzer.dataset.metadata import MetadataStore
 from c2_analyzer.dataset.page_view import read_html
 from c2_analyzer.dataset.safe_preview import sanitize_html
+from c2_analyzer.dataset.splits import split_paths, splits_root
 from c2_analyzer.dom.dictionary import dictionary_hash, load_dictionary
 from c2_analyzer.dom.exporter import output_dir as dom_output_dir
 from c2_analyzer.dom.exporter import reports_dir as dom_reports_dir
@@ -45,6 +54,7 @@ from c2_analyzer.preprocessing.batch import output_dir
 from c2_analyzer.preprocessing.loader import from_bytes
 from c2_analyzer.preprocessing.pipeline import preprocess
 from c2_analyzer.schemas.dom import DomResult
+from c2_analyzer.schemas.dom_baseline import DomPrediction
 from c2_analyzer.schemas.inspector import (
     DomDictionaryInfo,
     DomFeatureInfo,
@@ -94,6 +104,9 @@ class DevDataset:
         metadata_csv: Path | None = None,
         dom_root: Path | None = None,
         dom_reports: Path | None = None,
+        baseline_models: Path | None = None,
+        baseline_reports: Path | None = None,
+        splits: Path | None = None,
     ) -> None:
         self.manifests = manifests
         self.parsed_root = parsed_root  # data/processed/parsed_html (one folder per version)
@@ -101,6 +114,11 @@ class DevDataset:
         self.metadata_csv = metadata_csv
         self.dom_root = dom_root  # data/processed/dom_features (None = never stored)
         self.dom_reports = dom_reports  # reports/dom_features (None = no medians)
+        self.baseline_models = baseline_models  # models/dom_baseline (None = no predictions)
+        self.baseline_reports = baseline_reports  # reports/dom_baseline (misclassified.csv)
+        self.splits = splits  # data/splits (None = split unknown)
+        self._bundles: dict[str, tuple[tuple, dict]] = {}
+        self._files: dict[Path, tuple[int, object]] = {}
         self._facts: dict[Path, tuple[int, int, _Facts | None]] = {}
         self._manifests: dict[str, tuple[int, pd.DataFrame]] = {}
 
@@ -108,6 +126,7 @@ class DevDataset:
     def from_settings(cls) -> DevDataset:
         """The real project folders (same defaults as the Part 1/2 scripts)."""
         store = MetadataStore()  # only used for its paths; metadata.csv is not loaded here
+        baseline = BaselineConfig.load()
         return cls(
             manifests=manifests_dir(store),
             parsed_root=output_dir(None).parent,
@@ -115,6 +134,9 @@ class DevDataset:
             metadata_csv=store.csv_path,
             dom_root=dom_output_dir(None).parent,
             dom_reports=dom_reports_dir(),
+            baseline_models=baseline.models_dir,
+            baseline_reports=baseline.reports_dir,
+            splits=splits_root(),
         )
 
     # ---- versions ---------------------------------------------------------------
@@ -188,9 +210,11 @@ class DevDataset:
         query: str | None = None,
         has_password: bool | None = None,
         external_form_action: bool | None = None,
+        misclassified: bool | None = None,
     ) -> list[SampleSummary]:
         """The (filtered) sample list of one version, in manifest order."""
         rows = self.manifest(version)
+        wrong = self.misclassified(version)
         if label:
             rows = rows[rows["label"] == label]
         if language:
@@ -205,8 +229,11 @@ class DevDataset:
                 label=row["label"],
                 language=row["language"],
                 processed=facts is not None,
+                misclassified=row["sample_id"] in wrong,
                 **(asdict(facts) if facts is not None else {}),
             )
+            if misclassified is not None and summary.misclassified != misclassified:
+                continue
             if has_password is not None and summary.has_password != has_password:
                 continue
             if (
@@ -320,6 +347,95 @@ class DevDataset:
             ],
             label_medians=medians,
         )
+
+    # ---- Part 4: DOM baseline ---------------------------------------------------
+
+    def _cached_file(self, path: Path, load):
+        """load(path), cached until the file changes; None if it does not exist."""
+        try:
+            stamp = path.stat().st_mtime_ns
+        except OSError:
+            return None
+        cached = self._files.get(path)
+        if cached is None or cached[0] != stamp:
+            cached = (stamp, load(path))
+            self._files[path] = cached
+        return cached[1]
+
+    def misclassified(self, version: str) -> set[str]:
+        """Test sample ids the BEST baseline model got wrong (empty if not evaluated)."""
+        if self.baseline_reports is None:
+            return set()
+        folder = self.baseline_reports / version
+        results = self._cached_file(folder / "results.json", lambda p: json.loads(p.read_bytes()))
+        table = self._cached_file(
+            folder / "misclassified.csv",
+            lambda p: pd.read_csv(p, dtype=str, keep_default_na=False),
+        )
+        if not results or table is None or table.empty:
+            return set()
+        best = results.get("best_model")
+        return set(table.loc[table["model"] == best, "sample_id"])
+
+    def split_of(self, version: str, sample_id: str) -> str | None:
+        """train / val / test / excluded from data/splits/<version>/split.csv (None: no split)."""
+        if self.splits is None:
+            return None
+        csv_path, _, _ = split_paths(version, self.splits)
+        table = self._cached_file(
+            csv_path, lambda p: pd.read_csv(p, dtype=str, keep_default_na=False)
+        )
+        if table is None:
+            return None
+        match = table.loc[table["sample_id"] == sample_id, "split"]
+        return None if match.empty else str(match.iloc[0])
+
+    def baseline_bundles(self, version: str) -> tuple[dict, dict]:
+        """(trained bundles, model_card) of a version; NotFoundError if none were trained."""
+        try:
+            manifest_paths(self.manifests, version)  # validates the version name
+        except ValueError as error:
+            raise NotFoundError(str(error)) from None
+        folder = self.baseline_models / version if self.baseline_models else None
+        paths = [folder / f"{name}.joblib" for name in MODEL_NAMES] if folder else []
+        stamp = tuple(p.stat().st_mtime_ns if p.is_file() else 0 for p in paths)
+        if not any(stamp):
+            raise NotFoundError(
+                f"no DOM baseline trained for {version} - run: python "
+                f"scripts/train_dom_baseline.py all --version {version}"
+            )
+        cached = self._bundles.get(version)
+        if cached is None or cached[0] != stamp:
+            bundles = {p.stem: joblib.load(p) for p in paths if p.is_file()}
+            card_path = folder / "model_card.json"
+            card = json.loads(card_path.read_bytes()) if card_path.is_file() else {}
+            cached = (stamp, {"bundles": bundles, "card": card})
+            self._bundles[version] = cached
+        return cached[1]["bundles"], cached[1]["card"]
+
+    def dom_prediction(self, version: str, sample_id: str, top: int = 5) -> DomPrediction:
+        """The Part 4 baselines' prediction for a sample (features: stored or on the fly)."""
+        row = self._row(version, sample_id)
+        bundles, card = self.baseline_bundles(version)
+        text, source = self.dom_features(version, sample_id)
+        result = DomResult.model_validate_json(text)
+        prediction = predict_features(
+            result.features,
+            bundles,
+            version=version,
+            dictionary_hash=dictionary_hash(),
+            excluded_classes=card.get("excluded_classes", {}),
+            top=top,
+            sample_id=sample_id,
+        )
+        split = self.split_of(version, sample_id)
+        prediction.true_label = row["label"]
+        prediction.split = split
+        prediction.misclassified_test = (
+            sample_id in self.misclassified(version) if split == "test" else None
+        )
+        prediction.features_source = source
+        return prediction
 
     def safe_preview(self, sample_id: str, version: str | None = None) -> str:
         """Part 1's sanitized copy of a sample (scripts, URLs and forms removed).

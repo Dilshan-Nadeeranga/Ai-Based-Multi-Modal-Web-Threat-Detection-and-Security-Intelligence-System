@@ -41,6 +41,7 @@ class SampleSummary(BaseModel):
     has_password: bool = False
     external_form_action: bool = False  # a form whose action is on another site (Part 2 fact)
     processed: bool = False
+    misclassified: bool = False  # a test page the best Part 4 baseline got wrong
 
 
 class DomFeatureInfo(BaseModel):

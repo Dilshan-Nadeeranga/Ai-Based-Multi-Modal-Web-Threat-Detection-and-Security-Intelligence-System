@@ -12,7 +12,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 
 **Threat classes:** `benign`, `phishing`, `fake_ecommerce`, `crypto_scam`, `malware_delivery`.
 
-> **Status:** Part 1 (dataset preparation), Part 2 (HTML preprocessing) and Part 3 (DOM features) are done. `GET /health`, `POST /api/v1/preprocess`, `POST /api/v1/dom-features` and the [developer inspector](#developer-inspector) work. Parts 4–9 are still stubs (`NotImplementedError`), implemented part by part.
+> **Status:** Part 1 (dataset preparation), Part 2 (HTML preprocessing), Part 3 (DOM features) and Part 4 (DOM baseline, pilot on v0.1) are done. `GET /health`, `POST /api/v1/preprocess`, `POST /api/v1/dom-features` and the [developer inspector](#developer-inspector) work. Parts 5–9 are still stubs (`NotImplementedError`), implemented part by part.
 
 ## Implementation parts
 
@@ -251,6 +251,42 @@ python scripts/extract_dom_features.py describe [--markdown]        # the featur
   - `feature_dictionary.json`.
 - **Report:** `reports/dom_features/<version>_summary.{json,md}` and `figures/` contain, per label, the mean, median and % non-zero of each feature. It warns about constant, near-constant and highly correlated (|r| > 0.95) features, and ranks the most separating features by mutual information with box plots. This ranking is descriptive only; Part 4 selects features on the training split.
 
+## DOM baseline
+
+Part 4 is **Baseline 1** of the ablation study: DOM-only structural classification with Logistic Regression, Random Forest and XGBoost on the Part 3 feature vector. Later parts compare NLP-only (Part 6), behavior-only (Part 8) and the fused model against it **on the same split**.
+
+```bash
+python scripts/train_dom_baseline.py all --version v0.1        # split (if missing) -> train -> evaluate -> report
+python scripts/train_dom_baseline.py split --version v0.1 [--force]
+python scripts/train_dom_baseline.py train --version v0.1 --models logreg,rf,xgb
+python scripts/train_dom_baseline.py evaluate --version v0.1
+python scripts/train_dom_baseline.py predict --sample-id c2_phishing_000081
+python scripts/train_dom_baseline.py predict --file page.html --url https://example.com/login [--json]
+```
+
+- **One shared split per dataset version** (`data/splits/<version>/split.csv`, `split.json`, `cv_folds.csv`; tracked in git, ids and labels only). It is made from the frozen manifest, 70/15/15 with seed 42, stratified by label × language and **grouped by near-duplicate cluster**, so copies of one phishing kit never end up in both train and test. Sinhala and Tamil pages are spread over the three splits. Classes with fewer than 15 pages are excluded and listed, and the run is then marked **PILOT** (v0.1: fake_ecommerce and crypto_scam have 0 pages). An existing split is never replaced without `--force`.
+- **Model selection never sees the test split.** Each model has a small grid (`configs/dom_baseline.yaml`). The best grid point is chosen by mean macro-F1 over grouped 5-fold CV on train+val, refit on train+val, and only then evaluated **once** on test. Class imbalance is handled by `class_weight` (LR, RF) or balanced sample weights (XGBoost).
+- **Feature cleaning on train only:** constant features and one of each pair with |r| > 0.98 are dropped (`dropped_features.csv` says why).
+- **Metrics:**
+  - per-class precision, recall and F1;
+  - **macro-F1** (primary);
+  - weighted-F1, accuracy, balanced accuracy and one-vs-rest ROC-AUC;
+  - **benign false-positive rate** (target ≤ 2 %), with the flagged sample ids;
+  - per-language results (small-n warning);
+  - confusion matrices.
+- **Importance:** LR standardized coefficients, RF impurity and permutation importance, XGBoost gain and SHAP (global bar plot and a beeswarm per class), all labelled with the feature descriptions. On the pilot set they are indicative only.
+- **Outputs:**
+  - `models/dom_baseline/<version>/*.joblib` (git-ignored), plus the tracked `model_card.json`. It records the dataset, split fingerprint, feature set, features, label mapping, best params, metrics, library versions and git commit;
+  - `reports/dom_baseline/<version>/results.md` (the Baseline 1 table), `results.json`, `misclassified.csv`, `dropped_features.csv` and `figures/`.
+
+v0.1 pilot (42 test pages), from `reports/dom_baseline/v0.1/results.md`:
+
+| Model | CV macro-F1 | Test macro-F1 | Test accuracy | Benign FPR |
+|---|---|---|---|---|
+| Logistic Regression | 0.747 ± 0.030 | 0.716 | 0.738 | 25.0 % |
+| **Random Forest** (best by CV) | 0.797 ± 0.011 | 0.755 | 0.786 | 10.0 % |
+| XGBoost | 0.788 ± 0.024 | 0.753 | 0.786 | 10.0 % |
+
 ## API
 
 | Method | Path | Status |
@@ -274,9 +310,9 @@ python scripts/run_api.py        # APP_ENV=development (default in .env.example)
 
 Then open **http://127.0.0.1:8002/inspector** (Swagger: http://127.0.0.1:8002/docs).
 
-- **Left:** pick a frozen dataset version, filter by label, language, "has password input" or "external form action", search by id or title, and click a sample. Up/Down arrows move through the list.
+- **Left:** pick a frozen dataset version, filter by label, language, "has password input", "external form action" or "misclassified (test)" (test pages the best Part 4 model got wrong), search by id or title, and click a sample. Up/Down arrows move through the list.
 - **Top:** paste HTML (and optionally its URL) or choose a local `.html` file, then press **Analyze**. This calls `POST /api/v1/preprocess`. The file is read as text and never rendered.
-- **Tabs:** DOM Features (Part 3: evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only). Greyed-out tabs are placeholders for Parts 5–6, 7–8 and 9.
+- **Tabs:** DOM Features (Part 3, plus the Part 4 "DOM baseline prediction" card with the predicted class, probability bars, the top 5 features pushing towards or away from it, and a PILOT badge; then evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only). Greyed-out tabs are placeholders for Parts 5–6, 7–8 and 9.
 - **Deep links:** the URL hash remembers the version, sample and tab (e.g. `/inspector#v=v0.1&sample=c2_phishing_000081&tab=forms`). This is handy for presentations.
 
 Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
@@ -284,9 +320,10 @@ Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
 | Path | Returns |
 |---|---|
 | `GET /api/v1/dev/versions` | frozen versions (newest first) with counts and how many samples Part 2 processed |
-| `GET /api/v1/dev/samples?version=v0.1&label=&language=&q=&has_password=&external_form_action=` | sample list from the manifest + stored Part 2 JSON (HTML is not re-parsed) |
+| `GET /api/v1/dev/samples?version=v0.1&label=&language=&q=&has_password=&external_form_action=&misclassified=` | sample list from the manifest + stored Part 2 JSON (HTML is not re-parsed) |
 | `GET /api/v1/dev/samples/{id}/parsed?version=v0.1` | the stored `ParsedPage`. A missing one is processed on the fly but not saved (header `X-Parsed-Source`) |
 | `GET /api/v1/dev/samples/{id}/dom-features?version=v0.1` | the stored Part 3 `DomResult`, or one computed on the fly (header `X-Features-Source`) |
+| `GET /api/v1/dev/samples/{id}/dom-prediction?version=v0.1` | Part 4: probabilities from every trained baseline, the best model's top 5 contributions, the split and whether it is misclassified on test (`404` if no model has been trained) |
 | `GET /api/v1/dev/dom-dictionary?version=v0.1` | the feature dictionary plus per-label medians from the Part 3 report |
 | `GET /api/v1/dev/samples/{id}/safe-preview` | Part 1's sanitized copy, with `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'` and `nosniff` |
 

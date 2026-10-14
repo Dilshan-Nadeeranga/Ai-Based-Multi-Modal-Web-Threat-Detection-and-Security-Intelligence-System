@@ -14,11 +14,19 @@ paths:
   model_dir: models
   reports_dir: reports
 
+# Shared train/val/test split (Part 4, used by EVERY later part):
+# scripts/train_dom_baseline.py split --version v0.1 -> data/splits/<version>/
+# Stratified by label x language, grouped by near-duplicate cluster_id.
 split:
   train: 0.70
   val: 0.15
   test: 0.15
   stratify_by: [label, language]
+  group_by: cluster_id
+  min_samples_per_class: 15   # smaller classes are excluded from training (listed in split.json)
+  units: 20                   # StratifiedGroupKFold pieces (5 % each) that are combined into the splits
+  search_iterations: 2000     # seeded search over which pieces become val / test
+  cv_folds: 5                 # grouped stratified CV over train+val (model selection)
 
 # Near-duplicate clustering (Part 1 Batch C): scripts/deduplicate.py
 # Two pages are near-duplicates if
@@ -38,19 +46,12 @@ dedup:
   lsh_threshold: 0.60
   reports_dir: reports/dataset_stats
 
+# DOM baseline classifier (Part 4): scripts/train_dom_baseline.py
+# Models and hyperparameter grids live in configs/dom_baseline.yaml.
 dom_baseline:
-  models:
-    logistic_regression:
-      max_iter: 1000
-      class_weight: balanced
-    random_forest:
-      n_estimators: 300
-      max_depth: null
-      class_weight: balanced
-    xgboost:
-      n_estimators: 300
-      max_depth: 6
-      learning_rate: 0.1
+  models_dir: models/dom_baseline
+  reports_dir: reports/dom_baseline
+  n_jobs: 4                   # threads per model (RandomForest / XGBoost); 1 = single core
 
 xlmr:
   model_name: xlm-roberta-base

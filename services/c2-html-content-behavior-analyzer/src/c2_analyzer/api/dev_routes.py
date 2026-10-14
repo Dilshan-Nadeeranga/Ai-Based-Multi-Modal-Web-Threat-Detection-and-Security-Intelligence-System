@@ -27,7 +27,9 @@ from fastapi.responses import FileResponse, HTMLResponse
 
 from c2_analyzer.api.dependencies import get_dev_dataset
 from c2_analyzer.api.dev_data import DevDataset, NotFoundError
+from c2_analyzer.classifiers.dom_baseline.predict import PredictionError
 from c2_analyzer.schemas.dom import DomResult
+from c2_analyzer.schemas.dom_baseline import DomPrediction
 from c2_analyzer.schemas.inspector import DomDictionaryInfo, SampleSummary, VersionInfo
 from c2_analyzer.schemas.parsed_page import ParsedPage
 
@@ -73,11 +75,20 @@ def samples(
     q: str | None = Query(None, max_length=200, description="search in sample id and title"),
     has_password: bool | None = Query(None),
     external_form_action: bool | None = Query(None),
+    misclassified: bool | None = Query(
+        None, description="test pages the best Part 4 baseline got wrong"
+    ),
 ) -> list[SampleSummary]:
     """Manifest rows + facts from the stored Part 2 JSON (pages are not re-parsed)."""
     try:
         return dataset.samples(
-            _version(dataset, version), label, language, q, has_password, external_form_action
+            _version(dataset, version),
+            label,
+            language,
+            q,
+            has_password,
+            external_form_action,
+            misclassified,
         )
     except NotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from None
@@ -123,6 +134,29 @@ def dom_features(
     except NotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from None
     return Response(text, media_type="application/json", headers={"X-Features-Source": source})
+
+
+@router.get(
+    "/samples/{sample_id}/dom-prediction",
+    response_model=DomPrediction,
+    summary="Part 4 DOM baseline prediction of a sample",
+)
+def dom_prediction(
+    dataset: DatasetDep,
+    sample_id: str,
+    version: str | None = Query(None, examples=["v0.1"], description="default: newest"),
+) -> DomPrediction:
+    """Probabilities of every trained baseline + the best model's top 5 feature pushes.
+
+    404 if no baseline was trained for the version; 409 if the models no longer
+    fit the current feature dictionary (retrain).
+    """
+    try:
+        return dataset.dom_prediction(_version(dataset, version), sample_id)
+    except NotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from None
+    except PredictionError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from None
 
 
 @router.get(

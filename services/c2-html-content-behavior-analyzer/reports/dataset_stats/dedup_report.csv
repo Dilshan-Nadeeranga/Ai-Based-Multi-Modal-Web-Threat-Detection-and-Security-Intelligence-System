@@ -137,238 +137,266 @@ c2_benign_000135,benign,cl_000134,1,c2_benign_000135,,false,
 c2_benign_000136,benign,cl_000135,1,c2_benign_000136,,false,
 c2_benign_000137,benign,cl_000136,1,c2_benign_000137,,false,
 c2_benign_000138,benign,cl_000137,1,c2_benign_000138,,false,
-c2_crypto_scam_000001,crypto_scam,cl_000138,1,c2_crypto_scam_000001,,false,quality_flag bot_challenge
-c2_crypto_scam_000002,crypto_scam,cl_000139,1,c2_crypto_scam_000002,,false,quality_flag empty
-c2_malware_delivery_000001,malware_delivery,cl_000140,3,c2_malware_delivery_000001,,false,
-c2_malware_delivery_000002,malware_delivery,cl_000140,3,c2_malware_delivery_000001,c2_malware_delivery_000001,false,
-c2_malware_delivery_000003,malware_delivery,cl_000140,3,c2_malware_delivery_000001,c2_malware_delivery_000001,false,
-c2_malware_delivery_000004,malware_delivery,cl_000141,1,c2_malware_delivery_000004,,false,
-c2_malware_delivery_000005,malware_delivery,cl_000142,1,c2_malware_delivery_000005,,false,
-c2_malware_delivery_000006,malware_delivery,cl_000143,1,c2_malware_delivery_000006,,false,quality_flag empty
-c2_malware_delivery_000007,malware_delivery,cl_000144,1,c2_malware_delivery_000007,,false,quality_flag empty
-c2_malware_delivery_000008,malware_delivery,cl_000145,1,c2_malware_delivery_000008,,false,quality_flag error_page
-c2_malware_delivery_000009,malware_delivery,cl_000146,1,c2_malware_delivery_000009,,false,quality_flag error_page
-c2_malware_delivery_000010,malware_delivery,cl_000147,1,c2_malware_delivery_000010,,false,
-c2_malware_delivery_000011,malware_delivery,cl_000148,1,c2_malware_delivery_000011,,false,
-c2_malware_delivery_000012,malware_delivery,cl_000149,1,c2_malware_delivery_000012,,false,quality_flag error_page
-c2_malware_delivery_000013,malware_delivery,cl_000150,1,c2_malware_delivery_000013,,false,
-c2_malware_delivery_000014,malware_delivery,cl_000151,1,c2_malware_delivery_000014,,false,quality_flag bot_challenge
-c2_malware_delivery_000015,malware_delivery,cl_000152,1,c2_malware_delivery_000015,,false,
-c2_malware_delivery_000016,malware_delivery,cl_000153,1,c2_malware_delivery_000016,,false,
-c2_malware_delivery_000017,malware_delivery,cl_000154,3,c2_malware_delivery_000017,,false,
-c2_malware_delivery_000019,malware_delivery,cl_000154,3,c2_malware_delivery_000017,c2_malware_delivery_000017,false,
-c2_malware_delivery_000020,malware_delivery,cl_000154,3,c2_malware_delivery_000017,c2_malware_delivery_000017,false,
-c2_malware_delivery_000018,malware_delivery,cl_000155,1,c2_malware_delivery_000018,,false,
-c2_malware_delivery_000021,malware_delivery,cl_000156,1,c2_malware_delivery_000021,,false,
-c2_malware_delivery_000022,malware_delivery,cl_000157,1,c2_malware_delivery_000022,,false,quality_flag empty
-c2_malware_delivery_000023,malware_delivery,cl_000158,2,c2_malware_delivery_000023,,false,
-c2_malware_delivery_000024,malware_delivery,cl_000158,2,c2_malware_delivery_000023,c2_malware_delivery_000023,false,
-c2_malware_delivery_000025,malware_delivery,cl_000159,1,c2_malware_delivery_000025,,false,quality_flag empty
-c2_malware_delivery_000026,malware_delivery,cl_000160,1,c2_malware_delivery_000026,,false,quality_flag empty
-c2_malware_delivery_000027,malware_delivery,cl_000161,1,c2_malware_delivery_000027,,false,quality_flag empty
-c2_malware_delivery_000028,malware_delivery,cl_000162,1,c2_malware_delivery_000028,,false,
-c2_malware_delivery_000029,malware_delivery,cl_000163,1,c2_malware_delivery_000029,,false,quality_flag empty
-c2_malware_delivery_000030,malware_delivery,cl_000164,1,c2_malware_delivery_000030,,false,quality_flag bot_challenge
-c2_malware_delivery_000031,malware_delivery,cl_000165,1,c2_malware_delivery_000031,,false,
-c2_malware_delivery_000032,malware_delivery,cl_000166,1,c2_malware_delivery_000032,,false,quality_flag parked_domain
-c2_malware_delivery_000033,malware_delivery,cl_000167,1,c2_malware_delivery_000033,,false,
-c2_malware_delivery_000034,malware_delivery,cl_000168,1,c2_malware_delivery_000034,,false,
-c2_malware_delivery_000035,malware_delivery,cl_000169,1,c2_malware_delivery_000035,,false,quality_flag empty
-c2_malware_delivery_000036,malware_delivery,cl_000170,1,c2_malware_delivery_000036,,false,
-c2_malware_delivery_000037,malware_delivery,cl_000171,1,c2_malware_delivery_000037,,false,quality_flag empty
-c2_malware_delivery_000038,malware_delivery,cl_000172,1,c2_malware_delivery_000038,,false,
-c2_malware_delivery_000039,malware_delivery,cl_000173,1,c2_malware_delivery_000039,,false,
-c2_malware_delivery_000040,malware_delivery,cl_000174,1,c2_malware_delivery_000040,,false,
-c2_malware_delivery_000041,malware_delivery,cl_000175,1,c2_malware_delivery_000041,,false,
-c2_malware_delivery_000042,malware_delivery,cl_000176,1,c2_malware_delivery_000042,,false,
-c2_malware_delivery_000043,malware_delivery,cl_000177,1,c2_malware_delivery_000043,,false,
-c2_malware_delivery_000044,malware_delivery,cl_000178,1,c2_malware_delivery_000044,,false,quality_flag parked_domain
-c2_malware_delivery_000045,malware_delivery,cl_000179,1,c2_malware_delivery_000045,,false,
-c2_malware_delivery_000046,malware_delivery,cl_000180,1,c2_malware_delivery_000046,,false,
-c2_malware_delivery_000047,malware_delivery,cl_000181,1,c2_malware_delivery_000047,,false,quality_flag empty
-c2_malware_delivery_000048,malware_delivery,cl_000182,1,c2_malware_delivery_000048,,false,
-c2_malware_delivery_000049,malware_delivery,cl_000183,4,c2_malware_delivery_000049,,false,
-c2_malware_delivery_000051,malware_delivery,cl_000183,4,c2_malware_delivery_000049,c2_malware_delivery_000049,false,
-c2_malware_delivery_000053,malware_delivery,cl_000183,4,c2_malware_delivery_000049,c2_malware_delivery_000049,false,
-c2_malware_delivery_000054,malware_delivery,cl_000183,4,c2_malware_delivery_000049,c2_malware_delivery_000049,false,
-c2_malware_delivery_000050,malware_delivery,cl_000184,1,c2_malware_delivery_000050,,false,
-c2_malware_delivery_000052,malware_delivery,cl_000185,1,c2_malware_delivery_000052,,false,
-c2_malware_delivery_000055,malware_delivery,cl_000186,1,c2_malware_delivery_000055,,false,
-c2_malware_delivery_000056,malware_delivery,cl_000187,1,c2_malware_delivery_000056,,false,quality_flag error_page
-c2_malware_delivery_000057,malware_delivery,cl_000188,1,c2_malware_delivery_000057,,false,quality_flag error_page
-c2_malware_delivery_000058,malware_delivery,cl_000189,1,c2_malware_delivery_000058,,false,quality_flag empty
-c2_malware_delivery_000059,malware_delivery,cl_000190,1,c2_malware_delivery_000059,,false,quality_flag empty
-c2_malware_delivery_000060,malware_delivery,cl_000191,1,c2_malware_delivery_000060,,false,quality_flag empty
-c2_malware_delivery_000061,malware_delivery,cl_000192,1,c2_malware_delivery_000061,,false,quality_flag empty
-c2_malware_delivery_000062,malware_delivery,cl_000193,1,c2_malware_delivery_000062,,false,quality_flag empty
-c2_malware_delivery_000063,malware_delivery,cl_000194,1,c2_malware_delivery_000063,,false,
-c2_malware_delivery_000064,malware_delivery,cl_000195,1,c2_malware_delivery_000064,,false,quality_flag empty
-c2_malware_delivery_000065,malware_delivery,cl_000196,1,c2_malware_delivery_000065,,false,
-c2_malware_delivery_000066,malware_delivery,cl_000197,1,c2_malware_delivery_000066,,false,
-c2_malware_delivery_000067,malware_delivery,cl_000198,1,c2_malware_delivery_000067,,false,
-c2_malware_delivery_000068,malware_delivery,cl_000199,1,c2_malware_delivery_000068,,false,
-c2_malware_delivery_000069,malware_delivery,cl_000200,1,c2_malware_delivery_000069,,false,
-c2_malware_delivery_000070,malware_delivery,cl_000201,1,c2_malware_delivery_000070,,false,
-c2_malware_delivery_000071,malware_delivery,cl_000202,1,c2_malware_delivery_000071,,false,
-c2_malware_delivery_000072,malware_delivery,cl_000203,1,c2_malware_delivery_000072,,false,
-c2_malware_delivery_000073,malware_delivery,cl_000204,1,c2_malware_delivery_000073,,false,
-c2_malware_delivery_000074,malware_delivery,cl_000205,1,c2_malware_delivery_000074,,false,
-c2_malware_delivery_000075,malware_delivery,cl_000206,1,c2_malware_delivery_000075,,false,
-c2_malware_delivery_000076,malware_delivery,cl_000207,1,c2_malware_delivery_000076,,false,
-c2_malware_delivery_000077,malware_delivery,cl_000208,1,c2_malware_delivery_000077,,false,
-c2_malware_delivery_000078,malware_delivery,cl_000209,1,c2_malware_delivery_000078,,false,
-c2_malware_delivery_000079,malware_delivery,cl_000210,1,c2_malware_delivery_000079,,false,
-c2_malware_delivery_000080,malware_delivery,cl_000211,1,c2_malware_delivery_000080,,false,
-c2_malware_delivery_000081,malware_delivery,cl_000212,1,c2_malware_delivery_000081,,false,
-c2_malware_delivery_000082,malware_delivery,cl_000213,1,c2_malware_delivery_000082,,false,
-c2_malware_delivery_000083,malware_delivery,cl_000214,1,c2_malware_delivery_000083,,false,
-c2_malware_delivery_000084,malware_delivery,cl_000215,1,c2_malware_delivery_000084,,false,
-c2_malware_delivery_000085,malware_delivery,cl_000216,1,c2_malware_delivery_000085,,false,
-c2_malware_delivery_000086,malware_delivery,cl_000217,1,c2_malware_delivery_000086,,false,
-c2_malware_delivery_000087,malware_delivery,cl_000218,1,c2_malware_delivery_000087,,false,
-c2_malware_delivery_000088,malware_delivery,cl_000219,1,c2_malware_delivery_000088,,false,
-c2_malware_delivery_000089,malware_delivery,cl_000220,1,c2_malware_delivery_000089,,false,
-c2_malware_delivery_000090,malware_delivery,cl_000221,1,c2_malware_delivery_000090,,false,
-c2_malware_delivery_000091,malware_delivery,cl_000222,1,c2_malware_delivery_000091,,false,
-c2_malware_delivery_000092,malware_delivery,cl_000223,1,c2_malware_delivery_000092,,false,
-c2_malware_delivery_000093,malware_delivery,cl_000224,1,c2_malware_delivery_000093,,false,quality_flag error_page
-c2_malware_delivery_000094,malware_delivery,cl_000225,1,c2_malware_delivery_000094,,false,quality_flag error_page
-c2_malware_delivery_000095,malware_delivery,cl_000226,1,c2_malware_delivery_000095,,false,quality_flag error_page
-c2_malware_delivery_000096,malware_delivery,cl_000227,1,c2_malware_delivery_000096,,false,quality_flag error_page
-c2_malware_delivery_000097,malware_delivery,cl_000228,1,c2_malware_delivery_000097,,false,quality_flag error_page
-c2_malware_delivery_000098,malware_delivery,cl_000229,1,c2_malware_delivery_000098,,false,quality_flag error_page
-c2_malware_delivery_000099,malware_delivery,cl_000230,1,c2_malware_delivery_000099,,false,quality_flag error_page
-c2_malware_delivery_000100,malware_delivery,cl_000231,1,c2_malware_delivery_000100,,false,quality_flag empty
-c2_malware_delivery_000101,malware_delivery,cl_000232,1,c2_malware_delivery_000101,,false,quality_flag empty
-c2_phishing_000001,phishing,cl_000233,2,c2_phishing_000001,,false,
-c2_phishing_000104,phishing,cl_000233,2,c2_phishing_000001,c2_phishing_000001,false,
-c2_phishing_000002,phishing,cl_000234,1,c2_phishing_000002,,false,
-c2_phishing_000003,phishing,cl_000235,1,c2_phishing_000003,,false,
-c2_phishing_000004,phishing,cl_000236,11,c2_phishing_000004,,false,
-c2_phishing_000018,phishing,cl_000236,11,c2_phishing_000004,c2_phishing_000004,false,
-c2_phishing_000020,phishing,cl_000236,11,c2_phishing_000004,c2_phishing_000004,false,
-c2_phishing_000021,phishing,cl_000236,11,c2_phishing_000004,c2_phishing_000004,false,
-c2_phishing_000023,phishing,cl_000236,11,c2_phishing_000004,c2_phishing_000004,false,
-c2_phishing_000028,phishing,cl_000236,11,c2_phishing_000004,c2_phishing_000004,false,
-c2_phishing_000051,phishing,cl_000236,11,c2_phishing_000004,c2_phishing_000004,false,
-c2_phishing_000076,phishing,cl_000236,11,c2_phishing_000004,c2_phishing_000004,false,
-c2_phishing_000079,phishing,cl_000236,11,c2_phishing_000004,c2_phishing_000004,false,
-c2_phishing_000083,phishing,cl_000236,11,c2_phishing_000004,c2_phishing_000004,false,
-c2_phishing_000123,phishing,cl_000236,11,c2_phishing_000004,c2_phishing_000004,false,
-c2_phishing_000005,phishing,cl_000237,1,c2_phishing_000005,,false,
-c2_phishing_000006,phishing,cl_000238,1,c2_phishing_000006,,false,
-c2_phishing_000007,phishing,cl_000239,1,c2_phishing_000007,,false,
-c2_phishing_000008,phishing,cl_000240,1,c2_phishing_000008,,false,
-c2_phishing_000009,phishing,cl_000241,1,c2_phishing_000009,,false,
-c2_phishing_000010,phishing,cl_000242,1,c2_phishing_000010,,false,
-c2_phishing_000011,phishing,cl_000243,1,c2_phishing_000011,,false,
-c2_phishing_000012,phishing,cl_000244,1,c2_phishing_000012,,false,
-c2_phishing_000013,phishing,cl_000245,2,c2_phishing_000013,,false,
-c2_phishing_000049,phishing,cl_000245,2,c2_phishing_000013,c2_phishing_000013,false,
-c2_phishing_000014,phishing,cl_000246,1,c2_phishing_000014,,false,
-c2_phishing_000015,phishing,cl_000247,1,c2_phishing_000015,,false,
-c2_phishing_000016,phishing,cl_000248,1,c2_phishing_000016,,false,
-c2_phishing_000017,phishing,cl_000249,1,c2_phishing_000017,,false,
-c2_phishing_000019,phishing,cl_000250,5,c2_phishing_000103,c2_phishing_000103,false,
-c2_phishing_000026,phishing,cl_000250,5,c2_phishing_000103,c2_phishing_000103,false,
-c2_phishing_000044,phishing,cl_000250,5,c2_phishing_000103,c2_phishing_000103,false,
-c2_phishing_000097,phishing,cl_000250,5,c2_phishing_000103,c2_phishing_000103,false,
-c2_phishing_000103,phishing,cl_000250,5,c2_phishing_000103,,false,
-c2_phishing_000022,phishing,cl_000251,1,c2_phishing_000022,,false,
-c2_phishing_000024,phishing,cl_000252,1,c2_phishing_000024,,false,
-c2_phishing_000025,phishing,cl_000253,1,c2_phishing_000025,,false,
-c2_phishing_000027,phishing,cl_000254,1,c2_phishing_000027,,false,
-c2_phishing_000029,phishing,cl_000255,2,c2_phishing_000030,c2_phishing_000030,false,
-c2_phishing_000030,phishing,cl_000255,2,c2_phishing_000030,,false,
-c2_phishing_000031,phishing,cl_000256,2,c2_phishing_000032,c2_phishing_000032,false,
-c2_phishing_000032,phishing,cl_000256,2,c2_phishing_000032,,false,
-c2_phishing_000033,phishing,cl_000257,2,c2_phishing_000034,c2_phishing_000034,false,
-c2_phishing_000034,phishing,cl_000257,2,c2_phishing_000034,,false,
-c2_phishing_000035,phishing,cl_000258,1,c2_phishing_000035,,false,
-c2_phishing_000036,phishing,cl_000259,1,c2_phishing_000036,,false,
-c2_phishing_000037,phishing,cl_000260,1,c2_phishing_000037,,false,
-c2_phishing_000038,phishing,cl_000261,1,c2_phishing_000038,,false,
-c2_phishing_000039,phishing,cl_000262,1,c2_phishing_000039,,false,
-c2_phishing_000040,phishing,cl_000263,1,c2_phishing_000040,,false,
-c2_phishing_000041,phishing,cl_000264,2,c2_phishing_000041,,false,
-c2_phishing_000077,phishing,cl_000264,2,c2_phishing_000041,c2_phishing_000041,false,
-c2_phishing_000042,phishing,cl_000265,1,c2_phishing_000042,,false,
-c2_phishing_000043,phishing,cl_000266,1,c2_phishing_000043,,false,
-c2_phishing_000045,phishing,cl_000267,1,c2_phishing_000045,,false,
-c2_phishing_000046,phishing,cl_000268,1,c2_phishing_000046,,false,
-c2_phishing_000047,phishing,cl_000269,1,c2_phishing_000047,,false,
-c2_phishing_000048,phishing,cl_000270,1,c2_phishing_000048,,false,
-c2_phishing_000050,phishing,cl_000271,1,c2_phishing_000050,,false,
-c2_phishing_000052,phishing,cl_000272,2,c2_phishing_000052,,false,
-c2_phishing_000053,phishing,cl_000272,2,c2_phishing_000052,c2_phishing_000052,false,
-c2_phishing_000054,phishing,cl_000273,1,c2_phishing_000054,,false,
-c2_phishing_000055,phishing,cl_000274,1,c2_phishing_000055,,false,quality_flag empty
-c2_phishing_000056,phishing,cl_000275,1,c2_phishing_000056,,false,
-c2_phishing_000057,phishing,cl_000276,1,c2_phishing_000057,,false,
-c2_phishing_000058,phishing,cl_000277,1,c2_phishing_000058,,false,
-c2_phishing_000059,phishing,cl_000278,3,c2_phishing_000059,,false,
-c2_phishing_000064,phishing,cl_000278,3,c2_phishing_000059,c2_phishing_000059,false,
-c2_phishing_000082,phishing,cl_000278,3,c2_phishing_000059,c2_phishing_000059,false,
-c2_phishing_000060,phishing,cl_000279,1,c2_phishing_000060,,false,
-c2_phishing_000061,phishing,cl_000280,1,c2_phishing_000061,,false,quality_flag empty
-c2_phishing_000062,phishing,cl_000281,1,c2_phishing_000062,,false,
-c2_phishing_000063,phishing,cl_000282,1,c2_phishing_000063,,false,
-c2_phishing_000065,phishing,cl_000283,1,c2_phishing_000065,,false,quality_flag bot_challenge
-c2_phishing_000066,phishing,cl_000284,1,c2_phishing_000066,,false,
-c2_phishing_000067,phishing,cl_000285,1,c2_phishing_000067,,false,quality_flag empty
-c2_phishing_000068,phishing,cl_000286,1,c2_phishing_000068,,false,
-c2_phishing_000069,phishing,cl_000287,1,c2_phishing_000069,,false,
-c2_phishing_000070,phishing,cl_000288,1,c2_phishing_000070,,false,quality_flag empty
-c2_phishing_000071,phishing,cl_000289,1,c2_phishing_000071,,false,
-c2_phishing_000072,phishing,cl_000290,1,c2_phishing_000072,,false,quality_flag empty
-c2_phishing_000073,phishing,cl_000291,1,c2_phishing_000073,,false,quality_flag empty
-c2_phishing_000074,phishing,cl_000292,1,c2_phishing_000074,,false,
-c2_phishing_000075,phishing,cl_000293,1,c2_phishing_000075,,false,
-c2_phishing_000078,phishing,cl_000294,1,c2_phishing_000078,,false,
-c2_phishing_000080,phishing,cl_000295,1,c2_phishing_000080,,false,
-c2_phishing_000081,phishing,cl_000296,1,c2_phishing_000081,,false,
-c2_phishing_000084,phishing,cl_000297,1,c2_phishing_000084,,false,
-c2_phishing_000085,phishing,cl_000298,1,c2_phishing_000085,,false,quality_flag empty
-c2_phishing_000086,phishing,cl_000299,1,c2_phishing_000086,,false,quality_flag empty
-c2_phishing_000087,phishing,cl_000300,1,c2_phishing_000087,,false,quality_flag empty
-c2_phishing_000088,phishing,cl_000301,1,c2_phishing_000088,,false,
-c2_phishing_000089,phishing,cl_000302,2,c2_phishing_000089,,false,
-c2_phishing_000090,phishing,cl_000302,2,c2_phishing_000089,c2_phishing_000089,false,
-c2_phishing_000091,phishing,cl_000303,1,c2_phishing_000091,,false,
-c2_phishing_000092,phishing,cl_000304,1,c2_phishing_000092,,false,
-c2_phishing_000093,phishing,cl_000305,1,c2_phishing_000093,,false,
-c2_phishing_000094,phishing,cl_000306,1,c2_phishing_000094,,false,
-c2_phishing_000095,phishing,cl_000307,2,c2_phishing_000095,,false,
-c2_phishing_000124,phishing,cl_000307,2,c2_phishing_000095,c2_phishing_000095,false,
-c2_phishing_000096,phishing,cl_000308,1,c2_phishing_000096,,false,
-c2_phishing_000098,phishing,cl_000309,1,c2_phishing_000098,,false,
-c2_phishing_000099,phishing,cl_000310,1,c2_phishing_000099,,false,
-c2_phishing_000100,phishing,cl_000311,1,c2_phishing_000100,,false,
-c2_phishing_000101,phishing,cl_000312,1,c2_phishing_000101,,false,
-c2_phishing_000102,phishing,cl_000313,1,c2_phishing_000102,,false,
-c2_phishing_000105,phishing,cl_000314,1,c2_phishing_000105,,false,
-c2_phishing_000106,phishing,cl_000315,1,c2_phishing_000106,,false,
-c2_phishing_000107,phishing,cl_000316,1,c2_phishing_000107,,false,
-c2_phishing_000108,phishing,cl_000317,1,c2_phishing_000108,,false,quality_flag empty
-c2_phishing_000109,phishing,cl_000318,1,c2_phishing_000109,,false,quality_flag empty
-c2_phishing_000110,phishing,cl_000319,1,c2_phishing_000110,,false,
-c2_phishing_000111,phishing,cl_000320,1,c2_phishing_000111,,false,
-c2_phishing_000112,phishing,cl_000321,1,c2_phishing_000112,,false,
-c2_phishing_000113,phishing,cl_000322,1,c2_phishing_000113,,false,quality_flag suspended_hosting
-c2_phishing_000114,phishing,cl_000323,1,c2_phishing_000114,,false,
-c2_phishing_000115,phishing,cl_000324,2,c2_phishing_000119,c2_phishing_000119,false,
-c2_phishing_000119,phishing,cl_000324,2,c2_phishing_000119,,false,
-c2_phishing_000116,phishing,cl_000325,1,c2_phishing_000116,,false,
-c2_phishing_000117,phishing,cl_000326,1,c2_phishing_000117,,false,
-c2_phishing_000118,phishing,cl_000327,1,c2_phishing_000118,,false,
-c2_phishing_000120,phishing,cl_000328,1,c2_phishing_000120,,false,
-c2_phishing_000121,phishing,cl_000329,1,c2_phishing_000121,,false,quality_flag empty
-c2_phishing_000122,phishing,cl_000330,1,c2_phishing_000122,,false,quality_flag empty
-c2_phishing_000125,phishing,cl_000331,2,c2_phishing_000125,,false,
-c2_phishing_000126,phishing,cl_000331,2,c2_phishing_000125,c2_phishing_000125,false,
-c2_phishing_000127,phishing,cl_000332,1,c2_phishing_000127,,false,
-c2_phishing_000128,phishing,cl_000333,2,c2_phishing_000128,,false,
-c2_phishing_000131,phishing,cl_000333,2,c2_phishing_000128,c2_phishing_000128,false,
-c2_phishing_000129,phishing,cl_000334,1,c2_phishing_000129,,false,quality_flag empty
-c2_phishing_000130,phishing,cl_000335,1,c2_phishing_000130,,false,quality_flag empty
-c2_phishing_000132,phishing,cl_000336,1,c2_phishing_000132,,false,
+c2_benign_000139,benign,cl_000138,1,c2_benign_000139,,false,
+c2_benign_000140,benign,cl_000139,1,c2_benign_000140,,false,
+c2_benign_000141,benign,cl_000140,1,c2_benign_000141,,false,
+c2_benign_000142,benign,cl_000141,1,c2_benign_000142,,false,
+c2_benign_000143,benign,cl_000142,1,c2_benign_000143,,false,
+c2_benign_000144,benign,cl_000143,1,c2_benign_000144,,false,
+c2_benign_000145,benign,cl_000144,1,c2_benign_000145,,false,
+c2_benign_000146,benign,cl_000145,1,c2_benign_000146,,false,
+c2_benign_000147,benign,cl_000146,1,c2_benign_000147,,false,
+c2_benign_000148,benign,cl_000147,1,c2_benign_000148,,false,
+c2_benign_000149,benign,cl_000148,1,c2_benign_000149,,false,
+c2_benign_000150,benign,cl_000149,1,c2_benign_000150,,false,
+c2_benign_000151,benign,cl_000150,1,c2_benign_000151,,false,
+c2_benign_000152,benign,cl_000151,1,c2_benign_000152,,false,
+c2_benign_000153,benign,cl_000152,1,c2_benign_000153,,false,
+c2_benign_000154,benign,cl_000153,1,c2_benign_000154,,false,
+c2_benign_000155,benign,cl_000154,1,c2_benign_000155,,false,
+c2_benign_000156,benign,cl_000155,1,c2_benign_000156,,false,
+c2_benign_000157,benign,cl_000156,1,c2_benign_000157,,false,
+c2_benign_000158,benign,cl_000157,1,c2_benign_000158,,false,
+c2_benign_000159,benign,cl_000158,1,c2_benign_000159,,false,
+c2_benign_000160,benign,cl_000159,1,c2_benign_000160,,false,
+c2_benign_000161,benign,cl_000160,1,c2_benign_000161,,false,
+c2_crypto_scam_000001,crypto_scam,cl_000161,1,c2_crypto_scam_000001,,false,quality_flag bot_challenge
+c2_crypto_scam_000002,crypto_scam,cl_000162,1,c2_crypto_scam_000002,,false,quality_flag empty
+c2_crypto_scam_000003,crypto_scam,cl_000163,1,c2_crypto_scam_000003,,false,
+c2_crypto_scam_000004,crypto_scam,cl_000164,1,c2_crypto_scam_000004,,false,
+c2_fake_ecommerce_000001,fake_ecommerce,cl_000165,1,c2_fake_ecommerce_000001,,false,
+c2_fake_ecommerce_000002,fake_ecommerce,cl_000166,1,c2_fake_ecommerce_000002,,false,
+c2_fake_ecommerce_000003,fake_ecommerce,cl_000167,1,c2_fake_ecommerce_000003,,false,
+c2_malware_delivery_000001,malware_delivery,cl_000168,3,c2_malware_delivery_000001,,false,
+c2_malware_delivery_000002,malware_delivery,cl_000168,3,c2_malware_delivery_000001,c2_malware_delivery_000001,false,
+c2_malware_delivery_000003,malware_delivery,cl_000168,3,c2_malware_delivery_000001,c2_malware_delivery_000001,false,
+c2_malware_delivery_000004,malware_delivery,cl_000169,1,c2_malware_delivery_000004,,false,
+c2_malware_delivery_000005,malware_delivery,cl_000170,1,c2_malware_delivery_000005,,false,
+c2_malware_delivery_000006,malware_delivery,cl_000171,1,c2_malware_delivery_000006,,false,quality_flag empty
+c2_malware_delivery_000007,malware_delivery,cl_000172,1,c2_malware_delivery_000007,,false,quality_flag empty
+c2_malware_delivery_000008,malware_delivery,cl_000173,1,c2_malware_delivery_000008,,false,quality_flag error_page
+c2_malware_delivery_000009,malware_delivery,cl_000174,1,c2_malware_delivery_000009,,false,quality_flag error_page
+c2_malware_delivery_000010,malware_delivery,cl_000175,1,c2_malware_delivery_000010,,false,
+c2_malware_delivery_000011,malware_delivery,cl_000176,1,c2_malware_delivery_000011,,false,
+c2_malware_delivery_000012,malware_delivery,cl_000177,1,c2_malware_delivery_000012,,false,quality_flag error_page
+c2_malware_delivery_000013,malware_delivery,cl_000178,1,c2_malware_delivery_000013,,false,
+c2_malware_delivery_000014,malware_delivery,cl_000179,1,c2_malware_delivery_000014,,false,quality_flag bot_challenge
+c2_malware_delivery_000015,malware_delivery,cl_000180,1,c2_malware_delivery_000015,,false,
+c2_malware_delivery_000016,malware_delivery,cl_000181,1,c2_malware_delivery_000016,,false,
+c2_malware_delivery_000017,malware_delivery,cl_000182,3,c2_malware_delivery_000017,,false,
+c2_malware_delivery_000019,malware_delivery,cl_000182,3,c2_malware_delivery_000017,c2_malware_delivery_000017,false,
+c2_malware_delivery_000020,malware_delivery,cl_000182,3,c2_malware_delivery_000017,c2_malware_delivery_000017,false,
+c2_malware_delivery_000018,malware_delivery,cl_000183,1,c2_malware_delivery_000018,,false,
+c2_malware_delivery_000021,malware_delivery,cl_000184,1,c2_malware_delivery_000021,,false,
+c2_malware_delivery_000022,malware_delivery,cl_000185,1,c2_malware_delivery_000022,,false,quality_flag empty
+c2_malware_delivery_000023,malware_delivery,cl_000186,2,c2_malware_delivery_000023,,false,
+c2_malware_delivery_000024,malware_delivery,cl_000186,2,c2_malware_delivery_000023,c2_malware_delivery_000023,false,
+c2_malware_delivery_000025,malware_delivery,cl_000187,1,c2_malware_delivery_000025,,false,quality_flag empty
+c2_malware_delivery_000026,malware_delivery,cl_000188,1,c2_malware_delivery_000026,,false,quality_flag empty
+c2_malware_delivery_000027,malware_delivery,cl_000189,1,c2_malware_delivery_000027,,false,quality_flag empty
+c2_malware_delivery_000028,malware_delivery,cl_000190,1,c2_malware_delivery_000028,,false,
+c2_malware_delivery_000029,malware_delivery,cl_000191,1,c2_malware_delivery_000029,,false,quality_flag empty
+c2_malware_delivery_000030,malware_delivery,cl_000192,1,c2_malware_delivery_000030,,false,quality_flag bot_challenge
+c2_malware_delivery_000031,malware_delivery,cl_000193,1,c2_malware_delivery_000031,,false,
+c2_malware_delivery_000032,malware_delivery,cl_000194,1,c2_malware_delivery_000032,,false,quality_flag parked_domain
+c2_malware_delivery_000033,malware_delivery,cl_000195,1,c2_malware_delivery_000033,,false,
+c2_malware_delivery_000034,malware_delivery,cl_000196,1,c2_malware_delivery_000034,,false,
+c2_malware_delivery_000035,malware_delivery,cl_000197,1,c2_malware_delivery_000035,,false,quality_flag empty
+c2_malware_delivery_000036,malware_delivery,cl_000198,1,c2_malware_delivery_000036,,false,
+c2_malware_delivery_000037,malware_delivery,cl_000199,1,c2_malware_delivery_000037,,false,quality_flag empty
+c2_malware_delivery_000038,malware_delivery,cl_000200,1,c2_malware_delivery_000038,,false,
+c2_malware_delivery_000039,malware_delivery,cl_000201,1,c2_malware_delivery_000039,,false,
+c2_malware_delivery_000040,malware_delivery,cl_000202,1,c2_malware_delivery_000040,,false,
+c2_malware_delivery_000041,malware_delivery,cl_000203,1,c2_malware_delivery_000041,,false,
+c2_malware_delivery_000042,malware_delivery,cl_000204,1,c2_malware_delivery_000042,,false,
+c2_malware_delivery_000043,malware_delivery,cl_000205,1,c2_malware_delivery_000043,,false,
+c2_malware_delivery_000044,malware_delivery,cl_000206,1,c2_malware_delivery_000044,,false,quality_flag parked_domain
+c2_malware_delivery_000045,malware_delivery,cl_000207,1,c2_malware_delivery_000045,,false,
+c2_malware_delivery_000046,malware_delivery,cl_000208,1,c2_malware_delivery_000046,,false,
+c2_malware_delivery_000047,malware_delivery,cl_000209,1,c2_malware_delivery_000047,,false,quality_flag empty
+c2_malware_delivery_000048,malware_delivery,cl_000210,1,c2_malware_delivery_000048,,false,
+c2_malware_delivery_000049,malware_delivery,cl_000211,4,c2_malware_delivery_000049,,false,
+c2_malware_delivery_000051,malware_delivery,cl_000211,4,c2_malware_delivery_000049,c2_malware_delivery_000049,false,
+c2_malware_delivery_000053,malware_delivery,cl_000211,4,c2_malware_delivery_000049,c2_malware_delivery_000049,false,
+c2_malware_delivery_000054,malware_delivery,cl_000211,4,c2_malware_delivery_000049,c2_malware_delivery_000049,false,
+c2_malware_delivery_000050,malware_delivery,cl_000212,1,c2_malware_delivery_000050,,false,
+c2_malware_delivery_000052,malware_delivery,cl_000213,1,c2_malware_delivery_000052,,false,
+c2_malware_delivery_000055,malware_delivery,cl_000214,1,c2_malware_delivery_000055,,false,
+c2_malware_delivery_000056,malware_delivery,cl_000215,1,c2_malware_delivery_000056,,false,quality_flag error_page
+c2_malware_delivery_000057,malware_delivery,cl_000216,1,c2_malware_delivery_000057,,false,quality_flag error_page
+c2_malware_delivery_000058,malware_delivery,cl_000217,1,c2_malware_delivery_000058,,false,quality_flag empty
+c2_malware_delivery_000059,malware_delivery,cl_000218,1,c2_malware_delivery_000059,,false,quality_flag empty
+c2_malware_delivery_000060,malware_delivery,cl_000219,1,c2_malware_delivery_000060,,false,quality_flag empty
+c2_malware_delivery_000061,malware_delivery,cl_000220,1,c2_malware_delivery_000061,,false,quality_flag empty
+c2_malware_delivery_000062,malware_delivery,cl_000221,1,c2_malware_delivery_000062,,false,quality_flag empty
+c2_malware_delivery_000063,malware_delivery,cl_000222,1,c2_malware_delivery_000063,,false,
+c2_malware_delivery_000064,malware_delivery,cl_000223,1,c2_malware_delivery_000064,,false,quality_flag empty
+c2_malware_delivery_000065,malware_delivery,cl_000224,1,c2_malware_delivery_000065,,false,
+c2_malware_delivery_000066,malware_delivery,cl_000225,1,c2_malware_delivery_000066,,false,
+c2_malware_delivery_000067,malware_delivery,cl_000226,1,c2_malware_delivery_000067,,false,
+c2_malware_delivery_000068,malware_delivery,cl_000227,1,c2_malware_delivery_000068,,false,
+c2_malware_delivery_000069,malware_delivery,cl_000228,1,c2_malware_delivery_000069,,false,
+c2_malware_delivery_000070,malware_delivery,cl_000229,1,c2_malware_delivery_000070,,false,
+c2_malware_delivery_000071,malware_delivery,cl_000230,1,c2_malware_delivery_000071,,false,
+c2_malware_delivery_000072,malware_delivery,cl_000231,1,c2_malware_delivery_000072,,false,
+c2_malware_delivery_000073,malware_delivery,cl_000232,1,c2_malware_delivery_000073,,false,
+c2_malware_delivery_000074,malware_delivery,cl_000233,1,c2_malware_delivery_000074,,false,
+c2_malware_delivery_000075,malware_delivery,cl_000234,1,c2_malware_delivery_000075,,false,
+c2_malware_delivery_000076,malware_delivery,cl_000235,1,c2_malware_delivery_000076,,false,
+c2_malware_delivery_000077,malware_delivery,cl_000236,1,c2_malware_delivery_000077,,false,
+c2_malware_delivery_000078,malware_delivery,cl_000237,1,c2_malware_delivery_000078,,false,
+c2_malware_delivery_000079,malware_delivery,cl_000238,1,c2_malware_delivery_000079,,false,
+c2_malware_delivery_000080,malware_delivery,cl_000239,1,c2_malware_delivery_000080,,false,
+c2_malware_delivery_000081,malware_delivery,cl_000240,1,c2_malware_delivery_000081,,false,
+c2_malware_delivery_000082,malware_delivery,cl_000241,1,c2_malware_delivery_000082,,false,
+c2_malware_delivery_000083,malware_delivery,cl_000242,1,c2_malware_delivery_000083,,false,
+c2_malware_delivery_000084,malware_delivery,cl_000243,1,c2_malware_delivery_000084,,false,
+c2_malware_delivery_000085,malware_delivery,cl_000244,1,c2_malware_delivery_000085,,false,
+c2_malware_delivery_000086,malware_delivery,cl_000245,1,c2_malware_delivery_000086,,false,
+c2_malware_delivery_000087,malware_delivery,cl_000246,1,c2_malware_delivery_000087,,false,
+c2_malware_delivery_000088,malware_delivery,cl_000247,1,c2_malware_delivery_000088,,false,
+c2_malware_delivery_000089,malware_delivery,cl_000248,1,c2_malware_delivery_000089,,false,
+c2_malware_delivery_000090,malware_delivery,cl_000249,1,c2_malware_delivery_000090,,false,
+c2_malware_delivery_000091,malware_delivery,cl_000250,1,c2_malware_delivery_000091,,false,
+c2_malware_delivery_000092,malware_delivery,cl_000251,1,c2_malware_delivery_000092,,false,
+c2_malware_delivery_000093,malware_delivery,cl_000252,1,c2_malware_delivery_000093,,false,quality_flag error_page
+c2_malware_delivery_000094,malware_delivery,cl_000253,1,c2_malware_delivery_000094,,false,quality_flag error_page
+c2_malware_delivery_000095,malware_delivery,cl_000254,1,c2_malware_delivery_000095,,false,quality_flag error_page
+c2_malware_delivery_000096,malware_delivery,cl_000255,1,c2_malware_delivery_000096,,false,quality_flag error_page
+c2_malware_delivery_000097,malware_delivery,cl_000256,1,c2_malware_delivery_000097,,false,quality_flag error_page
+c2_malware_delivery_000098,malware_delivery,cl_000257,1,c2_malware_delivery_000098,,false,quality_flag error_page
+c2_malware_delivery_000099,malware_delivery,cl_000258,1,c2_malware_delivery_000099,,false,quality_flag error_page
+c2_malware_delivery_000100,malware_delivery,cl_000259,1,c2_malware_delivery_000100,,false,quality_flag empty
+c2_malware_delivery_000101,malware_delivery,cl_000260,1,c2_malware_delivery_000101,,false,quality_flag empty
+c2_phishing_000001,phishing,cl_000261,2,c2_phishing_000001,,false,
+c2_phishing_000104,phishing,cl_000261,2,c2_phishing_000001,c2_phishing_000001,false,
+c2_phishing_000002,phishing,cl_000262,1,c2_phishing_000002,,false,
+c2_phishing_000003,phishing,cl_000263,1,c2_phishing_000003,,false,
+c2_phishing_000004,phishing,cl_000264,11,c2_phishing_000004,,false,
+c2_phishing_000018,phishing,cl_000264,11,c2_phishing_000004,c2_phishing_000004,false,
+c2_phishing_000020,phishing,cl_000264,11,c2_phishing_000004,c2_phishing_000004,false,
+c2_phishing_000021,phishing,cl_000264,11,c2_phishing_000004,c2_phishing_000004,false,
+c2_phishing_000023,phishing,cl_000264,11,c2_phishing_000004,c2_phishing_000004,false,
+c2_phishing_000028,phishing,cl_000264,11,c2_phishing_000004,c2_phishing_000004,false,
+c2_phishing_000051,phishing,cl_000264,11,c2_phishing_000004,c2_phishing_000004,false,
+c2_phishing_000076,phishing,cl_000264,11,c2_phishing_000004,c2_phishing_000004,false,
+c2_phishing_000079,phishing,cl_000264,11,c2_phishing_000004,c2_phishing_000004,false,
+c2_phishing_000083,phishing,cl_000264,11,c2_phishing_000004,c2_phishing_000004,false,
+c2_phishing_000123,phishing,cl_000264,11,c2_phishing_000004,c2_phishing_000004,false,
+c2_phishing_000005,phishing,cl_000265,1,c2_phishing_000005,,false,
+c2_phishing_000006,phishing,cl_000266,1,c2_phishing_000006,,false,
+c2_phishing_000007,phishing,cl_000267,1,c2_phishing_000007,,false,
+c2_phishing_000008,phishing,cl_000268,1,c2_phishing_000008,,false,
+c2_phishing_000009,phishing,cl_000269,1,c2_phishing_000009,,false,
+c2_phishing_000010,phishing,cl_000270,1,c2_phishing_000010,,false,
+c2_phishing_000011,phishing,cl_000271,1,c2_phishing_000011,,false,
+c2_phishing_000012,phishing,cl_000272,1,c2_phishing_000012,,false,
+c2_phishing_000013,phishing,cl_000273,2,c2_phishing_000013,,false,
+c2_phishing_000049,phishing,cl_000273,2,c2_phishing_000013,c2_phishing_000013,false,
+c2_phishing_000014,phishing,cl_000274,1,c2_phishing_000014,,false,
+c2_phishing_000015,phishing,cl_000275,1,c2_phishing_000015,,false,
+c2_phishing_000016,phishing,cl_000276,1,c2_phishing_000016,,false,
+c2_phishing_000017,phishing,cl_000277,1,c2_phishing_000017,,false,
+c2_phishing_000019,phishing,cl_000278,5,c2_phishing_000103,c2_phishing_000103,false,
+c2_phishing_000026,phishing,cl_000278,5,c2_phishing_000103,c2_phishing_000103,false,
+c2_phishing_000044,phishing,cl_000278,5,c2_phishing_000103,c2_phishing_000103,false,
+c2_phishing_000097,phishing,cl_000278,5,c2_phishing_000103,c2_phishing_000103,false,
+c2_phishing_000103,phishing,cl_000278,5,c2_phishing_000103,,false,
+c2_phishing_000022,phishing,cl_000279,1,c2_phishing_000022,,false,
+c2_phishing_000024,phishing,cl_000280,1,c2_phishing_000024,,false,
+c2_phishing_000025,phishing,cl_000281,1,c2_phishing_000025,,false,
+c2_phishing_000027,phishing,cl_000282,1,c2_phishing_000027,,false,
+c2_phishing_000029,phishing,cl_000283,2,c2_phishing_000030,c2_phishing_000030,false,
+c2_phishing_000030,phishing,cl_000283,2,c2_phishing_000030,,false,
+c2_phishing_000031,phishing,cl_000284,2,c2_phishing_000032,c2_phishing_000032,false,
+c2_phishing_000032,phishing,cl_000284,2,c2_phishing_000032,,false,
+c2_phishing_000033,phishing,cl_000285,2,c2_phishing_000034,c2_phishing_000034,false,
+c2_phishing_000034,phishing,cl_000285,2,c2_phishing_000034,,false,
+c2_phishing_000035,phishing,cl_000286,1,c2_phishing_000035,,false,
+c2_phishing_000036,phishing,cl_000287,1,c2_phishing_000036,,false,
+c2_phishing_000037,phishing,cl_000288,1,c2_phishing_000037,,false,
+c2_phishing_000038,phishing,cl_000289,1,c2_phishing_000038,,false,
+c2_phishing_000039,phishing,cl_000290,1,c2_phishing_000039,,false,
+c2_phishing_000040,phishing,cl_000291,1,c2_phishing_000040,,false,
+c2_phishing_000041,phishing,cl_000292,2,c2_phishing_000041,,false,
+c2_phishing_000077,phishing,cl_000292,2,c2_phishing_000041,c2_phishing_000041,false,
+c2_phishing_000042,phishing,cl_000293,1,c2_phishing_000042,,false,
+c2_phishing_000043,phishing,cl_000294,1,c2_phishing_000043,,false,
+c2_phishing_000045,phishing,cl_000295,1,c2_phishing_000045,,false,
+c2_phishing_000046,phishing,cl_000296,1,c2_phishing_000046,,false,
+c2_phishing_000047,phishing,cl_000297,1,c2_phishing_000047,,false,
+c2_phishing_000048,phishing,cl_000298,1,c2_phishing_000048,,false,
+c2_phishing_000050,phishing,cl_000299,1,c2_phishing_000050,,false,
+c2_phishing_000052,phishing,cl_000300,2,c2_phishing_000052,,false,
+c2_phishing_000053,phishing,cl_000300,2,c2_phishing_000052,c2_phishing_000052,false,
+c2_phishing_000054,phishing,cl_000301,1,c2_phishing_000054,,false,
+c2_phishing_000055,phishing,cl_000302,1,c2_phishing_000055,,false,quality_flag empty
+c2_phishing_000056,phishing,cl_000303,1,c2_phishing_000056,,false,
+c2_phishing_000057,phishing,cl_000304,1,c2_phishing_000057,,false,
+c2_phishing_000058,phishing,cl_000305,1,c2_phishing_000058,,false,
+c2_phishing_000059,phishing,cl_000306,3,c2_phishing_000059,,false,
+c2_phishing_000064,phishing,cl_000306,3,c2_phishing_000059,c2_phishing_000059,false,
+c2_phishing_000082,phishing,cl_000306,3,c2_phishing_000059,c2_phishing_000059,false,
+c2_phishing_000060,phishing,cl_000307,1,c2_phishing_000060,,false,
+c2_phishing_000061,phishing,cl_000308,1,c2_phishing_000061,,false,quality_flag empty
+c2_phishing_000062,phishing,cl_000309,1,c2_phishing_000062,,false,
+c2_phishing_000063,phishing,cl_000310,1,c2_phishing_000063,,false,
+c2_phishing_000065,phishing,cl_000311,1,c2_phishing_000065,,false,quality_flag bot_challenge
+c2_phishing_000066,phishing,cl_000312,1,c2_phishing_000066,,false,
+c2_phishing_000067,phishing,cl_000313,1,c2_phishing_000067,,false,quality_flag empty
+c2_phishing_000068,phishing,cl_000314,1,c2_phishing_000068,,false,
+c2_phishing_000069,phishing,cl_000315,1,c2_phishing_000069,,false,
+c2_phishing_000070,phishing,cl_000316,1,c2_phishing_000070,,false,quality_flag empty
+c2_phishing_000071,phishing,cl_000317,1,c2_phishing_000071,,false,
+c2_phishing_000072,phishing,cl_000318,1,c2_phishing_000072,,false,quality_flag empty
+c2_phishing_000073,phishing,cl_000319,1,c2_phishing_000073,,false,quality_flag empty
+c2_phishing_000074,phishing,cl_000320,1,c2_phishing_000074,,false,
+c2_phishing_000075,phishing,cl_000321,1,c2_phishing_000075,,false,
+c2_phishing_000078,phishing,cl_000322,1,c2_phishing_000078,,false,
+c2_phishing_000080,phishing,cl_000323,1,c2_phishing_000080,,false,
+c2_phishing_000081,phishing,cl_000324,1,c2_phishing_000081,,false,
+c2_phishing_000084,phishing,cl_000325,1,c2_phishing_000084,,false,
+c2_phishing_000085,phishing,cl_000326,1,c2_phishing_000085,,false,quality_flag empty
+c2_phishing_000086,phishing,cl_000327,1,c2_phishing_000086,,false,quality_flag empty
+c2_phishing_000087,phishing,cl_000328,1,c2_phishing_000087,,false,quality_flag empty
+c2_phishing_000088,phishing,cl_000329,1,c2_phishing_000088,,false,
+c2_phishing_000089,phishing,cl_000330,2,c2_phishing_000089,,false,
+c2_phishing_000090,phishing,cl_000330,2,c2_phishing_000089,c2_phishing_000089,false,
+c2_phishing_000091,phishing,cl_000331,1,c2_phishing_000091,,false,
+c2_phishing_000092,phishing,cl_000332,1,c2_phishing_000092,,false,
+c2_phishing_000093,phishing,cl_000333,1,c2_phishing_000093,,false,
+c2_phishing_000094,phishing,cl_000334,1,c2_phishing_000094,,false,
+c2_phishing_000095,phishing,cl_000335,2,c2_phishing_000095,,false,
+c2_phishing_000124,phishing,cl_000335,2,c2_phishing_000095,c2_phishing_000095,false,
+c2_phishing_000096,phishing,cl_000336,1,c2_phishing_000096,,false,
+c2_phishing_000098,phishing,cl_000337,1,c2_phishing_000098,,false,
+c2_phishing_000099,phishing,cl_000338,1,c2_phishing_000099,,false,
+c2_phishing_000100,phishing,cl_000339,1,c2_phishing_000100,,false,
+c2_phishing_000101,phishing,cl_000340,1,c2_phishing_000101,,false,
+c2_phishing_000102,phishing,cl_000341,1,c2_phishing_000102,,false,
+c2_phishing_000105,phishing,cl_000342,1,c2_phishing_000105,,false,
+c2_phishing_000106,phishing,cl_000343,1,c2_phishing_000106,,false,
+c2_phishing_000107,phishing,cl_000344,1,c2_phishing_000107,,false,
+c2_phishing_000108,phishing,cl_000345,1,c2_phishing_000108,,false,quality_flag empty
+c2_phishing_000109,phishing,cl_000346,1,c2_phishing_000109,,false,quality_flag empty
+c2_phishing_000110,phishing,cl_000347,1,c2_phishing_000110,,false,
+c2_phishing_000111,phishing,cl_000348,1,c2_phishing_000111,,false,
+c2_phishing_000112,phishing,cl_000349,1,c2_phishing_000112,,false,
+c2_phishing_000113,phishing,cl_000350,1,c2_phishing_000113,,false,quality_flag suspended_hosting
+c2_phishing_000114,phishing,cl_000351,1,c2_phishing_000114,,false,
+c2_phishing_000115,phishing,cl_000352,2,c2_phishing_000119,c2_phishing_000119,false,
+c2_phishing_000119,phishing,cl_000352,2,c2_phishing_000119,,false,
+c2_phishing_000116,phishing,cl_000353,1,c2_phishing_000116,,false,
+c2_phishing_000117,phishing,cl_000354,1,c2_phishing_000117,,false,
+c2_phishing_000118,phishing,cl_000355,1,c2_phishing_000118,,false,
+c2_phishing_000120,phishing,cl_000356,1,c2_phishing_000120,,false,
+c2_phishing_000121,phishing,cl_000357,1,c2_phishing_000121,,false,quality_flag empty
+c2_phishing_000122,phishing,cl_000358,1,c2_phishing_000122,,false,quality_flag empty
+c2_phishing_000125,phishing,cl_000359,2,c2_phishing_000125,,false,
+c2_phishing_000126,phishing,cl_000359,2,c2_phishing_000125,c2_phishing_000125,false,
+c2_phishing_000127,phishing,cl_000360,1,c2_phishing_000127,,false,
+c2_phishing_000128,phishing,cl_000361,2,c2_phishing_000128,,false,
+c2_phishing_000131,phishing,cl_000361,2,c2_phishing_000128,c2_phishing_000128,false,
+c2_phishing_000129,phishing,cl_000362,1,c2_phishing_000129,,false,quality_flag empty
+c2_phishing_000130,phishing,cl_000363,1,c2_phishing_000130,,false,quality_flag empty
+c2_phishing_000132,phishing,cl_000364,1,c2_phishing_000132,,false,

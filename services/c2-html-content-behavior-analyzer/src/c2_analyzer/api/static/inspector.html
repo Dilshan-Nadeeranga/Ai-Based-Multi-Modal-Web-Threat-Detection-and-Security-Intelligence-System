@@ -176,6 +176,7 @@
   .bars { display: grid; grid-template-columns: 110px 1fr 50px; gap: 3px 8px; align-items: center; font-size: 12px; }
   .bars .bar { height: 12px; background: var(--accent); border-radius: 3px; min-width: 2px; }
   .bars .num { text-align: right; color: var(--muted); }
+  .bars.wide { grid-template-columns: 170px 1fr 60px; }
   .tree { font-family: var(--mono); font-size: 12px; }
   .tree ul { list-style: none; margin: 0; padding-left: 18px; border-left: 1px dotted var(--border); }
   .tree > ul { padding-left: 0; border-left: none; }
@@ -224,6 +225,7 @@
       </div>
       <label class="row"><input id="password-filter" type="checkbox"> has password input</label>
       <label class="row"><input id="external-filter" type="checkbox"> external form action</label>
+      <label class="row" title="test pages the best Part 4 DOM baseline got wrong"><input id="misclassified-filter" type="checkbox"> misclassified (test)</label>
       <input id="search-input" type="search" placeholder="Search id or title" aria-label="Search samples">
       <div id="sample-count"></div>
     </div>
