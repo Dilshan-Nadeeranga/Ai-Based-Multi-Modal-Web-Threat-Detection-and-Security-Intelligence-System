@@ -1,0 +1,55 @@
+{
+  "task": "Text + OCR Threat Baseline",
+  "items": [
+    {
+      "item": "Clean social post text",
+      "done": true
+    },
+    {
+      "item": "Clean OCR text",
+      "done": true
+    },
+    {
+      "item": "Combine/compare post and OCR text",
+      "done": true
+    },
+    {
+      "item": "Tokenize text",
+      "done": true
+    },
+    {
+      "item": "Select baseline transformer",
+      "done": true
+    },
+    {
+      "item": "Prepare training data",
+      "done": true
+    },
+    {
+      "item": "Train text baseline",
+      "done": true
+    },
+    {
+      "item": "Validate text baseline",
+      "done": true
+    },
+    {
+      "item": "Test text baseline",
+      "done": true
+    },
+    {
+      "item": "Calculate Precision/Recall/F1",
+      "done": true
+    },
+    {
+      "item": "Generate confusion matrix",
+      "done": true
+    },
+    {
+      "item": "Save trained model",
+      "done": true
+    }
+  ],
+  "done_count": 12,
+  "updated_at": "2026-10-14T06:18:26.005987+00:00"
+}

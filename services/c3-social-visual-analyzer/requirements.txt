@@ -19,6 +19,13 @@ pyarrow>=15.0
 playwright>=1.47
 tldextract>=5.1
 
+# Text + OCR threat baseline (CPU torch: pip install torch --index-url https://download.pytorch.org/whl/cpu)
+torch>=2.4
+transformers>=4.44
+scikit-learn>=1.5
+matplotlib>=3.8
+truststore>=0.9
+
 # Testing
 pytest>=8.0
 httpx>=0.27

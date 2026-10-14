@@ -38,3 +38,6 @@ data/reference/**
 data/annotations/*.tmp
 data/annotations/.dataset.lock
 data/statistics/*.tmp
+
+# Trained model weights (large; regenerate with scripts/train_text_baseline.py)
+models/
