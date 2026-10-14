@@ -4,6 +4,18 @@ import heroImg from './assets/hero.png'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import './App.css'
+import NavBar from './components/NavBar.jsx'
+
+// Authentication (centralized in the API Gateway)
+import AdminRoute from './features/auth/components/AdminRoute.jsx'
+import ProtectedRoute from './features/auth/components/ProtectedRoute.jsx'
+import Login from './features/auth/pages/Login.jsx'
+import Register from './features/auth/pages/Register.jsx'
+import AdminDashboard from './features/admin/pages/AdminDashboard.jsx'
+import UserManagement from './features/admin/pages/UserManagement.jsx'
+import Dashboard from './features/dashboard/pages/Dashboard.jsx'
+import History from './features/history/pages/History.jsx'
+import Profile from './features/profile/pages/Profile.jsx'
 
 // C1 — Intelligent URL & Domain Analyzer
 import UrlAnalyzer from './features/url-analyzer/pages/UrlAnalyzer.jsx'
@@ -14,20 +26,35 @@ import PatchReview from './features/code-audit/pages/PatchReview.jsx'
 import RepositoryAudit from './features/code-audit/pages/RepositoryAudit.jsx'
 import VulnerabilityReport from './features/code-audit/pages/VulnerabilityReport.jsx'
 
+const protect = (element) => <ProtectedRoute>{element}</ProtectedRoute>
+
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      {/* C1 — Intelligent URL & Domain Analyzer */}
-      <Route path="/url-analyzer" element={<UrlAnalyzer />} />
+    <>
+      <NavBar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-      {/* C4 — Code Quality & Vulnerability Auditor */}
-      <Route path="/code-audit" element={<RepositoryAudit />} />
-      <Route path="/code-audit/progress" element={<AuditProgress />} />
-      <Route path="/code-audit/report" element={<VulnerabilityReport />} />
-      <Route path="/code-audit/patches" element={<PatchReview />} />
-      <Route path="/code-audit/remediations/:remediationId/review" element={<PatchReview />} />
-    </Routes>
+        <Route path="/dashboard" element={protect(<Dashboard />)} />
+        <Route path="/history" element={protect(<History />)} />
+        <Route path="/profile" element={protect(<Profile />)} />
+
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/users" element={<AdminRoute><UserManagement /></AdminRoute>} />
+
+        {/* C1 — Intelligent URL & Domain Analyzer */}
+        <Route path="/url-analyzer" element={protect(<UrlAnalyzer />)} />
+
+        {/* C4 — Code Quality & Vulnerability Auditor */}
+        <Route path="/code-audit" element={protect(<RepositoryAudit />)} />
+        <Route path="/code-audit/progress" element={protect(<AuditProgress />)} />
+        <Route path="/code-audit/report" element={protect(<VulnerabilityReport />)} />
+        <Route path="/code-audit/patches" element={protect(<PatchReview />)} />
+        <Route path="/code-audit/remediations/:remediationId/review" element={protect(<PatchReview />)} />
+      </Routes>
+    </>
   )
 }
 
