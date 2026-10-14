@@ -212,3 +212,22 @@ export function submitReviewDecision(remediationId, decision, reason = null) {
     { decision, ...(reason ? { reason } : {}) }
   )
 }
+
+/**
+ * GET /scans/{scanId}/risk-score
+ * Preliminary internal risk index (model v0.1) — not CVSS, not an exploit probability.
+ */
+export function getRiskScore(scanId) {
+  return requestJson(
+    `${API_BASE_URL}/scans/${encodeURIComponent(scanId)}/risk-score`,
+    'Unable to calculate the preliminary risk score.'
+  )
+}
+
+/** POST /scans/{scanId}/risk-score/recalculate — always stores a new assessment */
+export function recalculateRiskScore(scanId) {
+  return postJson(
+    `${API_BASE_URL}/scans/${encodeURIComponent(scanId)}/risk-score/recalculate`,
+    'Unable to recalculate the preliminary risk score.'
+  )
+}
