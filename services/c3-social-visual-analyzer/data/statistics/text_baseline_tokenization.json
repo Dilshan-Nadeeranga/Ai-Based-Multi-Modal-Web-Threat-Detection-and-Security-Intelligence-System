@@ -1,0 +1,31 @@
+{
+  "tokenizer": "distilbert-base-uncased",
+  "max_length": 256,
+  "splits": {
+    "train": {
+      "samples": 293,
+      "tokens_p50": 160,
+      "tokens_p90": 683,
+      "tokens_max": 1457,
+      "truncated": 99,
+      "unk_rate": 0.0
+    },
+    "val": {
+      "samples": 63,
+      "tokens_p50": 184,
+      "tokens_p90": 746,
+      "tokens_max": 1391,
+      "truncated": 25,
+      "unk_rate": 0.0
+    },
+    "test": {
+      "samples": 63,
+      "tokens_p50": 166,
+      "tokens_p90": 519,
+      "tokens_max": 1402,
+      "truncated": 19,
+      "unk_rate": 0.00049
+    }
+  },
+  "created_at": "2026-10-14T06:09:15.940109+00:00"
+}
