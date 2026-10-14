@@ -1,0 +1,47 @@
+{
+  "seed": 42,
+  "ratios": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "counts": {
+    "train": 17,
+    "val": 4,
+    "test": 3,
+    "total": 24
+  },
+  "train": [
+    "amazon",
+    "apple",
+    "chase",
+    "citibank",
+    "dhl",
+    "ebay",
+    "facebook",
+    "google",
+    "hdfcbank",
+    "instagram",
+    "linkedin",
+    "metamask",
+    "microsoft",
+    "netflix",
+    "usps",
+    "whatsapp",
+    "yahoo"
+  ],
+  "val": [
+    "bankofamerica",
+    "coinbase",
+    "dbsbank",
+    "paypal"
+  ],
+  "test": [
+    "adobe",
+    "att",
+    "steam"
+  ],
+  "unit": "brand_id",
+  "note": "Each brand appears in exactly one split to avoid brand leakage.",
+  "created_at": "2026-10-13T19:59:31.264002+00:00"
+}

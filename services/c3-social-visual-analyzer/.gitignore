@@ -28,10 +28,12 @@ data/raw/**
 data/processed/**
 data/rejected/**
 data/webpage_screenshots/**
+data/reference/**
 !data/raw/**/
 !data/processed/**/
 !data/rejected/**/
 !data/webpage_screenshots/**/
+!data/reference/**/
 !data/**/.gitkeep
 data/annotations/*.tmp
 data/annotations/.dataset.lock
