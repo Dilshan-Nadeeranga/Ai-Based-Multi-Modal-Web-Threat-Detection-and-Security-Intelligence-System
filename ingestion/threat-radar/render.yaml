@@ -1,0 +1,14 @@
+# Render Blueprint — backend web service (Reddit scraper needs Playwright Chromium at build time)
+services:
+  - type: web
+    name: threatradar-backend
+    runtime: node
+    rootDir: backend
+    # RSS-only (REDDIT_USE_RSS_ONLY=true): skip Playwright — faster deploy, no Chromium needed
+    buildCommand: npm install && npm run build && (test "$REDDIT_USE_RSS_ONLY" = "true" || npm run playwright:install)
+    startCommand: npm start
+    envVars:
+      - key: PLAYWRIGHT_SKIP_BROWSER_GC
+        value: "1"
+      - key: NODE_VERSION
+        value: "20"

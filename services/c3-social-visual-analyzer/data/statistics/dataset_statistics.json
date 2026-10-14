@@ -1,27 +1,27 @@
 {
   "dataset_version": "0.1",
-  "generated_at": "2026-10-11T08:11:03Z",
+  "generated_at": "2026-10-12T19:51:00Z",
   "source_file": "data/annotations/dataset_metadata.jsonl",
   "includes_synthetic": false,
-  "total_samples": 1019,
+  "total_samples": 1419,
   "excluded_synthetic_samples": 0,
   "skipped_invalid_records": 0,
   "malformed_lines": 0,
   "binary_labels": {
-    "legitimate": 9,
-    "scam": 10,
+    "legitimate": 209,
+    "scam": 210,
     "undecided": 0,
     "not_annotated": 1000
   },
   "class_balance": {
-    "legitimate_percent": 47.37,
-    "scam_percent": 52.63
+    "legitimate_percent": 49.88,
+    "scam_percent": 50.12
   },
   "class_distribution": {
-    "legitimate": 9,
-    "phishing": 0,
+    "legitimate": 209,
+    "phishing": 100,
     "brand_impersonation": 0,
-    "financial_scam": 0,
+    "financial_scam": 100,
     "data_theft": 10,
     "malware": 0,
     "browser_abuse": 0,
@@ -32,7 +32,7 @@
     "real": 500,
     "fake": 500,
     "undecided": 0,
-    "not_annotated": 19
+    "not_annotated": 419
   },
   "misinformation_balance": {
     "real_percent": 50.0,
@@ -51,7 +51,7 @@
     "verified": 0,
     "provisional": 1000,
     "needs_review": 0,
-    "not_annotated": 19
+    "not_annotated": 419
   },
   "platform_distribution": {
     "facebook": 19,
@@ -63,34 +63,52 @@
     "telegram": 0,
     "whatsapp": 0,
     "reddit": 1000,
-    "website": 0,
+    "website": 400,
     "other": 0,
     "unknown": 0
   },
   "collection_method_distribution": {
     "manual": 19,
-    "public_dataset": 1000,
+    "public_dataset": 1400,
     "api": 0,
     "research_archive": 0,
     "synthetic_test": 0
   },
   "label_status": {
-    "verified": 19,
+    "verified": 419,
     "provisional": 0,
     "needs_review": 0,
     "not_annotated": 1000
   },
   "dataset_version_distribution": {
-    "0.1": 1019
+    "0.1": 1419
   },
   "total_images": 1019,
-  "total_embedded_urls": 14,
-  "samples_with_text": 1019,
+  "total_embedded_urls": 214,
+  "samples_with_text": 1419,
   "samples_with_images": 1019,
-  "samples_without_images": 0,
+  "samples_without_images": 400,
   "samples_with_multiple_images": 0,
-  "samples_with_urls": 14,
-  "samples_without_urls": 1005,
+  "samples_with_urls": 214,
+  "samples_without_urls": 1205,
   "samples_with_multiple_urls": 0,
-  "samples_with_claimed_brand": 9
+  "samples_with_claimed_brand": 71,
+  "web_captures": {
+    "attempts": 11,
+    "captured": 4,
+    "http_error": 4,
+    "failed": 3,
+    "skipped": 0,
+    "samples_with_screenshot": 4,
+    "samples_with_urls_not_captured": 210,
+    "total_screenshots": 8,
+    "distinct_final_domains": 8,
+    "redirected_captures": 5,
+    "error_codes": {
+      "DOWNLOAD_BLOCKED": 1,
+      "HTTP_ERROR": 4,
+      "NAME_NOT_RESOLVED": 1,
+      "TIMEOUT": 1
+    }
+  }
 }

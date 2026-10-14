@@ -1,0 +1,81 @@
+{
+  "timestamp": "2026-10-13T14:41:17.304055+00:00",
+  "dataset_metadata": {
+    "strategy": "domain_grouped",
+    "random_seed": 42,
+    "total_samples": 200000,
+    "train_samples": 143303,
+    "val_samples": 18865,
+    "test_samples": 37832,
+    "class_distribution_total": {
+      "1": 100000,
+      "0": 100000
+    },
+    "class_distribution_train": {
+      "1": 73222,
+      "0": 70081
+    },
+    "class_distribution_val": {
+      "0": 9977,
+      "1": 8888
+    },
+    "class_distribution_test": {
+      "0": 19942,
+      "1": 17890
+    },
+    "unique_domains_total": 127451,
+    "unique_domains_train": 89215,
+    "unique_domains_test": 25491
+  },
+  "feature_count": 52,
+  "models": {
+    "random_forest": {
+      "model_name": "Random Forest (Baseline)",
+      "model_type": "RandomForestClassifier",
+      "accuracy": 0.9754,
+      "precision": 0.9889,
+      "recall": 0.9587,
+      "f1_score": 0.9735,
+      "roc_auc": 0.9967,
+      "false_positive_rate": 0.0097,
+      "true_negative_rate": 0.9903,
+      "confusion_matrix": [
+        [
+          19749,
+          193
+        ],
+        [
+          739,
+          17151
+        ]
+      ],
+      "optimal_threshold": 0.31,
+      "avg_latency_ms": 0.0007,
+      "is_baseline": true,
+      "hyperparameters": {
+        "bootstrap": true,
+        "ccp_alpha": 0.0,
+        "class_weight": "balanced",
+        "criterion": "gini",
+        "max_depth": 15,
+        "max_features": "sqrt",
+        "max_leaf_nodes": null,
+        "max_samples": null,
+        "min_impurity_decrease": 0.0,
+        "min_samples_leaf": 2,
+        "min_samples_split": 4,
+        "min_weight_fraction_leaf": 0.0,
+        "monotonic_cst": null,
+        "n_estimators": 100,
+        "n_jobs": -1,
+        "oob_score": false,
+        "random_state": 42,
+        "verbose": 0,
+        "warm_start": false
+      },
+      "training_time_sec": 1.28
+    }
+  },
+  "recommended_model": "random_forest",
+  "recommendation_rationale": "Model 'Random Forest (Baseline)' achieved the strongest operational balance: F1-Score: 0.9735, ROC-AUC: 0.9967, False Positive Rate: 0.0097, and Inference Latency: 0.0007 ms/sample (Training Time: 1.28s). Maintained the most reliable generalization boundary across all tested metrics."
+}

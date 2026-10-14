@@ -548,6 +548,88 @@
   font-style: italic;
 }
 
+.ca-remediation h5 {
+  margin: 12px 0 4px;
+  font-size: 13px;
+}
+
+.ca-remediation__button {
+  font-size: 14px;
+  padding: 9px 18px;
+}
+
+.ca-remediation__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.ca-badge--unvalidated {
+  color: #f5b942;
+  background: rgba(245, 185, 66, 0.12);
+  border: 1px solid rgba(245, 185, 66, 0.4);
+}
+
+.ca-badge--warning {
+  color: #ffb86b;
+  background: rgba(255, 184, 107, 0.12);
+  border: 1px solid rgba(255, 184, 107, 0.4);
+}
+
+.ca-validation {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ca-border);
+}
+
+.ca-validation__checks {
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 13px;
+}
+
+.ca-validation__checks th,
+.ca-validation__checks td {
+  text-align: left;
+  padding: 4px 16px 4px 0;
+  border-bottom: 1px solid var(--ca-border);
+}
+
+.ca-validation__checks th {
+  font-weight: 500;
+  color: var(--ca-text-muted);
+}
+
+.ca-validation__issues {
+  margin: 4px 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+
+.ca-diff__line {
+  display: block;
+}
+
+.ca-diff__file {
+  color: var(--ca-text-muted);
+}
+
+.ca-diff__hunk {
+  color: #7aa2f7;
+}
+
+.ca-diff__add {
+  color: #2ecc8f;
+  background: rgba(46, 204, 143, 0.08);
+}
+
+.ca-diff__del {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.08);
+}
+
 .ca-context {
   margin-top: 4px;
 }
@@ -569,6 +651,136 @@
   background: var(--ca-surface-2);
   border: 1px dashed var(--ca-border);
   border-radius: 8px;
+}
+
+/* HITL analyst review */
+.ca-page.ca-review {
+  max-width: 980px;
+}
+
+.ca-review__back,
+.ca-review__open {
+  font-size: 13px;
+  color: var(--ca-accent);
+  text-decoration: none;
+}
+
+.ca-review__section {
+  margin-top: 18px;
+}
+
+.ca-review__heading {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ca-text);
+}
+
+.ca-review__letter {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  border-radius: 6px;
+  background: var(--ca-surface-2);
+  border: 1px solid var(--ca-border);
+  text-align: center;
+  font-size: 13px;
+  line-height: 22px;
+  color: var(--ca-text-muted);
+}
+
+.ca-review__subheading {
+  margin: 18px 0 4px;
+  font-size: 15px;
+}
+
+.ca-code__line {
+  display: block;
+}
+
+.ca-code__number {
+  display: inline-block;
+  margin-right: 14px;
+  color: var(--ca-text-muted);
+  user-select: none;
+}
+
+.ca-review__warning,
+.ca-review__blocked {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.ca-review__warning {
+  color: #ffb86b;
+  background: rgba(255, 184, 107, 0.1);
+  border: 1px solid rgba(255, 184, 107, 0.45);
+}
+
+.ca-review__blocked {
+  color: var(--ca-danger);
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.4);
+}
+
+.ca-review__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 14px 0 8px;
+}
+
+.ca-form__button.ca-review__accept {
+  background: #1f9d6c;
+}
+
+.ca-form__button.ca-review__reject {
+  background: #c94a4a;
+}
+
+.ca-form__button.ca-dialog__cancel {
+  background: var(--ca-surface-2);
+  border: 1px solid var(--ca-border);
+}
+
+.ca-review__outcome {
+  margin-top: 6px;
+}
+
+.ca-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(5, 8, 14, 0.72);
+}
+
+.ca-dialog__box {
+  width: 100%;
+  max-width: 460px;
+  padding: 22px;
+  background: var(--ca-surface);
+  border: 1px solid var(--ca-border);
+  border-radius: 10px;
+  color: var(--ca-text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  text-align: left;
+}
+
+.ca-dialog__box h4 {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.ca-dialog__reason {
+  margin-top: 8px;
+  resize: vertical;
 }
 
 @media (max-width: 520px) {
