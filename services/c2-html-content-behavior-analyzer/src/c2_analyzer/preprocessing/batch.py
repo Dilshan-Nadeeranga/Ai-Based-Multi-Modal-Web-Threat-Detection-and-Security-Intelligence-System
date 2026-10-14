@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import multiprocessing
 import time
+from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
@@ -153,19 +154,30 @@ def build_tasks(
     ]
 
 
-def run_tasks(tasks: list[dict], workers: int, show_progress: bool = True) -> list[dict]:
-    """Run the tasks, in parallel when workers > 1. Results come back in task order."""
-    bar = tqdm(total=len(tasks), desc="Preprocessing", unit="page", disable=not show_progress)
+def run_tasks(
+    tasks: list[dict],
+    workers: int,
+    show_progress: bool = True,
+    worker: Callable[[dict], dict] | None = None,
+    desc: str = "Preprocessing",
+) -> list[dict]:
+    """Run the tasks, in parallel when workers > 1. Results come back in task order.
+
+    ``worker`` (default ``process_task``) must be a module-level function that
+    never raises - Part 3 reuses this runner with its own worker.
+    """
+    worker = worker or process_task
+    bar = tqdm(total=len(tasks), desc=desc, unit="page", disable=not show_progress)
     results: dict[str, dict] = {}
     try:
         if workers <= 1 or len(tasks) <= 1:
             for task in tasks:
-                results[task["sample_id"]] = process_task(task)
+                results[task["sample_id"]] = worker(task)
                 bar.update()
         else:
             context = multiprocessing.get_context("spawn")  # same on Windows, Linux and macOS
             with ProcessPoolExecutor(max_workers=workers, mp_context=context) as pool:
-                futures = {pool.submit(process_task, task): task for task in tasks}
+                futures = {pool.submit(worker, task): task for task in tasks}
                 for future in as_completed(futures):
                     task = futures[future]
                     try:

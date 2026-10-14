@@ -1,0 +1,1083 @@
+{
+  "version": "v0.1",
+  "generated_at": "2026-10-14T09:50:49+05:30",
+  "feature_set_version": "dom_v1",
+  "dictionary_hash": "8605201ec979e8ef1602ced8c43964fcb872580223c3503676d242164dead472",
+  "feature_count": 52,
+  "filters": {
+    "label": null,
+    "limit": null,
+    "force": true
+  },
+  "counts": {
+    "rows_in_csv": 278,
+    "run_total": 278,
+    "processed": 278,
+    "skipped_unchanged": 0,
+    "failed": 0,
+    "part2_processed_now": 0,
+    "pages_with_group_errors": 0
+  },
+  "failures": [],
+  "group_errors": [],
+  "timing": {
+    "wall_seconds": 3.5,
+    "pages_timed": 278,
+    "avg_ms": 19.6,
+    "p95_ms": 83.5,
+    "max_ms": 140.48
+  },
+  "labels": [
+    "benign",
+    "phishing",
+    "malware_delivery"
+  ],
+  "per_label": {
+    "benign": {
+      "pages": 132,
+      "mean": {
+        "base_url_known": 1.0,
+        "node_count": 1754.6515,
+        "element_count": 1442.0606,
+        "max_depth": 17.9015,
+        "avg_depth": 11.1484,
+        "leaf_ratio": 0.5037,
+        "distinct_tag_count": 31.7045,
+        "text_to_html_ratio": 0.0454,
+        "form_count": 1.3939,
+        "has_form": 0.447,
+        "inputs_total": 4.2652,
+        "inputs_outside_forms_count": 0.8106,
+        "password_field_count": 0.0909,
+        "has_password_field": 0.0303,
+        "email_field_count": 0.2045,
+        "username_field_count": 0.0379,
+        "otp_pin_field_count": 0.0,
+        "card_field_count": 0.0,
+        "sensitive_field_count": 0.0909,
+        "hidden_input_count": 2.6515,
+        "hidden_input_ratio": 0.2161,
+        "external_form_action_count": 0.0379,
+        "has_external_form_action": 0.0303,
+        "password_form_external_action": 0.0,
+        "form_action_to_ip": 0.0,
+        "form_action_empty_or_js": 0.3788,
+        "form_action_to_known_form_service": 0.0,
+        "form_method_get_with_password": 0.0076,
+        "iframe_count": 0.6136,
+        "external_iframe_count": 0.4924,
+        "hidden_iframe_count": 0.3409,
+        "inline_script_count": 15.6667,
+        "external_script_count": 16.4091,
+        "external_script_domain_count": 1.947,
+        "inline_script_chars_total": 93303.4621,
+        "event_handler_count": 6.5076,
+        "javascript_url_count": 0.5682,
+        "hidden_element_count": 31.8561,
+        "hidden_text_chars": 1035.3636,
+        "hidden_text_ratio": 0.1398,
+        "link_count": 178.7576,
+        "internal_link_count": 150.9091,
+        "external_link_count": 19.803,
+        "external_link_ratio": 0.155,
+        "null_link_count": 7.4167,
+        "null_link_ratio": 0.0354,
+        "distinct_external_domains": 8.1818,
+        "has_meta_refresh": 0.0152,
+        "meta_refresh_external": 0.0,
+        "external_stylesheet_ratio": 0.2938,
+        "has_title": 0.9773,
+        "title_length": 48.2273
+      },
+      "median": {
+        "base_url_known": 1.0,
+        "node_count": 1343.5,
+        "element_count": 1114.0,
+        "max_depth": 18.0,
+        "avg_depth": 10.9861,
+        "leaf_ratio": 0.4718,
+        "distinct_tag_count": 32.0,
+        "text_to_html_ratio": 0.021,
+        "form_count": 0.0,
+        "has_form": 0.0,
+        "inputs_total": 1.0,
+        "inputs_outside_forms_count": 0.0,
+        "password_field_count": 0.0,
+        "has_password_field": 0.0,
+        "email_field_count": 0.0,
+        "username_field_count": 0.0,
+        "otp_pin_field_count": 0.0,
+        "card_field_count": 0.0,
+        "sensitive_field_count": 0.0,
+        "hidden_input_count": 0.0,
+        "hidden_input_ratio": 0.0,
+        "external_form_action_count": 0.0,
+        "has_external_form_action": 0.0,
+        "password_form_external_action": 0.0,
+        "form_action_to_ip": 0.0,
+        "form_action_empty_or_js": 0.0,
+        "form_action_to_known_form_service": 0.0,
+        "form_method_get_with_password": 0.0,
+        "iframe_count": 0.0,
+        "external_iframe_count": 0.0,
+        "hidden_iframe_count": 0.0,
+        "inline_script_count": 9.0,
+        "external_script_count": 11.0,
+        "external_script_domain_count": 1.0,
+        "inline_script_chars_total": 14976.0,
+        "event_handler_count": 0.0,
+        "javascript_url_count": 0.0,
+        "hidden_element_count": 3.0,
+        "hidden_text_chars": 44.5,
+        "hidden_text_ratio": 0.0053,
+        "link_count": 114.5,
+        "internal_link_count": 88.5,
+        "external_link_count": 10.0,
+        "external_link_ratio": 0.0852,
+        "null_link_count": 1.0,
+        "null_link_ratio": 0.0109,
+        "distinct_external_domains": 7.0,
+        "has_meta_refresh": 0.0,
+        "meta_refresh_external": 0.0,
+        "external_stylesheet_ratio": 0.0417,
+        "has_title": 1.0,
+        "title_length": 51.0
+      },
+      "pct_nonzero": {
+        "base_url_known": 100.0,
+        "node_count": 100.0,
+        "element_count": 100.0,
+        "max_depth": 100.0,
+        "avg_depth": 100.0,
+        "leaf_ratio": 100.0,
+        "distinct_tag_count": 100.0,
+        "text_to_html_ratio": 92.4242,
+        "form_count": 44.697,
+        "has_form": 44.697,
+        "inputs_total": 59.8485,
+        "inputs_outside_forms_count": 29.5455,
+        "password_field_count": 3.0303,
+        "has_password_field": 3.0303,
+        "email_field_count": 15.1515,
+        "username_field_count": 1.5152,
+        "otp_pin_field_count": 0.0,
+        "card_field_count": 0.0,
+        "sensitive_field_count": 3.0303,
+        "hidden_input_count": 31.0606,
+        "hidden_input_ratio": 31.0606,
+        "external_form_action_count": 3.0303,
+        "has_external_form_action": 3.0303,
+        "password_form_external_action": 0.0,
+        "form_action_to_ip": 0.0,
+        "form_action_empty_or_js": 19.697,
+        "form_action_to_known_form_service": 0.0,
+        "form_method_get_with_password": 0.7576,
+        "iframe_count": 38.6364,
+        "external_iframe_count": 34.8485,
+        "hidden_iframe_count": 29.5455,
+        "inline_script_count": 92.4242,
+        "external_script_count": 93.1818,
+        "external_script_domain_count": 73.4848,
+        "inline_script_chars_total": 92.4242,
+        "event_handler_count": 35.6061,
+        "javascript_url_count": 9.8485,
+        "hidden_element_count": 71.9697,
+        "hidden_text_chars": 59.8485,
+        "hidden_text_ratio": 59.8485,
+        "link_count": 93.9394,
+        "internal_link_count": 90.9091,
+        "external_link_count": 90.9091,
+        "external_link_ratio": 90.9091,
+        "null_link_count": 60.6061,
+        "null_link_ratio": 60.6061,
+        "distinct_external_domains": 90.9091,
+        "has_meta_refresh": 1.5152,
+        "meta_refresh_external": 0.0,
+        "external_stylesheet_ratio": 50.7576,
+        "has_title": 97.7273,
+        "title_length": 97.7273
+      }
+    },
+    "phishing": {
+      "pages": 87,
+      "mean": {
+        "base_url_known": 1.0,
+        "node_count": 485.023,
+        "element_count": 372.5632,
+        "max_depth": 13.1379,
+        "avg_depth": 7.3012,
+        "leaf_ratio": 0.6174,
+        "distinct_tag_count": 22.3908,
+        "text_to_html_ratio": 0.042,
+        "form_count": 0.7356,
+        "has_form": 0.4023,
+        "inputs_total": 3.8736,
+        "inputs_outside_forms_count": 1.4368,
+        "password_field_count": 0.4138,
+        "has_password_field": 0.3218,
+        "email_field_count": 0.3678,
+        "username_field_count": 0.092,
+        "otp_pin_field_count": 0.1724,
+        "card_field_count": 0.1149,
+        "sensitive_field_count": 0.7011,
+        "hidden_input_count": 1.7471,
+        "hidden_input_ratio": 0.1437,
+        "external_form_action_count": 0.0345,
+        "has_external_form_action": 0.0345,
+        "password_form_external_action": 0.023,
+        "form_action_to_ip": 0.0,
+        "form_action_empty_or_js": 0.4828,
+        "form_action_to_known_form_service": 0.023,
+        "form_method_get_with_password": 0.1724,
+        "iframe_count": 0.2644,
+        "external_iframe_count": 0.092,
+        "hidden_iframe_count": 0.1839,
+        "inline_script_count": 7.0115,
+        "external_script_count": 16.5517,
+        "external_script_domain_count": 1.1149,
+        "inline_script_chars_total": 25242.3448,
+        "event_handler_count": 15.8851,
+        "javascript_url_count": 1.092,
+        "hidden_element_count": 4.3103,
+        "hidden_text_chars": 550.7011,
+        "hidden_text_ratio": 0.1633,
+        "link_count": 37.954,
+        "internal_link_count": 6.2299,
+        "external_link_count": 23.6092,
+        "external_link_ratio": 0.3453,
+        "null_link_count": 8.069,
+        "null_link_ratio": 0.3381,
+        "distinct_external_domains": 1.7011,
+        "has_meta_refresh": 0.0115,
+        "meta_refresh_external": 0.0,
+        "external_stylesheet_ratio": 0.3865,
+        "has_title": 0.9885,
+        "title_length": 29.6897
+      },
+      "median": {
+        "base_url_known": 1.0,
+        "node_count": 200.0,
+        "element_count": 163.0,
+        "max_depth": 11.0,
+        "avg_depth": 6.1033,
+        "leaf_ratio": 0.6129,
+        "distinct_tag_count": 22.0,
+        "text_to_html_ratio": 0.0282,
+        "form_count": 0.0,
+        "has_form": 0.0,
+        "inputs_total": 2.0,
+        "inputs_outside_forms_count": 0.0,
+        "password_field_count": 0.0,
+        "has_password_field": 0.0,
+        "email_field_count": 0.0,
+        "username_field_count": 0.0,
+        "otp_pin_field_count": 0.0,
+        "card_field_count": 0.0,
+        "sensitive_field_count": 0.0,
+        "hidden_input_count": 0.0,
+        "hidden_input_ratio": 0.0,
+        "external_form_action_count": 0.0,
+        "has_external_form_action": 0.0,
+        "password_form_external_action": 0.0,
+        "form_action_to_ip": 0.0,
+        "form_action_empty_or_js": 0.0,
+        "form_action_to_known_form_service": 0.0,
+        "form_method_get_with_password": 0.0,
+        "iframe_count": 0.0,
+        "external_iframe_count": 0.0,
+        "hidden_iframe_count": 0.0,
+        "inline_script_count": 2.0,
+        "external_script_count": 3.0,
+        "external_script_domain_count": 1.0,
+        "inline_script_chars_total": 2433.0,
+        "event_handler_count": 0.0,
+        "javascript_url_count": 0.0,
+        "hidden_element_count": 1.0,
+        "hidden_text_chars": 0.0,
+        "hidden_text_ratio": 0.0,
+        "link_count": 7.0,
+        "internal_link_count": 0.0,
+        "external_link_count": 1.0,
+        "external_link_ratio": 0.1,
+        "null_link_count": 2.0,
+        "null_link_ratio": 0.1667,
+        "distinct_external_domains": 1.0,
+        "has_meta_refresh": 0.0,
+        "meta_refresh_external": 0.0,
+        "external_stylesheet_ratio": 0.0417,
+        "has_title": 1.0,
+        "title_length": 25.0
+      },
+      "pct_nonzero": {
+        "base_url_known": 100.0,
+        "node_count": 100.0,
+        "element_count": 100.0,
+        "max_depth": 100.0,
+        "avg_depth": 100.0,
+        "leaf_ratio": 100.0,
+        "distinct_tag_count": 100.0,
+        "text_to_html_ratio": 94.2529,
+        "form_count": 40.2299,
+        "has_form": 40.2299,
+        "inputs_total": 78.1609,
+        "inputs_outside_forms_count": 48.2759,
+        "password_field_count": 32.1839,
+        "has_password_field": 32.1839,
+        "email_field_count": 34.4828,
+        "username_field_count": 5.7471,
+        "otp_pin_field_count": 3.4483,
+        "card_field_count": 3.4483,
+        "sensitive_field_count": 33.3333,
+        "hidden_input_count": 22.9885,
+        "hidden_input_ratio": 22.9885,
+        "external_form_action_count": 3.4483,
+        "has_external_form_action": 3.4483,
+        "password_form_external_action": 2.2989,
+        "form_action_to_ip": 0.0,
+        "form_action_empty_or_js": 31.0345,
+        "form_action_to_known_form_service": 2.2989,
+        "form_method_get_with_password": 17.2414,
+        "iframe_count": 20.6897,
+        "external_iframe_count": 8.046,
+        "hidden_iframe_count": 14.9425,
+        "inline_script_count": 82.7586,
+        "external_script_count": 80.4598,
+        "external_script_domain_count": 57.4713,
+        "inline_script_chars_total": 82.7586,
+        "event_handler_count": 27.5862,
+        "javascript_url_count": 11.4943,
+        "hidden_element_count": 62.069,
+        "hidden_text_chars": 41.3793,
+        "hidden_text_ratio": 41.3793,
+        "link_count": 82.7586,
+        "internal_link_count": 43.6782,
+        "external_link_count": 52.8736,
+        "external_link_ratio": 52.8736,
+        "null_link_count": 58.6207,
+        "null_link_ratio": 58.6207,
+        "distinct_external_domains": 52.8736,
+        "has_meta_refresh": 1.1494,
+        "meta_refresh_external": 0.0,
+        "external_stylesheet_ratio": 56.3218,
+        "has_title": 98.8506,
+        "title_length": 98.8506
+      }
+    },
+    "malware_delivery": {
+      "pages": 59,
+      "mean": {
+        "base_url_known": 1.0,
+        "node_count": 242.2542,
+        "element_count": 192.8644,
+        "max_depth": 11.2881,
+        "avg_depth": 6.6655,
+        "leaf_ratio": 0.5291,
+        "distinct_tag_count": 20.0678,
+        "text_to_html_ratio": 0.0849,
+        "form_count": 0.6949,
+        "has_form": 0.3051,
+        "inputs_total": 2.8644,
+        "inputs_outside_forms_count": 0.2881,
+        "password_field_count": 0.0678,
+        "has_password_field": 0.0508,
+        "email_field_count": 0.1695,
+        "username_field_count": 0.0508,
+        "otp_pin_field_count": 0.0,
+        "card_field_count": 0.0,
+        "sensitive_field_count": 0.0678,
+        "hidden_input_count": 1.6441,
+        "hidden_input_ratio": 0.147,
+        "external_form_action_count": 0.0339,
+        "has_external_form_action": 0.0339,
+        "password_form_external_action": 0.0,
+        "form_action_to_ip": 0.0678,
+        "form_action_empty_or_js": 0.0678,
+        "form_action_to_known_form_service": 0.0,
+        "form_method_get_with_password": 0.0,
+        "iframe_count": 0.1017,
+        "external_iframe_count": 0.1017,
+        "hidden_iframe_count": 0.0,
+        "inline_script_count": 5.2881,
+        "external_script_count": 2.7966,
+        "external_script_domain_count": 0.3559,
+        "inline_script_chars_total": 80090.0,
+        "event_handler_count": 1.4576,
+        "javascript_url_count": 0.7458,
+        "hidden_element_count": 1.2373,
+        "hidden_text_chars": 20.0678,
+        "hidden_text_ratio": 0.0093,
+        "link_count": 21.1017,
+        "internal_link_count": 12.5254,
+        "external_link_count": 5.7966,
+        "external_link_ratio": 0.1954,
+        "null_link_count": 2.2542,
+        "null_link_ratio": 0.0412,
+        "distinct_external_domains": 2.2542,
+        "has_meta_refresh": 0.0169,
+        "meta_refresh_external": 0.0,
+        "external_stylesheet_ratio": 0.1228,
+        "has_title": 0.9661,
+        "title_length": 24.1695
+      },
+      "median": {
+        "base_url_known": 1.0,
+        "node_count": 100.0,
+        "element_count": 73.0,
+        "max_depth": 10.0,
+        "avg_depth": 6.087,
+        "leaf_ratio": 0.4889,
+        "distinct_tag_count": 18.0,
+        "text_to_html_ratio": 0.0024,
+        "form_count": 0.0,
+        "has_form": 0.0,
+        "inputs_total": 0.0,
+        "inputs_outside_forms_count": 0.0,
+        "password_field_count": 0.0,
+        "has_password_field": 0.0,
+        "email_field_count": 0.0,
+        "username_field_count": 0.0,
+        "otp_pin_field_count": 0.0,
+        "card_field_count": 0.0,
+        "sensitive_field_count": 0.0,
+        "hidden_input_count": 0.0,
+        "hidden_input_ratio": 0.0,
+        "external_form_action_count": 0.0,
+        "has_external_form_action": 0.0,
+        "password_form_external_action": 0.0,
+        "form_action_to_ip": 0.0,
+        "form_action_empty_or_js": 0.0,
+        "form_action_to_known_form_service": 0.0,
+        "form_method_get_with_password": 0.0,
+        "iframe_count": 0.0,
+        "external_iframe_count": 0.0,
+        "hidden_iframe_count": 0.0,
+        "inline_script_count": 6.0,
+        "external_script_count": 0.0,
+        "external_script_domain_count": 0.0,
+        "inline_script_chars_total": 12168.0,
+        "event_handler_count": 0.0,
+        "javascript_url_count": 0.0,
+        "hidden_element_count": 0.0,
+        "hidden_text_chars": 0.0,
+        "hidden_text_ratio": 0.0,
+        "link_count": 4.0,
+        "internal_link_count": 4.0,
+        "external_link_count": 0.0,
+        "external_link_ratio": 0.0,
+        "null_link_count": 0.0,
+        "null_link_ratio": 0.0,
+        "distinct_external_domains": 0.0,
+        "has_meta_refresh": 0.0,
+        "meta_refresh_external": 0.0,
+        "external_stylesheet_ratio": 0.0,
+        "has_title": 1.0,
+        "title_length": 15.0
+      },
+      "pct_nonzero": {
+        "base_url_known": 100.0,
+        "node_count": 100.0,
+        "element_count": 100.0,
+        "max_depth": 100.0,
+        "avg_depth": 100.0,
+        "leaf_ratio": 100.0,
+        "distinct_tag_count": 100.0,
+        "text_to_html_ratio": 96.6102,
+        "form_count": 30.5085,
+        "has_form": 30.5085,
+        "inputs_total": 33.8983,
+        "inputs_outside_forms_count": 6.7797,
+        "password_field_count": 5.0847,
+        "has_password_field": 5.0847,
+        "email_field_count": 13.5593,
+        "username_field_count": 3.3898,
+        "otp_pin_field_count": 0.0,
+        "card_field_count": 0.0,
+        "sensitive_field_count": 5.0847,
+        "hidden_input_count": 20.339,
+        "hidden_input_ratio": 20.339,
+        "external_form_action_count": 3.3898,
+        "has_external_form_action": 3.3898,
+        "password_form_external_action": 0.0,
+        "form_action_to_ip": 6.7797,
+        "form_action_empty_or_js": 5.0847,
+        "form_action_to_known_form_service": 0.0,
+        "form_method_get_with_password": 0.0,
+        "iframe_count": 6.7797,
+        "external_iframe_count": 6.7797,
+        "hidden_iframe_count": 0.0,
+        "inline_script_count": 77.9661,
+        "external_script_count": 32.2034,
+        "external_script_domain_count": 23.7288,
+        "inline_script_chars_total": 77.9661,
+        "event_handler_count": 13.5593,
+        "javascript_url_count": 1.6949,
+        "hidden_element_count": 22.0339,
+        "hidden_text_chars": 13.5593,
+        "hidden_text_ratio": 13.5593,
+        "link_count": 88.1356,
+        "internal_link_count": 79.661,
+        "external_link_count": 35.5932,
+        "external_link_ratio": 35.5932,
+        "null_link_count": 25.4237,
+        "null_link_ratio": 25.4237,
+        "distinct_external_domains": 35.5932,
+        "has_meta_refresh": 1.6949,
+        "meta_refresh_external": 0.0,
+        "external_stylesheet_ratio": 25.4237,
+        "has_title": 96.6102,
+        "title_length": 96.6102
+      }
+    }
+  },
+  "warnings": {
+    "constant_features": [
+      "base_url_known",
+      "meta_refresh_external"
+    ],
+    "near_constant_features": {
+      "username_field_count": 0.968,
+      "otp_pin_field_count": 0.989,
+      "card_field_count": 0.989,
+      "external_form_action_count": 0.968,
+      "has_external_form_action": 0.968,
+      "password_form_external_action": 0.993,
+      "form_action_to_ip": 0.986,
+      "form_action_to_known_form_service": 0.993,
+      "has_meta_refresh": 0.986,
+      "has_title": 0.978
+    },
+    "correlated_pairs": [
+      {
+        "a": "password_form_external_action",
+        "b": "form_action_to_known_form_service",
+        "r": 1.0
+      },
+      {
+        "a": "node_count",
+        "b": "element_count",
+        "r": 0.9944
+      },
+      {
+        "a": "external_form_action_count",
+        "b": "has_external_form_action",
+        "r": 0.9611
+      }
+    ]
+  },
+  "separation": [
+    {
+      "feature": "internal_link_count",
+      "mutual_information": 0.4664,
+      "median_spread": 1.0442,
+      "medians": {
+        "benign": 88.5,
+        "phishing": 0.0,
+        "malware_delivery": 4.0
+      }
+    },
+    {
+      "feature": "node_count",
+      "mutual_information": 0.4205,
+      "median_spread": 0.9055,
+      "medians": {
+        "benign": 1343.5,
+        "phishing": 200.0,
+        "malware_delivery": 100.0
+      }
+    },
+    {
+      "feature": "link_count",
+      "mutual_information": 0.3856,
+      "median_spread": 0.98,
+      "medians": {
+        "benign": 114.5,
+        "phishing": 7.0,
+        "malware_delivery": 4.0
+      }
+    },
+    {
+      "feature": "element_count",
+      "mutual_information": 0.3286,
+      "median_spread": 0.9752,
+      "medians": {
+        "benign": 1114.0,
+        "phishing": 163.0,
+        "malware_delivery": 73.0
+      }
+    },
+    {
+      "feature": "avg_depth",
+      "mutual_information": 0.2975,
+      "median_spread": 0.8279,
+      "medians": {
+        "benign": 10.9861,
+        "phishing": 6.1033,
+        "malware_delivery": 6.087
+      }
+    },
+    {
+      "feature": "external_link_ratio",
+      "mutual_information": 0.2963,
+      "median_spread": 0.3619,
+      "medians": {
+        "benign": 0.0852,
+        "phishing": 0.1,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "leaf_ratio",
+      "mutual_information": 0.2827,
+      "median_spread": 0.8877,
+      "medians": {
+        "benign": 0.4718,
+        "phishing": 0.6129,
+        "malware_delivery": 0.4889
+      }
+    },
+    {
+      "feature": "external_script_count",
+      "mutual_information": 0.267,
+      "median_spread": 0.7857,
+      "medians": {
+        "benign": 11.0,
+        "phishing": 3.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "inline_script_chars_total",
+      "mutual_information": 0.256,
+      "median_spread": 0.2438,
+      "medians": {
+        "benign": 14976.0,
+        "phishing": 2433.0,
+        "malware_delivery": 12168.0
+      }
+    },
+    {
+      "feature": "null_link_ratio",
+      "mutual_information": 0.2481,
+      "median_spread": 1.7692,
+      "medians": {
+        "benign": 0.0109,
+        "phishing": 0.1667,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "inline_script_count",
+      "mutual_information": 0.2419,
+      "median_spread": 0.6364,
+      "medians": {
+        "benign": 9.0,
+        "phishing": 2.0,
+        "malware_delivery": 6.0
+      }
+    },
+    {
+      "feature": "distinct_tag_count",
+      "mutual_information": 0.2333,
+      "median_spread": 0.9333,
+      "medians": {
+        "benign": 32.0,
+        "phishing": 22.0,
+        "malware_delivery": 18.0
+      }
+    },
+    {
+      "feature": "distinct_external_domains",
+      "mutual_information": 0.2318,
+      "median_spread": 1.0,
+      "medians": {
+        "benign": 7.0,
+        "phishing": 1.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "title_length",
+      "mutual_information": 0.1986,
+      "median_spread": 0.8372,
+      "medians": {
+        "benign": 51.0,
+        "phishing": 25.0,
+        "malware_delivery": 15.0
+      }
+    },
+    {
+      "feature": "external_link_count",
+      "mutual_information": 0.1888,
+      "median_spread": 0.8333,
+      "medians": {
+        "benign": 10.0,
+        "phishing": 1.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "max_depth",
+      "mutual_information": 0.1506,
+      "median_spread": 0.8,
+      "medians": {
+        "benign": 18.0,
+        "phishing": 11.0,
+        "malware_delivery": 10.0
+      }
+    },
+    {
+      "feature": "hidden_iframe_count",
+      "mutual_information": 0.1306,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "inputs_outside_forms_count",
+      "mutual_information": 0.1193,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "hidden_text_chars",
+      "mutual_information": 0.099,
+      "median_spread": 0.3123,
+      "medians": {
+        "benign": 44.5,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "hidden_element_count",
+      "mutual_information": 0.0961,
+      "median_spread": 0.375,
+      "medians": {
+        "benign": 3.0,
+        "phishing": 1.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "text_to_html_ratio",
+      "mutual_information": 0.092,
+      "median_spread": 0.5249,
+      "medians": {
+        "benign": 0.021,
+        "phishing": 0.0282,
+        "malware_delivery": 0.0024
+      }
+    },
+    {
+      "feature": "external_script_domain_count",
+      "mutual_information": 0.0905,
+      "median_spread": 0.5,
+      "medians": {
+        "benign": 1.0,
+        "phishing": 1.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "hidden_text_ratio",
+      "mutual_information": 0.0891,
+      "median_spread": 0.0617,
+      "medians": {
+        "benign": 0.0053,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "card_field_count",
+      "mutual_information": 0.0821,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "inputs_total",
+      "mutual_information": 0.0785,
+      "median_spread": 0.6667,
+      "medians": {
+        "benign": 1.0,
+        "phishing": 2.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "javascript_url_count",
+      "mutual_information": 0.0755,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "has_password_field",
+      "mutual_information": 0.0748,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "password_field_count",
+      "mutual_information": 0.0672,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "external_iframe_count",
+      "mutual_information": 0.0598,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "sensitive_field_count",
+      "mutual_information": 0.0597,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "form_method_get_with_password",
+      "mutual_information": 0.0552,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "iframe_count",
+      "mutual_information": 0.0506,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "email_field_count",
+      "mutual_information": 0.0487,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "null_link_count",
+      "mutual_information": 0.0418,
+      "median_spread": 0.4,
+      "medians": {
+        "benign": 1.0,
+        "phishing": 2.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "external_stylesheet_ratio",
+      "mutual_information": 0.034,
+      "median_spread": 0.0834,
+      "medians": {
+        "benign": 0.0417,
+        "phishing": 0.0417,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "form_action_to_ip",
+      "mutual_information": 0.0227,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "external_form_action_count",
+      "mutual_information": 0.0214,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "event_handler_count",
+      "mutual_information": 0.0198,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "form_count",
+      "mutual_information": 0.0189,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "password_form_external_action",
+      "mutual_information": 0.0084,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "form_action_to_known_form_service",
+      "mutual_information": 0.0084,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "form_action_empty_or_js",
+      "mutual_information": 0.0081,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "has_form",
+      "mutual_information": 0.0063,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "has_title",
+      "mutual_information": 0.0016,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 1.0,
+        "phishing": 1.0,
+        "malware_delivery": 1.0
+      }
+    },
+    {
+      "feature": "has_meta_refresh",
+      "mutual_information": 0.0002,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "has_external_form_action",
+      "mutual_information": 0.0001,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "username_field_count",
+      "mutual_information": 0.0,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "otp_pin_field_count",
+      "mutual_information": 0.0,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "hidden_input_count",
+      "mutual_information": 0.0,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    },
+    {
+      "feature": "hidden_input_ratio",
+      "mutual_information": 0.0,
+      "median_spread": 0.0,
+      "medians": {
+        "benign": 0.0,
+        "phishing": 0.0,
+        "malware_delivery": 0.0
+      }
+    }
+  ],
+  "top_separating": [
+    "internal_link_count",
+    "node_count",
+    "link_count",
+    "element_count",
+    "avg_depth",
+    "external_link_ratio",
+    "leaf_ratio",
+    "external_script_count",
+    "inline_script_chars_total",
+    "null_link_ratio",
+    "inline_script_count",
+    "distinct_tag_count"
+  ]
+}

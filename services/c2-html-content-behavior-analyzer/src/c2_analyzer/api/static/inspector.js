@@ -546,10 +546,137 @@ registerTab({
   },
 });
 
+// ---- 9. DOM Features (Part 3) ----------------------------------------------------------------
+//
+// Part 3's fixed-order feature vector + evidence. Data: the dictionary (names, groups,
+// descriptions, per-label medians from reports/dom_features) and the DomResult of
+// this page (dev endpoint for samples, POST /api/v1/dom-features for pasted HTML).
+
+const domCache = { dictionary: new Map(), results: new WeakMap() };
+const SEVERITY_KIND = { high: "danger", medium: "warn", info: "info" };
+
+function cached(map, key, load) {
+  if (!map.has(key)) {
+    const promise = load().catch((error) => {
+      map.delete(key); // do not keep a failure: the next visit tries again
+      throw error;
+    });
+    map.set(key, promise);
+  }
+  return map.get(key);
+}
+
+function domDictionary(version) {
+  return cached(domCache.dictionary, version || "", () =>
+    api("/api/v1/dev/dom-dictionary" + query({ version })).then((r) => r.data));
+}
+
+function domResult(ctx) {
+  return cached(domCache.results, ctx, () => {
+    if (ctx.kind === "sample") {
+      return api(`/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/dom-features` + query({ version: ctx.version }))
+        .then((r) => ({ data: r.data, source: r.headers.get("X-Features-Source") || "stored" }));
+    }
+    return api("/api/v1/dom-features", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html: ctx.html || "", url: ctx.url || null }),
+    }).then((r) => ({ data: r.data, source: "api" }));
+  });
+}
+
+function fmtValue(value) {
+  if (typeof value !== "number") return show(value);
+  return Number.isInteger(value) ? fmtInt(value) : String(Math.round(value * 10000) / 10000);
+}
+
+function detailText(details) {
+  // Details come from the page (already PII-masked by Part 2): shown as plain text only.
+  return Object.entries(details || {})
+    .map(([key, value]) => `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`)
+    .join(" · ");
+}
+
+function mediansCell(name, medians) {
+  const labels = Object.keys(medians);
+  if (!labels.length) return el("span", { cls: "muted", text: "—" });
+  return append(el("span", { cls: "muted" }),
+    labels.map((label, i) => [i ? " · " : "", `${label} ${fmtValue(medians[label][name])}`]));
+}
+
+registerTab({
+  id: "dom-features",
+  title: "DOM Features (Part 3)",
+  async render(ctx, box) {
+    fill(box, el("p", { cls: "muted", text: "Loading DOM features…" }));
+    const [dictionary, result] = await Promise.all([domDictionary(ctx.version), domResult(ctx)]);
+    if (state.ctx !== ctx || !box.isConnected) return; // the user moved on meanwhile
+    const r = result.data;
+    const features = r.features || {};
+    const medians = dictionary.label_medians || {};
+    const specs = dictionary.features || [];
+    clear(box);
+
+    fill(box,
+      el("div", { cls: "toolbar" },
+        badge(r.feature_set_version, "info"),
+        badge(`${specs.length} features`),
+        badge(result.source === "on-the-fly" ? "computed on the fly" : result.source, result.source === "on-the-fly" ? "warn" : null),
+        el("span", { cls: "muted", text: `tree from ${r.tree_source} · ${fmtValue(r.processing_ms)} ms` })),
+      (r.errors || []).length ? el("div", { cls: "error-box" }, el("ul", {}, r.errors.map((e) => el("li", { text: e })))) : null,
+      (r.warnings || []).length ? el("p", { cls: "note", text: "Note: " + r.warnings.join(" · ") }) : null,
+      Object.keys(medians).length ? null
+        : el("p", { cls: "note", text: `No label medians yet - run: python scripts/extract_dom_features.py run --version ${ctx.version || "<version>"}` }),
+    );
+
+    // Evidence first: the "why" in words, most severe first.
+    const evidence = r.evidence || [];
+    fill(box, section(`Evidence (${evidence.length})`,
+      evidence.length
+        ? el("div", {}, evidence.map((item) => el("div", { cls: "card" },
+          el("h3", {}, badge(item.severity.toUpperCase(), SEVERITY_KIND[item.severity]), el("span", { cls: "multi", text: item.message })),
+          el("div", { cls: "muted url", text: `${item.feature} = ${fmtValue(item.value)}` + (detailText(item.details) ? ` · ${detailText(item.details)}` : "") }))))
+        : el("p", { cls: "muted", text: "No evidence: none of the evidence features is non-zero." })));
+
+    // Grouped cards: the non-zero features of each group, with label medians to compare.
+    const grid = el("div");
+    for (const group of dictionary.groups || []) {
+      const inGroup = specs.filter((s) => s.group === group);
+      const nonzero = inGroup.filter((s) => features[s.name]);
+      grid.append(el("div", { cls: "card" },
+        el("h3", {}, group, badge(`${nonzero.length} / ${inGroup.length} non-zero`)),
+        nonzero.length
+          ? table(["feature", "value", "median per label"], nonzero, (s) => [
+            el("span", { cls: "url", text: s.name, title: s.description }),
+            el("strong", { text: fmtValue(features[s.name]) }),
+            mediansCell(s.name, medians),
+          ])
+          : el("p", { cls: "muted", text: "All zero." })));
+    }
+    fill(box, section("Feature groups (non-zero values)", grid));
+
+    // Every feature, in vector order, built only when asked for.
+    const all = el("div");
+    all.hidden = true;
+    const toggle = el("button", { attrs: { type: "button" }, text: "Show all features" });
+    toggle.addEventListener("click", () => {
+      if (!all.firstChild) {
+        all.append(table(["#", "feature", "group", "type", "value", "median per label", "description"], specs, (s, i) => [
+          String(i + 1), el("span", { cls: "url", text: s.name }), s.group, s.type,
+          features[s.name] ? el("strong", { text: fmtValue(features[s.name]) }) : el("span", { cls: "muted", text: fmtValue(features[s.name]) }),
+          mediansCell(s.name, medians), s.description,
+        ], 100));
+      }
+      all.hidden = !all.hidden;
+      toggle.textContent = all.hidden ? "Show all features" : "Hide all features";
+    });
+    fill(box, section("All features (vector order)", toggle, all));
+  },
+});
+
 // ---- Future parts (disabled placeholders) -------------------------------------------------
 
 for (const [id, title] of [
-  ["dom-features", "DOM Features (Part 3)"],
   ["content-nlp", "Content / NLP (Part 5–6)"],
   ["js-behavior", "JS Behavior (Part 7–8)"],
   ["unified", "Unified Result (Part 9)"],
@@ -585,12 +712,17 @@ function renderPanel() {
   let tab = TABS.find((t) => t.id === state.activeTab);
   if (!tab || !tab.enabled || !tab.available(state.ctx)) tab = TABS[0];
   state.activeTab = tab.id;
-  try {
-    tab.render(state.ctx, panel);
-  } catch (error) {
-    // A broken tab must not break the inspector (same idea as Part 2's isolated steps).
+  // A broken tab must not break the inspector (same idea as Part 2's isolated steps).
+  // render() may be async (tabs that fetch more data return a Promise).
+  const failed = (error) => {
     console.error(error);
     panel.append(el("div", { cls: "error-box", text: `This tab failed to render: ${error.message}` }));
+  };
+  try {
+    const pending = tab.render(state.ctx, panel);
+    if (pending && typeof pending.catch === "function") pending.catch(failed);
+  } catch (error) {
+    failed(error);
   }
 }
 
@@ -799,7 +931,9 @@ async function analyzePasted(event) {
       headers: { "Content-Type": "application/json" },
       body,
     });
-    showPage({ page: data, kind: "pasted", parsedSource: "api" });
+    // html/url are kept (as strings, never rendered) so later tabs can send them to
+    // their own endpoints, e.g. DOM Features -> POST /api/v1/dom-features.
+    showPage({ page: data, kind: "pasted", parsedSource: "api", html, url: url || null });
     markCurrent();
     setStatus(`Analyzed ${fmtBytes(data.meta && data.meta.html_size_bytes)} in ${show(data.meta && data.meta.processing_ms)} ms (POST /api/v1/preprocess).`);
   } catch (error) {

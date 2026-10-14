@@ -27,7 +27,8 @@ from fastapi.responses import FileResponse, HTMLResponse
 
 from c2_analyzer.api.dependencies import get_dev_dataset
 from c2_analyzer.api.dev_data import DevDataset, NotFoundError
-from c2_analyzer.schemas.inspector import SampleSummary, VersionInfo
+from c2_analyzer.schemas.dom import DomResult
+from c2_analyzer.schemas.inspector import DomDictionaryInfo, SampleSummary, VersionInfo
 from c2_analyzer.schemas.parsed_page import ParsedPage
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -101,6 +102,44 @@ def parsed(
     except NotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from None
     return Response(text, media_type="application/json", headers={"X-Parsed-Source": source})
+
+
+@router.get(
+    "/samples/{sample_id}/dom-features",
+    response_model=DomResult,
+    summary="Part 3 DOM features + evidence of a sample",
+)
+def dom_features(
+    dataset: DatasetDep,
+    sample_id: str,
+    version: str | None = Query(None, examples=["v0.1"], description="default: newest"),
+) -> Response:
+    """The stored DomResult; computed on the fly (not saved) if missing or outdated.
+
+    Header ``X-Features-Source`` says which: ``stored`` or ``on-the-fly``.
+    """
+    try:
+        text, source = dataset.dom_features(_version(dataset, version), sample_id)
+    except NotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from None
+    return Response(text, media_type="application/json", headers={"X-Features-Source": source})
+
+
+@router.get(
+    "/dom-dictionary",
+    response_model=DomDictionaryInfo,
+    summary="Part 3 feature dictionary + per-label medians",
+)
+def dom_dictionary(
+    dataset: DatasetDep,
+    version: str | None = Query(None, examples=["v0.1"], description="medians of this version"),
+) -> DomDictionaryInfo:
+    """Names, groups, descriptions; medians per label from reports/dom_features (if run)."""
+    try:
+        chosen = version or dataset.latest_version()
+    except NotFoundError:
+        chosen = None
+    return dataset.dom_dictionary(chosen)
 
 
 @router.get(

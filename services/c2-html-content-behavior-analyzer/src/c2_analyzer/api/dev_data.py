@@ -8,6 +8,8 @@ sample, so it reads the same files the pipeline uses:
     data/metadata/manifests/dataset_<version>.{csv,json}   Part 1 frozen versions
     data/processed/parsed_html/<version>/<sample_id>.json   Part 2 stored ParsedPage
     data/raw/<label>/<file>.html                            the original page
+    data/processed/dom_features/<version>/<sample_id>.json  Part 3 stored DomResult
+    reports/dom_features/<version>_summary.json             Part 3 per-label medians
 
 Rules:
 - READ ONLY: nothing here writes to data/ (a page processed on the fly is not
@@ -34,10 +36,22 @@ from c2_analyzer.dataset.manifest import list_versions, manifest_paths, manifest
 from c2_analyzer.dataset.metadata import MetadataStore
 from c2_analyzer.dataset.page_view import read_html
 from c2_analyzer.dataset.safe_preview import sanitize_html
+from c2_analyzer.dom.dictionary import dictionary_hash, load_dictionary
+from c2_analyzer.dom.exporter import output_dir as dom_output_dir
+from c2_analyzer.dom.exporter import reports_dir as dom_reports_dir
+from c2_analyzer.dom.pipeline import extract_dom_features
+from c2_analyzer.dom.report import label_medians
 from c2_analyzer.preprocessing.batch import output_dir
 from c2_analyzer.preprocessing.loader import from_bytes
 from c2_analyzer.preprocessing.pipeline import preprocess
-from c2_analyzer.schemas.inspector import SampleSummary, VersionInfo
+from c2_analyzer.schemas.dom import DomResult
+from c2_analyzer.schemas.inspector import (
+    DomDictionaryInfo,
+    DomFeatureInfo,
+    SampleSummary,
+    VersionInfo,
+)
+from c2_analyzer.schemas.parsed_page import ParsedPage
 
 SAMPLE_ID_PATTERN = re.compile(r"^c2_[a-z_]+_\d{6}$")  # the Part 1 id format
 
@@ -78,11 +92,15 @@ class DevDataset:
         parsed_root: Path,
         raw_dir: Path,
         metadata_csv: Path | None = None,
+        dom_root: Path | None = None,
+        dom_reports: Path | None = None,
     ) -> None:
         self.manifests = manifests
         self.parsed_root = parsed_root  # data/processed/parsed_html (one folder per version)
         self.raw_dir = raw_dir
         self.metadata_csv = metadata_csv
+        self.dom_root = dom_root  # data/processed/dom_features (None = never stored)
+        self.dom_reports = dom_reports  # reports/dom_features (None = no medians)
         self._facts: dict[Path, tuple[int, int, _Facts | None]] = {}
         self._manifests: dict[str, tuple[int, pd.DataFrame]] = {}
 
@@ -95,6 +113,8 @@ class DevDataset:
             parsed_root=output_dir(None).parent,
             raw_dir=store.raw_dir,
             metadata_csv=store.csv_path,
+            dom_root=dom_output_dir(None).parent,
+            dom_reports=dom_reports_dir(),
         )
 
     # ---- versions ---------------------------------------------------------------
@@ -248,6 +268,58 @@ class DevDataset:
             label=row["label"],
         )
         return preprocess(raw).model_dump_json(by_alias=True), "on-the-fly"
+
+    def dom_features(self, version: str, sample_id: str) -> tuple[str, str]:
+        """(DomResult JSON text, "stored" | "on-the-fly") - Part 3 for one sample.
+
+        The stored result is used when it was made from the same file with the
+        current feature dictionary; otherwise the features are computed now from
+        the (stored or freshly made) ParsedPage and the raw HTML - not saved.
+        """
+        row = self._row(version, sample_id)
+        if self.dom_root is not None:
+            path = self.dom_root / version / f"{sample_id}.json"
+            if path.is_file():
+                try:
+                    stored = DomResult.model_validate_json(path.read_bytes())
+                except ValueError:
+                    stored = None
+                if (
+                    stored is not None
+                    and stored.dictionary_hash == dictionary_hash()
+                    and stored.source_sha256 == row["sha256"]
+                ):
+                    return path.read_text(encoding="utf-8"), "stored"
+        raw = from_bytes(
+            self._raw_file(row).read_bytes(),
+            page_url=self._page_url(sample_id),
+            sample_id=sample_id,
+            dataset_version=version,
+            label=row["label"],
+        )
+        text, _ = self.parsed(version, sample_id)
+        page = ParsedPage.model_validate_json(text)
+        return extract_dom_features(page, raw.html).model_dump_json(), "on-the-fly"
+
+    def dom_dictionary(self, version: str | None) -> DomDictionaryInfo:
+        """The Part 3 feature dictionary + per-label medians of a version (if reported)."""
+        dictionary = load_dictionary()
+        medians = label_medians(version, self.dom_reports) if version and self.dom_reports else {}
+        return DomDictionaryInfo(
+            feature_set_version=dictionary.feature_set_version,
+            groups=list(dictionary.groups),
+            features=[
+                DomFeatureInfo(
+                    name=spec.name,
+                    group=spec.group,
+                    type=spec.type,
+                    description=spec.description,
+                    needs_page_url=spec.needs_page_url,
+                )
+                for spec in dictionary.features
+            ],
+            label_medians=medians,
+        )
 
     def safe_preview(self, sample_id: str, version: str | None = None) -> str:
         """Part 1's sanitized copy of a sample (scripts, URLs and forms removed).

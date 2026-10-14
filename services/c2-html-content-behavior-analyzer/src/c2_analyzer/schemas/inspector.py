@@ -41,3 +41,22 @@ class SampleSummary(BaseModel):
     has_password: bool = False
     external_form_action: bool = False  # a form whose action is on another site (Part 2 fact)
     processed: bool = False
+
+
+class DomFeatureInfo(BaseModel):
+    """One Part 3 feature as the inspector shows it."""
+
+    name: str
+    group: str
+    type: str
+    description: str
+    needs_page_url: bool = False
+
+
+class DomDictionaryInfo(BaseModel):
+    """The Part 3 feature dictionary + per-label medians (from the version's report)."""
+
+    feature_set_version: str
+    groups: list[str]
+    features: list[DomFeatureInfo]
+    label_medians: dict[str, dict[str, float]] = Field(default_factory=dict)

@@ -1,0 +1,446 @@
+# DOM security feature dictionary (Part 3) - the SINGLE source of truth for the
+# feature vector: names, ORDER, types, plain-English reasons and evidence texts.
+#
+# - The order of `features` below IS the column order of dom_features.csv and of
+#   the model input in Part 4. Never reorder or rename a feature inside a
+#   feature_set_version; add/remove/rename -> bump feature_set_version (dom_v2 ...).
+# - type: int (a count), float (a ratio/average), binary (0 or 1).
+# - description: why the feature exists - reused in explanations (Part 9) and the viva.
+# - source: which ParsedPage fields (Part 2) or raw-HTML tree walk it comes from.
+# - evidence (optional): message template shown when the value is non-zero.
+#   {value} is the feature value; other {names} come from the evidence details.
+#   severity: high (red) | medium (amber) | info.
+# - Ratios with a zero denominator are 0.0; no feature is ever NaN.
+# - If the page's own URL is unknown, internal/external cannot be decided:
+#   every feature marked `needs_page_url: true` is 0 and base_url_known = 0.
+
+feature_set_version: dom_v1
+
+groups: [context, structure, forms, credentials, hidden_inputs, form_actions, iframes,
+         scripts, hidden_elements, links, meta_resources]
+
+# ---------------------------------------------------------------------------
+# Input field classification (credentials group). Each input is put in at most
+# ONE class, checked in this order: password > card > otp_pin > email > username.
+# A field matches a class if its type or autocomplete token is listed, or one
+# of the `patterns` matches - unless one of the class's `exclude` patterns
+# matches (then the next class is tried). Patterns search the text
+# "type name id placeholder autocomplete label" (case-insensitive; Sinhala/Tamil as written).
+# Inputs that never collect typed data (hidden, submit, checkbox, ...) are skipped.
+# ---------------------------------------------------------------------------
+field_rules:
+  skip_types: [hidden, submit, button, reset, image, checkbox, radio, file, range, color]
+  classes:
+    password:
+      types: [password]
+      autocomplete: [current-password, new-password]
+      patterns: []   # by design only the HTML type/autocomplete decide "password"
+    card:
+      types: []
+      autocomplete: [cc-number, cc-csc, cc-exp, cc-exp-month, cc-exp-year, cc-name, cc-type]
+      patterns:
+        - 'card[ _-]?(no|num|number)'
+        - 'cc[ _-]?(num|number|no)\b'
+        - 'credit[ _-]?card|debit[ _-]?card'
+        - '\b(cvv2?|cvc2?|csc|cid)\b'
+        - 'exp(iry|iration)?[ _-]?(date|month|year|mm|yy)'
+        - 'mm[ ]?/[ ]?yy'
+        - 'valid[ _-]?(thru|through)'
+        - 'කාඩ්පත'            # si: card
+        - 'அட்டை'              # ta: card
+      exclude:
+        - 'identity|\bnic\b|\bid[ _-]?card'   # Sri Lankan NIC is an identity card, not a payment card
+    otp_pin:
+      types: []
+      autocomplete: [one-time-code]
+      patterns:
+        - '\botp\b|(^|[^a-z])otp'
+        - 'one[ _-]?time'
+        - 'verification[ _-]?code|verify[ _-]?code|security[ _-]?code|auth(entication)?[ _-]?code'
+        - 'sms[ _-]?code|2fa|mfa|passcode'
+        - '(^|[^a-z])pin([^a-z]|$)'
+        - 'සත්‍යාපන'           # si: verification
+        - 'රහස් අංකය'           # si: secret number (PIN)
+        - 'එක් වරක්'            # si: one-time
+        - 'ஒருமுறை'            # ta: one-time
+        - 'சரிபார்ப்பு'         # ta: verification
+        - '验证码|驗證碼|인증번호|код подтверждения'   # zh/ko/ru: verification code (kits in the dataset)
+      exclude:
+        - 'captcha|recaptcha|图片'   # a CAPTCHA answer is not a one-time code
+    email:
+      types: [email]
+      autocomplete: [email]
+      patterns:
+        - 'e[ _-]?mail|\bmail\b|courriel|correo'
+        - 'ඊමේල්|විද්‍යුත් තැපෑල|තැපෑල'    # si: email
+        - 'மின்னஞ்சல்'                     # ta: email
+        - '邮箱|郵箱|이메일|почта'           # zh/ko/ru: email (kits in the dataset)
+    username:
+      types: []
+      autocomplete: [username]
+      patterns:
+        - 'user[ _-]?(name|id)?|uname|login[ _-]?(id|name)?|logon'
+        - 'account[ _-]?(id|name|no|number)?|customer[ _-]?(id|no|number)|member[ _-]?id|client[ _-]?id'
+        - 'පරිශීලක'            # si: user
+        - 'பயனர்'              # ta: user
+        - '用户名|账号|帳號|아이디|логин'    # zh/ko/ru: user name / account
+  # Words for "password" are kept for the evidence text only (type decides the class):
+  # si මුරපදය / මුර පදය, ta கடவுச்சொல் (spec spelling කඩවුච්චොල් is the same word).
+  password_words: ['password', 'passwd', 'pwd', 'මුරපදය', 'මුර පදය', 'கடவுச்சொல்', 'කඩවුච්චොල්']
+
+# Free form-to-email / form-hosting services: a login form posting to one of
+# these is a classic phishing-kit pattern (no server of their own needed).
+# Matched against the registrable domain of the form action (or a parent of it).
+known_form_services:
+  - submit-form.com
+  - formspree.io
+  - getform.io
+  - formsubmit.co
+  - formcarry.com
+  - basin.usebasin.com
+  - usebasin.com
+  - formbold.com
+  - formkeep.com
+  - web3forms.com
+  - staticforms.xyz
+  - 000webhostapp.com
+  - jotform.com
+  - form.jotform.com
+  - forms.zohopublic.com
+  - script.google.com
+  - api.telegram.org
+  - discord.com
+  - workers.dev
+  - ngrok.io
+  - ngrok-free.app
+
+# Hidden elements (task 11): an element hides itself by the `hidden` attribute,
+# aria-hidden="true", inline display:none / visibility:hidden / opacity:0 /
+# font-size:0 (Part 2 visibility rules), zero width/height, or off-screen
+# positioning (absolute/fixed at left/top/right/bottom <= -offscreen_px, or
+# text-indent <= -offscreen_px). Descendants of a hidden element are not counted again.
+hidden_elements:
+  offscreen_px: 1000
+  never_visible_tags: [html, head, title, meta, link, script, style, base, template, noscript, br, wbr]
+
+# Report settings (descriptive statistics, not a model).
+report:
+  near_constant_share: 0.95   # most common value on >= 95% of pages -> warn
+  correlation_threshold: 0.95  # |Pearson r| above this -> warn (redundant pair)
+  top_separating: 12
+
+features:
+  # ---- context -----------------------------------------------------------------------------
+  - name: base_url_known
+    group: context
+    type: binary
+    description: The page's own URL is known, so internal vs external links/forms/scripts can be decided. When 0, all "external" features are 0 and mean "unknown", not "safe".
+    source: meta.page_url
+
+  # ---- structure (tasks 1-3) ----------------------------------------------------------------
+  - name: node_count
+    group: structure
+    type: int
+    description: Elements plus non-empty text nodes. Phishing kits are usually small single-purpose pages; real sites are large.
+    source: raw HTML tree (= dom.node_count)
+  - name: element_count
+    group: structure
+    type: int
+    description: Number of HTML elements in the whole document.
+    source: raw HTML tree (= dom.element_count)
+  - name: max_depth
+    group: structure
+    type: int
+    description: Deepest nesting level (html = 1). Very flat or extremely deep trees are unusual for genuine sites.
+    source: raw HTML tree (= dom.max_depth)
+  - name: avg_depth
+    group: structure
+    type: float
+    description: Average nesting level of all elements - how "layered" the layout is.
+    source: raw HTML tree
+  - name: leaf_ratio
+    group: structure
+    type: float
+    description: Share of elements with no child elements. Copied login kits are often shallow with many leaves.
+    source: raw HTML tree
+  - name: distinct_tag_count
+    group: structure
+    type: int
+    description: Number of different tag names. Real sites use a richer tag vocabulary than minimal kits.
+    source: dom.tag_counts
+  - name: text_to_html_ratio
+    group: structure
+    type: float
+    description: Visible characters divided by HTML bytes. Scam pages often have little real content and much markup or script.
+    source: visible_text, meta.html_size_bytes
+
+  # ---- forms (task 4) ----------------------------------------------------------------------
+  - name: form_count
+    group: forms
+    type: int
+    description: Number of <form> elements. Credential theft happens through forms.
+    source: forms
+  - name: has_form
+    group: forms
+    type: binary
+    description: The page has at least one form.
+    source: forms
+  - name: inputs_total
+    group: forms
+    type: int
+    description: All input/select/textarea fields, inside or outside forms.
+    source: forms[].inputs, inputs_outside_forms
+  - name: inputs_outside_forms_count
+    group: forms
+    type: int
+    description: Fields not inside any form - typical of kits that collect data with JavaScript instead of a normal form submit.
+    source: inputs_outside_forms
+    evidence: {message: "{value} input field(s) outside any form (data likely sent by JavaScript)", severity: medium}
+
+  # ---- credentials (tasks 5-6) -------------------------------------------------------------
+  - name: password_field_count
+    group: credentials
+    type: int
+    description: Password fields (type=password or a password autocomplete token). The core of a credential-phishing page.
+    source: inputs (type, autocomplete)
+    evidence: {message: "{value} password field(s)", severity: info}
+  - name: has_password_field
+    group: credentials
+    type: binary
+    description: The page asks for a password.
+    source: inputs
+  - name: email_field_count
+    group: credentials
+    type: int
+    description: Fields asking for an e-mail address (type, autocomplete, name/id/placeholder/label in English, Sinhala or Tamil).
+    source: inputs (type, name, id, placeholder, autocomplete, label_text)
+    evidence: {message: "{value} e-mail field(s)", severity: info}
+  - name: username_field_count
+    group: credentials
+    type: int
+    description: Fields asking for a user name, login id, account or customer number.
+    source: inputs (type, name, id, placeholder, autocomplete, label_text)
+    evidence: {message: "{value} username / account field(s)", severity: info}
+  - name: otp_pin_field_count
+    group: credentials
+    type: int
+    description: Fields asking for a one-time code, verification code or PIN - real-time phishing that bypasses 2-factor authentication.
+    source: inputs (type, name, id, placeholder, autocomplete, label_text)
+    evidence: {message: "{value} OTP / PIN field(s)", severity: high}
+  - name: card_field_count
+    group: credentials
+    type: int
+    description: Fields asking for a card number, CVV or expiry date - payment-card theft (fake shops, fake payment pages).
+    source: inputs (type, name, id, placeholder, autocomplete, label_text)
+    evidence: {message: "{value} payment card field(s) (number / CVV / expiry)", severity: high}
+  - name: sensitive_field_count
+    group: credentials
+    type: int
+    description: Fields for secrets that a scammer can use directly - password + OTP/PIN + card fields.
+    source: derived from the three counts above
+    evidence: {message: "{value} field(s) ask for secrets (password, OTP/PIN, card)", severity: medium}
+
+  # ---- hidden inputs (task 7) --------------------------------------------------------------
+  - name: hidden_input_count
+    group: hidden_inputs
+    type: int
+    description: Inputs of type=hidden or hidden by attribute/inline style. Kits use them to carry the victim's e-mail, tracking ids or the target bank.
+    source: inputs[].hidden
+    evidence: {message: "{value} hidden input field(s)", severity: info}
+  - name: hidden_input_ratio
+    group: hidden_inputs
+    type: float
+    description: Hidden inputs divided by all inputs.
+    source: inputs[].hidden
+
+  # ---- form actions (task 8) ---------------------------------------------------------------
+  - name: external_form_action_count
+    group: form_actions
+    type: int
+    description: Forms that submit to another registrable domain than the page itself.
+    source: forms[].is_external_action
+    needs_page_url: true
+  - name: has_external_form_action
+    group: form_actions
+    type: binary
+    description: At least one form submits its data to another site.
+    source: forms[].is_external_action
+    needs_page_url: true
+    evidence: {message: "Form submits to an external domain ({domains})", severity: high}
+  - name: password_form_external_action
+    group: form_actions
+    type: binary
+    description: A form containing a password field submits to an external domain - one of the strongest structural phishing signals.
+    source: forms[].inputs, forms[].is_external_action
+    needs_page_url: true
+    evidence: {message: "Password form submits to external domain {domain}", severity: high}
+  - name: form_action_to_ip
+    group: form_actions
+    type: binary
+    description: A form submits to a bare IP address instead of a domain name - legitimate sites almost never do this.
+    source: forms[].action_abs
+    evidence: {message: "Form submits to an IP address ({action})", severity: high}
+  - name: form_action_empty_or_js
+    group: form_actions
+    type: int
+    description: "Forms whose action is empty, \"#\" or javascript: - the data is handled by JavaScript (often sent elsewhere) instead of a visible target."
+    source: forms[].action_raw
+    evidence: {message: "{value} form(s) with an empty, '#' or javascript: action", severity: medium}
+  - name: form_action_to_known_form_service
+    group: form_actions
+    type: binary
+    description: A form posts to a free form-to-email service (submit-form.com, formspree, getform, ...), a common phishing-kit shortcut. List in this file.
+    source: forms[].action_domain
+    evidence: {message: "Form posts to form-collection service {service}", severity: high}
+  - name: form_method_get_with_password
+    group: form_actions
+    type: binary
+    description: A form with a password field uses method GET, which puts the password in the URL - careless kit code or misconfiguration.
+    source: forms[].method, forms[].inputs
+    evidence: {message: "Password form uses method GET (password would appear in the URL)", severity: medium}
+
+  # ---- iframes (task 9) --------------------------------------------------------------------
+  - name: iframe_count
+    group: iframes
+    type: int
+    description: Number of <iframe>/<frame> elements. Frames can load another site's content into the page.
+    source: embedded (tag iframe/frame)
+  - name: external_iframe_count
+    group: iframes
+    type: int
+    description: Frames that load content from another domain.
+    source: embedded[].is_external
+    needs_page_url: true
+  - name: hidden_iframe_count
+    group: iframes
+    type: int
+    description: Frames that are invisible (zero size or hidden) - used for click-jacking, tracking or silent drive-by downloads.
+    source: embedded[].hidden
+    evidence: {message: "{value} hidden iframe(s)", severity: high}
+
+  # ---- scripts (task 10; counts only - JavaScript meaning is Part 7) -----------------------
+  - name: inline_script_count
+    group: scripts
+    type: int
+    description: Number of inline <script> blocks with code (JSON-LD/templates excluded).
+    source: scripts_inline
+  - name: external_script_count
+    group: scripts
+    type: int
+    description: Number of <script src> references.
+    source: scripts_external
+  - name: external_script_domain_count
+    group: scripts
+    type: int
+    description: Distinct other domains that scripts are loaded from - each one is a third party that can change the page.
+    source: scripts_external[].domain, is_external
+    needs_page_url: true
+  - name: inline_script_chars_total
+    group: scripts
+    type: int
+    description: Total characters of inline JavaScript. Large inline code is typical of obfuscated kits and droppers.
+    source: scripts_inline[].chars
+  - name: event_handler_count
+    group: scripts
+    type: int
+    description: Inline on*= event handlers (onclick, onsubmit, onload, ...) - code hidden in attributes.
+    source: event_handlers
+  - name: javascript_url_count
+    group: scripts
+    type: int
+    description: "Links/actions using javascript: URLs - clicks that run code instead of navigating."
+    source: javascript_urls
+    evidence: {message: "{value} javascript: URL(s)", severity: medium}
+
+  # ---- hidden elements (task 11) -----------------------------------------------------------
+  - name: hidden_element_count
+    group: hidden_elements
+    type: int
+    description: Elements hidden by their own markup (hidden attribute, aria-hidden, display:none, visibility:hidden, opacity:0, font-size:0, zero size, off-screen). Hidden content can stuff keywords or hide parts of a kit; hidden inputs are counted separately.
+    source: raw HTML tree + Part 2 visibility rules
+    evidence: {message: "{value} hidden element(s) ({methods})", severity: info}
+  - name: hidden_text_chars
+    group: hidden_elements
+    type: int
+    description: Characters of text inside hidden elements.
+    source: hidden_text
+  - name: hidden_text_ratio
+    group: hidden_elements
+    type: float
+    description: Hidden text divided by all text (hidden + visible). A high share suggests keyword stuffing or cloaking.
+    source: hidden_text, visible_text
+    evidence: {message: "{percent}% of the page text is hidden", severity: medium, min_value: 0.3}
+
+  # ---- links (task 12) ---------------------------------------------------------------------
+  - name: link_count
+    group: links
+    type: int
+    description: Number of <a href> links.
+    source: links
+  - name: internal_link_count
+    group: links
+    type: int
+    description: Web links to the page's own registrable domain (null links not included).
+    source: links[].domain, is_external
+    needs_page_url: true
+  - name: external_link_count
+    group: links
+    type: int
+    description: Web links to other domains. Kits often link every menu item to the real brand's site.
+    source: links[].is_external
+    needs_page_url: true
+  - name: external_link_ratio
+    group: links
+    type: float
+    description: External web links divided by all web links (internal + external).
+    source: links
+    needs_page_url: true
+    evidence: {message: "{percent}% of web links point to other domains (top {domains})", severity: medium, min_value: 0.8}
+  - name: null_link_count
+    group: links
+    type: int
+    description: Links that go nowhere (empty, "#", "#!" or javascript:) - kits keep the look of a menu without real pages.
+    source: links[].href_raw
+  - name: null_link_ratio
+    group: links
+    type: float
+    description: Null links divided by all links.
+    source: links[].href_raw
+    evidence: {message: "{percent}% of links go nowhere (#, empty or javascript:)", severity: medium, min_value: 0.5}
+  - name: distinct_external_domains
+    group: links
+    type: int
+    description: Number of different domains that links point to.
+    source: links[].domain
+    needs_page_url: true
+
+  # ---- meta & resources --------------------------------------------------------------------
+  - name: has_meta_refresh
+    group: meta_resources
+    type: binary
+    description: A <meta http-equiv=refresh> redirects or reloads the page automatically - common in redirect chains.
+    source: meta_tags (http_equiv=refresh)
+    evidence: {message: "Meta refresh present", severity: info}
+  - name: meta_refresh_external
+    group: meta_resources
+    type: binary
+    description: The meta refresh redirects to another domain.
+    source: meta_tags[].redirect_url
+    needs_page_url: true
+    evidence: {message: "Meta refresh redirects to another domain ({url})", severity: high}
+  - name: external_stylesheet_ratio
+    group: meta_resources
+    type: float
+    description: Stylesheets loaded from other domains divided by all linked stylesheets - kits often hot-link the real brand's CSS.
+    source: css.external_stylesheets
+    needs_page_url: true
+  - name: has_title
+    group: meta_resources
+    type: binary
+    description: The page has a non-empty <title>.
+    source: title
+  - name: title_length
+    group: meta_resources
+    type: int
+    description: Characters in the title.
+    source: title

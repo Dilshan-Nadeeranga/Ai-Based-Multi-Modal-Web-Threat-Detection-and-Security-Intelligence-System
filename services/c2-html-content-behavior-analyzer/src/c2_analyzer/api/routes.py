@@ -1,4 +1,4 @@
-"""Public API routes: Part 2 preprocessing now, the tri-modal analysis in Part 9.
+"""Public API routes: Part 2 preprocessing, Part 3 DOM features, Part 9 analysis (stub).
 
 Part 9: Preliminary tri-modal output (fusion + FastAPI).
 """
@@ -8,8 +8,10 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 
+from c2_analyzer.dom.pipeline import dom_features_for_html
 from c2_analyzer.preprocessing.pipeline import preprocess_html
 from c2_analyzer.schemas.analysis import AnalysisRequest, AnalysisResponse
+from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.schemas.parsed_page import ParsedPage
 
 router = APIRouter()
@@ -63,6 +65,25 @@ def preprocess(request: PreprocessRequest) -> Response:
     # Serialized directly: the page was just built from the model, so FastAPI's
     # extra validation pass (slow for a 3000-node skeleton) adds nothing.
     return Response(page.model_dump_json(by_alias=True), media_type="application/json")
+
+
+@router.post(
+    "/api/v1/dom-features",
+    response_model=DomResult,
+    tags=["DOM features (Part 3)"],
+    summary="HTML -> DOM security feature vector + evidence (Part 3, no verdict)",
+    responses={413: {"description": "request body larger than 5 MB"}},
+)
+def dom_features(request: PreprocessRequest) -> Response:
+    """Run Part 2 then Part 3 on one HTML string.
+
+    Returns the fixed-order feature vector (``features``, order of
+    configs/dom_features.yaml) and human-readable ``evidence``. Without ``url``
+    the internal/external features are 0 and ``base_url_known`` is 0. Same
+    code as ``extract_dom_features.py`` - the numbers match the training CSV.
+    """
+    result = dom_features_for_html(request.html, request.url)
+    return Response(result.model_dump_json(), media_type="application/json")
 
 
 @router.post("/api/v1/analyze", response_model=AnalysisResponse, tags=["analysis (Part 9)"])

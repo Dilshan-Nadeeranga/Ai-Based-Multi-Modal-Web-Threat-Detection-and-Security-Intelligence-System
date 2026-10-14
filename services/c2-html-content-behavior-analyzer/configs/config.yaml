@@ -104,3 +104,10 @@ preprocessing:
 # HTTP API (Part 9 groundwork; also used by the developer inspector)
 api:
   max_body_bytes: 5242880         # 5 MB request body, larger -> 413 (checked before parsing)
+
+# DOM structural analysis (Part 3): scripts/extract_dom_features.py
+# The feature list itself lives in configs/dom_features.yaml.
+dom_features:
+  output_dir: data/processed/dom_features
+  reports_dir: reports/dom_features
+  workers: 4

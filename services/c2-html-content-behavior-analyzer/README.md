@@ -12,7 +12,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 
 **Threat classes:** `benign`, `phishing`, `fake_ecommerce`, `crypto_scam`, `malware_delivery`.
 
-> **Status:** Part 1 (dataset preparation) and Part 2 (HTML preprocessing) are done. `GET /health`, `POST /api/v1/preprocess` and the [developer inspector](#developer-inspector) work. Parts 3–9 are still stubs (`NotImplementedError`), implemented part by part.
+> **Status:** Part 1 (dataset preparation), Part 2 (HTML preprocessing) and Part 3 (DOM features) are done. `GET /health`, `POST /api/v1/preprocess`, `POST /api/v1/dom-features` and the [developer inspector](#developer-inspector) work. Parts 4–9 are still stubs (`NotImplementedError`), implemented part by part.
 
 ## Implementation parts
 
@@ -226,11 +226,37 @@ A run skips pages whose JSON already matches the source sha256, schema version a
 - counts, failures, parser fallbacks, truncated pages and timing;
 - a descriptive per-label table: median text length and % of pages with forms, password inputs, inline/external scripts, iframes and meta refresh.
 
+## DOM features
+
+Part 3 turns each `ParsedPage` into a **fixed-order numeric feature vector** (the Part 4 model input) plus **evidence**, short sentences such as "Password form submits to external domain submit-form.com". It counts and measures. It does not classify (Part 4) and does not interpret JavaScript (Part 7).
+
+```bash
+python scripts/extract_dom_features.py run --version v0.1           # whole version -> CSV + report
+python scripts/extract_dom_features.py run --version v0.1 --force   # redo everything
+python scripts/extract_dom_features.py one --sample-id c2_phishing_000081
+python scripts/extract_dom_features.py one --file page.html --url https://example.com/login
+python scripts/extract_dom_features.py describe [--markdown]        # the feature table for the report
+```
+
+- **The feature dictionary is `configs/dom_features.yaml`.** It holds the 52 features in 11 groups (context, structure, forms, credentials, hidden inputs, form actions, iframes, scripts, hidden elements, links, meta & resources). For each feature it gives the type, a plain-English reason, the ParsedPage source and an evidence template. Its order is the CSV column order. Changing the list means bumping `feature_set_version` (now `dom_v1`).
+- **Credential fields** (password, e-mail, username, OTP/PIN, payment card) are detected from the type, autocomplete tokens, and name/id/placeholder/label patterns in English, Sinhala and Tamil, e.g. ඊමේල්, මුරපදය, පරිශීලක, மின்னஞ்சல், கடவுச்சொல். Exclusions handle cases like a Sri Lankan NIC, which is not a payment card, or a CAPTCHA, which is not an OTP.
+- **Strong structural signals** include a password form posting to another domain, a form posting to a form-collection service (submit-form.com, formspree, …), a form posting to an IP address, hidden iframes, and the share of links that go nowhere.
+- **Safe numbers:**
+  - when the page URL is unknown, `base_url_known = 0` and every internal/external feature is 0;
+  - a ratio with a zero denominator is 0.0, and no value is ever NaN;
+  - if one feature group fails, only that group is set to 0 and the error is recorded.
+- **Outputs (git-ignored)** go to `data/processed/dom_features/<version>/`:
+  - `dom_features.csv`: `sample_id, label, language, cluster_id`, then the features in dictionary order;
+  - one `<sample_id>.json` per sample, with the features and evidence;
+  - `feature_dictionary.json`.
+- **Report:** `reports/dom_features/<version>_summary.{json,md}` and `figures/` contain, per label, the mean, median and % non-zero of each feature. It warns about constant, near-constant and highly correlated (|r| > 0.95) features, and ranks the most separating features by mutual information with box plots. This ranking is descriptive only; Part 4 selects features on the training split.
+
 ## API
 
 | Method | Path | Status |
 |---|---|---|
 | GET | `/health` | ✅ returns `{"status": "ok", "service": "c2"}` |
+| POST | `/api/v1/dom-features` | ✅ Part 3: same body → `DomResult` (52-feature vector in dictionary order + evidence). No `url` → `base_url_known = 0` and external features 0 |
 | POST | `/api/v1/preprocess` | ✅ Part 2: body `{"html": "...", "url": "..." or null}` → `ParsedPage` JSON (same as the stored files). `url` is never fetched. Body > 5 MB → `413` |
 | POST | `/api/v1/analyze` | stub (501) – body `{"html": "...", "url": "..."}` |
 | POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}` |
@@ -250,7 +276,7 @@ Then open **http://127.0.0.1:8002/inspector** (Swagger: http://127.0.0.1:8002/do
 
 - **Left:** pick a frozen dataset version, filter by label, language, "has password input" or "external form action", search by id or title, and click a sample. Up/Down arrows move through the list.
 - **Top:** paste HTML (and optionally its URL) or choose a local `.html` file, then press **Analyze**. This calls `POST /api/v1/preprocess`. The file is read as text and never rendered.
-- **Tabs:** Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only). Greyed-out tabs are placeholders for Parts 3, 5–6, 7–8 and 9.
+- **Tabs:** DOM Features (Part 3: evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only). Greyed-out tabs are placeholders for Parts 5–6, 7–8 and 9.
 - **Deep links:** the URL hash remembers the version, sample and tab (e.g. `/inspector#v=v0.1&sample=c2_phishing_000081&tab=forms`). This is handy for presentations.
 
 Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
@@ -260,6 +286,8 @@ Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
 | `GET /api/v1/dev/versions` | frozen versions (newest first) with counts and how many samples Part 2 processed |
 | `GET /api/v1/dev/samples?version=v0.1&label=&language=&q=&has_password=&external_form_action=` | sample list from the manifest + stored Part 2 JSON (HTML is not re-parsed) |
 | `GET /api/v1/dev/samples/{id}/parsed?version=v0.1` | the stored `ParsedPage`. A missing one is processed on the fly but not saved (header `X-Parsed-Source`) |
+| `GET /api/v1/dev/samples/{id}/dom-features?version=v0.1` | the stored Part 3 `DomResult`, or one computed on the fly (header `X-Features-Source`) |
+| `GET /api/v1/dev/dom-dictionary?version=v0.1` | the feature dictionary plus per-label medians from the Part 3 report |
 | `GET /api/v1/dev/samples/{id}/safe-preview` | Part 1's sanitized copy, with `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'` and `nosniff` |
 
 **Safety.** Dataset pages are hostile, so the inspector only ever shows them as text:
