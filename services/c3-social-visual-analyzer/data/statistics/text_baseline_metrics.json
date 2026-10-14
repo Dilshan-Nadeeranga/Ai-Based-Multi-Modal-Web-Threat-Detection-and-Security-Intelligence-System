@@ -1,0 +1,270 @@
+{
+  "model": "distilbert-base-uncased",
+  "saved_model": "models/text_baseline/distilbert-base-uncased",
+  "hyperparameters": {
+    "epochs": 4,
+    "batch_size": 8,
+    "max_length": 256,
+    "lr": 3e-05,
+    "seed": 42,
+    "device": "cpu"
+  },
+  "best_epoch": 4,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.6487,
+      "val_f1_scam": 0.7619,
+      "val_accuracy": 0.7619
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.3847,
+      "val_f1_scam": 0.7018,
+      "val_accuracy": 0.7302
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.2361,
+      "val_f1_scam": 0.7541,
+      "val_accuracy": 0.7619
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.1153,
+      "val_f1_scam": 0.7742,
+      "val_accuracy": 0.7778
+    }
+  ],
+  "validation": {
+    "accuracy": 0.7778,
+    "precision_scam": 0.8,
+    "recall_scam": 0.75,
+    "f1_scam": 0.7742,
+    "per_class": {
+      "legitimate": {
+        "precision": 0.7576,
+        "recall": 0.8065,
+        "f1": 0.7812,
+        "support": 31
+      },
+      "scam": {
+        "precision": 0.8,
+        "recall": 0.75,
+        "f1": 0.7742,
+        "support": 32
+      }
+    },
+    "macro": {
+      "precision": 0.7788,
+      "recall": 0.7782,
+      "f1": 0.7777
+    },
+    "confusion_matrix": {
+      "labels": [
+        "legitimate",
+        "scam"
+      ],
+      "rows_true_cols_pred": [
+        [
+          25,
+          6
+        ],
+        [
+          8,
+          24
+        ]
+      ]
+    }
+  },
+  "test": {
+    "accuracy": 0.8095,
+    "precision_scam": 0.8065,
+    "recall_scam": 0.8065,
+    "f1_scam": 0.8065,
+    "per_class": {
+      "legitimate": {
+        "precision": 0.8125,
+        "recall": 0.8125,
+        "f1": 0.8125,
+        "support": 32
+      },
+      "scam": {
+        "precision": 0.8065,
+        "recall": 0.8065,
+        "f1": 0.8065,
+        "support": 31
+      }
+    },
+    "macro": {
+      "precision": 0.8095,
+      "recall": 0.8095,
+      "f1": 0.8095
+    },
+    "confusion_matrix": {
+      "labels": [
+        "legitimate",
+        "scam"
+      ],
+      "rows_true_cols_pred": [
+        [
+          26,
+          6
+        ],
+        [
+          6,
+          25
+        ]
+      ]
+    }
+  },
+  "test_by_source": {
+    "DIFrauD job_scams": {
+      "n": 30,
+      "accuracy": 0.7333,
+      "f1_scam": 0.75,
+      "confusion_matrix": [
+        [
+          10,
+          5
+        ],
+        [
+          3,
+          12
+        ]
+      ]
+    },
+    "Phish360 (Multimodal-Phishing-Benchmarks)": {
+      "n": 30,
+      "accuracy": 0.8667,
+      "f1_scam": 0.8571,
+      "confusion_matrix": [
+        [
+          14,
+          1
+        ],
+        [
+          3,
+          12
+        ]
+      ]
+    },
+    "manual": {
+      "n": 3,
+      "accuracy": 1.0,
+      "f1_scam": 1.0,
+      "confusion_matrix": [
+        [
+          2,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ]
+    }
+  },
+  "test_errors": [
+    {
+      "sample_id": "SVT_001083",
+      "source_dataset": "Phish360 (Multimodal-Phishing-Benchmarks)",
+      "label": 0,
+      "pred": 1,
+      "p_scam": 0.8854
+    },
+    {
+      "sample_id": "SVT_001125",
+      "source_dataset": "Phish360 (Multimodal-Phishing-Benchmarks)",
+      "label": 1,
+      "pred": 0,
+      "p_scam": 0.316
+    },
+    {
+      "sample_id": "SVT_001158",
+      "source_dataset": "Phish360 (Multimodal-Phishing-Benchmarks)",
+      "label": 1,
+      "pred": 0,
+      "p_scam": 0.1205
+    },
+    {
+      "sample_id": "SVT_001162",
+      "source_dataset": "Phish360 (Multimodal-Phishing-Benchmarks)",
+      "label": 1,
+      "pred": 0,
+      "p_scam": 0.251
+    },
+    {
+      "sample_id": "SVT_001227",
+      "source_dataset": "DIFrauD job_scams",
+      "label": 0,
+      "pred": 1,
+      "p_scam": 0.7534
+    },
+    {
+      "sample_id": "SVT_001252",
+      "source_dataset": "DIFrauD job_scams",
+      "label": 0,
+      "pred": 1,
+      "p_scam": 0.9743
+    },
+    {
+      "sample_id": "SVT_001263",
+      "source_dataset": "DIFrauD job_scams",
+      "label": 0,
+      "pred": 1,
+      "p_scam": 0.5709
+    },
+    {
+      "sample_id": "SVT_001272",
+      "source_dataset": "DIFrauD job_scams",
+      "label": 0,
+      "pred": 1,
+      "p_scam": 0.983
+    },
+    {
+      "sample_id": "SVT_001305",
+      "source_dataset": "DIFrauD job_scams",
+      "label": 0,
+      "pred": 1,
+      "p_scam": 0.9728
+    },
+    {
+      "sample_id": "SVT_001361",
+      "source_dataset": "DIFrauD job_scams",
+      "label": 1,
+      "pred": 0,
+      "p_scam": 0.0273
+    },
+    {
+      "sample_id": "SVT_001387",
+      "source_dataset": "DIFrauD job_scams",
+      "label": 1,
+      "pred": 0,
+      "p_scam": 0.1913
+    },
+    {
+      "sample_id": "SVT_001397",
+      "source_dataset": "DIFrauD job_scams",
+      "label": 1,
+      "pred": 0,
+      "p_scam": 0.0312
+    }
+  ],
+  "label_counts": {
+    "train": {
+      "0": 146,
+      "1": 147
+    },
+    "val": {
+      "0": 31,
+      "1": 32
+    },
+    "test": {
+      "0": 32,
+      "1": 31
+    }
+  },
+  "training_seconds": 546.0,
+  "created_at": "2026-10-14T06:18:23.277464+00:00"
+}
