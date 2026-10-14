@@ -17,6 +17,7 @@ tldextract is not installed, a small built-in rule is used instead.
 from __future__ import annotations
 
 import ipaddress
+import re
 from functools import lru_cache
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
@@ -27,6 +28,8 @@ TWO_LEVEL_SUFFIXES = {
     "co.uk", "org.uk", "ac.uk", "gov.uk", "com.au", "net.au", "org.au", "co.in", "net.in",
     "org.in", "co.jp", "com.br", "com.cn", "com.sg", "com.my", "co.nz", "co.za", "com.tr",
 }  # fmt: skip
+# One DNS label (letters, digits, hyphens; punycode "xn--" included).
+HOST_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 
 
 def normalize_url(url: str) -> str:
@@ -95,6 +98,11 @@ def domain_of_host(host: str) -> str:
     """Registrable domain of a host name ("a.b.bank.com.lk" -> "bank.com.lk").
 
     IP addresses and single-label hosts ("localhost") are returned unchanged.
+    A well-formed host whose suffix is not on the public-suffix list (reserved
+    ".example", ".test", ".local", internal names) falls back to the built-in
+    rule, so "cdn.site.example" and "www.site.example" are still one site.
+    A host that IS a public suffix ("s3.ap-southeast-1.amazonaws.com") or is
+    malformed ("bank.lk%20") is kept whole.
     """
     host = host.lower().rstrip(".")
     if _is_ip(host) or "." not in host:
@@ -102,10 +110,14 @@ def domain_of_host(host: str) -> str:
     extractor = _tld_extractor()
     if extractor is not None:
         result = extractor(host)
-        domain = getattr(result, "top_domain_under_public_suffix", None) or getattr(
-            result, "registered_domain", ""
-        )
-        return domain or host  # unknown suffix: keep the full host
+        if hasattr(result, "top_domain_under_public_suffix"):  # tldextract >= 5.3
+            domain = result.top_domain_under_public_suffix
+        else:
+            domain = result.registered_domain
+        if domain:
+            return domain
+        if result.suffix or not HOST_LABEL.match(host.rsplit(".", 1)[-1]):
+            return host  # the host is a suffix itself, or not a valid DNS name
     labels = host.split(".")
     keep = 3 if ".".join(labels[-2:]) in TWO_LEVEL_SUFFIXES else 2
     return ".".join(labels[-keep:])

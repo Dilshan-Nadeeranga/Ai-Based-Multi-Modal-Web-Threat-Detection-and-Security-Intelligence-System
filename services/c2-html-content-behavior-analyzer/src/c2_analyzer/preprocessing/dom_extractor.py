@@ -142,6 +142,7 @@ def extract_embedded(
 ) -> list[Embedded]:
     """iframes, frames, objects and embeds (their content is never loaded)."""
     items = []
+    hidden_cache: dict[int, bool] = {}  # see visibility.is_hidden_in_tree
     for tag in soup.find_all(list(EMBED_SOURCES)):
         source = _attr(tag, EMBED_SOURCES[tag.name])
         absolute = resolve_url(source, base_url)
@@ -153,7 +154,7 @@ def extract_embedded(
                 is_external=is_external(absolute, page_url),
                 width=_attr(tag, "width"),
                 height=_attr(tag, "height"),
-                hidden=zero_size(tag) or is_hidden_in_tree(tag),
+                hidden=zero_size(tag) or is_hidden_in_tree(tag, cache=hidden_cache),
             )
         )
     return items

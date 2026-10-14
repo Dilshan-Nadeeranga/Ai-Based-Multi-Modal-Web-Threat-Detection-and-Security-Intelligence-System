@@ -12,7 +12,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 
 **Threat classes:** `benign`, `phishing`, `fake_ecommerce`, `crypto_scam`, `malware_delivery`.
 
-> **Status:** Part 1 (dataset preparation) and Part 2 (HTML preprocessing) are done. `GET /health` works. Parts 3–9 are still stubs (`NotImplementedError`), implemented part by part.
+> **Status:** Part 1 (dataset preparation) and Part 2 (HTML preprocessing) are done. `GET /health`, `POST /api/v1/preprocess` and the [developer inspector](#developer-inspector) work. Parts 3–9 are still stubs (`NotImplementedError`), implemented part by part.
 
 ## Implementation parts
 
@@ -46,7 +46,7 @@ cp .env.example .env    # then edit values
 ## Run
 
 ```bash
-python scripts/run_api.py                          # or: make run-api
+python scripts/run_api.py                          # 127.0.0.1:8002 (or: make run-api)
 uvicorn c2_analyzer.api.main:app --reload --port 8002
 pytest                                             # or: make test
 make lint
@@ -231,10 +231,46 @@ A run skips pages whose JSON already matches the source sha256, schema version a
 | Method | Path | Status |
 |---|---|---|
 | GET | `/health` | ✅ returns `{"status": "ok", "service": "c2"}` |
+| POST | `/api/v1/preprocess` | ✅ Part 2: body `{"html": "...", "url": "..." or null}` → `ParsedPage` JSON (same as the stored files). `url` is never fetched. Body > 5 MB → `413` |
 | POST | `/api/v1/analyze` | stub (501) – body `{"html": "...", "url": "..."}` |
 | POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}` |
+| GET | `/api/v1/dev/...`, `/inspector` | developer only – see below (404 unless `APP_ENV=development`) |
 
-The gateway reaches C2 through its `C2_URL` env var (e.g. `http://localhost:8002`).
+The gateway reaches C2 through its `C2_URL` env var (e.g. `http://localhost:8002`). Swagger UI with example requests: `/docs`. Every response carries `X-Content-Type-Options: nosniff`.
+
+## Developer inspector
+
+A small web page that shows **how the C2 engine sees a page**, for debugging, supervisor demos and progress presentations. It is a developer tool, not the product UI: the team dashboard (`frontend/scamtrace-dashboard`) is separate.
+
+```bash
+python scripts/run_api.py        # APP_ENV=development (default in .env.example)
+```
+
+Then open **http://127.0.0.1:8002/inspector** (Swagger: http://127.0.0.1:8002/docs).
+
+- **Left:** pick a frozen dataset version, filter by label, language, "has password input" or "external form action", search by id or title, and click a sample. Up/Down arrows move through the list.
+- **Top:** paste HTML (and optionally its URL) or choose a local `.html` file, then press **Analyze**. This calls `POST /api/v1/preprocess`. The file is read as text and never rendered.
+- **Tabs:** Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only). Greyed-out tabs are placeholders for Parts 3, 5–6, 7–8 and 9.
+- **Deep links:** the URL hash remembers the version, sample and tab (e.g. `/inspector#v=v0.1&sample=c2_phishing_000081&tab=forms`). This is handy for presentations.
+
+Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
+
+| Path | Returns |
+|---|---|
+| `GET /api/v1/dev/versions` | frozen versions (newest first) with counts and how many samples Part 2 processed |
+| `GET /api/v1/dev/samples?version=v0.1&label=&language=&q=&has_password=&external_form_action=` | sample list from the manifest + stored Part 2 JSON (HTML is not re-parsed) |
+| `GET /api/v1/dev/samples/{id}/parsed?version=v0.1` | the stored `ParsedPage`. A missing one is processed on the fly but not saved (header `X-Parsed-Source`) |
+| `GET /api/v1/dev/samples/{id}/safe-preview` | Part 1's sanitized copy, with `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'` and `nosniff` |
+
+**Safety.** Dataset pages are hostile, so the inspector only ever shows them as text:
+- every value goes through `textContent`. `innerHTML`, `eval` and similar HTML-parsing calls are banned, and a test greps for them;
+- page URLs are never clickable;
+- the page sends a strict CSP and loads no CDN, so it works offline;
+- the only rendered HTML is the sanitized preview, inside an `<iframe sandbox="">`.
+
+The dev endpoints are read-only and never fetch a URL. `run_api.py` binds to `127.0.0.1` (use `--host` to change it), and the Docker image sets `APP_ENV=production`.
+
+**Adding a tab in a later part:** in `src/c2_analyzer/api/static/inspector.js`, replace the placeholder with `registerTab({ id, title, render(ctx, box) { ... } })`. If the tab needs new data, add a matching dev endpoint in `api/dev_routes.py`.
 
 ## Structure
 

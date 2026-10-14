@@ -100,3 +100,7 @@ preprocessing:
   comment_sample_chars: 200
   skeleton_max_nodes: 3000
   skeleton_max_depth: 40
+
+# HTTP API (Part 9 groundwork; also used by the developer inspector)
+api:
+  max_body_bytes: 5242880         # 5 MB request body, larger -> 413 (checked before parsing)

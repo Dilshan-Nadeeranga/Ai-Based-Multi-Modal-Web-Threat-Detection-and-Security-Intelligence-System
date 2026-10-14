@@ -349,6 +349,7 @@ def test_one_megabyte_page_under_two_seconds():
     body = block.split("<body", 1)[1].split(">", 1)[1].rsplit("</body>", 1)[0]
     html = "<html><body>" + body * (1_000_000 // len(body) + 1) + "</body></html>"
     assert len(html.encode()) > 1_000_000
+    preprocess(from_string("<p>warm-up</p>", PAGE_URL))  # one-time imports are not per-page cost
     started = time.perf_counter()
     page = preprocess(from_string(html, PAGE_URL))
     assert time.perf_counter() - started < 2.0

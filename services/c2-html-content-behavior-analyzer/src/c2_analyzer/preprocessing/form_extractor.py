@@ -54,20 +54,28 @@ def resolve_action(raw: str | None, base_url: str | None, page_url: str | None) 
 
 
 class LabelIndex:
-    """Text of every <label for="id">, built once per page."""
+    """Label lookups for one page, built once: <label for="id"> texts and, for
+    every field inside a <label>, its nearest wrapping label (so no field has to
+    walk up through all its ancestors). Also holds the page's hidden-check cache.
+    """
 
     def __init__(self, soup: BeautifulSoup) -> None:
         self.by_id: dict[str, str] = {}
+        self.wrapper: dict[int, Tag] = {}  # id(field) -> nearest <label> around it
+        self.hidden_cache: dict[int, bool] = {}  # see visibility.is_hidden_in_tree
         for label in soup.find_all("label"):
             target = _attr(label, "for")
             if target and target not in self.by_id:
                 self.by_id[target] = normalize_inline(label.get_text(" "))
+            # Document order: an inner label comes later and overwrites the outer one.
+            for field in label.find_all(FIELD_TAGS):
+                self.wrapper[id(field)] = label
 
     def label_for(self, field: Tag) -> str | None:
         field_id = _attr(field, "id")
         if field_id and self.by_id.get(field_id):
             return self.by_id[field_id]
-        wrapper = field.find_parent("label")
+        wrapper = self.wrapper.get(id(field))
         if wrapper is not None:
             text = normalize_inline(wrapper.get_text(" "))
             if text:
@@ -103,7 +111,7 @@ def input_field(field: Tag, labels: LabelIndex, settings: PreprocessSettings) ->
         placeholder=normalize_inline(_attr(field, "placeholder")) or None,
         autocomplete=_attr(field, "autocomplete"),
         required=field.has_attr("required"),
-        hidden=kind == "hidden" or is_hidden_in_tree(field),
+        hidden=kind == "hidden" or is_hidden_in_tree(field, cache=labels.hidden_cache),
         maxlength=_maxlength(field),
         label_text=labels.label_for(field),
         value_present=present,
@@ -137,6 +145,7 @@ def extract_forms(
     labels = LabelIndex(soup)
     forms_by_id = {}
     forms = []
+    in_a_form: set[int] = set()  # id() of every field/button inside some <form>
     for index, form in enumerate(soup.find_all("form")):
         raw = form.get("action") if isinstance(form.get("action"), str) else None
         action = resolve_action(raw, base_url, page_url)
@@ -153,6 +162,7 @@ def extract_forms(
             name=_attr(form, "name"),
         )
         for tag in form.find_all(["input", "select", "textarea", "button"]):
+            in_a_form.add(id(tag))
             if _is_button(tag):
                 record.buttons.append(_button(tag))
             elif tag.name in FIELD_TAGS:
@@ -163,7 +173,7 @@ def extract_forms(
 
     outside = []
     for tag in soup.find_all(["input", "select", "textarea", "button"]):
-        if tag.find_parent("form") is not None:
+        if id(tag) in in_a_form:
             continue
         owner = forms_by_id.get(_attr(tag, "form") or "")  # <input form="login"> belongs to it
         if _is_button(tag):

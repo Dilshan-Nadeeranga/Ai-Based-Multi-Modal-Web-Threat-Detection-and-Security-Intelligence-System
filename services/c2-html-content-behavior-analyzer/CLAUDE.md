@@ -67,6 +67,14 @@ Implement one part (or batch) at a time, when asked. See **Progress** below.
   - Outputs: `data/processed/parsed_html/<version|adhoc>/<sample_id>.json` (+ `.txt` visible text); skip if same source_sha256 + schema_version + domain_method (`--force` redoes). Reports: `reports/preprocessing/<version>_summary.{json,md}`.
   - `scripts/preprocess_html.py`: `run --version [--label --limit --workers --force]` (refuses if manifest verify fails; ProcessPoolExecutor with spawn), `one --sample-id | --file [--url] [--save]`.
   - Fixed on the way (Part 1): `MetadataStore.add` copies the frame after the first row (pandas 3 made it read-only, so `update` failed).
+  - Fixed after Part 2 (7 tests were failing with tldextract 5.4): `domain_of_host` uses the built-in rule for a well-formed host whose suffix is not on the PSL (`.example`, `.test`, `.local`); a host that IS a suffix (`s3.ap-southeast-1.amazonaws.com`) or is malformed stays whole. `visibility.is_hidden_in_tree(cache=...)` + precomputed form/label membership in `form_extractor` remove quadratic ancestor walks (1 MB nested page 3.5 s → 1.5 s). All 278 stored v0.1 JSONs are byte-identical with the new code (timing aside), so no re-run was needed.
+- [x] **Developer inspector + Part 2 API** (after Part 2, before Part 3)
+  - Public (stays for Part 9): `POST /api/v1/preprocess` `{html, url?}` → ParsedPage JSON (same bytes/aliases as stored files; `url` never fetched). `api/security.py`: `BodySizeLimitMiddleware` (config `api.max_body_bytes` 5 MB → 413, checks Content-Length AND streamed bytes) and `SecurityHeadersMiddleware` (nosniff + no-referrer on every response).
+  - `api/main.py::create_app(app_env)`; dev routes (`api/dev_routes.py`) are registered ONLY when APP_ENV=development (otherwise 404, not in OpenAPI). Dockerfile sets `APP_ENV=production`. Tests build apps with `create_app("development"/"production")` and override `dependencies.get_dev_dataset`.
+  - `GET /api/v1/dev/versions | samples?version&label&language&q&has_password&external_form_action | samples/{id}/parsed?version | samples/{id}/safe-preview?version` backed by `api/dev_data.py::DevDataset` (READ ONLY; manifest + stored JSON, per-file summary cache keyed by mtime/size; missing JSON → processed on the fly, not saved, header `X-Parsed-Source`; ids validated against pattern AND manifest; raw paths must stay in data/raw). Response models in `schemas/inspector.py`. Safe preview = Part 1 `sanitize_html` with CSP `default-src 'none'; style-src 'unsafe-inline'` + nosniff.
+  - `GET /inspector` → `api/static/inspector.html` + `inspector.js` (vanilla, offline, CSP `script-src 'self'`). **XSS rule:** API values only via `el()`/textContent; no HTML-parsing sinks (grep test in `tests/test_inspector.py`); `el()` refuses href/src/on* attrs; page URLs are plain text; Safe Preview is an `<iframe sandbox="">`.
+  - `scripts/run_api.py`: binds 127.0.0.1 (`--host` to change, warns if dev + non-loopback), port from API_PORT (8002), chdirs to the service folder so `.env` is found, prints the URLs.
+  - **Inspector: add a tab per future part.** In `inspector.js` call `registerTab({id, title, render(ctx, box)})` (replace the disabled placeholder: "DOM Features (Part 3)", "Content / NLP (Part 5–6)", "JS Behavior (Part 7–8)", "Unified Result (Part 9)"); add a dev endpoint for the part's output (e.g. `samples/{id}/dom-features`) in `dev_routes.py` + `DevDataset`; render with the text-only helpers; extend `tests/test_inspector.py`.
 - [ ] Parts 3–9
 
 ## Conventions
@@ -84,9 +92,9 @@ Implement one part (or batch) at a time, when asked. See **Progress** below.
 python -m venv .venv && .venv\Scripts\activate      # Windows
 pip install -r requirements.txt -r requirements-dev.txt && pip install --no-deps -e .
 pytest
-uvicorn c2_analyzer.api.main:app --reload --port 8002
+python scripts/run_api.py          # 127.0.0.1:8002 -> /inspector (APP_ENV=development), /docs
 ```
-Port **8002** (C3 uses 8003, C4 uses 8000).
+Port **8002** (C3 uses 8003, C4 uses 8000). The inspector is a developer tool only; the team dashboard (`frontend/scamtrace-dashboard`) is separate and not touched by C2.
 
 ## Integration note
 `backend/api-gateway/src/server.js` calls `POST ${C2_URL}/analyze-html` with `{ url }`, while C2's main contract is `POST /api/v1/analyze` with `{ html, url? }`. `/analyze-html` is a 501 stub kept for compatibility; reconcile the contract with the team in Part 9.

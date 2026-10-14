@@ -22,4 +22,4 @@ format:
 	$(PYTHON) -m black src tests scripts
 
 run-api:
-	$(PYTHON) -m uvicorn c2_analyzer.api.main:app --reload --port $(PORT)
+	$(PYTHON) scripts/run_api.py --reload --port $(PORT)

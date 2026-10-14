@@ -1,0 +1,871 @@
+/*
+ * C2 developer inspector - all client logic (no build step, no libraries, works offline).
+ *
+ * SECURITY RULE (viva): page content is UNTRUSTED. A phishing page's title can be
+ * "<img src=x onerror=...>"; if we ever parsed it as HTML, the scam would run inside
+ * our own tool. So:
+ *   1. Values from the API reach the screen ONLY through text nodes: el() below
+ *      creates elements with document.createElement and sets text with textContent.
+ *      HTML-parsing sinks (inner/outer-HTML, insertAdjacent-HTML, document "write",
+ *      "eval", the Function constructor) are never used - tests/test_inspector.py
+ *      greps this file for them.
+ *   2. No href/src is ever set from page data (el() refuses such attributes and
+ *      on* handlers). Page URLs are shown as plain text, never as links.
+ *   3. The one exception is the Safe Preview iframe: its src is built from a
+ *      validated dataset sample id (not page content), points to our own sanitized
+ *      endpoint, and the iframe is sandbox="" (no scripts, opaque origin).
+ *
+ * ADDING A TAB (later parts): call registerTab({...}) - see the "Tab registry"
+ * section. Each tab gets the current context and an empty container to fill.
+ */
+"use strict";
+
+// ---------------------------------------------------------------------------
+// Safe DOM helpers
+// ---------------------------------------------------------------------------
+
+const BLOCKED_ATTRS = new Set(["href", "src", "srcdoc", "action", "formaction", "xlink:href", "style"]);
+
+/**
+ * el("td", {cls: "url", title: "..."}, "text", childNode, ...)
+ * Strings become text nodes (never parsed). Attributes that load/navigate or run
+ * code are refused, so a page value can never become a link or a script.
+ */
+function el(tag, opts, ...children) {
+  const node = document.createElement(tag);
+  const o = opts || {};
+  if (o.cls) node.className = o.cls;
+  if (o.text !== undefined && o.text !== null) node.textContent = String(o.text);
+  if (o.title !== undefined && o.title !== null) node.title = String(o.title);
+  for (const [name, value] of Object.entries(o.attrs || {})) {
+    const lower = name.toLowerCase();
+    if (lower.startsWith("on") || BLOCKED_ATTRS.has(lower)) {
+      throw new Error("el(): attribute not allowed: " + name);
+    }
+    if (value !== false && value !== null && value !== undefined) node.setAttribute(name, String(value));
+  }
+  if (o.onClick) node.addEventListener("click", o.onClick);
+  append(node, children);
+  return node;
+}
+
+function append(node, children) {
+  for (const child of children.flat(Infinity)) {
+    if (child === null || child === undefined || child === false) continue;
+    node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+  return node;
+}
+
+/** Like node.append(), but skips null/false (native append would print "null"). */
+function fill(node, ...children) {
+  return append(node, children);
+}
+
+function clear(node) {
+  while (node.firstChild) node.removeChild(node.firstChild);
+  return node;
+}
+
+const $ = (id) => document.getElementById(id);
+const fmtInt = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : "—");
+const show = (v) => (v === null || v === undefined || v === "" ? "—" : String(v));
+
+function fmtBytes(n) {
+  if (typeof n !== "number") return "—";
+  if (n < 1024) return n + " B";
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+  return (n / 1024 / 1024).toFixed(2) + " MB";
+}
+
+function cut(text, max) {
+  const s = show(text);
+  return s.length > max ? s.slice(0, max) + " …" : s;
+}
+
+const badge = (text, kind) => el("span", { cls: "badge" + (kind ? " " + kind : ""), text });
+const yes = (flag, kind) => (flag ? badge("yes", kind) : el("span", { cls: "muted", text: "—" }));
+const labelChip = (label) =>
+  el("span", { cls: "chip " + (LABEL_CLASSES.has(label) ? label : ""), text: label || "unlabelled" });
+const urlText = (url) => el("span", { cls: "url", text: show(url) }); // never a link
+
+const LABEL_CLASSES = new Set(["benign", "phishing", "fake_ecommerce", "crypto_scam", "malware_delivery"]);
+const SAMPLE_ID = /^c2_[a-z_]+_\d{6}$/;
+const VERSION = /^v\d+(\.\d+)*$/;
+const MAX_HTML_BYTES = 5 * 1024 * 1024;
+
+function section(title, ...children) {
+  const head = el("h2", {}, ...(Array.isArray(title) ? title : [title]));
+  return el("div", { cls: "section" }, head, ...children);
+}
+
+function kv(pairs) {
+  const dl = el("dl", { cls: "kv" });
+  for (const [key, value] of pairs) {
+    dl.append(el("dt", { text: key }), append(el("dd"), [value instanceof Node ? value : show(value)]));
+  }
+  return dl;
+}
+
+function countCard(label, value, sub) {
+  return el("div", { cls: "count" }, el("div", { cls: "n", text: fmtInt(value) }), el("div", { cls: "l", text: label }),
+    sub ? el("div", { cls: "l", text: sub }) : null);
+}
+
+/** A table with a header row; rows beyond `limit` are added by a "show more" button. */
+function table(headers, rows, rowFn, limit = 300) {
+  if (!rows || rows.length === 0) return el("p", { cls: "muted", text: "None." });
+  const tbody = el("tbody");
+  const wrap = el("div", { cls: "table-wrap" },
+    el("table", {}, el("thead", {}, el("tr", {}, headers.map((h) => el("th", { text: h })))), tbody));
+  let shown = 0;
+  const more = el("button", { attrs: { type: "button" } });
+  const addRows = () => {
+    const next = rows.slice(shown, shown + limit);
+    for (const [i, row] of next.entries()) {
+      tbody.append(el("tr", {}, rowFn(row, shown + i).map((cell) => append(el("td"), [cell instanceof Node ? cell : show(cell)]))));
+    }
+    shown += next.length;
+    more.textContent = `Show more (${fmtInt(rows.length - shown)} left)`;
+    more.hidden = shown >= rows.length;
+  };
+  more.addEventListener("click", addRows);
+  addRows();
+  return el("div", {}, wrap, more);
+}
+
+// ---------------------------------------------------------------------------
+// API (same origin only; nothing here talks to any other server)
+// ---------------------------------------------------------------------------
+
+async function api(path, options) {
+  const response = await fetch(path, { credentials: "same-origin", ...options });
+  if (!response.ok) {
+    let detail = response.status + " " + response.statusText;
+    try {
+      const body = await response.json();
+      if (body && body.detail) detail = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail);
+    } catch (_) { /* not JSON */ }
+    const error = new Error(detail);
+    error.status = response.status;
+    throw error;
+  }
+  return { data: await response.json(), headers: response.headers };
+}
+
+function query(params) {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== null && v !== undefined && v !== "") q.set(k, String(v));
+  const s = q.toString();
+  return s ? "?" + s : "";
+}
+
+// ---------------------------------------------------------------------------
+// Tab registry - later parts add a tab here (no other code needs to change)
+// ---------------------------------------------------------------------------
+//
+//   registerTab({
+//     id: "dom-features",               // used in the URL hash (#...&tab=dom-features)
+//     title: "DOM Features (Part 3)",
+//     enabled: true,                    // false = shown greyed out ("coming in ...")
+//     available: (ctx) => true,         // optional: is the tab usable for this page?
+//     render: (ctx, container) => {},   // fill the container (text-only helpers above)
+//   });
+//
+// ctx = { page: ParsedPage, kind: "sample" | "pasted", sampleId, version, label,
+//         language, parsedSource: "stored" | "on-the-fly" | "api" }.
+// A tab that needs more data (e.g. Part 3 features) fetches it in render() and
+// fills the container when it arrives.
+
+const TABS = [];
+
+function registerTab(tab) {
+  if (!tab.id || !tab.title) throw new Error("registerTab: id and title are required");
+  TABS.push({ enabled: true, available: () => true, ...tab });
+}
+
+const state = {
+  ctx: null,          // the page being inspected
+  activeTab: "overview",
+  samples: [],
+  versions: [],
+  loadToken: 0,       // ignores answers to requests that are no longer current
+};
+
+// ---- 1. Overview ----------------------------------------------------------
+
+registerTab({
+  id: "overview",
+  title: "Overview",
+  render(ctx, box) {
+    const p = ctx.page;
+    const m = p.meta || {};
+    const inputs = allInputs(p);
+    const ext = (p.links || []).filter((l) => l.is_external).length;
+    const iframes = (p.embedded || []).filter((e) => e.tag === "iframe" || e.tag === "frame").length;
+    fill(box, 
+      section("Page",
+        kv([
+          ["Label", ctx.label ? labelChip(ctx.label) : el("span", { cls: "muted", text: "— (pasted HTML)" })],
+          ["Language", ctx.language ? `${ctx.language} (dataset)` + (p.lang_attr ? ` · lang="${p.lang_attr}"` : "") : show(p.lang_attr)],
+          ["Title", el("span", { cls: "multi", text: show(p.title) })],
+          ["Sample", show(m.sample_id)],
+          ["Dataset version", show(m.dataset_version)],
+          ["Page URL", urlText(m.page_url)],
+          ["Base URL", urlText(m.base_url)],
+          ["HTML size", fmtBytes(m.html_size_bytes)],
+          ["Encoding / parser", `${show(m.encoding)} / ${show(m.parser_used)}`],
+          ["Processing", `${show(m.processing_ms)} ms`],
+          ["Truncated", m.truncated ? append(el("span"), [badge("truncated", "warn"), " ", (m.truncation_reasons || []).join("; ")]) : "no"],
+          ["Schema / domains", `${show(m.schema_version)} / ${show(m.domain_method)}`],
+          ["Source", ctx.parsedSource === "on-the-fly" ? append(el("span"), [badge("processed on the fly", "warn"), " not stored yet - run preprocess_html.py"]) : show(ctx.parsedSource)],
+        ])),
+      (m.errors || []).length
+        ? section("Errors (a failed step keeps its fields empty)", el("div", { cls: "error-box" }, el("ul", {}, m.errors.map((e) => el("li", { text: e })))))
+        : null,
+      section("Counts",
+        el("div", { cls: "cards" },
+          countCard("headings", (p.headings || []).length),
+          countCard("paragraphs", (p.paragraphs || []).length),
+          countCard("forms", (p.forms || []).length),
+          countCard("inputs", inputs.length, `${inputs.filter((i) => i.type === "password").length} password`),
+          countCard("links", (p.links || []).length, `${ext} external · ${(p.links || []).length - ext} internal`),
+          countCard("inline scripts", (p.scripts_inline || []).length),
+          countCard("external scripts", (p.scripts_external || []).length),
+          countCard("event handlers", (p.event_handlers || []).length),
+          countCard("iframes", iframes),
+          countCard("comments", (p.comments || {}).count),
+          countCard("elements", (p.dom || {}).element_count),
+          countCard("max depth", (p.dom || {}).max_depth),
+        )),
+      section("Time per step (ms)", bars(Object.entries(m.step_ms || {}), (v) => v.toFixed(1))),
+    );
+  },
+});
+
+function allInputs(p) {
+  return (p.forms || []).flatMap((f) => f.inputs || []).concat(p.inputs_outside_forms || []);
+}
+
+function bars(entries, fmt) {
+  if (!entries.length) return el("p", { cls: "muted", text: "None." });
+  const max = Math.max(...entries.map(([, v]) => v), 1);
+  const grid = el("div", { cls: "bars" });
+  for (const [name, value] of entries) {
+    const bar = el("div", { cls: "bar" });
+    bar.style.width = Math.max(0.5, (100 * value) / max).toFixed(1) + "%"; // a number, not page data
+    grid.append(el("span", { cls: "url", text: name, title: name }), el("div", {}, bar), el("span", { cls: "num", text: fmt ? fmt(value) : fmtInt(value) }));
+  }
+  return grid;
+}
+
+// ---- 2. Text ----------------------------------------------------------------
+
+registerTab({
+  id: "text",
+  title: "Text",
+  render(ctx, box) {
+    const p = ctx.page;
+    const headings = el("div", { cls: "multi" });
+    for (const h of p.headings || []) {
+      const row = el("div", { cls: "heading" }, el("span", { cls: "lvl", text: "H" + h.level }), h.text);
+      row.style.paddingLeft = (Math.min(6, Math.max(1, Number(h.level) || 1)) - 1) * 18 + "px";
+      headings.append(row);
+    }
+    const paragraphs = (p.paragraphs || []);
+    fill(box, 
+      section("Title & description", kv([
+        ["Title", el("span", { cls: "multi", text: show(p.title) })],
+        ["Meta description", el("span", { cls: "multi", text: show(p.meta_description) })],
+        ["Meta keywords", el("span", { cls: "multi", text: show(p.meta_keywords) })],
+        ["lang / charset", `${show(p.lang_attr)} / ${show(p.charset_declared)}`],
+      ])),
+      section(`Headings (${(p.headings || []).length})`, (p.headings || []).length ? headings : el("p", { cls: "muted", text: "None." })),
+      section(`Paragraphs (${paragraphs.length})`,
+        paragraphs.length ? el("ol", { cls: "multi scroll" }, paragraphs.slice(0, 500).map((t) => el("li", { text: t }))) : el("p", { cls: "muted", text: "None." }),
+        paragraphs.length > 500 ? el("p", { cls: "muted", text: `First 500 of ${paragraphs.length} shown (all are in Raw JSON).` }) : null),
+      section(`Visible text (${fmtInt((p.visible_text || "").length)} chars)`, el("pre", { cls: "multi scroll", text: p.visible_text || "(empty)" })),
+      section([`Hidden text (${fmtInt((p.hidden_text || "").length)} chars)`, badge("hidden by attribute / inline style / noscript", "warn")],
+        el("pre", { cls: "multi scroll hidden-box", text: p.hidden_text || "(none)" })),
+    );
+  },
+});
+
+// ---- 3. Forms -----------------------------------------------------------------
+
+function inputTable(inputs) {
+  return table(["tag / type", "name", "label", "placeholder", "hidden", "required", "autocomplete", "value (masked)"], inputs, (i) => [
+    i.tag === "input" ? i.type : `${i.tag}`,
+    i.name,
+    el("span", { cls: "multi", text: show(i.label_text) }),
+    el("span", { cls: "multi", text: show(i.placeholder) }),
+    yes(i.hidden, "warn"),
+    yes(i.required),
+    i.autocomplete,
+    i.value_present ? el("span", { cls: "url", text: show(i.value_masked) }) : el("span", { cls: "muted", text: "—" }),
+  ]);
+}
+
+registerTab({
+  id: "forms",
+  title: "Forms",
+  render(ctx, box) {
+    const p = ctx.page;
+    if (!(p.forms || []).length && !(p.inputs_outside_forms || []).length) {
+      fill(box, el("p", { cls: "empty", text: "No forms and no inputs on this page." }));
+      return;
+    }
+    for (const f of p.forms || []) {
+      fill(box, el("div", { cls: "card" },
+        el("h3", {}, `Form #${f.index}`, badge(f.method, "info"),
+          f.is_external_action ? badge("EXTERNAL ACTION", "danger") : badge("same site", "ok"),
+          f.id ? badge("id=" + f.id) : null, f.name ? badge("name=" + f.name) : null),
+        kv([
+          ["Action (resolved)", f.action_abs ? urlText(f.action_abs) : el("span", { cls: "muted", text: "— (no URL, e.g. javascript:)" })],
+          ["Action (as written)", urlText(f.action_raw)],
+          ["Action domain", show(f.action_domain)],
+          ["Enctype", show(f.enctype)],
+        ]),
+        el("h3", {}, `Inputs (${(f.inputs || []).length})`),
+        inputTable(f.inputs || []),
+        el("h3", {}, `Buttons (${(f.buttons || []).length})`),
+        table(["type", "text", "value"], f.buttons || [], (b) => [b.type, el("span", { cls: "multi", text: show(b.text) }), b.value]),
+      ));
+    }
+    if ((p.inputs_outside_forms || []).length) {
+      fill(box, el("div", { cls: "card" },
+        el("h3", {}, `Inputs outside any form (${p.inputs_outside_forms.length})`, badge("often submitted by JavaScript", "warn")),
+        inputTable(p.inputs_outside_forms)));
+    }
+  },
+});
+
+// ---- 4. Scripts -----------------------------------------------------------------
+
+const SCRIPT_PREVIEW_CHARS = 3000;
+
+registerTab({
+  id: "scripts",
+  title: "Scripts",
+  render(ctx, box) {
+    const p = ctx.page;
+    const inline = p.scripts_inline || [];
+    const list = el("div");
+    for (const s of inline) {
+      const details = el("details", {},
+        el("summary", {}, `#${s.index} · ${s.position} · ${fmtInt(s.chars)} chars`, s.type ? ` · type=${s.type}` : "",
+          s.content_truncated ? " · " : "", s.content_truncated ? badge("capped", "warn") : null));
+      // The <pre> is built only when opened: a page can have hundreds of big scripts.
+      details.addEventListener("toggle", () => {
+        if (!details.open || details.dataset.filled) return;
+        details.dataset.filled = "1";
+        const text = (s.content || "").slice(0, SCRIPT_PREVIEW_CHARS);
+        details.append(el("pre", { cls: "scroll", text: text + ((s.content || "").length > SCRIPT_PREVIEW_CHARS ? `\n\n… first ${SCRIPT_PREVIEW_CHARS} chars shown (full text in Raw JSON)` : "") }));
+      });
+      list.append(details);
+    }
+    const data = (p.structured_data || []).concat(p.templates || []);
+    fill(box, 
+      section(`Inline scripts (${inline.length})`, inline.length ? list : el("p", { cls: "muted", text: "None." }),
+        el("p", { cls: "muted", text: "Shown as text only - never executed (static analysis is Part 7)." })),
+      section(`External scripts (${(p.scripts_external || []).length})`,
+        table(["src", "domain", "site", "async / defer", "integrity", "crossorigin"], p.scripts_external || [], (s) => [
+          urlText(s.src_abs || s.src_raw), s.domain,
+          s.is_external ? badge("external", "danger") : badge("same site", "ok"),
+          [s.async ? "async" : "", s.defer ? "defer" : ""].filter(Boolean).join(" ") || "—",
+          yes(s.has_integrity, "ok"), s.crossorigin,
+        ])),
+      section(`Event handlers (${(p.event_handlers || []).length})`,
+        table(["tag", "attribute", "code"], p.event_handlers || [], (h) => [h.tag, h.attribute, el("span", { cls: "url", text: cut(h.code, 400) })])),
+      section(`javascript: URLs (${(p.javascript_urls || []).length})`,
+        table(["tag", "attribute", "code"], p.javascript_urls || [], (j) => [j.tag, j.attribute, el("span", { cls: "url", text: cut(j.code, 400) })])),
+      section(`Data blocks: JSON-LD / templates (${data.length})`,
+        table(["type", "chars", "content (start)"], data, (d) => [d.type, fmtInt(d.chars), el("span", { cls: "url", text: cut(d.content, 300) })])),
+    );
+  },
+});
+
+// ---- 5. Links & Resources ---------------------------------------------------------
+
+registerTab({
+  id: "links",
+  title: "Links & Resources",
+  render(ctx, box) {
+    const p = ctx.page;
+    const links = p.links || [];
+    const ext = links.filter((l) => l.is_external).length;
+    const ratio = el("div", { cls: "ratio", title: `${links.length - ext} internal / ${ext} external` });
+    if (links.length) {
+      const i = el("div", { cls: "int" });
+      i.style.width = ((100 * (links.length - ext)) / links.length).toFixed(1) + "%";
+      const e = el("div", { cls: "ext" });
+      e.style.width = ((100 * ext) / links.length).toFixed(1) + "%";
+      ratio.append(i, e);
+    }
+    const css = p.css || {};
+    const refresh = (p.meta_tags || []).find((t) => (t.http_equiv || "").toLowerCase() === "refresh");
+    fill(box, 
+      section(`Links (${links.length})`,
+        el("div", { cls: "muted", text: links.length ? `internal ${links.length - ext} (${Math.round((100 * (links.length - ext)) / links.length)}%) · external ${ext} (${Math.round((100 * ext) / links.length)}%)` : "No links." }),
+        links.length ? ratio : null,
+        table(["domain", "site", "text", "URL", "rel / target"], links, (l) => [
+          l.domain, l.is_external ? badge("external", "danger") : badge("internal", "ok"),
+          el("span", { cls: "multi", text: show(l.text) }), urlText(l.href_abs || l.href_raw),
+          [l.rel, l.target].filter(Boolean).join(" / ") || "—",
+        ])),
+      section("Stylesheets & CSS",
+        kv([
+          ["<style> blocks", `${fmtInt(css.inline_style_blocks_count)} (${fmtInt(css.inline_style_total_chars)} chars)`],
+          ["style=\"\" attributes", fmtInt(css.style_attribute_count)],
+        ]),
+        table(["stylesheet", "domain", "site"], css.external_stylesheets || [], (s) => [urlText(s.href_abs), s.domain, s.is_external ? badge("external", "danger") : badge("same site", "ok")])),
+      section(`Iframes & embeds (${(p.embedded || []).length})`,
+        table(["tag", "src", "domain", "site", "size", "hidden"], p.embedded || [], (e) => [
+          e.tag, urlText(e.src_abs), e.domain, e.is_external ? badge("external", "danger") : badge("same site", "ok"),
+          `${show(e.width)} × ${show(e.height)}`, e.hidden ? badge("HIDDEN", "danger") : el("span", { cls: "muted", text: "—" }),
+        ])),
+      section([`Meta tags (${(p.meta_tags || []).length})`, refresh ? badge("meta refresh", "warn") : null],
+        refresh ? el("p", { cls: "note" }, "Refresh redirect to ", urlText(refresh.redirect_url || refresh.content)) : null,
+        table(["name / property / http-equiv", "content", "redirect URL"], p.meta_tags || [], (t) => [
+          t.name || t.property || (t.http_equiv ? "http-equiv=" + t.http_equiv : "—"),
+          el("span", { cls: "multi", text: cut(t.content, 300) }), t.redirect_url ? urlText(t.redirect_url) : "—",
+        ])),
+    );
+  },
+});
+
+// ---- 6. DOM -------------------------------------------------------------------------
+
+function nodeLabel(n) {
+  const parts = [el("span", { cls: "tag", text: n.tag })];
+  if (n.id) parts.push(el("span", { cls: "attr", text: "#" + n.id }));
+  if (n.class && n.class.length) parts.push(el("span", { cls: "attr", text: "." + n.class.join(".") }));
+  if (n.type) parts.push(el("span", { cls: "attr", text: ` type=${n.type}` }));
+  if (n.name) parts.push(el("span", { cls: "attr", text: ` name=${n.name}` }));
+  if (n.href_domain) parts.push(el("span", { cls: "attr", text: ` → ${n.href_domain}` }));
+  return parts;
+}
+
+/** One tree row; children are created only when expanded (skeletons have 3000 nodes). */
+function treeItem(node, openDepth) {
+  const kids = node.children || [];
+  const li = el("li");
+  if (!kids.length) {
+    li.append(el("span", { cls: "leaf" }), ...nodeLabel(node));
+    return li;
+  }
+  const toggle = el("button", { cls: "tog", attrs: { type: "button", "aria-expanded": "false" }, text: "▸" });
+  const childList = el("ul");
+  childList.hidden = true;
+  let built = false;
+  const setOpen = (open) => {
+    if (open && !built) {
+      built = true;
+      childList.append(...kids.map((k) => treeItem(k, openDepth - 1)));
+    }
+    childList.hidden = !open;
+    toggle.textContent = open ? "▾" : "▸";
+    toggle.setAttribute("aria-expanded", String(open));
+  };
+  toggle.addEventListener("click", () => setOpen(childList.hidden));
+  li.append(toggle, ...nodeLabel(node), el("span", { cls: "muted", text: ` (${kids.length})` }), childList);
+  if (openDepth > 0) setOpen(true);
+  return li;
+}
+
+registerTab({
+  id: "dom",
+  title: "DOM",
+  render(ctx, box) {
+    const d = ctx.page.dom || {};
+    const tags = Object.entries(d.tag_counts || {}).sort((a, b) => b[1] - a[1]);
+    const skeletonNotes = ((ctx.page.meta || {}).truncation_reasons || []).filter((r) => /skeleton/i.test(r));
+    const tree = el("div", { cls: "tree" });
+    if (d.skeleton) tree.append(el("ul", {}, treeItem(d.skeleton, 3)));
+    fill(box, 
+      section("Size", el("div", { cls: "cards" },
+        countCard("nodes", d.node_count), countCard("elements", d.element_count),
+        countCard("max depth", d.max_depth), countCard("distinct tags", tags.length))),
+      section(`Tag counts (top ${Math.min(40, tags.length)} of ${tags.length})`, bars(tags.slice(0, 40))),
+      section(["Skeleton tree", skeletonNotes.length ? badge("capped", "warn") : null],
+        skeletonNotes.length ? el("p", { cls: "muted", text: skeletonNotes.join("; ") }) : null,
+        d.skeleton ? tree : el("p", { cls: "muted", text: "No skeleton." })),
+    );
+  },
+});
+
+// ---- 7. Raw JSON ----------------------------------------------------------------------
+
+registerTab({
+  id: "json",
+  title: "Raw JSON",
+  render(ctx, box) {
+    const text = JSON.stringify(ctx.page, null, 2);
+    const msg = el("span", { cls: "muted", text: `${fmtBytes(new Blob([text]).size)}` });
+    const copy = el("button", { attrs: { type: "button" }, text: "Copy", onClick: async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        msg.textContent = "Copied.";
+      } catch (_) {
+        const range = document.createRange();
+        range.selectNodeContents(pre);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        msg.textContent = "Clipboard blocked - text selected, press Ctrl+C.";
+      }
+    } });
+    const pre = el("pre", { cls: "multi", text });
+    fill(box, el("div", { cls: "toolbar" }, copy, msg), pre);
+  },
+});
+
+// ---- 8. Safe Preview --------------------------------------------------------------------
+
+registerTab({
+  id: "preview",
+  title: "Safe Preview",
+  available: (ctx) => ctx.kind === "sample",
+  render(ctx, box) {
+    if (ctx.kind !== "sample" || !SAMPLE_ID.test(ctx.sampleId || "")) {
+      fill(box, el("p", { cls: "empty", text: "Safe Preview is only available for dataset samples (pasted HTML is never rendered)." }));
+      return;
+    }
+    // sandbox="" = no scripts, no forms, no popups, opaque origin. The src is our own
+    // endpoint + a validated sample id (not page content) - see rule 3 at the top.
+    const frame = document.createElement("iframe");
+    frame.className = "preview-frame";
+    frame.setAttribute("sandbox", "");
+    frame.setAttribute("referrerpolicy", "no-referrer");
+    frame.title = "Sanitized preview of " + ctx.sampleId;
+    frame.src = `/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/safe-preview` + query({ version: ctx.version });
+    fill(box, 
+      el("p", { cls: "note", text: "Sanitized copy — original never rendered. Scripts, links, forms, frames and outside resources were removed (Part 1 safe_preview) and the frame is sandboxed." }),
+      frame,
+    );
+  },
+});
+
+// ---- Future parts (disabled placeholders) -------------------------------------------------
+
+for (const [id, title] of [
+  ["dom-features", "DOM Features (Part 3)"],
+  ["content-nlp", "Content / NLP (Part 5–6)"],
+  ["js-behavior", "JS Behavior (Part 7–8)"],
+  ["unified", "Unified Result (Part 9)"],
+]) {
+  registerTab({ id, title, enabled: false, render() {} });
+}
+
+// ---------------------------------------------------------------------------
+// Rendering the tabs and the page header
+// ---------------------------------------------------------------------------
+
+function renderTabs() {
+  const nav = clear($("tabs"));
+  for (const tab of TABS) {
+    const usable = tab.enabled && state.ctx && tab.available(state.ctx);
+    const button = el("button", {
+      cls: tab.enabled ? "" : "future",
+      text: tab.title,
+      title: tab.enabled ? (usable || !state.ctx ? "" : "Not available for this page") : "Coming in a later part",
+      attrs: { type: "button", role: "tab", "aria-selected": String(tab.id === state.activeTab), disabled: !usable },
+      onClick: () => selectTab(tab.id),
+    });
+    nav.append(button);
+  }
+}
+
+function renderPanel() {
+  const panel = clear($("panel"));
+  if (!state.ctx) {
+    panel.append(el("p", { cls: "empty", text: "Nothing selected yet." }));
+    return;
+  }
+  let tab = TABS.find((t) => t.id === state.activeTab);
+  if (!tab || !tab.enabled || !tab.available(state.ctx)) tab = TABS[0];
+  state.activeTab = tab.id;
+  try {
+    tab.render(state.ctx, panel);
+  } catch (error) {
+    // A broken tab must not break the inspector (same idea as Part 2's isolated steps).
+    console.error(error);
+    panel.append(el("div", { cls: "error-box", text: `This tab failed to render: ${error.message}` }));
+  }
+}
+
+function renderHeader() {
+  const header = clear($("page-header"));
+  const c = state.ctx;
+  if (!c) {
+    fill(header, el("span", { cls: "muted", text: "Pick a sample on the left, or paste HTML above." }));
+    return;
+  }
+  fill(header, 
+    c.label ? labelChip(c.label) : badge("pasted HTML", "info"),
+    c.sampleId ? badge(c.sampleId) : null,
+    c.version ? badge(c.version) : null,
+    el("span", { cls: "title multi", text: c.page.title || "(no title)" }),
+    c.parsedSource === "on-the-fly" ? badge("processed on the fly", "warn") : null,
+  );
+}
+
+function selectTab(id) {
+  state.activeTab = id;
+  renderTabs();
+  renderPanel();
+  writeHash();
+}
+
+function showPage(ctx) {
+  state.ctx = ctx;
+  renderHeader();
+  renderTabs();
+  renderPanel();
+  writeHash();
+}
+
+// ---------------------------------------------------------------------------
+// URL hash: #v=v0.1&sample=c2_phishing_000012&tab=forms  (deep links for demos)
+// ---------------------------------------------------------------------------
+
+function writeHash() {
+  const params = new URLSearchParams();
+  const version = $("version-select").value;
+  if (version) params.set("v", version);
+  if (state.ctx && state.ctx.kind === "sample") params.set("sample", state.ctx.sampleId);
+  params.set("tab", state.activeTab);
+  history.replaceState(null, "", "#" + params.toString());
+}
+
+function readHash() {
+  const params = new URLSearchParams(location.hash.slice(1));
+  const tab = params.get("tab");
+  return {
+    version: VERSION.test(params.get("v") || "") ? params.get("v") : null,
+    sample: SAMPLE_ID.test(params.get("sample") || "") ? params.get("sample") : null,
+    tab: TABS.some((t) => t.id === tab && t.enabled) ? tab : null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Sidebar: versions, filters, sample list
+// ---------------------------------------------------------------------------
+
+function setStatus(text, isError) {
+  const status = $("status");
+  status.textContent = text || "";
+  status.classList.toggle("error", Boolean(isError));
+}
+
+async function loadVersions(preferred) {
+  const select = $("version-select");
+  try {
+    const { data } = await api("/api/v1/dev/versions");
+    state.versions = data;
+    clear(select);
+    for (const v of data) select.append(el("option", { text: v.version, attrs: { value: v.version } }));
+    if (!data.length) {
+      $("version-info").textContent = "No frozen dataset version - paste HTML above instead.";
+      return false;
+    }
+    if (preferred && data.some((v) => v.version === preferred)) select.value = preferred;
+    updateVersionInfo();
+    return true;
+  } catch (error) {
+    $("version-info").textContent = "Could not load versions: " + error.message;
+    return false;
+  }
+}
+
+function updateVersionInfo() {
+  const v = state.versions.find((x) => x.version === $("version-select").value);
+  if (!v) return;
+  $("version-info").textContent = `${fmtInt(v.total)} samples · ${fmtInt(v.processed)} processed by Part 2` + (v.created_at ? ` · frozen ${v.created_at.slice(0, 10)}` : "");
+  $("version-info").title = v.notes || "";
+  const fill = (select, counts, allText) => {
+    const current = select.value;
+    clear(select).append(el("option", { text: allText, attrs: { value: "" } }));
+    for (const [name, n] of Object.entries(counts || {})) {
+      select.append(el("option", { text: `${name} (${n})`, attrs: { value: name, disabled: n === 0 } }));
+    }
+    select.value = Object.prototype.hasOwnProperty.call(counts || {}, current) ? current : "";
+  };
+  fill($("label-filter"), v.counts_per_label, "All labels");
+  fill($("language-filter"), v.counts_per_language, "All languages");
+}
+
+async function loadSamples() {
+  const token = ++state.loadToken;
+  const list = clear($("sample-list"));
+  const version = $("version-select").value;
+  if (!version) return;
+  $("sample-count").textContent = "Loading…";
+  try {
+    const { data } = await api("/api/v1/dev/samples" + query({
+      version,
+      label: $("label-filter").value,
+      language: $("language-filter").value,
+      q: $("search-input").value.trim(),
+      has_password: $("password-filter").checked ? "true" : "",
+      external_form_action: $("external-filter").checked ? "true" : "",
+    }));
+    if (token !== state.loadToken) return; // a newer filter change is already loading
+    state.samples = data;
+    $("sample-count").textContent = `${fmtInt(data.length)} sample(s)`;
+    for (const s of data) list.append(sampleItem(s));
+  } catch (error) {
+    if (token === state.loadToken) $("sample-count").textContent = "Error: " + error.message;
+  }
+}
+
+function sampleItem(s) {
+  const current = state.ctx && state.ctx.kind === "sample" && state.ctx.sampleId === s.sample_id;
+  const button = el("button", {
+    attrs: { type: "button", "aria-current": String(Boolean(current)), "data-id": s.sample_id },
+    title: s.title || s.sample_id,
+    onClick: () => openSample(s.sample_id),
+  },
+  labelChip(s.label),
+  el("span", { cls: "t multi", text: s.title || "(no title)" }),
+  el("span", { cls: "sub" }, el("span", { text: s.sample_id }), el("span", { text: s.language }),
+    s.has_password ? badge("password", "warn") : null,
+    s.external_form_action ? badge("ext form", "danger") : null,
+    s.processed ? null : badge("not processed")));
+  return el("li", {}, button);
+}
+
+function markCurrent() {
+  for (const b of $("sample-list").querySelectorAll("button[data-id]")) {
+    b.setAttribute("aria-current", String(Boolean(state.ctx && state.ctx.kind === "sample" && b.dataset.id === state.ctx.sampleId)));
+  }
+}
+
+async function openSample(sampleId) {
+  if (!SAMPLE_ID.test(sampleId)) return;
+  const version = $("version-select").value;
+  const meta = state.samples.find((s) => s.sample_id === sampleId) || {};
+  setStatus(`Loading ${sampleId}…`);
+  try {
+    const { data, headers } = await api(`/api/v1/dev/samples/${encodeURIComponent(sampleId)}/parsed` + query({ version }));
+    showPage({
+      page: data, kind: "sample", sampleId, version,
+      label: meta.label, language: meta.language,
+      parsedSource: headers.get("X-Parsed-Source") || "stored",
+    });
+    markCurrent();
+    setStatus(`${sampleId} loaded (${headers.get("X-Parsed-Source") || "stored"}).`);
+  } catch (error) {
+    setStatus(`Could not load ${sampleId}: ${error.message}`, true);
+  }
+}
+
+// Up/Down arrows move through the sample list (handy during demos).
+function listKeys(event) {
+  if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+  const buttons = [...$("sample-list").querySelectorAll("button[data-id]")];
+  const index = buttons.indexOf(document.activeElement);
+  if (index < 0) return;
+  event.preventDefault();
+  const next = buttons[index + (event.key === "ArrowDown" ? 1 : -1)];
+  if (next) {
+    next.focus();
+    next.click();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Top bar: analyze pasted HTML / a local file (read as text, never rendered)
+// ---------------------------------------------------------------------------
+
+async function analyzePasted(event) {
+  event.preventDefault();
+  const html = $("html-input").value;
+  const url = $("url-input").value.trim();
+  if (!html.trim()) {
+    setStatus("Paste some HTML (or choose a file) first.", true);
+    return;
+  }
+  const body = JSON.stringify({ html, url: url || null });
+  if (new Blob([body]).size > MAX_HTML_BYTES) {
+    setStatus("Too large: the API accepts at most 5 MB.", true);
+    return;
+  }
+  $("analyze-btn").disabled = true;
+  setStatus("Analyzing…");
+  try {
+    const { data } = await api("/api/v1/preprocess", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+    showPage({ page: data, kind: "pasted", parsedSource: "api" });
+    markCurrent();
+    setStatus(`Analyzed ${fmtBytes(data.meta && data.meta.html_size_bytes)} in ${show(data.meta && data.meta.processing_ms)} ms (POST /api/v1/preprocess).`);
+  } catch (error) {
+    setStatus(error.status === 413 ? "Too large: the API accepts at most 5 MB." : "Analyze failed: " + error.message, true);
+  } finally {
+    $("analyze-btn").disabled = false;
+  }
+}
+
+function loadFile() {
+  const file = $("file-input").files[0];
+  if (!file) return;
+  if (file.size > MAX_HTML_BYTES) {
+    setStatus(`${file.name} is ${fmtBytes(file.size)} - the API accepts at most 5 MB.`, true);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    $("html-input").value = String(reader.result); // shown as text in a textarea, never rendered
+    setStatus(`${file.name} loaded (${fmtBytes(file.size)}) - press Analyze.`);
+  };
+  reader.onerror = () => setStatus(`Could not read ${file.name}.`, true);
+  reader.readAsText(file);
+}
+
+// ---------------------------------------------------------------------------
+// Start
+// ---------------------------------------------------------------------------
+
+function debounce(fn, ms) {
+  let timer = null;
+  return () => {
+    clearTimeout(timer);
+    timer = setTimeout(fn, ms);
+  };
+}
+
+async function start() {
+  const initial = readHash();
+  if (initial.tab) state.activeTab = initial.tab;
+  renderTabs();
+  renderPanel();
+
+  $("analyze-form").addEventListener("submit", analyzePasted);
+  $("file-input").addEventListener("change", loadFile);
+  $("clear-btn").addEventListener("click", () => {
+    $("html-input").value = "";
+    $("url-input").value = "";
+    $("file-input").value = "";
+    setStatus("");
+  });
+  $("version-select").addEventListener("change", () => {
+    updateVersionInfo();
+    loadSamples();
+    writeHash();
+  });
+  for (const id of ["label-filter", "language-filter", "password-filter", "external-filter"]) {
+    $(id).addEventListener("change", loadSamples);
+  }
+  $("search-input").addEventListener("input", debounce(loadSamples, 250));
+  $("sample-list").addEventListener("keydown", listKeys);
+
+  if (await loadVersions(initial.version)) {
+    await loadSamples();
+    if (initial.sample) await openSample(initial.sample);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", start);
