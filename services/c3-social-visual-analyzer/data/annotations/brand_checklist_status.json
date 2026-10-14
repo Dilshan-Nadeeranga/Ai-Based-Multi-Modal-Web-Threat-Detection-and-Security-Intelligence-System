@@ -1,0 +1,60 @@
+{
+  "title": "Brand Reference + Annotation Dataset",
+  "done_count": 13,
+  "total": 13,
+  "items": [
+    {
+      "item": "Select initial target brands",
+      "done": true
+    },
+    {
+      "item": "Collect legitimate brand logos",
+      "done": true
+    },
+    {
+      "item": "Collect official website screenshots",
+      "done": true
+    },
+    {
+      "item": "Record official brand names",
+      "done": true
+    },
+    {
+      "item": "Record official domains",
+      "done": true
+    },
+    {
+      "item": "Normalize reference logos",
+      "done": true
+    },
+    {
+      "item": "Remove duplicate logos",
+      "done": true
+    },
+    {
+      "item": "Assign brand IDs",
+      "done": true
+    },
+    {
+      "item": "Create logo annotations",
+      "done": true
+    },
+    {
+      "item": "Create bounding-box annotations",
+      "done": true
+    },
+    {
+      "item": "Create train/validation/test split",
+      "done": true
+    },
+    {
+      "item": "Store brand metadata",
+      "done": true
+    },
+    {
+      "item": "Generate brand dataset statistics",
+      "done": true
+    }
+  ],
+  "updated_at": "2026-10-13T19:59:31.355782+00:00"
+}
