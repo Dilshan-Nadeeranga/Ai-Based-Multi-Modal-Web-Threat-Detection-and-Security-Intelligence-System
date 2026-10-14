@@ -62,8 +62,13 @@ xlmr:
   weight_decay: 0.01
   warmup_ratio: 0.1
 
+# Static JavaScript analysis (Part 7): scripts/analyze_js.py
+# Rules, API catalogue, library signatures and safety limits (500 KB per script,
+# 3 s parse timeout, ...) live in configs/js_rules.yaml; the vector in js_features.yaml.
 js_analyzer:
-  max_script_bytes: 500000
+  output_dir: data/processed/js
+  reports_dir: reports/js_analysis
+  workers: 4
 
 # Sample collection (Part 1 Batch B): scripts/collect.py
 collection:

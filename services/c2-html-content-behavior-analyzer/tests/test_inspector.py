@@ -260,5 +260,7 @@ def test_js_has_no_external_urls_and_a_tab_registry():
     js = read_static("inspector.js")
     assert "http://" not in js and "https://" not in js
     assert "SECURITY RULE" in js and "function registerTab" in js
-    for future in ("Part 3", "Part 5–6", "Part 7–8", "Part 9"):
-        assert future in js
+    for tab in ("Part 3", "Part 5–6", "JS Analysis (Part 7)", "Behavior Intent (Part 8)", "Part 9"):
+        assert tab in js
+    # Part 7 snippets are page CODE: they must reach the screen as text only
+    assert "js-analysis" in js and 'codeText = (text) => el("span"' in js

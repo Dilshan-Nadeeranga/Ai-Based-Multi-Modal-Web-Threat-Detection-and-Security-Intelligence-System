@@ -12,7 +12,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 
 **Threat classes:** `benign`, `phishing`, `fake_ecommerce`, `crypto_scam`, `malware_delivery`.
 
-> **Status:** Part 1 (dataset preparation), Part 2 (HTML preprocessing), Part 3 (DOM features) and Part 4 (DOM baseline, pilot on v0.1) are done. `GET /health`, `POST /api/v1/preprocess`, `POST /api/v1/dom-features` and the [developer inspector](#developer-inspector) work. Parts 5–9 are still stubs (`NotImplementedError`), implemented part by part.
+> **Status:** Part 1 (dataset preparation), Part 2 (HTML preprocessing), Part 3 (DOM features), Part 4 (DOM baseline, pilot) and Part 7 (static JavaScript analysis) are done. `GET /health`, `POST /api/v1/preprocess`, `POST /api/v1/dom-features`, `POST /api/v1/js-analysis` and the [developer inspector](#developer-inspector) work. Parts 5, 6, 8 and 9 are still stubs (`NotImplementedError`), implemented part by part.
 
 ## Implementation parts
 
@@ -287,6 +287,52 @@ v0.1 pilot (42 test pages), from `reports/dom_baseline/v0.1/results.md`:
 | **Random Forest** (best by CV) | 0.797 ± 0.011 | 0.755 | 0.786 | 10.0 % |
 | XGBoost | 0.788 ± 0.024 | 0.753 | 0.786 | 10.0 % |
 
+## JavaScript analysis
+
+Part 7 analyses every piece of JavaScript Part 2 found: inline scripts, `on*=` handlers and `javascript:` URLs. It works **statically**. Code is parsed into a syntax tree with [tree-sitter](https://tree-sitter.github.io/) and never executed, and external `<script src>` files are never downloaded; only their address is analysed. Part 7 **reports** API usage. Deciding intent (for example, "credential read + external fetch = exfiltration") is Part 8's job.
+
+```bash
+python scripts/analyze_js.py run --version v0.2 [--force] [--workers 4]
+python scripts/analyze_js.py one --sample-id c2_phishing_000081      # grouped detections, line numbers, snippets
+python scripts/analyze_js.py one --file page.html --url https://example.com/login [--json]
+python scripts/analyze_js.py describe [--markdown]                    # the js_v1 feature table
+```
+
+- **Detected (tasks 5–15), including aliases:**
+  - **eval:** `window["eval"]`, `(0, eval)()`, `var e = eval`, and `setTimeout` with a string;
+  - **Function:** `new Function`, `x.constructor("code")`;
+  - **HTML writes:** `document.write`, `innerHTML` / `outerHTML` / `insertAdjacentHTML` / `srcdoc`;
+  - **Network:** `fetch`, `sendBeacon`, WebSocket / EventSource, image beacons, XMLHttpRequest (`open` method and URL, `send` body), jQuery ajax;
+  - **Forms:** `form.submit()` / `requestSubmit` / `action =` / submit events;
+  - **Redirects:** `location` assignments, `assign` / `replace` (also via `top` / `parent` / `document`), `window.open`, external `pushState`, meta refresh created by code;
+  - **Cookies and storage:** `document.cookie` read vs write, local / session storage read vs write;
+  - **Clipboard:** the clipboard API, `execCommand` copy / paste, clipboard listeners.
+- **Extras for Part 8:** credential value reads (with the selector, e.g. `#password`), key / submit / beforeunload / contextmenu listeners, decoders and download triggers.
+- **Facts recorded per detection:** where it is (script, line:column, byte range), how it is accessed (call / read / write / assign / construct / listener), the literal argument and URL (PII-masked), whether that URL leaves the page's site (resolved against `<base href>`), the HTTP method, the identifiers used, the enclosing function and the variable it is assigned to.
+- **Error-tolerant parsing:** tree-sitter still gives a tree for broken code.
+  - If more than half of a script is unparsable, the parse hits the time limit (3 s), or tree-sitter is missing, a **regex fallback** runs. Its results are marked `confidence: low`.
+  - Scripts larger than 500 KB are analysed up to the limit and marked truncated.
+  - The walk is iterative, so deep nesting cannot crash it.
+- **Library awareness:** jQuery, Bootstrap, React, Vue, GTM / gtag, Facebook pixel, reCAPTCHA, Cloudflare, Webpack and others are recognised by license banners or short snippets. Their detections are kept but tagged `in_library` and **left out of the page-own counts**. Otherwise every benign site using jQuery would "use innerHTML and XHR".
+- **Obfuscation statistics (descriptive):** entropy, line lengths, whitespace, escapes, identifier statistics, and signatures (packer, JSFuck, aaencode / jjencode, string arrays, `_0x` names, `eval(atob(...))`, base64 blobs). *Minified* (normal compression) is reported separately from *obfuscation signatures*.
+- **Outputs:**
+  - `data/processed/js/<version>/<sample_id>.json` (`JsAnalysisResult`, schema `js_v1`);
+  - `js_features.csv` (sample_id, label, language, cluster_id + **51 features** from `configs/js_features.yaml`, page-own only);
+  - `reports/js_analysis/<version>_summary.{json,md}`.
+
+v0.2, from `reports/js_analysis/v0.2_summary.md`:
+- **Parse success:** 99.6 % of 6,039 scripts parsed (23 used the lexical fallback).
+- **Library code:** 5.9 % of inline scripts.
+- **Speed:** 47 ms per page on average (median 8 ms); 5.4 s for all 306 pages with 4 workers.
+
+| % of pages (page-own code) | benign | phishing | malware_delivery |
+|---|---|---|---|
+| reads a credential-like field | 2.6 | 19.5 | 1.7 |
+| external request (literal URL) | 4.5 | 16.1 | 3.4 |
+| external redirect | 0.6 | 11.5 | 0 |
+| key / input listener | 9.7 | 26.4 | 1.7 |
+| `location.replace` | 1.3 | 8.0 | 42.4 |
+
 ## API
 
 | Method | Path | Status |
@@ -294,6 +340,7 @@ v0.1 pilot (42 test pages), from `reports/dom_baseline/v0.1/results.md`:
 | GET | `/health` | ✅ returns `{"status": "ok", "service": "c2"}` |
 | POST | `/api/v1/dom-features` | ✅ Part 3: same body → `DomResult` (52-feature vector in dictionary order + evidence). No `url` → `base_url_known = 0` and external features 0 |
 | POST | `/api/v1/preprocess` | ✅ Part 2: body `{"html": "...", "url": "..." or null}` → `ParsedPage` JSON (same as the stored files). `url` is never fetched. Body > 5 MB → `413` |
+| POST | `/api/v1/js-analysis` | ✅ Part 7: same body → `JsAnalysisResult` (detections with line numbers / arguments / masked snippets, scripts with obfuscation stats, external scripts, js_v1 features). Nothing is executed or downloaded |
 | POST | `/api/v1/analyze` | stub (501) – body `{"html": "...", "url": "..."}` |
 | POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}` |
 | GET | `/api/v1/dev/...`, `/inspector` | developer only – see below (404 unless `APP_ENV=development`) |
@@ -312,7 +359,7 @@ Then open **http://127.0.0.1:8002/inspector** (Swagger: http://127.0.0.1:8002/do
 
 - **Left:** pick a frozen dataset version, filter by label, language, "has password input", "external form action" or "misclassified (test)" (test pages the best Part 4 model got wrong), search by id or title, and click a sample. Up/Down arrows move through the list.
 - **Top:** paste HTML (and optionally its URL) or choose a local `.html` file, then press **Analyze**. This calls `POST /api/v1/preprocess`. The file is read as text and never rendered.
-- **Tabs:** DOM Features (Part 3, plus the Part 4 "DOM baseline prediction" card with the predicted class, probability bars, the top 5 features pushing towards or away from it, and a PILOT badge; then evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only). Greyed-out tabs are placeholders for Parts 5–6, 7–8 and 9.
+- **Tabs:** DOM Features (Part 3, plus the Part 4 "DOM baseline prediction" card with the predicted class, probability bars, the top 5 features pushing towards or away from it, and a PILOT badge; then evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only) · JS Analysis (Part 7: summary chips per API category, the detections table with snippets shown as monospace text only, external-URL / library / confidence badges, per-script obfuscation cards and the external scripts table). Greyed-out tabs are placeholders for Parts 5–6, 8 and 9.
 - **Deep links:** the URL hash remembers the version, sample and tab (e.g. `/inspector#v=v0.1&sample=c2_phishing_000081&tab=forms`). This is handy for presentations.
 
 Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
@@ -324,6 +371,7 @@ Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
 | `GET /api/v1/dev/samples/{id}/parsed?version=v0.1` | the stored `ParsedPage`. A missing one is processed on the fly but not saved (header `X-Parsed-Source`) |
 | `GET /api/v1/dev/samples/{id}/dom-features?version=v0.1` | the stored Part 3 `DomResult`, or one computed on the fly (header `X-Features-Source`) |
 | `GET /api/v1/dev/samples/{id}/dom-prediction?version=v0.1` | Part 4: probabilities from every trained baseline, the best model's top 5 contributions, the split and whether it is misclassified on test (`404` if no model has been trained) |
+| `GET /api/v1/dev/samples/{id}/js-analysis?version=v0.2` | the stored Part 7 `JsAnalysisResult`, or one computed on the fly (header `X-Js-Source`) |
 | `GET /api/v1/dev/dom-dictionary?version=v0.1` | the feature dictionary plus per-label medians from the Part 3 report |
 | `GET /api/v1/dev/samples/{id}/safe-preview` | Part 1's sanitized copy, with `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'` and `nosniff` |
 

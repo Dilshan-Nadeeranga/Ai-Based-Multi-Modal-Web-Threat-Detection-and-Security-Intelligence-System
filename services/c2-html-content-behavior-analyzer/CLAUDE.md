@@ -15,7 +15,7 @@ Threat classes: `benign`, `phishing`, `fake_ecommerce`, `crypto_scam`, `malware_
 4. DOM baseline classifiers → `classifiers/dom_baseline/`
 5. Multilingual content analyzer → `content/` (language ID, intent taxonomy, corpus)
 6. XLM-R classification → `nlp/` (training designed for Colab: `notebooks/04_xlmr_finetune_colab.ipynb`)
-7. Static JS analyzer → `js_analyzer/` (esprima; unparsable JS must fail gracefully)
+7. Static JS analyzer → `js_analyzer/` (tree-sitter AST + lexical fallback; unparsable JS must fail gracefully)
 8. Behavioral intent mapping → `behavior/` (rules in `configs/sources_sinks.yaml`)
 9. Fusion + API → `fusion/`, `api/`
 
@@ -74,7 +74,7 @@ Implement one part (or batch) at a time, when asked. See **Progress** below.
   - `GET /api/v1/dev/versions | samples?version&label&language&q&has_password&external_form_action | samples/{id}/parsed?version | samples/{id}/safe-preview?version` backed by `api/dev_data.py::DevDataset` (READ ONLY; manifest + stored JSON, per-file summary cache keyed by mtime/size; missing JSON → processed on the fly, not saved, header `X-Parsed-Source`; ids validated against pattern AND manifest; raw paths must stay in data/raw). Response models in `schemas/inspector.py`. Safe preview = Part 1 `sanitize_html` with CSP `default-src 'none'; style-src 'unsafe-inline'` + nosniff.
   - `GET /inspector` → `api/static/inspector.html` + `inspector.js` (vanilla, offline, CSP `script-src 'self'`). **XSS rule:** API values only via `el()`/textContent; no HTML-parsing sinks (grep test in `tests/test_inspector.py`); `el()` refuses href/src/on* attrs; page URLs are plain text; Safe Preview is an `<iframe sandbox="">`.
   - `scripts/run_api.py`: binds 127.0.0.1 (`--host` to change, warns if dev + non-loopback), port from API_PORT (8002), chdirs to the service folder so `.env` is found, prints the URLs.
-  - **Inspector: add a tab per future part.** In `inspector.js` call `registerTab({id, title, render(ctx, box)})` (replace the disabled placeholder: "Content / NLP (Part 5–6)", "JS Behavior (Part 7–8)", "Unified Result (Part 9)"); add a dev endpoint for the part's output (e.g. `samples/{id}/dom-features`) in `dev_routes.py` + `DevDataset`; render with the text-only helpers; extend `tests/test_inspector.py`.
+  - **Inspector: add a tab per future part.** In `inspector.js` call `registerTab({id, title, render(ctx, box)})` (replace the disabled placeholder: "Content / NLP (Part 5–6)", "Behavior Intent (Part 8)", "Unified Result (Part 9)"); add a dev endpoint for the part's output (e.g. `samples/{id}/dom-features`) in `dev_routes.py` + `DevDataset`; render with the text-only helpers; extend `tests/test_inspector.py`.
 - [x] **Part 3 – DOM structural analysis** (Tasks 1–14)
   - Principle: ParsedPage → FIXED-ORDER numeric vector + evidence. Raw HTML is re-parsed (Part 2's `parse_html`) only for tree metrics Part 2 doesn't store (avg depth, leaf ratio, hidden elements); Part 2 visibility helpers reused. No ML (Part 4), no JS semantics (Part 7, scripts only counted). One entry point: `dom/pipeline.py::extract_dom_features(page, html=None)` (`dom_features_for_html` for the API).
   - **`configs/dom_features.yaml` is the single source of truth** (`feature_set_version: dom_v1`, 52 features in 11 groups): order = CSV/vector order; each feature has type (int/float/binary), description (viva), source, `needs_page_url`, optional evidence template `{message, severity high|medium|info, min_value}`. Also `field_rules` (classes password > card > otp_pin > email > username; types/autocomplete/patterns/exclude, en+si+ta + a few zh/ko/ru kit words), `known_form_services`, `hidden_elements` (offscreen_px, never_visible_tags), `report` thresholds. Rename/reorder/add → bump feature_set_version. `dom/dictionary.py` loads + validates; `dictionary_hash()` decides skip/redo.
@@ -91,7 +91,46 @@ Implement one part (or batch) at a time, when asked. See **Progress** below.
   - CLI `scripts/train_dom_baseline.py split|train|evaluate|all|predict` (`all` = split if missing → train → evaluate+importance+report; `predict --sample-id | --file [--url] [--json]` uses XGBoost SHAP for the explanation).
   - API/inspector: dev `GET /api/v1/dev/samples/{id}/dom-prediction` (404 no models, 409 stale), `samples?misclassified=true` (best model's test mistakes; `SampleSummary.misclassified`). DOM Features tab has a "DOM baseline prediction (Part 4)" card (PILOT badge, probability bars, top 5 pushes towards/away); sidebar checkbox "misclassified (test)".
   - v0.1 pilot (3 classes; fake_ecommerce/crypto_scam excluded, 0 pages): split 194/42/42, si 6/2/1, ta 1/1/1. 52 → 47 features (dropped base_url_known, meta_refresh_external constant; element_count, has_external_form_action, form_action_to_known_form_service correlated). CV macro-F1 LR 0.747±0.030, RF 0.797±0.011 (best), XGB 0.788±0.024; test macro-F1 0.716 / 0.755 / 0.753; benign FPR 25 % / 10 % / 10 % (target ≤ 2 % NOT met). Run takes ~40 s.
-- [ ] Parts 5–9
+- [x] **Part 7 – Static JavaScript intent analyzer** (Tasks 1–15). Order note: Parts 7/8 are done before Parts 5/6 while the multilingual corpus is being collected (approved by the supervisor).
+  - **Principles (module docstrings):**
+    - NEVER execute JS and NEVER fetch external scripts (the proposal's "lightweight, no sandbox" claim).
+    - Part 7 DETECTS API usage + evidence and does not decide intent (that is Part 8, which builds on detections' locations / args / assigned_to / enclosing_function).
+    - One entry point, `js_analyzer/pipeline.py::analyze_js(page)` (`js_analysis_for_html` for the API).
+  - **Inputs (`extractor`):** reuses Part 2's ParsedPage.
+    - `scripts_inline` (JSON-LD / templates already separated), `event_handlers` (source="event_handler") and `javascript_urls` (percent-decoded, source="javascript_url").
+    - External scripts are reference-level only: domain, same site, async / defer, integrity, `known_cdn`, a library guess from the file name, and flags raw_ip / free_hosting / data_url (= `suspicious_host`) plus insecure_http.
+  - **Parser (`ast_parser`):** tree-sitter 0.25 + tree-sitter-javascript 0.25 (requirements.txt; esprima removed).
+    - Size: 500 KB cap per script (`truncated`). A truncated script with errors is retried at the last line / `;` / `}` before the first ERROR.
+    - **Timeout:** `timeout_micros` per parse, Windows-safe. The new `progress_callback` API segfaulted on Windows, and the deprecation warning is silenced.
+    - `has_error`, `error_ratio` (bytes in the outermost ERROR / MISSING nodes); more than 0.5 means unusable.
+    - **Lexical fallback** (`lexical_scanner`): runs on unusable trees, timeouts, or a missing tree-sitter. Its regexes are in js_rules.yaml (`apis.<id>.lexical`, CASE-SENSITIVE), comments are blanked first, and results have confidence="low".
+    - `visitor.AstWalker`: an iterative TreeCursor walk with `max_ast_depth` and an inside-ERROR flag.
+  - **Detectors (`detectors`, helpers in `syntax`):**
+    - `callee_path` normalizes `window` / `self` / `top` / `parent` / `globalThis` prefixes, `a["b"]`, `(0, eval)` and `document.location`.
+    - Per-script aliases, in source order without scopes: `var e = eval`, the storage / document objects, `new XMLHttpRequest`, `new Image`, `createElement(img / a / meta)`, and element lookups (`var p = getElementById("password")` → `<el #password>`).
+    - `x.value` is only recorded on a known element: a selector, an element alias, `target` / `elements` / `forms`, `this` in handlers, or a credential-like name. In minified bundles `e.value` is usually not an input.
+    - `x.constructor()` only counts with a string argument (or a `.constructor.constructor` chain).
+    - Image beacons need an image receiver plus query or concatenated data.
+    - `pushState` is only recorded with an EXTERNAL URL.
+    - Escape-heavy strings only count escapes that hide ASCII letters / digits / spaces; JSON-escaped Arabic text or `\u002F` is not counted.
+    - API catalogue: `configs/js_rules.yaml` (categories, apis + descriptions, lists, library signatures, limits, obfuscation thresholds). `rules_hash()` = both YAMLs + `ANALYZER_VERSION` + parser version, and decides skip / redo.
+  - **Libraries (`libraries`):** recognised by a `banner` in the first 3 KB, or a `marker` in a SHORT script (`max_chars`, so a kit padded behind a GTM snippet is not hidden), or by `src` patterns. Their detections are kept with `in_library=true` and excluded from page-own counts / features / flags.
+  - **`obfuscation`:** descriptive statistics.
+    - Measures: entropy, lines, whitespace, non-alphanumeric share, ASCII-hiding `escape_ratio`, identifier statistics, `_0x` ratio, string array size.
+    - `minified` is a separate flag from `signatures` (packer, jjencode, aaencode, eval_of_decoded, base64_blob, jsfuck, hex_identifiers, string_array, escape_heavy).
+    - String scanning is LINEAR (`string_lengths`; a regex was quadratic on unclosed quotes, 72 s for one page).
+  - **Schema:** `schemas/js.py::JsAnalysisResult` (js_v1): meta, scripts[], external_scripts[], detections[] (capped at 3000 per page, counts complete), counts (page_own / library), summary flags, features, limitations. The old `JsFinding` / `JsFindings` were removed and the Part 8 stubs now take `JsAnalysisResult`.
+  - **Features:** `configs/js_features.yaml` (js_v1, 51 features in 12 groups).
+    - Each is `count: {apis, categories, access, external, credential}` over page-own detections, or `compute:` (`features.py`).
+    - Outputs: `data/processed/js/<v>/{<id>.json, js_features.csv, js_feature_dictionary.json}`; batch rules as in Part 3 (verify, Part 2 produced + saved if missing, skip by sha + rules_hash + mtime, CSV always complete).
+    - Report: `reports/js_analysis/<v>_summary.{json,md}`, with per-page times taken from the stored results.
+  - **CLI:** `scripts/analyze_js.py run|one|describe`. API: public `POST /api/v1/js-analysis` (Swagger examples) and dev `GET /api/v1/dev/samples/{id}/js-analysis` (`X-Js-Source`, `DevDataset.js_root`). Inspector tab "JS Analysis (Part 7)" with snippets via textContent only; placeholder "Behavior Intent (Part 8)".
+  - **v0.2 run (306 pages):**
+    - 0 failures; parse success 99.6 % (23 of 6,039 lexical; the 4 truncated 500 KB data scripts end inside strings, 19 are broken handlers).
+    - Library scripts: 5.9 %. Time: avg 47 ms, median 8 ms per page; 5.4 s wall with 4 workers.
+    - Phishing vs benign (page-own): credential read 19.5 % vs 2.6 %, external request 16.1 vs 4.5, external redirect 11.5 vs 0.6, key listener 26.4 vs 9.7.
+    - malware_delivery has 42–44 % for `location.replace` / beacons / XHR / decoding (one kit family).
+- [ ] Parts 5, 6, 8, 9
 
 ## Conventions
 - Python ≥ 3.11, src layout, package `c2_analyzer`. Absolute imports (`from c2_analyzer.x import y`).

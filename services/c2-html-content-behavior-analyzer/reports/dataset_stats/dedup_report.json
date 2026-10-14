@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-14T16:18:35",
+  "generated_at": "2026-10-14T22:31:36",
   "settings": {
     "num_perm": 128,
     "text_shingle_size": 5,
@@ -10,22 +10,35 @@
     "lsh_threshold": 0.6
   },
   "summary": {
-    "samples": 401,
-    "compared": 341,
+    "samples": 567,
+    "compared": 492,
     "not_compared": {
-      "quality_flag empty": 38,
-      "quality_flag bot_challenge": 4,
+      "quality_flag empty": 46,
+      "quality_flag bot_challenge": 5,
       "quality_flag suspended_hosting": 1,
-      "no visible text": 2,
-      "quality_flag parked_domain": 3,
-      "quality_flag error_page": 12
+      "no visible text": 4,
+      "quality_flag parked_domain": 4,
+      "quality_flag error_page": 14,
+      "quality_flag login_wall": 1
     },
-    "clusters": 364,
-    "clusters_with_near_duplicates": 20,
+    "clusters": 529,
+    "clusters_with_near_duplicates": 21,
     "duplicates_marked": 37,
-    "label_conflicts": 0
+    "label_conflicts": 1
   },
-  "label_conflicts": [],
+  "label_conflicts": [
+    {
+      "cluster_id": "cl_000181",
+      "labels": [
+        "benign",
+        "fake_ecommerce"
+      ],
+      "members": [
+        "c2_benign_000182",
+        "c2_fake_ecommerce_000002"
+      ]
+    }
+  ],
   "clusters": [
     {
       "cluster_id": "cl_000125",
@@ -50,7 +63,30 @@
       ]
     },
     {
-      "cluster_id": "cl_000168",
+      "cluster_id": "cl_000181",
+      "size": 2,
+      "labels": [
+        "benign",
+        "fake_ecommerce"
+      ],
+      "label_conflict": true,
+      "representative": null,
+      "members": [
+        "c2_benign_000182",
+        "c2_fake_ecommerce_000002"
+      ],
+      "pair_count": 1,
+      "pairs": [
+        {
+          "a": "c2_benign_000182",
+          "b": "c2_fake_ecommerce_000002",
+          "text_similarity": 1.0,
+          "dom_similarity": 1.0
+        }
+      ]
+    },
+    {
+      "cluster_id": "cl_000333",
       "size": 3,
       "labels": [
         "malware_delivery"
@@ -85,7 +121,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000182",
+      "cluster_id": "cl_000347",
       "size": 3,
       "labels": [
         "malware_delivery"
@@ -114,7 +150,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000186",
+      "cluster_id": "cl_000351",
       "size": 2,
       "labels": [
         "malware_delivery"
@@ -136,7 +172,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000211",
+      "cluster_id": "cl_000376",
       "size": 4,
       "labels": [
         "malware_delivery"
@@ -190,7 +226,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000261",
+      "cluster_id": "cl_000426",
       "size": 2,
       "labels": [
         "phishing"
@@ -212,13 +248,13 @@
       ]
     },
     {
-      "cluster_id": "cl_000264",
+      "cluster_id": "cl_000429",
       "size": 11,
       "labels": [
         "phishing"
       ],
       "label_conflict": false,
-      "representative": "c2_phishing_000004",
+      "representative": "c2_phishing_000051",
       "members": [
         "c2_phishing_000004",
         "c2_phishing_000018",
@@ -236,25 +272,7 @@
       "pairs": [
         {
           "a": "c2_phishing_000004",
-          "b": "c2_phishing_000079",
-          "text_similarity": 0.8966,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000004",
           "b": "c2_phishing_000076",
-          "text_similarity": 0.8966,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000004",
-          "b": "c2_phishing_000028",
-          "text_similarity": 0.8814,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000004",
-          "b": "c2_phishing_000023",
           "text_similarity": 0.8966,
           "dom_similarity": 1.0
         },
@@ -266,19 +284,31 @@
         },
         {
           "a": "c2_phishing_000004",
-          "b": "c2_phishing_000083",
+          "b": "c2_phishing_000051",
           "text_similarity": 0.8966,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000004",
+          "b": "c2_phishing_000023",
+          "text_similarity": 0.8966,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000004",
+          "b": "c2_phishing_000079",
+          "text_similarity": 0.8966,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000004",
+          "b": "c2_phishing_000028",
+          "text_similarity": 0.8814,
           "dom_similarity": 1.0
         },
         {
           "a": "c2_phishing_000004",
           "b": "c2_phishing_000021",
-          "text_similarity": 0.8966,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000004",
-          "b": "c2_phishing_000123",
           "text_similarity": 0.8966,
           "dom_similarity": 1.0
         },
@@ -290,19 +320,37 @@
         },
         {
           "a": "c2_phishing_000004",
-          "b": "c2_phishing_000051",
+          "b": "c2_phishing_000083",
           "text_similarity": 0.8966,
           "dom_similarity": 1.0
         },
         {
-          "a": "c2_phishing_000018",
-          "b": "c2_phishing_000079",
+          "a": "c2_phishing_000004",
+          "b": "c2_phishing_000123",
           "text_similarity": 0.8966,
           "dom_similarity": 1.0
         },
         {
           "a": "c2_phishing_000018",
           "b": "c2_phishing_000076",
+          "text_similarity": 0.8966,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000018",
+          "b": "c2_phishing_000051",
+          "text_similarity": 0.8966,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000018",
+          "b": "c2_phishing_000023",
+          "text_similarity": 0.8966,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000018",
+          "b": "c2_phishing_000079",
           "text_similarity": 0.8966,
           "dom_similarity": 1.0
         },
@@ -314,25 +362,7 @@
         },
         {
           "a": "c2_phishing_000018",
-          "b": "c2_phishing_000023",
-          "text_similarity": 0.8966,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000018",
-          "b": "c2_phishing_000083",
-          "text_similarity": 0.8966,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000018",
           "b": "c2_phishing_000021",
-          "text_similarity": 0.8966,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000018",
-          "b": "c2_phishing_000123",
           "text_similarity": 0.8966,
           "dom_similarity": 1.0
         },
@@ -344,19 +374,37 @@
         },
         {
           "a": "c2_phishing_000018",
-          "b": "c2_phishing_000051",
+          "b": "c2_phishing_000083",
+          "text_similarity": 0.8966,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000018",
+          "b": "c2_phishing_000123",
           "text_similarity": 0.8966,
           "dom_similarity": 1.0
         },
         {
           "a": "c2_phishing_000020",
-          "b": "c2_phishing_000079",
+          "b": "c2_phishing_000076",
           "text_similarity": 0.8889,
           "dom_similarity": 1.0
         },
         {
           "a": "c2_phishing_000020",
-          "b": "c2_phishing_000076",
+          "b": "c2_phishing_000051",
+          "text_similarity": 0.8889,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000020",
+          "b": "c2_phishing_000023",
+          "text_similarity": 0.8889,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000020",
+          "b": "c2_phishing_000079",
           "text_similarity": 0.8889,
           "dom_similarity": 1.0
         },
@@ -368,50 +416,26 @@
         },
         {
           "a": "c2_phishing_000020",
-          "b": "c2_phishing_000023",
-          "text_similarity": 0.8889,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000020",
-          "b": "c2_phishing_000083",
-          "text_similarity": 0.8889,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000020",
           "b": "c2_phishing_000021",
           "text_similarity": 0.8889,
           "dom_similarity": 1.0
         },
         {
           "a": "c2_phishing_000020",
-          "b": "c2_phishing_000123",
+          "b": "c2_phishing_000083",
           "text_similarity": 0.8889,
           "dom_similarity": 1.0
         },
         {
           "a": "c2_phishing_000020",
-          "b": "c2_phishing_000051",
+          "b": "c2_phishing_000123",
           "text_similarity": 0.8889,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000021",
-          "b": "c2_phishing_000079",
-          "text_similarity": 0.8966,
           "dom_similarity": 1.0
         },
         {
           "a": "c2_phishing_000021",
           "b": "c2_phishing_000076",
           "text_similarity": 0.8966,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000021",
-          "b": "c2_phishing_000028",
-          "text_similarity": 0.8814,
           "dom_similarity": 1.0
         },
         {
@@ -422,14 +446,8 @@
         },
         {
           "a": "c2_phishing_000021",
-          "b": "c2_phishing_000083",
-          "text_similarity": 0.8966,
-          "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000021",
-          "b": "c2_phishing_000123",
-          "text_similarity": 0.8966,
+          "b": "c2_phishing_000028",
+          "text_similarity": 0.8814,
           "dom_similarity": 1.0
         },
         {
@@ -439,8 +457,20 @@
           "dom_similarity": 1.0
         },
         {
-          "a": "c2_phishing_000023",
+          "a": "c2_phishing_000021",
           "b": "c2_phishing_000079",
+          "text_similarity": 0.8966,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000021",
+          "b": "c2_phishing_000083",
+          "text_similarity": 0.8966,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000021",
+          "b": "c2_phishing_000123",
           "text_similarity": 0.8966,
           "dom_similarity": 1.0
         },
@@ -458,6 +488,18 @@
         },
         {
           "a": "c2_phishing_000023",
+          "b": "c2_phishing_000051",
+          "text_similarity": 0.8966,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000023",
+          "b": "c2_phishing_000079",
+          "text_similarity": 0.8966,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000023",
           "b": "c2_phishing_000083",
           "text_similarity": 0.8966,
           "dom_similarity": 1.0
@@ -469,20 +511,20 @@
           "dom_similarity": 1.0
         },
         {
-          "a": "c2_phishing_000023",
-          "b": "c2_phishing_000051",
-          "text_similarity": 0.8966,
-          "dom_similarity": 1.0
-        },
-        {
           "a": "c2_phishing_000028",
-          "b": "c2_phishing_000079",
+          "b": "c2_phishing_000076",
           "text_similarity": 0.8814,
           "dom_similarity": 1.0
         },
         {
           "a": "c2_phishing_000028",
-          "b": "c2_phishing_000076",
+          "b": "c2_phishing_000051",
+          "text_similarity": 0.8814,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000028",
+          "b": "c2_phishing_000079",
           "text_similarity": 0.8814,
           "dom_similarity": 1.0
         },
@@ -499,20 +541,14 @@
           "dom_similarity": 1.0
         },
         {
-          "a": "c2_phishing_000028",
-          "b": "c2_phishing_000051",
-          "text_similarity": 0.8814,
-          "dom_similarity": 1.0
-        },
-        {
           "a": "c2_phishing_000051",
-          "b": "c2_phishing_000079",
+          "b": "c2_phishing_000076",
           "text_similarity": 0.8966,
           "dom_similarity": 1.0
         },
         {
           "a": "c2_phishing_000051",
-          "b": "c2_phishing_000076",
+          "b": "c2_phishing_000079",
           "text_similarity": 0.8966,
           "dom_similarity": 1.0
         },
@@ -537,7 +573,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000273",
+      "cluster_id": "cl_000438",
       "size": 2,
       "labels": [
         "phishing"
@@ -559,7 +595,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000278",
+      "cluster_id": "cl_000443",
       "size": 5,
       "labels": [
         "phishing"
@@ -577,21 +613,9 @@
       "pairs": [
         {
           "a": "c2_phishing_000019",
-          "b": "c2_phishing_000044",
-          "text_similarity": 0.9703,
-          "dom_similarity": 0.8725
-        },
-        {
-          "a": "c2_phishing_000019",
           "b": "c2_phishing_000097",
           "text_similarity": 0.9515,
           "dom_similarity": 1.0
-        },
-        {
-          "a": "c2_phishing_000019",
-          "b": "c2_phishing_000103",
-          "text_similarity": 0.9515,
-          "dom_similarity": 0.8725
         },
         {
           "a": "c2_phishing_000019",
@@ -600,10 +624,16 @@
           "dom_similarity": 0.8725
         },
         {
-          "a": "c2_phishing_000026",
+          "a": "c2_phishing_000019",
+          "b": "c2_phishing_000103",
+          "text_similarity": 0.9515,
+          "dom_similarity": 0.8725
+        },
+        {
+          "a": "c2_phishing_000019",
           "b": "c2_phishing_000044",
-          "text_similarity": 0.98,
-          "dom_similarity": 1.0
+          "text_similarity": 0.9703,
+          "dom_similarity": 0.8725
         },
         {
           "a": "c2_phishing_000026",
@@ -615,6 +645,12 @@
           "a": "c2_phishing_000026",
           "b": "c2_phishing_000103",
           "text_similarity": 0.9608,
+          "dom_similarity": 1.0
+        },
+        {
+          "a": "c2_phishing_000026",
+          "b": "c2_phishing_000044",
+          "text_similarity": 0.98,
           "dom_similarity": 1.0
         },
         {
@@ -638,13 +674,13 @@
       ]
     },
     {
-      "cluster_id": "cl_000283",
+      "cluster_id": "cl_000448",
       "size": 2,
       "labels": [
         "phishing"
       ],
       "label_conflict": false,
-      "representative": "c2_phishing_000030",
+      "representative": "c2_phishing_000029",
       "members": [
         "c2_phishing_000029",
         "c2_phishing_000030"
@@ -660,13 +696,13 @@
       ]
     },
     {
-      "cluster_id": "cl_000284",
+      "cluster_id": "cl_000449",
       "size": 2,
       "labels": [
         "phishing"
       ],
       "label_conflict": false,
-      "representative": "c2_phishing_000032",
+      "representative": "c2_phishing_000031",
       "members": [
         "c2_phishing_000031",
         "c2_phishing_000032"
@@ -682,13 +718,13 @@
       ]
     },
     {
-      "cluster_id": "cl_000285",
+      "cluster_id": "cl_000450",
       "size": 2,
       "labels": [
         "phishing"
       ],
       "label_conflict": false,
-      "representative": "c2_phishing_000034",
+      "representative": "c2_phishing_000033",
       "members": [
         "c2_phishing_000033",
         "c2_phishing_000034"
@@ -704,7 +740,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000292",
+      "cluster_id": "cl_000457",
       "size": 2,
       "labels": [
         "phishing"
@@ -726,7 +762,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000300",
+      "cluster_id": "cl_000465",
       "size": 2,
       "labels": [
         "phishing"
@@ -748,7 +784,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000306",
+      "cluster_id": "cl_000471",
       "size": 3,
       "labels": [
         "phishing"
@@ -764,14 +800,14 @@
       "pairs": [
         {
           "a": "c2_phishing_000059",
-          "b": "c2_phishing_000064",
-          "text_similarity": 0.8182,
+          "b": "c2_phishing_000082",
+          "text_similarity": 1.0,
           "dom_similarity": 1.0
         },
         {
           "a": "c2_phishing_000059",
-          "b": "c2_phishing_000082",
-          "text_similarity": 1.0,
+          "b": "c2_phishing_000064",
+          "text_similarity": 0.8182,
           "dom_similarity": 1.0
         },
         {
@@ -783,7 +819,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000330",
+      "cluster_id": "cl_000495",
       "size": 2,
       "labels": [
         "phishing"
@@ -805,7 +841,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000335",
+      "cluster_id": "cl_000500",
       "size": 2,
       "labels": [
         "phishing"
@@ -827,13 +863,13 @@
       ]
     },
     {
-      "cluster_id": "cl_000352",
+      "cluster_id": "cl_000517",
       "size": 2,
       "labels": [
         "phishing"
       ],
       "label_conflict": false,
-      "representative": "c2_phishing_000119",
+      "representative": "c2_phishing_000115",
       "members": [
         "c2_phishing_000115",
         "c2_phishing_000119"
@@ -849,7 +885,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000359",
+      "cluster_id": "cl_000524",
       "size": 2,
       "labels": [
         "phishing"
@@ -871,7 +907,7 @@
       ]
     },
     {
-      "cluster_id": "cl_000361",
+      "cluster_id": "cl_000526",
       "size": 2,
       "labels": [
         "phishing"

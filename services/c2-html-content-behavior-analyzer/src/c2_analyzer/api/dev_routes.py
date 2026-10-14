@@ -31,6 +31,7 @@ from c2_analyzer.classifiers.dom_baseline.predict import PredictionError
 from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.schemas.dom_baseline import DomPrediction
 from c2_analyzer.schemas.inspector import DomDictionaryInfo, SampleSummary, VersionInfo
+from c2_analyzer.schemas.js import JsAnalysisResult
 from c2_analyzer.schemas.parsed_page import ParsedPage
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -134,6 +135,27 @@ def dom_features(
     except NotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from None
     return Response(text, media_type="application/json", headers={"X-Features-Source": source})
+
+
+@router.get(
+    "/samples/{sample_id}/js-analysis",
+    response_model=JsAnalysisResult,
+    summary="Part 7 static JavaScript analysis of a sample",
+)
+def js_analysis(
+    dataset: DatasetDep,
+    sample_id: str,
+    version: str | None = Query(None, examples=["v0.2"], description="default: newest"),
+) -> Response:
+    """The stored JsAnalysisResult; computed on the fly (not saved) if missing or outdated.
+
+    Header ``X-Js-Source`` says which: ``stored`` or ``on-the-fly``.
+    """
+    try:
+        text, source = dataset.js_analysis(_version(dataset, version), sample_id)
+    except NotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from None
+    return Response(text, media_type="application/json", headers={"X-Js-Source": source})
 
 
 @router.get(

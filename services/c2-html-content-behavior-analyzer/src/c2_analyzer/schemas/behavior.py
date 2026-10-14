@@ -1,30 +1,14 @@
-"""JS findings (Part 7) and behavioral intent (Part 8) models.
+"""Behavioral intent (Part 8) models.
 
-Part 7: Static JavaScript intent analyzer.
+Part 8: Behavioral intent mapping (sources -> sinks).
+
+Part 8's input is Part 7's ``schemas.js.JsAnalysisResult`` (detections with
+locations, arguments, enclosing functions and assigned variables).
 """
 
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
-
-
-class JsFinding(BaseModel):
-    """A single dangerous API usage found in static JavaScript."""
-
-    api: str
-    category: str
-    severity: str
-    script_index: int
-    line: int | None = None
-    snippet: str | None = None
-
-
-class JsFindings(BaseModel):
-    """All static JS findings for a page."""
-
-    findings: list[JsFinding] = Field(default_factory=list)
-    scripts_analyzed: int = 0
-    scripts_failed: int = 0
 
 
 class SourceSinkFlow(BaseModel):

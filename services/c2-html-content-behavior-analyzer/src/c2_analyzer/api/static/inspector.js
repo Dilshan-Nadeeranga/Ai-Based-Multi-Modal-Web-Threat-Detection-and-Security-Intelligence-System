@@ -367,7 +367,7 @@ registerTab({
     const data = (p.structured_data || []).concat(p.templates || []);
     fill(box, 
       section(`Inline scripts (${inline.length})`, inline.length ? list : el("p", { cls: "muted", text: "None." }),
-        el("p", { cls: "muted", text: "Shown as text only - never executed (static analysis is Part 7)." })),
+        el("p", { cls: "muted", text: "Shown as text only - never executed (static analysis: see the JS Analysis (Part 7) tab)." })),
       section(`External scripts (${(p.scripts_external || []).length})`,
         table(["src", "domain", "site", "async / defer", "integrity", "crossorigin"], p.scripts_external || [], (s) => [
           urlText(s.src_abs || s.src_raw), s.domain,
@@ -733,11 +733,176 @@ registerTab({
   },
 });
 
+// ---- 8. JS Analysis (Part 7) ------------------------------------------------------
+//
+// Static JavaScript analysis: what the page's scripts USE (eval, fetch, cookies, ...),
+// where, and with which arguments. Part 7 does not judge intent (Part 8 does).
+// Snippets are page code: shown ONLY as text (textContent, monospace), never parsed.
+
+const jsCache = new WeakMap();
+const JS_CATEGORY_KIND = {
+  code_execution: "danger", form_submission: "danger", clipboard: "danger",
+  dom_write: "warn", html_injection: "warn", network_fetch: "warn", network_xhr: "warn",
+  redirect: "warn", cookie: "warn", credential_access: "warn", download: "warn",
+};
+
+function jsAnalysis(ctx) {
+  return cached(jsCache, ctx, () => {
+    if (ctx.kind === "sample") {
+      return api(`/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/js-analysis` + query({ version: ctx.version }))
+        .then((r) => ({ data: r.data, source: r.headers.get("X-Js-Source") || "stored" }));
+    }
+    return api("/api/v1/js-analysis", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html: ctx.html || "", url: ctx.url || null }),
+    }).then((r) => ({ data: r.data, source: "api" }));
+  });
+}
+
+const codeText = (text) => el("span", { cls: "url", text: show(text) }); // monospace, text only
+
+function detectionRow(d, scripts) {
+  const script = scripts[d.script_index] || {};
+  const args = d.args || {};
+  const url = args.url
+    ? el("span", {}, codeText(args.url), " ",
+      args.url_is_external ? badge("external", "danger") : badge("same site", "ok"))
+    : (args.literal_value ? codeText(args.literal_value) : el("span", { cls: "muted", text: "—" }));
+  const facts = [d.selector ? `selector ${d.selector}` : "", d.event_type ? `event ${d.event_type}` : "",
+    d.assigned_to ? `→ ${d.assigned_to}` : "", args.http_method || "",
+    (args.identifiers_used || []).length ? "uses " + args.identifiers_used.slice(0, 6).join(", ") : "",
+    d.enclosing_function ? `in ${d.enclosing_function}` : ""].filter(Boolean).join(" · ");
+  return [
+    el("span", {}, el("strong", { text: d.api }), " ", badge(d.category, JS_CATEGORY_KIND[d.category])),
+    `${d.source} #${d.script_index}`,
+    `${d.line}:${d.column}`,
+    d.access,
+    el("div", {}, codeText(d.snippet), facts ? el("div", { cls: "muted", text: facts }) : null),
+    url,
+    el("span", {}, d.in_library ? badge(`library: ${script.library || "?"}`, "info") : null, " ",
+      d.confidence === "low" ? badge("low confidence", "warn") : badge("high", "ok")),
+  ];
+}
+
+function scriptCard(s) {
+  const o = s.obfuscation;
+  return el("div", { cls: "card" },
+    el("h3", {}, `#${s.index} ${s.origin}`,
+      badge(s.parser, s.parser === "tree-sitter" ? "ok" : "warn"),
+      s.library ? badge(`library: ${s.library}`, "info") : null,
+      s.truncated ? badge("truncated", "warn") : null,
+      s.timed_out ? badge("parse timeout", "danger") : null,
+      s.has_error ? badge(`parse errors ${(100 * s.error_ratio).toFixed(1)} %`, "warn") : null,
+      s.detections ? badge(`${s.detections} detection(s)`) : null,
+      o && o.minified ? badge("minified") : null,
+      ...(o ? o.signatures.map((x) => badge(x, "danger")) : [])),
+    o ? kv([
+      ["characters", `${fmtInt(s.analyzed_chars)} analysed of ${fmtInt(s.chars)}`],
+      ["lines / longest", `${fmtInt(o.lines)} / ${fmtInt(o.max_line_length)} chars`],
+      ["entropy", `${fmtValue(o.entropy)} bits/char`],
+      ["whitespace / symbols", `${fmtPct(o.whitespace_ratio)} / ${fmtPct(o.non_alnum_ratio)}`],
+      ["escapes hiding text", fmtPct(o.escape_ratio)],
+      ["identifiers", `${fmtInt(o.identifier_count)} · avg ${fmtValue(o.avg_identifier_length)} chars · ${fmtPct(o.single_char_identifier_ratio)} one-letter · ${fmtPct(o.hex_identifier_ratio)} _0x names`],
+      ["longest string / string array", `${fmtInt(o.max_string_length)} / ${fmtInt(o.string_array_size)}`],
+    ]) : el("p", { cls: "muted", text: s.note || "Not analysed." }),
+    s.note && o ? el("p", { cls: "note", text: s.note }) : null);
+}
+
+registerTab({
+  id: "js-analysis",
+  title: "JS Analysis (Part 7)",
+  async render(ctx, box) {
+    fill(box, el("p", { cls: "muted", text: "Analysing JavaScript (static, nothing is executed)…" }));
+    const result = await jsAnalysis(ctx);
+    if (state.ctx !== ctx || !box.isConnected) return; // the user moved on meanwhile
+    const r = result.data;
+    const meta = r.meta || {};
+    const summary = r.summary || {};
+    const scripts = r.scripts || [];
+    const detections = r.detections || [];
+    clear(box);
+
+    fill(box,
+      el("div", { cls: "toolbar" },
+        badge(r.feature_set_version, "info"),
+        badge(meta.parser || "parser ?"),
+        badge(result.source === "on-the-fly" ? "computed on the fly" : result.source, result.source === "on-the-fly" ? "warn" : null),
+        el("span", { cls: "muted", text: `${fmtValue(meta.processing_ms)} ms · rules ${(meta.rules_hash || "").slice(0, 12)}` })),
+      (meta.errors || []).length ? el("div", { cls: "error-box" }, el("ul", {}, meta.errors.map((e) => el("li", { text: e })))) : null,
+      (meta.warnings || []).length ? el("p", { cls: "note", text: "Note: " + meta.warnings.join(" · ") }) : null,
+      el("p", { cls: "muted", text: "Static analysis only: scripts are parsed, never run. External <script src> files are not downloaded. Part 7 reports API usage; intent is decided in Part 8." }));
+
+    // Summary: counts, then one chip per category (page-own code only).
+    const own = summary.categories_page_own || {};
+    const lib = summary.categories_library || {};
+    const categories = Array.from(new Set(Object.keys(own).concat(Object.keys(lib))));
+    const flags = Object.entries(summary.flags || {}).filter(([, v]) => v).map(([k]) => k);
+    fill(box, section("Summary",
+      el("div", { cls: "cards" },
+        countCard("scripts analysed", summary.scripts_analyzed),
+        countCard("lexical fallback", summary.scripts_lexical),
+        countCard("library scripts", summary.library_scripts, (summary.libraries || []).join(", ")),
+        countCard("detections (page-own)", summary.detections_page_own, `of ${fmtInt(summary.detections_total)} total`),
+        countCard("external scripts", (r.external_scripts || []).length)),
+      el("h3", { cls: "heading" }, "API categories (page-own · library)"),
+      categories.length
+        ? el("div", { cls: "toolbar" }, categories.map((c) =>
+          badge(`${c}: ${fmtInt(own[c] || 0)}${lib[c] ? ` · lib ${fmtInt(lib[c])}` : ""}`, own[c] ? JS_CATEGORY_KIND[c] || "info" : null)))
+        : el("p", { cls: "muted", text: "No API usage found." }),
+      el("h3", { cls: "heading" }, "Flags (page-own)"),
+      flags.length ? el("div", { cls: "toolbar" }, flags.map((f) => badge(f, "warn"))) : el("p", { cls: "muted", text: "None." })));
+
+    // Detections table with two filters (library code, category).
+    const tableBox = el("div");
+    const showLib = el("input", { attrs: { type: "checkbox" } });
+    const category = el("select", {}, el("option", { text: "all categories", attrs: { value: "" } }),
+      ...categories.map((c) => el("option", { text: c, attrs: { value: c } })));
+    const draw = () => {
+      const rows = detections.filter((d) => (showLib.checked || !d.in_library) && (!category.value || d.category === category.value));
+      fill(clear(tableBox), table(["api", "source", "line", "access", "snippet (text only)", "URL / literal", "where / confidence"],
+        rows, (d) => detectionRow(d, scripts), 200));
+    };
+    showLib.addEventListener("change", draw);
+    category.addEventListener("change", draw);
+    const cut = summary.detections_stored !== undefined && summary.detections_stored < summary.detections_total;
+    fill(box, section(`Detections (${fmtInt(detections.length)})`,
+      el("div", { cls: "toolbar" }, el("label", { cls: "row" }, showLib, " include library code"), category,
+        cut ? badge(`list cut at ${fmtInt(summary.detections_stored)}`, "warn") : null),
+      tableBox));
+    draw();
+
+    // One card per analysed piece of JavaScript, with its obfuscation statistics.
+    const cards = el("div");
+    cards.hidden = scripts.length > 12;
+    const toggle = el("button", { attrs: { type: "button" }, text: cards.hidden ? `Show all ${scripts.length} scripts` : "Hide scripts" });
+    toggle.addEventListener("click", () => {
+      if (!cards.firstChild) cards.append(...scripts.map(scriptCard));
+      cards.hidden = !cards.hidden;
+      toggle.textContent = cards.hidden ? `Show all ${scripts.length} scripts` : "Hide scripts";
+    });
+    if (!cards.hidden) cards.append(...scripts.map(scriptCard));
+    fill(box, section(`Scripts (${scripts.length}) - obfuscation statistics are descriptive (minified ≠ obfuscated)`, toggle, cards));
+
+    fill(box, section(`External scripts (${(r.external_scripts || []).length}) - address only, never downloaded`,
+      table(["src", "domain", "site", "CDN / library", "flags", "async / defer", "integrity"], r.external_scripts || [], (s) => [
+        urlText(s.src), s.domain,
+        s.is_external ? badge("third-party", "warn") : badge("same site", "ok"),
+        el("span", {}, s.known_cdn ? badge("known CDN", "ok") : null, " ", s.library ? badge(s.library, "info") : null),
+        el("span", {}, ...(s.flags || []).map((f) => badge(f, f === "insecure_http" ? "warn" : "danger"))),
+        [s.async ? "async" : "", s.defer ? "defer" : ""].filter(Boolean).join(" ") || "—",
+        yes(s.has_integrity, "ok"),
+      ])));
+
+    fill(box, section("Limitations (static mode)", el("ul", {}, (r.limitations || []).map((x) => el("li", { text: x })))));
+  },
+});
+
 // ---- Future parts (disabled placeholders) -------------------------------------------------
 
 for (const [id, title] of [
   ["content-nlp", "Content / NLP (Part 5–6)"],
-  ["js-behavior", "JS Behavior (Part 7–8)"],
+  ["behavior", "Behavior Intent (Part 8)"],
   ["unified", "Unified Result (Part 9)"],
 ]) {
   registerTab({ id, title, enabled: false, render() {} });

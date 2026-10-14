@@ -13,6 +13,7 @@ sample, so it reads the same files the pipeline uses:
     data/splits/<version>/split.csv                         shared split (Part 4)
     models/dom_baseline/<version>/*.joblib                  Part 4 trained baselines
     reports/dom_baseline/<version>/misclassified.csv        Part 4 test mistakes
+    data/processed/js/<version>/<sample_id>.json            Part 7 stored JsAnalysisResult
 
 Rules:
 - READ ONLY: nothing here writes to data/ (a page processed on the fly is not
@@ -50,6 +51,9 @@ from c2_analyzer.dom.exporter import output_dir as dom_output_dir
 from c2_analyzer.dom.exporter import reports_dir as dom_reports_dir
 from c2_analyzer.dom.pipeline import extract_dom_features
 from c2_analyzer.dom.report import label_medians
+from c2_analyzer.js_analyzer.batch import output_dir as js_output_dir
+from c2_analyzer.js_analyzer.batch import stored_result as stored_js_result
+from c2_analyzer.js_analyzer.pipeline import analyze_js
 from c2_analyzer.preprocessing.batch import output_dir
 from c2_analyzer.preprocessing.loader import from_bytes
 from c2_analyzer.preprocessing.pipeline import preprocess
@@ -107,6 +111,7 @@ class DevDataset:
         baseline_models: Path | None = None,
         baseline_reports: Path | None = None,
         splits: Path | None = None,
+        js_root: Path | None = None,
     ) -> None:
         self.manifests = manifests
         self.parsed_root = parsed_root  # data/processed/parsed_html (one folder per version)
@@ -117,6 +122,7 @@ class DevDataset:
         self.baseline_models = baseline_models  # models/dom_baseline (None = no predictions)
         self.baseline_reports = baseline_reports  # reports/dom_baseline (misclassified.csv)
         self.splits = splits  # data/splits (None = split unknown)
+        self.js_root = js_root  # data/processed/js (None = never stored)
         self._bundles: dict[str, tuple[tuple, dict]] = {}
         self._files: dict[Path, tuple[int, object]] = {}
         self._facts: dict[Path, tuple[int, int, _Facts | None]] = {}
@@ -137,6 +143,7 @@ class DevDataset:
             baseline_models=baseline.models_dir,
             baseline_reports=baseline.reports_dir,
             splits=splits_root(),
+            js_root=js_output_dir(None).parent,
         )
 
     # ---- versions ---------------------------------------------------------------
@@ -327,6 +334,22 @@ class DevDataset:
         text, _ = self.parsed(version, sample_id)
         page = ParsedPage.model_validate_json(text)
         return extract_dom_features(page, raw.html).model_dump_json(), "on-the-fly"
+
+    def js_analysis(self, version: str, sample_id: str) -> tuple[str, str]:
+        """(JsAnalysisResult JSON text, "stored" | "on-the-fly") - Part 7 for one sample.
+
+        The stored result is used when it was made from the same file with the
+        current rules; otherwise the analysis runs now on the (stored or freshly
+        made) ParsedPage - not saved.
+        """
+        row = self._row(version, sample_id)
+        if self.js_root is not None:
+            path = self.js_root / version / f"{sample_id}.json"
+            if stored_js_result(path, row["sha256"]) is not None:
+                return path.read_text(encoding="utf-8"), "stored"
+        text, _ = self.parsed(version, sample_id)
+        page = ParsedPage.model_validate_json(text)
+        return analyze_js(page).model_dump_json(), "on-the-fly"
 
     def dom_dictionary(self, version: str | None) -> DomDictionaryInfo:
         """The Part 3 feature dictionary + per-label medians of a version (if reported)."""
