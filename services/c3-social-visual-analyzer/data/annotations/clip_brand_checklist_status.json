@@ -1,0 +1,63 @@
+{
+  "task": "Visual Threat + CLIP Brand Analysis",
+  "items": [
+    {
+      "item": "Load CLIP model",
+      "done": true
+    },
+    {
+      "item": "Preprocess post images",
+      "done": true
+    },
+    {
+      "item": "Generate image embeddings",
+      "done": true
+    },
+    {
+      "item": "Generate brand text embeddings",
+      "done": true
+    },
+    {
+      "item": "Generate reference-logo embeddings",
+      "done": true
+    },
+    {
+      "item": "Calculate cosine similarity",
+      "done": true
+    },
+    {
+      "item": "Generate Top-K brand candidates",
+      "done": true
+    },
+    {
+      "item": "Select similarity threshold",
+      "done": true
+    },
+    {
+      "item": "Analyze post image brand",
+      "done": true
+    },
+    {
+      "item": "Analyze website screenshot brand",
+      "done": true
+    },
+    {
+      "item": "Store predicted brand",
+      "done": true
+    },
+    {
+      "item": "Store similarity confidence",
+      "done": true
+    },
+    {
+      "item": "Evaluate brand recognition",
+      "done": true
+    },
+    {
+      "item": "Save experiment results",
+      "done": true
+    }
+  ],
+  "done_count": 14,
+  "updated_at": "2026-10-14T18:16:40.279984+00:00"
+}
