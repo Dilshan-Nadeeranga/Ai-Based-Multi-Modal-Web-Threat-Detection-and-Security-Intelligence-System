@@ -2,6 +2,8 @@
 
 const API_BASE_URL =
   import.meta.env.VITE_C4_API_BASE_URL || 'http://localhost:8000/api/v1'
+// Repository submissions go through the authenticated API Gateway, which records scan ownership.
+const GATEWAY_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 export class CodeAuditApiError extends Error {
   constructor(message, status, code = null, data = null) {
@@ -13,20 +15,21 @@ export class CodeAuditApiError extends Error {
 }
 
 /**
- * POST /repositories/analyze
+ * POST {gateway}/code-audit → C4 POST /repositories/analyze (authenticated; the scan is owned by the user)
  * @param {string} repositoryUrl public GitHub repository URL
  */
 export async function analyzeRepository(repositoryUrl) {
   let response
   try {
-    response = await fetch(`${API_BASE_URL}/repositories/analyze`, {
+    response = await fetch(`${GATEWAY_BASE_URL}/code-audit`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ repository_url: repositoryUrl }),
     })
   } catch {
     throw new CodeAuditApiError(
-      'Backend is unavailable. Please make sure the analysis service is running.',
+      'Backend is unavailable. Please make sure the API Gateway and analysis service are running.',
       0
     )
   }
@@ -39,8 +42,9 @@ export async function analyzeRepository(repositoryUrl) {
   }
 
   if (!response.ok) {
-    const detail = data && data.detail
+    const detail = data && (data.detail || data.message)
     const messages = {
+      401: 'Your session has expired. Please log in again.',
       400: 'Invalid GitHub URL. Use the form https://github.com/owner/repository.',
       404: 'Repository not found. It may not exist, or it is private (private repositories are not supported yet).',
       429: 'GitHub rate limit reached. Please try again in a few minutes.',
