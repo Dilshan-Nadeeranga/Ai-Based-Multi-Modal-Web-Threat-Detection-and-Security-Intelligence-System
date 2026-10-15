@@ -18,16 +18,16 @@ export default function RiskBreakdown({ risk }) {
             const caption = key === 'brand' ? 'used only if a brand mismatch is detected'
               : used ? `weight ${weight} (renormalised over available components)` : 'not available — excluded'
             return value === null || value === undefined
-              ? <p key={key} className="text-xs text-slate-500">{label}: not available</p>
+              ? <p key={key} className="text-xs text-st-muted">{label}: not available</p>
               : <Bar key={key} label={label} value={value} hint={caption} />
           })}
         </div>
-        <div className="rounded-lg bg-slate-950/60 border border-slate-800 p-4 text-sm space-y-2 font-mono">
-          <p className="flex justify-between"><span className="text-slate-400">Weighted base</span><span>{pct(risk.base, 1)}</span></p>
-          <p className="flex justify-between"><span className="text-slate-400">Consistency boost</span><span>+{pct(risk.boost, 1)}</span></p>
-          <p className={`flex justify-between border-t border-slate-800 pt-2 font-bold ${style.text}`}><span>Final score</span><span>{pct(risk.score, 1)} → {risk.level}</span></p>
-          {risk.reasons.length > 0 && <p className="text-xs text-slate-400 font-sans">{risk.reasons.join('; ')}</p>}
-          <p className="text-[11px] text-slate-500 font-sans">HIGH {risk.rule.HIGH} · MEDIUM {risk.rule.MEDIUM} · LOW {risk.rule.LOW}</p>
+        <div className="rounded-lg bg-st-low border border-st-container p-4 text-sm space-y-2 font-mono">
+          <p className="flex justify-between"><span className="text-st-muted">Weighted base</span><span>{pct(risk.base, 1)}</span></p>
+          <p className="flex justify-between"><span className="text-st-muted">Consistency boost</span><span>+{pct(risk.boost, 1)}</span></p>
+          <p className={`flex justify-between border-t border-st-container pt-2 font-bold ${style.text}`}><span>Final score</span><span>{pct(risk.score, 1)} → {risk.level}</span></p>
+          {risk.reasons.length > 0 && <p className="text-xs text-st-muted font-sans">{risk.reasons.join('; ')}</p>}
+          <p className="text-[11px] text-st-muted font-sans">HIGH {risk.rule.HIGH} · MEDIUM {risk.rule.MEDIUM} · LOW {risk.rule.LOW}</p>
         </div>
       </div>
     </Card>

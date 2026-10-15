@@ -4,11 +4,11 @@ import { PIPELINE_STEPS } from './constants.js'
 import { Card } from './ui.jsx'
 
 const ICONS = {
-  done: <CheckCircle2 className="w-4 h-4 text-emerald-400" />,
-  skipped: <MinusCircle className="w-4 h-4 text-slate-500" />,
-  failed: <XCircle className="w-4 h-4 text-red-400" />,
-  running: <Loader2 className="w-4 h-4 text-sky-400 animate-spin" />,
-  pending: <Circle className="w-4 h-4 text-slate-600" />,
+  done: <CheckCircle2 className="w-4 h-4 text-emerald-700" />,
+  skipped: <MinusCircle className="w-4 h-4 text-st-muted" />,
+  failed: <XCircle className="w-4 h-4 text-red-700" />,
+  running: <Loader2 className="w-4 h-4 text-st-blue-dark animate-spin" />,
+  pending: <Circle className="w-4 h-4 text-st-outline" />,
 }
 
 /** While running, the backend gives no per-step progress, so every step shows as "running" until the response arrives. */
@@ -34,11 +34,11 @@ export default function AnalysisProgress({ running, pipeline }) {
           const step = byKey[key]
           const status = step?.status || (running ? 'running' : 'pending')
           return (
-            <li key={key} className="flex items-start gap-2 rounded-lg bg-slate-950/60 border border-slate-800 px-3 py-2">
+            <li key={key} className="flex items-start gap-2 rounded-lg bg-st-low border border-st-container px-3 py-2">
               <span className="mt-0.5">{ICONS[status]}</span>
               <div className="min-w-0">
-                <p className="text-sm text-slate-200">{label}</p>
-                <p className="text-[11px] text-slate-500 truncate" title={step?.detail || ''}>
+                <p className="text-sm text-st-ink">{label}</p>
+                <p className="text-[11px] text-st-muted truncate" title={step?.detail || ''}>
                   {status === 'done' && `${step.duration_ms} ms`}
                   {status === 'skipped' && `skipped — ${step.detail}`}
                   {status === 'failed' && `failed — ${step.detail}`}

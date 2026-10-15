@@ -14,7 +14,7 @@ export default function TextThreatCard({ textThreat }) {
           {[['Post text', textThreat.post_text_score], ['OCR text', textThreat.ocr_text_score]].map(([label, score]) => (
             <div key={label}>
               {score === null || score === undefined
-                ? <p className="text-xs text-slate-500">{label}: not available</p>
+                ? <p className="text-xs text-st-muted">{label}: not available</p>
                 : <Bar label={`${label} scam probability`} value={score}
                        hint={`Prediction: ${prediction(score)} (threshold 50%)`} />}
             </div>

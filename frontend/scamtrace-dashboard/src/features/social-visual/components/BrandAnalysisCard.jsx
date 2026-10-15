@@ -3,19 +3,19 @@ import { pct } from './constants.js'
 import { Bar, Card, NotAvailable } from './ui.jsx'
 
 function Candidates({ title, clip }) {
-  if (!clip) return <div><p className="text-xs font-semibold text-slate-300 mb-2">{title}</p><NotAvailable>Not available.</NotAvailable></div>
+  if (!clip) return <div><p className="text-xs font-semibold text-st-ink mb-2">{title}</p><NotAvailable>Not available.</NotAvailable></div>
   return (
     <div>
-      <p className="text-xs font-semibold text-slate-300">{title}</p>
-      <p className="text-[11px] mb-3 text-slate-500">
+      <p className="text-xs font-semibold text-st-ink">{title}</p>
+      <p className="text-[11px] mb-3 text-st-muted">
         {clip.predicted_brand
-          ? <>Accepted: <span className="text-slate-200">{clip.predicted_brand}</span> ({pct(clip.confidence, 1)} ≥ {pct(clip.threshold)})</>
+          ? <>Accepted: <span className="text-st-ink">{clip.predicted_brand}</span> ({pct(clip.confidence, 1)} ≥ {pct(clip.threshold)})</>
           : <>Rejected as unknown brand (best {pct(clip.confidence, 1)} &lt; {pct(clip.threshold)})</>}
       </p>
       <div className="space-y-2">
         {clip.top_k.map((candidate) => (
           <Bar key={candidate.brand_id} label={candidate.name} value={candidate.probability}
-               tone={candidate.brand_id === clip.predicted_brand ? 'bg-sky-500' : 'bg-slate-500'} />
+               tone={candidate.brand_id === clip.predicted_brand ? 'bg-sky-500' : 'bg-st-outline'} />
         ))}
       </div>
     </div>
@@ -35,18 +35,18 @@ export default function BrandAnalysisCard({ brandAnalysis, postImage, logoDetect
         <Candidates title="Website screenshot — top candidates" clip={brandAnalysis?.website} />
       </div>
       {reference && postImage && (
-        <div className="mt-6 border-t border-slate-800 pt-4">
-          <p className="text-xs font-semibold text-slate-300 mb-3">
+        <div className="mt-6 border-t border-st-container pt-4">
+          <p className="text-xs font-semibold text-st-ink mb-3">
             Post image vs reference logo ({reference.name}{post?.predicted_brand === reference.brand_id ? '' : ' — best candidate, not accepted'})
           </p>
           <div className="flex flex-wrap items-center gap-6">
-            <img src={postImage} alt="Post" className="h-32 rounded border border-slate-800 bg-slate-950 object-contain" />
-            <span className="text-slate-500">↔</span>
-            <img src={reference.image} alt={reference.name} className="h-32 w-32 rounded border border-slate-800 bg-white object-contain" />
+            <img src={postImage} alt="Post" className="h-32 rounded border border-st-container bg-st-low object-contain" />
+            <span className="text-st-muted">↔</span>
+            <img src={reference.image} alt={reference.name} className="h-32 w-32 rounded border border-st-container bg-white object-contain" />
             <div className="text-sm space-y-1">
-              <p className="text-slate-400">CLIP logo cosine: <span className="font-mono text-slate-100">{clipRow ? clipRow.logo_cosine.toFixed(3) : '—'}</span></p>
-              <p className="text-slate-400">CLIP text cosine: <span className="font-mono text-slate-100">{clipRow ? clipRow.text_cosine.toFixed(3) : '—'}</span></p>
-              <p className="text-slate-400">Detected logo similarity: <span className="font-mono text-slate-100">{bestLogo ? pct(bestLogo.similarity, 1) : '—'}</span></p>
+              <p className="text-st-muted">CLIP logo cosine: <span className="font-mono text-st-ink">{clipRow ? clipRow.logo_cosine.toFixed(3) : '—'}</span></p>
+              <p className="text-st-muted">CLIP text cosine: <span className="font-mono text-st-ink">{clipRow ? clipRow.text_cosine.toFixed(3) : '—'}</span></p>
+              <p className="text-st-muted">Detected logo similarity: <span className="font-mono text-st-ink">{bestLogo ? pct(bestLogo.similarity, 1) : '—'}</span></p>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import AppShell from '../../../components/AppShell.jsx'
 import { getReviewWorkspace, startReview, validateRemediation } from '../api/codeAuditApi.js'
 import CodeViewer from '../components/CodeViewer.jsx'
 import DiffViewer from '../components/DiffViewer.jsx'
@@ -12,6 +13,14 @@ const LOAD_ERRORS = {
   REMEDIATION_NOT_FOUND: 'This remediation suggestion does not exist.',
   FINDING_NOT_FOUND: 'The finding for this remediation no longer exists.',
   RELATION_MISMATCH: 'The stored finding, remediation and validation records do not match. Review is not possible.',
+}
+
+function ReviewPage({ children }) {
+  return (
+    <AppShell title="Analyst Review">
+      <div className="ca-page ca-review">{children}</div>
+    </AppShell>
+  )
 }
 
 function Section({ letter, title, children }) {
@@ -109,29 +118,29 @@ function AnalystReview({ remediationId }) {
 
   if (!remediationId) {
     return (
-      <main className="ca-page ca-review">
+      <ReviewPage>
         <header className="ca-page__header"><h1>HITL Analyst Review</h1></header>
         <p className="ca-empty">
           Open a finding in the <Link to="/code-audit">Code Audit</Link> report and choose
           “Open Analyst Review” on its AI remediation suggestion.
         </p>
-      </main>
+      </ReviewPage>
     )
   }
   if (loadError) {
     return (
-      <main className="ca-page ca-review">
+      <ReviewPage>
         <header className="ca-page__header"><h1>HITL Analyst Review</h1></header>
         <p className="ca-error" role="alert">{loadError}</p>
         <Link to="/code-audit">Back to Code Audit</Link>
-      </main>
+      </ReviewPage>
     )
   }
   if (!workspace) {
     return (
-      <main className="ca-page ca-review">
+      <ReviewPage>
         <p className="ca-loading">Loading analyst review…</p>
-      </main>
+      </ReviewPage>
     )
   }
 
@@ -142,9 +151,10 @@ function AnalystReview({ remediationId }) {
     : finding.start_line
 
   return (
-    <main className="ca-page ca-review">
+    <ReviewPage>
       <header className="ca-page__header">
         <Link to="/code-audit" className="ca-review__back">← Code Audit</Link>
+        <span className="ca-page__badge">Component C4</span>
         <h1>HITL Analyst Review</h1>
         <p className="ca-page__subtitle">
           Mandatory human decision before patch approval. Review the deterministic evidence, then
@@ -295,6 +305,6 @@ function AnalystReview({ remediationId }) {
           </Link>
         </p>
       </Section>
-    </main>
+    </ReviewPage>
   )
 }

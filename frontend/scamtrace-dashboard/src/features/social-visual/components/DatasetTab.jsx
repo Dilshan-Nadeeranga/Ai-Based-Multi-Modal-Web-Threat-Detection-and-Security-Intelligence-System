@@ -11,11 +11,11 @@ function Distribution({ title, data }) {
       <div className="space-y-2">
         {entries.map(([key, value]) => (
           <div key={key}>
-            <div className="flex justify-between text-xs text-slate-300"><span>{key.replaceAll('_', ' ')}</span><span className="font-mono">{value}</span></div>
-            <div className="mt-1 h-2 rounded bg-slate-800 overflow-hidden"><div className="h-full bg-sky-500" style={{ width: `${(value / max) * 100}%` }} /></div>
+            <div className="flex justify-between text-xs text-st-ink"><span>{key.replaceAll('_', ' ')}</span><span className="font-mono">{value}</span></div>
+            <div className="mt-1 h-2 rounded bg-st-container overflow-hidden"><div className="h-full bg-sky-500" style={{ width: `${(value / max) * 100}%` }} /></div>
           </div>
         ))}
-        {entries.length === 0 && <p className="text-sm text-slate-500">No data.</p>}
+        {entries.length === 0 && <p className="text-sm text-st-muted">No data.</p>}
       </div>
     </Card>
   )
@@ -29,8 +29,8 @@ export default function DatasetTab() {
     getDatasetStatistics().then(setStats).catch((err) => setError(err.message))
   }, [])
 
-  if (error) return <p className="text-sm text-red-400">{error}</p>
-  if (!stats) return <p className="flex items-center gap-2 text-sm text-slate-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading dataset statistics…</p>
+  if (error) return <p role="alert" className="rounded-lg bg-st-error-bg p-4 text-sm text-st-error-ink">{error}</p>
+  if (!stats) return <p className="flex items-center gap-2 text-sm text-st-muted"><Loader2 className="w-4 h-4 animate-spin" /> Loading dataset statistics…</p>
 
   const totals = [
     ['Samples', stats.total_samples], ['Verified labels', stats.label_status?.verified],
@@ -42,9 +42,9 @@ export default function DatasetTab() {
       <Card title="C3 multimodal dataset" subtitle={`Version ${stats.dataset_version} · generated ${stats.generated_at}`} icon={Database}>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {totals.map(([label, value]) => (
-            <div key={label} className="rounded-lg bg-slate-950/60 border border-slate-800 p-3">
-              <p className="text-[11px] uppercase text-slate-500">{label}</p>
-              <p className="text-xl font-bold text-slate-100">{value ?? '—'}</p>
+            <div key={label} className="rounded-lg bg-st-low border border-st-container p-3">
+              <p className="text-[11px] uppercase text-st-muted">{label}</p>
+              <p className="text-xl font-bold text-st-ink">{value ?? '—'}</p>
             </div>
           ))}
         </div>
