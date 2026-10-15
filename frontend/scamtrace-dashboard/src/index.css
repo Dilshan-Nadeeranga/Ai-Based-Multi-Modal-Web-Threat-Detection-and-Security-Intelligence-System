@@ -2,6 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /* Browsers paint autofilled fields with their own background; an inset shadow is the only reliable override. */
+  .st-autofill:-webkit-autofill,
+  .st-autofill:-webkit-autofill:hover {
+    -webkit-text-fill-color: #000b5b;
+    caret-color: #000b5b;
+    -webkit-box-shadow: 0 0 0 1000px #f3f2ff inset, 0 0 0 1px #ececff;
+    box-shadow: 0 0 0 1000px #f3f2ff inset, 0 0 0 1px #ececff;
+    transition: background-color 9999s ease-out 0s;
+  }
+  .st-autofill:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset, 0 0 0 2px #005bb0;
+    box-shadow: 0 0 0 1000px #ffffff inset, 0 0 0 2px #005bb0;
+  }
+
+  /* Soft blue backdrop with a faint grid, used behind the light home/login content. */
+  .st-blue-backdrop {
+    background-color: #e8eeff;
+    background-image:
+      linear-gradient(rgba(7, 28, 140, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(7, 28, 140, 0.05) 1px, transparent 1px),
+      radial-gradient(ellipse at 15% 10%, rgba(0, 116, 221, 0.18), transparent 55%),
+      radial-gradient(ellipse at 85% 90%, rgba(7, 28, 140, 0.16), transparent 55%),
+      linear-gradient(160deg, #f3f6ff 0%, #e3ebff 55%, #d6e3ff 100%);
+    background-size: 32px 32px, 32px 32px, 100% 100%, 100% 100%, 100% 100%;
+  }
+}
+
 *,
 *::before,
 *::after {

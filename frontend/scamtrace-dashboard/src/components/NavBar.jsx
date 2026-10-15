@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { LogOut, ShieldCheck } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { useAuth } from '../features/auth/hooks/useAuth.js'
+import Logo from './Logo.jsx'
 
 const USER_LINKS = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -35,8 +36,8 @@ export default function NavBar() {
   return (
     <header className="w-full border-b border-slate-800 bg-slate-950/95 backdrop-blur sticky top-0 z-40">
       <nav className="max-w-7xl mx-auto px-4 py-2 min-h-14 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-2 text-slate-100 font-bold tracking-tight">
-          <ShieldCheck className="w-5 h-5 text-sky-400" /> ScamTrace
+        <Link to={user ? '/dashboard' : '/'} aria-label="ScamTrace home" className="flex items-center">
+          <Logo onDark className="h-6" />
         </Link>
 
         {!loading && user && (
