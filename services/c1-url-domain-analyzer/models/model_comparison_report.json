@@ -1,56 +1,56 @@
 {
-  "timestamp": "2026-10-13T14:41:17.304055+00:00",
+  "timestamp": "2026-10-15T12:53:32.857207+00:00",
   "dataset_metadata": {
     "strategy": "domain_grouped",
     "random_seed": 42,
     "total_samples": 200000,
-    "train_samples": 143303,
-    "val_samples": 18865,
-    "test_samples": 37832,
+    "train_samples": 145899,
+    "val_samples": 21071,
+    "test_samples": 33030,
     "class_distribution_total": {
       "1": 100000,
       "0": 100000
     },
     "class_distribution_train": {
-      "1": 73222,
-      "0": 70081
+      "1": 75841,
+      "0": 70058
     },
     "class_distribution_val": {
-      "0": 9977,
-      "1": 8888
+      "1": 11074,
+      "0": 9997
     },
     "class_distribution_test": {
-      "0": 19942,
-      "1": 17890
+      "0": 19945,
+      "1": 13085
     },
     "unique_domains_total": 127451,
     "unique_domains_train": 89215,
     "unique_domains_test": 25491
   },
-  "feature_count": 52,
+  "feature_count": 57,
   "models": {
-    "random_forest": {
+    "random_forest_baseline": {
       "model_name": "Random Forest (Baseline)",
       "model_type": "RandomForestClassifier",
-      "accuracy": 0.9754,
-      "precision": 0.9889,
-      "recall": 0.9587,
-      "f1_score": 0.9735,
-      "roc_auc": 0.9967,
-      "false_positive_rate": 0.0097,
-      "true_negative_rate": 0.9903,
+      "accuracy": 0.9805,
+      "precision": 0.9769,
+      "recall": 0.9737,
+      "f1_score": 0.9753,
+      "roc_auc": 0.9972,
+      "false_positive_rate": 0.0151,
+      "true_negative_rate": 0.9849,
       "confusion_matrix": [
         [
-          19749,
-          193
+          19644,
+          301
         ],
         [
-          739,
-          17151
+          344,
+          12741
         ]
       ],
-      "optimal_threshold": 0.31,
-      "avg_latency_ms": 0.0007,
+      "optimal_threshold": 0.34,
+      "avg_latency_ms": 0.0008,
       "is_baseline": true,
       "hyperparameters": {
         "bootstrap": true,
@@ -73,9 +73,85 @@
         "verbose": 0,
         "warm_start": false
       },
-      "training_time_sec": 1.28
+      "training_time_sec": 1.421,
+      "false_negative_rate": 0.0263,
+      "threshold_tuning_summary": {
+        "threshold": 0.34,
+        "tn": 9858,
+        "fp": 139,
+        "fn": 202,
+        "tp": 10872,
+        "accuracy": 0.9838,
+        "precision": 0.9874,
+        "recall": 0.9818,
+        "f1_score": 0.9846,
+        "fpr": 0.0139,
+        "fnr": 0.0182,
+        "combined_error": 0.0321
+      }
+    },
+    "random_forest": {
+      "model_name": "Random Forest (Tuned & Improved)",
+      "model_type": "RandomForestClassifier",
+      "accuracy": 0.9848,
+      "precision": 0.989,
+      "recall": 0.9724,
+      "f1_score": 0.9807,
+      "roc_auc": 0.9983,
+      "false_positive_rate": 0.0071,
+      "true_negative_rate": 0.9929,
+      "confusion_matrix": [
+        [
+          19804,
+          141
+        ],
+        [
+          361,
+          12724
+        ]
+      ],
+      "optimal_threshold": 0.44,
+      "avg_latency_ms": 0.0012,
+      "is_baseline": false,
+      "hyperparameters": {
+        "bootstrap": true,
+        "ccp_alpha": 0.0,
+        "class_weight": "balanced",
+        "criterion": "gini",
+        "max_depth": 20,
+        "max_features": "sqrt",
+        "max_leaf_nodes": null,
+        "max_samples": null,
+        "min_impurity_decrease": 0.0,
+        "min_samples_leaf": 1,
+        "min_samples_split": 4,
+        "min_weight_fraction_leaf": 0.0,
+        "monotonic_cst": null,
+        "n_estimators": 150,
+        "n_jobs": -1,
+        "oob_score": false,
+        "random_state": 42,
+        "verbose": 0,
+        "warm_start": false
+      },
+      "training_time_sec": 2.244,
+      "false_negative_rate": 0.0276,
+      "threshold_tuning_summary": {
+        "threshold": 0.44,
+        "tn": 9933,
+        "fp": 64,
+        "fn": 191,
+        "tp": 10883,
+        "accuracy": 0.9879,
+        "precision": 0.9942,
+        "recall": 0.9828,
+        "f1_score": 0.9884,
+        "fpr": 0.0064,
+        "fnr": 0.0172,
+        "combined_error": 0.0236
+      }
     }
   },
   "recommended_model": "random_forest",
-  "recommendation_rationale": "Model 'Random Forest (Baseline)' achieved the strongest operational balance: F1-Score: 0.9735, ROC-AUC: 0.9967, False Positive Rate: 0.0097, and Inference Latency: 0.0007 ms/sample (Training Time: 1.28s). Maintained the most reliable generalization boundary across all tested metrics."
+  "recommendation_rationale": "Model 'Random Forest (Tuned & Improved)' achieved the strongest operational balance: F1-Score: 0.9807, ROC-AUC: 0.9983, False Positive Rate: 0.0071, False Negative Rate: 0.0276, and Inference Latency: 0.0012 ms/sample (Training Time: 2.24s). Compared to Baseline (FPR: 0.0151, FNR: 0.0263), reduced False Positives by +160 and False Negatives by -17."
 }
