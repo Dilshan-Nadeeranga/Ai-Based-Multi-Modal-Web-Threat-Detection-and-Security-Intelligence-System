@@ -82,6 +82,12 @@ FEATURE_NAMES: List[str] = [
     "is_nrd",
     "has_dns_records",
     "has_domain_data",
+    # Enhanced Features for FP/FN Reduction
+    "is_shortened_url",
+    "base_url_entropy",
+    "has_tracking_param",
+    "path_to_url_ratio",
+    "is_standard_port",
 ]
 
 
@@ -189,6 +195,12 @@ class MlFeatureExtractor:
             "is_nrd": float(is_nrd_val),
             "has_dns_records": float(has_dns_val),
             "has_domain_data": float(has_domain_flag),
+            # Enhanced Features for FP/FN Reduction
+            "is_shortened_url": 1.0 if lexical.is_shortened_url else 0.0,
+            "base_url_entropy": float(lexical.base_url_entropy),
+            "has_tracking_param": 1.0 if lexical.has_tracking_param else 0.0,
+            "path_to_url_ratio": float(lexical.path_to_url_ratio),
+            "is_standard_port": 1.0 if lexical.is_standard_port else 0.0,
         }
 
     def extract_vector(

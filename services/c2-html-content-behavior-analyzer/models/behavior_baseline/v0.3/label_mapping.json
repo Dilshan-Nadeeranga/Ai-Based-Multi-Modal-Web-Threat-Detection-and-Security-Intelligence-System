@@ -1,0 +1,24 @@
+{
+  "classes": [
+    "benign",
+    "phishing",
+    "fake_ecommerce",
+    "crypto_scam",
+    "malware_delivery"
+  ],
+  "index": {
+    "benign": 0,
+    "phishing": 1,
+    "fake_ecommerce": 2,
+    "crypto_scam": 3,
+    "malware_delivery": 4
+  },
+  "labels_yaml_id": {
+    "benign": 0,
+    "phishing": 1,
+    "fake_ecommerce": 2,
+    "crypto_scam": 3,
+    "malware_delivery": 4
+  },
+  "excluded_classes": {}
+}

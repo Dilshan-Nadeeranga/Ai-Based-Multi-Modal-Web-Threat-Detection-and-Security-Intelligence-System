@@ -1,7 +1,7 @@
 {
-  "model_name": "Random Forest (Baseline)",
+  "model_name": "Random Forest (Tuned & Improved)",
   "model_type": "RandomForestClassifier",
-  "optimal_threshold": 0.31,
+  "optimal_threshold": 0.44,
   "feature_names": [
     "url_length",
     "hostname_length",
@@ -54,17 +54,23 @@
     "domain_age_days",
     "is_nrd",
     "has_dns_records",
-    "has_domain_data"
+    "has_domain_data",
+    "is_shortened_url",
+    "base_url_entropy",
+    "has_tracking_param",
+    "path_to_url_ratio",
+    "is_standard_port"
   ],
-  "feature_count": 52,
+  "feature_count": 57,
   "metrics": {
-    "accuracy": 0.9754,
-    "precision": 0.9889,
-    "recall": 0.9587,
-    "f1_score": 0.9735,
-    "roc_auc": 0.9967,
-    "false_positive_rate": 0.0097,
-    "avg_latency_ms": 0.0007
+    "accuracy": 0.9848,
+    "precision": 0.989,
+    "recall": 0.9724,
+    "f1_score": 0.9807,
+    "roc_auc": 0.9983,
+    "false_positive_rate": 0.0071,
+    "false_negative_rate": 0.0276,
+    "avg_latency_ms": 0.0012
   },
-  "trained_at": "2026-10-13T14:41:17.304055+00:00"
+  "trained_at": "2026-10-15T12:53:32.857207+00:00"
 }

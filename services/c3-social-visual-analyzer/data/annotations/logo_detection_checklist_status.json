@@ -1,0 +1,59 @@
+{
+  "task": "Logo / UI Detection + Visual Similarity",
+  "items": [
+    {
+      "item": "Prepare YOLO dataset",
+      "done": true
+    },
+    {
+      "item": "Configure YOLO model",
+      "done": true
+    },
+    {
+      "item": "Train logo detector baseline",
+      "done": true
+    },
+    {
+      "item": "Validate logo detector",
+      "done": true
+    },
+    {
+      "item": "Detect logo bounding boxes",
+      "done": true
+    },
+    {
+      "item": "Extract detected logo regions",
+      "done": true
+    },
+    {
+      "item": "Compare detected logo with references",
+      "done": true
+    },
+    {
+      "item": "Generate visual embeddings",
+      "done": true
+    },
+    {
+      "item": "Calculate logo similarity",
+      "done": true
+    },
+    {
+      "item": "Compare post image with website image",
+      "done": true
+    },
+    {
+      "item": "Save similarity results",
+      "done": true
+    },
+    {
+      "item": "Visualize detected logo regions",
+      "done": true
+    },
+    {
+      "item": "Evaluate baseline performance",
+      "done": true
+    }
+  ],
+  "done_count": 13,
+  "updated_at": "2026-10-15T04:33:24.635701+00:00"
+}

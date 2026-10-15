@@ -1,23 +1,236 @@
-# Sensitive sources and dangerous sinks for behavioral mapping (Part 8).
+# Sensitive SOURCES and dangerous SINKS for behavioral intent mapping (Part 8).
+# Read by c2_analyzer/behavior/rules.py.
+#
+# The idea (viva): Part 7 says WHICH APIs a page uses; Part 8 says what the code
+# is TRYING TO DO by linking them:
+#
+#     SOURCE (sensitive data)  ->  FLOW (variables, objects, calls)  ->  SINK (where it goes)
+#     #password.value          ->  var p -> JSON.stringify({p})       ->  fetch("https://evil.test")
+#
+# A single API is never a pattern on its own: fetch() is on every modern site,
+# reading #password.value is what every login form's validation does. Only the
+# CONNECTION (this password reaches that external request) is evidence.
+#
+# Sources and sinks are recognised from Part 7's detections (configs/js_rules.yaml
+# api ids - Part 8 does not detect APIs a second time). A few sources Part 7 does
+# not record (event.key in key listeners, navigator fingerprint properties,
+# location.href reads, jQuery serialize()) are matched by Part 8 from the lists below.
+# Credential FIELDS are classified with Part 3's field rules (configs/dom_features.yaml
+# field_rules) - the regexes are not repeated here.
+# Changing this file changes the behavior rules hash (stored results are redone).
+version: sources_sinks_v1
+
 sources:
-  credential_input: [password_input.value, input.value]
-  cookie: [document.cookie]
-  storage: [localStorage.getItem, sessionStorage.getItem]
-  clipboard_read: [navigator.clipboard.readText]
-  url_params: [location.search, location.hash, document.referrer]
+  credential_input:
+    description: "The value of a credential field (password, email, username, OTP / PIN, card, CVV, NIC) - by its selector, the page's form field it points to (Part 3 field classes) or a credential-like name"
+    sensitivity: high
+    apis: [input.value, FormData]
+    methods: [serialize, serializeArray]        # $(form).serialize() of a form with credential fields
+    field_classes: [password, card, otp_pin, email, username]   # Part 3 classes that count as credentials
+    # "secret" classes: a form is a credential form only with one of these (an email-only
+    # form is a newsletter / contact form); flows of identity fields alone (email /
+    # username, no secret) are one severity level lower
+    secret_classes: [password, card, otp_pin]
+    extra_words: [nic, ssn, passport]           # credential names Part 3 has no class for
+    secret_words: [pass, pwd, pin, otp, cvv, cvc, card, ccnum, ssn, nic, secret, token, passport]
+  form_data_generic:
+    description: "A whole form read at once (new FormData(form), URLSearchParams(FormData), $(form).serialize()) without credential fields"
+    sensitivity: medium
+    apis: [FormData]
+    methods: [serialize, serializeArray]
+  keystrokes:
+    description: "Per-key capture: event.key / keyCode / which / code / charCode / data inside a keydown / keypress / keyup / input listener (the whole typed value is user_input / credential_input)"
+    sensitivity: high
+    listener_apis: [key_listener]
+    event_properties: [key, keyCode, which, code, charCode, data]
+  cookie_read:
+    description: "document.cookie read (or cookieStore.get) - session / tracking identifiers"
+    sensitivity: medium
+    apis: [document.cookie, cookieStore]
+  storage_read:
+    description: "localStorage / sessionStorage read (tokens, saved user data)"
+    sensitivity: medium
+    apis: [localStorage, sessionStorage]
+  clipboard_read:
+    description: "What the user copied (navigator.clipboard.readText/read, clipboardData.getData, execCommand('paste'))"
+    sensitivity: high
+    apis: [navigator.clipboard.readText, navigator.clipboard.read, clipboardData.getData, document.execCommand]
+  user_input:
+    description: "The value of an input that is not a credential field (search box, quantity, ...)"
+    sensitivity: low
+    apis: [input.value]
+  page_url:
+    description: "The page address (location.search / hash / href, document.URL)"
+    sensitivity: low
+    apis: [location_read]
+    members: [search, hash]
+    paths: [location.href, location.pathname, location.toString, document.URL, document.documentURI]
+  referrer:
+    description: "document.referrer (where the visitor came from)"
+    sensitivity: low
+    apis: [location_read]
+    members: [referrer]
+  fingerprint:
+    description: "Browser / device properties used to fingerprint or cloak (navigator.userAgent, webdriver, language, screen size, timezone)"
+    sensitivity: low
+    paths: [navigator.userAgent, navigator.webdriver, navigator.platform, navigator.language,
+            navigator.languages, navigator.vendor, navigator.plugins, navigator.hardwareConcurrency,
+            navigator.deviceMemory, navigator.maxTouchPoints, navigator.appVersion,
+            navigator.userAgentData, screen.width, screen.height, screen.colorDepth,
+            screen.availWidth, screen.availHeight]
+    calls: [getTimezoneOffset, resolvedOptions]
+  decoded_string:
+    description: "A string decoded in the page (atob, unescape, String.fromCharCode, an escape-heavy literal) - used for obfuscated execution, never as 'sensitive data'"
+    sensitivity: low
+    internal: true                              # not a data source for exfiltration patterns
+    apis: [atob, unescape, String.fromCharCode, escape_heavy_string]
 
+# destination: external | internal | unknown - decided from the sink's URL (a literal, or a
+# string constant the URL variable was set to) against the page's own site, like Part 2/3.
 sinks:
-  network: [fetch, XMLHttpRequest.send, navigator.sendBeacon, WebSocket.send, Image.src]
-  form_submit: [form.submit, form.action]
-  navigation: [location.href, location.replace, location.assign, window.open]
-  code_execution: [eval, Function, setTimeout_string]
-  dom_write: [innerHTML, document.write]
-  download: [a.download, URL.createObjectURL]
-  clipboard_write: [navigator.clipboard.writeText, document.execCommand]
+  network_external:
+    description: "A request to another site: fetch, XHR open/send, sendBeacon, WebSocket, EventSource, an image beacon, $.ajax/post/get"
+    risk: high
+    apis: [fetch, xhr.open, xhr.send, navigator.sendBeacon, WebSocket, websocket.send, EventSource, image_beacon, jquery.ajax]
+    destination: external
+  network_unknown:
+    description: "A request whose address is built at run time (not resolvable statically)"
+    risk: medium
+    apis: [fetch, xhr.open, xhr.send, navigator.sendBeacon, WebSocket, websocket.send, EventSource, image_beacon, jquery.ajax]
+    destination: unknown
+  network_internal:
+    description: "A request to the page's own site (same registrable domain) - lower risk"
+    risk: low
+    apis: [fetch, xhr.open, xhr.send, navigator.sendBeacon, WebSocket, websocket.send, EventSource, image_beacon, jquery.ajax]
+    destination: internal
+  form_action_external:
+    description: "form.action set to another site from code (the next submit sends every field there)"
+    risk: high
+    apis: [form.action]
+    destination: external
+  form_action_internal:
+    description: "form.action set from code to the own site or an unknown address"
+    risk: low
+    apis: [form.action]
+    destination: [internal, unknown]
+  form_submit:
+    description: "A form submitted from code (submit / requestSubmit / dispatchEvent)"
+    risk: medium
+    apis: [form.submit, form.requestSubmit, submit_event]
+  redirect_external:
+    description: "Navigation to another site from code (location = / assign / replace, meta refresh made in code, pushState)"
+    risk: medium
+    apis: [location.href, location.assign, location.replace, meta_refresh, history.pushState]
+    destination: external
+  redirect_unknown:
+    description: "Navigation to an address built at run time"
+    risk: low
+    apis: [location.href, location.assign, location.replace, meta_refresh]
+    destination: unknown
+  redirect_internal:
+    description: "Navigation within the own site"
+    risk: low
+    apis: [location.href, location.assign, location.replace]
+    destination: internal
+  window_open:
+    description: "window.open (new tab / window)"
+    risk: low
+    apis: [window.open]
+  clipboard_write:
+    description: "Writes to the clipboard (writeText / write, clipboardData.setData, execCommand copy / cut)"
+    risk: high
+    apis: [navigator.clipboard.writeText, navigator.clipboard.write, clipboardData.setData, document.execCommand]
+  code_execution:
+    description: "Runs a string as code (eval, Function, string timers, execScript)"
+    risk: high
+    apis: [eval, execScript, Function, setTimeout_string, setInterval_string]
+  html_injection:
+    description: "Writes a string into the page as HTML (innerHTML, outerHTML, insertAdjacentHTML, srcdoc, document.write)"
+    risk: medium
+    apis: [innerHTML, outerHTML, insertAdjacentHTML, srcdoc, document.write, document.writeln]
+  download:
+    description: "Starts a file download from code (download attribute, Blob URL, msSaveBlob)"
+    risk: medium
+    apis: [download_attribute, URL.createObjectURL, msSaveBlob]
+  storage_write:
+    description: "Stores data in the browser (localStorage / sessionStorage / cookie write)"
+    risk: low
+    apis: [localStorage, sessionStorage, document.cookie, cookieStore]
 
-patterns:
-  credential_exfiltration: {sources: [credential_input, cookie, storage], sinks: [network, form_submit]}
-  forced_redirect: {sources: [], sinks: [navigation]}
-  clipboard_hijack: {sources: [clipboard_read], sinks: [clipboard_write, network]}
-  drive_by_download: {sources: [], sinks: [download]}
-  obfuscated_execution: {sources: [], sinks: [code_execution]}
+# Services that receive data without a server of the attacker's own - a request to
+# one of them carrying page data is a classic phishing-kit signature (raises severity).
+# host matches the host or a subdomain; path (optional) must start the URL path.
+# kind: collector     = never a normal website backend (chat bots, webhook catchers, tunnels):
+#                       any credential sent there is critical;
+#       form_service  = legitimate form backends (contact / newsletter forms use them too):
+#                       critical with a password / card / OTP, one level lower for
+#                       identity fields only (email, phone, name).
+exfil_endpoints:
+  - {name: Telegram Bot API, host: api.telegram.org, kind: collector}
+  - {name: Discord webhook, host: discord.com, path: /api/webhooks, kind: collector}
+  - {name: Discord webhook, host: discordapp.com, path: /api/webhooks, kind: collector}
+  - {name: Slack webhook, host: hooks.slack.com, kind: collector}
+  - {name: ngrok tunnel, host: ngrok.io, kind: collector}
+  - {name: ngrok tunnel, host: ngrok-free.app, kind: collector}
+  - {name: ngrok tunnel, host: ngrok.app, kind: collector}
+  - {name: Cloudflare quick tunnel, host: trycloudflare.com, kind: collector}
+  - {name: webhook.site, host: webhook.site, kind: collector}
+  - {name: Pipedream, host: pipedream.net, kind: collector}
+  - {name: RequestBin, host: requestbin.net, kind: collector}
+  - {name: Beeceptor, host: beeceptor.com, kind: collector}
+  - {name: Formspree, host: formspree.io, kind: form_service}
+  - {name: Getform, host: getform.io, kind: form_service}
+  - {name: submit-form.com, host: submit-form.com, kind: form_service}
+  - {name: FormSubmit, host: formsubmit.co, kind: form_service}
+  - {name: Formcarry, host: formcarry.com, kind: form_service}
+  - {name: Basin, host: usebasin.com, kind: form_service}
+  - {name: Web3Forms, host: web3forms.com, kind: form_service}
+  - {name: EmailJS, host: api.emailjs.com, kind: form_service}
+  - {name: Google Apps Script, host: script.google.com, path: /macros, kind: form_service}
+  - {name: Google Apps Script, host: script.googleusercontent.com, kind: form_service}
+  - {name: SheetDB, host: sheetdb.io, kind: form_service}
+  - {name: Sheet.best, host: sheet.best, kind: form_service}
+
+# How taint moves (behavior/dataflow.py). Function names are normalized paths
+# (window.btoa == btoa).
+propagation:
+  encoders:                                     # taint passes through, the flow is marked "encoded"
+    btoa: base64
+    encodeURIComponent: uri
+    encodeURI: uri
+    escape: escape
+  pass_through: [JSON.stringify, JSON.parse, String, Object.assign, Object.values, Object.entries,
+                 Array.from, structuredClone, decodeURIComponent, decodeURI]
+  mutators: [push, unshift, append, set, concat, splice, assign]   # x.push(v): x is now tainted
+  callbacks: [then, done, success, always, fail, catch, finally, forEach, map, filter, reduce, some, every, each]
+  # results that are never the data itself (booleans / positions / sizes)
+  non_propagating_methods: [includes, indexOf, lastIndexOf, test, startsWith, endsWith, has,
+                            hasOwnProperty, localeCompare, isNaN, isFinite, isArray]
+  non_propagating_properties: [length, size]
+
+# Which listener / handler events are a deliberate user action and which run by themselves
+# (behavior/triggers.py: "auto" redirects / downloads happen without any click).
+events:
+  user: [click, dblclick, mousedown, mouseup, pointerdown, pointerup, touchstart, touchend,
+         submit, change, keydown, keyup, keypress, input, copy, cut, paste, contextmenu, reset]
+  # message, error, focus, hashchange ... are neither: they come from other frames or the
+  # browser, so their trigger stays "unknown"
+  auto: [load, DOMContentLoaded, readystatechange, pageshow, beforeunload, unload, visibilitychange,
+         mousemove, mouseover, mouseenter, mouseleave, mouseout, scroll, ready]
+  timers: [setTimeout, setInterval, requestAnimationFrame, requestIdleCallback, queueMicrotask]
+
+# Safety caps (nothing here can hang a batch; hitting one marks the result truncated).
+limits:
+  max_passes: 6                   # fixed-point passes (taint only grows; stops as soon as nothing
+                                  # changes - each level of nested helper calls needs one pass)
+  max_path_steps: 12              # longer evidence chains are cut (flow.truncated)
+  max_labels_per_value: 6         # distinct sources remembered per variable
+  max_tainted_vars_per_script: 2000
+  max_eval_nodes: 4000            # nodes looked at to compute ONE expression's taint
+  max_eval_depth: 80
+  script_time_budget_ms: 2000
+  page_time_budget_ms: 5000
+  max_sources: 500                # stored per page (counts stay complete)
+  max_sinks: 500
+  max_flows: 300
+  step_code_chars: 120

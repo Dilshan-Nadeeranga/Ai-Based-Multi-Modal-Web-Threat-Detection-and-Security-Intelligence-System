@@ -1,26 +1,425 @@
-# Dangerous JavaScript APIs detected statically (Part 7).
+# Static JavaScript analysis rules (Part 7). Read by c2_analyzer/js_analyzer/rules.py.
+#
+# Part 7 DETECTS API usage and records evidence (where, how, with which
+# arguments). It does NOT decide intent: "credential value read + fetch to an
+# external domain = exfiltration" is Part 8's job (configs/sources_sinks.yaml).
+#
+# What lives here:
+#   categories  - the API groups (tasks 5-15 + a few extras Part 8 needs)
+#   apis        - every API id a detector can emit: its category, a sentence for
+#                 the report/viva, and the regex the LEXICAL FALLBACK uses when a
+#                 script cannot be parsed (detections from it get confidence=low)
+#   lists       - aliases, event types, CDNs, free hosting, credential words ...
+#   libraries   - signatures of well-known libraries (detections inside them are
+#                 kept but tagged in_library and left out of the page-own counts)
+#   limits      - safety limits (size, time, depth)
+# Lexical patterns are CASE-SENSITIVE (JavaScript is); use (?i:...) where case does not matter.
+# The SYNTAX matching (which AST shapes mean "eval", aliases, read vs write) is in
+# js_analyzer/detectors.py - it needs code, not a list. Changing this file changes
+# rules_hash(), so stored results are redone on the next run.
+rules_version: js_rules_v1
+
 categories:
-  code_execution:
-    severity: high
-    apis: [eval, Function, setTimeout_string, setInterval_string]
-  dom_injection:
-    severity: medium
-    apis: [document.write, document.writeln, innerHTML, outerHTML, insertAdjacentHTML]
-  network:
-    severity: medium
-    apis: [fetch, XMLHttpRequest, navigator.sendBeacon, WebSocket]
-  form_manipulation:
-    severity: high
-    apis: [form.submit, form.action]
-  redirect:
-    severity: medium
-    apis: [window.location, location.href, location.replace, location.assign, window.open]
-  storage:
-    severity: medium
-    apis: [document.cookie, localStorage, sessionStorage]
-  clipboard:
-    severity: high
-    apis: [navigator.clipboard.writeText, navigator.clipboard.readText, document.execCommand]
-  obfuscation:
-    severity: low
-    apis: [atob, unescape, String.fromCharCode, decodeURIComponent]
+  code_execution: {severity: high, description: "Runs a string as code (eval, Function, string timers)"}
+  dom_write: {severity: medium, description: "Writes raw HTML into the document stream (document.write)"}
+  html_injection: {severity: medium, description: "Assigns HTML markup to an element (innerHTML, outerHTML, insertAdjacentHTML, srcdoc)"}
+  network_fetch: {severity: medium, description: "Sends data with fetch, beacons, WebSocket or EventSource"}
+  network_xhr: {severity: medium, description: "Sends data with XMLHttpRequest (or jQuery's ajax helpers)"}
+  form_submission: {severity: high, description: "Submits a form from code or changes where it submits to"}
+  redirect: {severity: medium, description: "Navigates the page or opens a window from code"}
+  cookie: {severity: medium, description: "Reads or writes document.cookie"}
+  storage: {severity: low, description: "Reads or writes localStorage / sessionStorage"}
+  clipboard: {severity: high, description: "Reads or writes the clipboard, or listens to copy/cut/paste"}
+  credential_access: {severity: medium, description: "Reads values typed into inputs (or the whole form with FormData)"}
+  event_listener: {severity: low, description: "Listens to key presses, submits, page leave or right-click"}
+  decoding: {severity: low, description: "Decodes hidden strings (atob, unescape, fromCharCode, escape-heavy literals)"}
+  download: {severity: medium, description: "Triggers a file download from code (download attribute, Blob URLs)"}
+  page_url: {severity: low, description: "Reads the page address or referrer (a data source for Part 8)"}
+
+# access: call | read | write | assign | construct | listener
+apis:
+  # ---- task 5: eval --------------------------------------------------------------
+  eval:
+    category: code_execution
+    description: "eval() - incl. window.eval, window['eval'], (0, eval)(), eval.call and aliases (var e = eval)"
+    lexical: [{pattern: '\beval\s*\(', access: call}]
+  execScript:
+    category: code_execution
+    description: "execScript() - old Internet Explorer eval"
+    lexical: [{pattern: '\bexecScript\s*\(', access: call}]
+  setTimeout_string:
+    category: code_execution
+    description: "setTimeout with a STRING first argument - the browser evals the string"
+    lexical: [{pattern: '\bsetTimeout\s*\(\s*[''"`]', access: call}]
+  setInterval_string:
+    category: code_execution
+    description: "setInterval with a STRING first argument - the browser evals the string"
+    lexical: [{pattern: '\bsetInterval\s*\(\s*[''"`]', access: call}]
+  # ---- task 6: Function ----------------------------------------------------------
+  Function:
+    category: code_execution
+    description: "new Function(...) / Function(...) / x.constructor('code') - builds a function from a string"
+    lexical: [{pattern: '\bnew\s+Function\s*\(|(?<![\w$.])Function\s*\(|\.constructor\s*\(\s*[''"`]', access: call}]
+  # ---- task 7: document.write ------------------------------------------------------
+  document.write:
+    category: dom_write
+    description: "document.write() - writes raw HTML into the page"
+    lexical: [{pattern: '\bdocument\s*\.\s*write\s*\(', access: call}]
+  document.writeln:
+    category: dom_write
+    description: "document.writeln() - writes raw HTML into the page"
+    lexical: [{pattern: '\bdocument\s*\.\s*writeln\s*\(', access: call}]
+  # ---- task 8: innerHTML -----------------------------------------------------------
+  innerHTML:
+    category: html_injection
+    description: "element.innerHTML = / += - parses a string as HTML"
+    lexical: [{pattern: '\.\s*innerHTML\s*\+?=(?!=)', access: assign}]
+  outerHTML:
+    category: html_injection
+    description: "element.outerHTML = - replaces the element with parsed HTML"
+    lexical: [{pattern: '\.\s*outerHTML\s*\+?=(?!=)', access: assign}]
+  insertAdjacentHTML:
+    category: html_injection
+    description: "element.insertAdjacentHTML() - parses a string as HTML"
+    lexical: [{pattern: '\.\s*insertAdjacentHTML\s*\(', access: call}]
+  srcdoc:
+    category: html_injection
+    description: "iframe.srcdoc = - a whole HTML document from a string"
+    lexical: [{pattern: '\.\s*srcdoc\s*=(?!=)', access: assign}]
+  # ---- task 9: fetch and other senders ---------------------------------------------
+  fetch:
+    category: network_fetch
+    description: "fetch() - HTTP request from code (URL and method captured)"
+    lexical: [{pattern: '(?<![\w$.])fetch\s*\(|\b(?:window|self|globalThis)\s*\.\s*fetch\s*\(', access: call}]
+  navigator.sendBeacon:
+    category: network_fetch
+    description: "navigator.sendBeacon() - fire-and-forget POST, even while the page closes"
+    lexical: [{pattern: '\bsendBeacon\s*\(', access: call}]
+  WebSocket:
+    category: network_fetch
+    description: "new WebSocket() - two-way connection to a server"
+    lexical: [{pattern: '\bnew\s+WebSocket\s*\(', access: construct}]
+  EventSource:
+    category: network_fetch
+    description: "new EventSource() - server-sent events stream"
+    lexical: [{pattern: '\bnew\s+EventSource\s*\(', access: construct}]
+  image_beacon:
+    category: network_fetch
+    description: "new Image().src = url (or img.src = '...?' + data) - sends data in a GET request"
+    lexical: [{pattern: '\bnew\s+Image\s*\([^)]*\)\s*\.\s*src\s*=(?!=)', access: assign}]
+  # ---- task 10: XMLHttpRequest -----------------------------------------------------
+  XMLHttpRequest:
+    category: network_xhr
+    description: "new XMLHttpRequest() (or ActiveXObject('Microsoft.XMLHTTP'))"
+    lexical: [{pattern: '\bnew\s+XMLHttpRequest\s*\(|(?i:microsoft\.xmlhttp)', access: construct}]
+  xhr.open:
+    category: network_xhr
+    description: "xhr.open(method, url) - method and URL captured"
+    lexical: [{pattern: '\.\s*open\s*\(\s*[''"](?i:GET|POST|PUT|PATCH|DELETE|HEAD)[''"]', access: call}]
+  xhr.send:
+    category: network_xhr
+    description: "xhr.send(body) - the identifiers in the body are recorded"
+  jquery.ajax:
+    category: network_xhr
+    description: "jQuery $.ajax / $.post / $.get / $.getJSON (library-style XHR)"
+    lexical: [{pattern: '(?:\$|\bjQuery)\s*\.\s*(?:ajax|post|get|getJSON)\s*\(', access: call}]
+  # ---- task 11: form submission ----------------------------------------------------
+  form.submit:
+    category: form_submission
+    description: "form.submit() / document.forms[..].submit() / $(form).submit() - submits without a click"
+    lexical: [{pattern: '\.\s*submit\s*\(\s*\)', access: call}]
+  form.requestSubmit:
+    category: form_submission
+    description: "form.requestSubmit() - submits like a click"
+    lexical: [{pattern: '\.\s*requestSubmit\s*\(', access: call}]
+  form.action:
+    category: form_submission
+    description: "form.action = url / setAttribute('action', url) - changes where the form goes"
+    lexical: [{pattern: '\.\s*action\s*=(?!=)', access: assign}]
+  submit_event:
+    category: form_submission
+    description: "dispatchEvent(new Event('submit')) / $(form).trigger('submit')"
+    lexical: [{pattern: 'dispatchEvent\s*\(\s*new\s+(?:Submit)?Event\s*\(\s*[''"]submit', access: call}]
+  # ---- task 12: redirects ----------------------------------------------------------
+  location.href:
+    category: redirect
+    description: "location = url / location.href = url (also window/document/top/parent/self.location)"
+    lexical: [{pattern: '\blocation(?:\s*\.\s*href)?\s*=(?!=)', access: assign}]
+  location.assign:
+    category: redirect
+    description: "location.assign(url)"
+    lexical: [{pattern: '\blocation\s*\.\s*assign\s*\(', access: call}]
+  location.replace:
+    category: redirect
+    description: "location.replace(url) - navigates without a history entry (no Back)"
+    lexical: [{pattern: '\blocation\s*\.\s*replace\s*\(', access: call}]
+  window.open:
+    category: redirect
+    description: "window.open(url) - opens a new window / tab"
+    lexical: [{pattern: '\b(?:window|self|top)\s*\.\s*open\s*\(', access: call}]
+  history.pushState:
+    category: redirect
+    description: "history.pushState / replaceState with an EXTERNAL URL (same-site SPA routing is not recorded)"
+  meta_refresh:
+    category: redirect
+    description: "a <meta http-equiv=refresh> created from code"
+    lexical: [{pattern: '(?i:http-?equiv[''"]?\s*[,=:]\s*[''"]refresh)', access: assign}]
+  # ---- task 13: cookies ------------------------------------------------------------
+  document.cookie:
+    category: cookie
+    description: "document.cookie - READ (value used) vs WRITE (assigned)"
+    lexical:
+      - {pattern: '\bdocument\s*\.\s*cookie\s*\+?=(?!=)', access: write}
+      - {pattern: '\bdocument\s*\.\s*cookie\b(?!\s*\+?=(?!=))', access: read}
+  cookieStore:
+    category: cookie
+    description: "cookieStore.get/getAll (read) and set/delete (write)"
+  # ---- task 14: storage ------------------------------------------------------------
+  localStorage:
+    category: storage
+    description: "localStorage getItem/key/property (read) and setItem/removeItem/clear/assignment (write)"
+    lexical:
+      - {pattern: '\blocalStorage\s*(?:\.\s*(?:setItem|removeItem|clear)\s*\(|(?:\.\s*[\w$]+|\[[^\]]+\])\s*=(?!=))', access: write}
+      - {pattern: '\blocalStorage\s*(?:\.\s*(?:getItem|key)\s*\(|\[)', access: read}
+  sessionStorage:
+    category: storage
+    description: "sessionStorage getItem/key/property (read) and setItem/removeItem/clear/assignment (write)"
+    lexical:
+      - {pattern: '\bsessionStorage\s*(?:\.\s*(?:setItem|removeItem|clear)\s*\(|(?:\.\s*[\w$]+|\[[^\]]+\])\s*=(?!=))', access: write}
+      - {pattern: '\bsessionStorage\s*(?:\.\s*(?:getItem|key)\s*\(|\[)', access: read}
+  # ---- task 15: clipboard ----------------------------------------------------------
+  navigator.clipboard.writeText:
+    category: clipboard
+    description: "navigator.clipboard.writeText() - replaces what the user will paste"
+    lexical: [{pattern: '\bclipboard\s*\.\s*writeText\s*\(', access: write}]
+  navigator.clipboard.write:
+    category: clipboard
+    description: "navigator.clipboard.write()"
+    lexical: [{pattern: '\bclipboard\s*\.\s*write\s*\(', access: write}]
+  navigator.clipboard.readText:
+    category: clipboard
+    description: "navigator.clipboard.readText() - reads what the user copied"
+    lexical: [{pattern: '\bclipboard\s*\.\s*readText\s*\(', access: read}]
+  navigator.clipboard.read:
+    category: clipboard
+    description: "navigator.clipboard.read()"
+    lexical: [{pattern: '\bclipboard\s*\.\s*read\s*\(', access: read}]
+  document.execCommand:
+    category: clipboard
+    description: "document.execCommand('copy'|'cut') (write) / ('paste') (read); other commands are ignored"
+    lexical:
+      - {pattern: 'execCommand\s*\(\s*[''"](?:copy|cut)[''"]', access: write}
+      - {pattern: 'execCommand\s*\(\s*[''"]paste[''"]', access: read}
+  clipboardData.setData:
+    category: clipboard
+    description: "event.clipboardData.setData() - changes what gets copied"
+    lexical: [{pattern: 'clipboardData\s*\.\s*setData\s*\(', access: write}]
+  clipboardData.getData:
+    category: clipboard
+    description: "event.clipboardData.getData() - reads what gets pasted"
+    lexical: [{pattern: 'clipboardData\s*\.\s*getData\s*\(', access: read}]
+  clipboard_event:
+    category: clipboard
+    description: "a copy / cut / paste listener (addEventListener, oncopy=, or an HTML oncopy attribute)"
+    lexical: [{pattern: 'addEventListener\s*\(\s*[''"](?:copy|cut|paste)[''"]|\bon(?:copy|cut|paste)\s*=(?!=)', access: listener}]
+  # ---- extras for Part 8 (credential sources, listeners, decoders, downloads) ------
+  input.value:
+    category: credential_access
+    description: "element.value / getElementById(..).value / querySelector(..).value / $(..).val() read (selector kept)"
+    # lexical: only reads straight from an element lookup ("e.value" alone is too vague)
+    lexical: [{pattern: '(?:getElementById|querySelector|getElementsByName)\s*\([^()]{0,200}\)(?:\s*\[\s*\d+\s*\])?\s*\.\s*value\b(?!\s*=(?!=))|\$\(\s*[''"][^''"]{1,200}[''"]\s*\)\s*\.\s*val\s*\(\s*\)', access: read}]
+  FormData:
+    category: credential_access
+    description: "new FormData(form) - every field of a form at once"
+    lexical: [{pattern: '\bnew\s+FormData\s*\(', access: construct}]
+  key_listener:
+    category: event_listener
+    description: "keydown / keypress / keyup / input listener (possible keylogging)"
+    lexical: [{pattern: 'addEventListener\s*\(\s*[''"](?:keydown|keypress|keyup|input)[''"]|\bonkey(?:down|press|up)\s*=(?!=)', access: listener}]
+  submit_listener:
+    category: event_listener
+    description: "submit listener (code runs when the form is sent)"
+    lexical: [{pattern: 'addEventListener\s*\(\s*[''"]submit[''"]|\bonsubmit\s*=(?!=)', access: listener}]
+  beforeunload_listener:
+    category: event_listener
+    description: "beforeunload / unload listener (keeps the user on the page)"
+    lexical: [{pattern: 'addEventListener\s*\(\s*[''"](?:before)?unload[''"]|\bonbeforeunload\s*=(?!=)', access: listener}]
+  contextmenu_listener:
+    category: event_listener
+    description: "contextmenu listener (usually blocks right-click / 'view source')"
+    lexical: [{pattern: 'addEventListener\s*\(\s*[''"]contextmenu[''"]|\boncontextmenu\s*=(?!=)', access: listener}]
+  atob:
+    category: decoding
+    description: "atob() - decodes base64"
+    lexical: [{pattern: '(?<![\w$.])atob\s*\(', access: call}]
+  unescape:
+    category: decoding
+    description: "unescape() - decodes %XX escapes"
+    lexical: [{pattern: '(?<![\w$.])unescape\s*\(', access: call}]
+  decodeURIComponent:
+    category: decoding
+    description: "decodeURIComponent()"
+    lexical: [{pattern: '\bdecodeURIComponent\s*\(', access: call}]
+  decodeURI:
+    category: decoding
+    description: "decodeURI()"
+    lexical: [{pattern: '\bdecodeURI\s*\(', access: call}]
+  String.fromCharCode:
+    category: decoding
+    description: "String.fromCharCode() - builds a string from char codes"
+    lexical: [{pattern: 'fromCharCode\s*\(', access: call}]
+  escape_heavy_string:
+    category: decoding
+    description: "a string literal written mostly as \\xHH / \\uHHHH escapes"
+  download_attribute:
+    category: download
+    description: "a.download = name / setAttribute('download') - makes a link save a file"
+    lexical: [{pattern: '\.\s*download\s*=(?!=)|setAttribute\s*\(\s*[''"]download[''"]', access: assign}]
+  URL.createObjectURL:
+    category: download
+    description: "URL.createObjectURL() - a URL for data made in the page (Blob)"
+    lexical: [{pattern: 'createObjectURL\s*\(', access: call}]
+  msSaveBlob:
+    category: download
+    description: "navigator.msSaveBlob / msSaveOrOpenBlob - old Edge/IE file save"
+    lexical: [{pattern: 'msSave(?:OrOpen)?Blob\s*\(', access: call}]
+  Blob:
+    category: download
+    description: "new Blob() - file data built in the page (recorded, not counted as a download)"
+    lexical: [{pattern: '\bnew\s+Blob\s*\(', access: construct}]
+  location_read:
+    category: page_url
+    description: "location.search / location.hash / document.referrer read"
+    lexical: [{pattern: '\blocation\s*\.\s*(?:search|hash)\b|\bdocument\s*\.\s*referrer\b', access: read}]
+
+lists:
+  # leading names that mean "the global object": window.eval == self.eval == eval
+  global_aliases: [window, self, globalThis, top, parent, frames, content]
+  # names of the windows a redirect can target (kept in the detection's callee)
+  frame_targets: [top, parent, opener]
+  # event type -> api id (addEventListener / .on / on<type>= / HTML attribute)
+  listener_events:
+    keydown: key_listener
+    keypress: key_listener
+    keyup: key_listener
+    input: key_listener
+    submit: submit_listener
+    beforeunload: beforeunload_listener
+    unload: beforeunload_listener
+    contextmenu: contextmenu_listener
+    copy: clipboard_event
+    cut: clipboard_event
+    paste: clipboard_event
+  # selectors / names that point to a credential field (credential_hint on input.value)
+  credential_words: [pass, pwd, passwd, password, pin, otp, cvv, cvc, card, ccnum, cc_num, expiry,
+                     ssn, nic, email, e-mail, mail, user, login, account, acct, phone, mobile, secret, token]
+  # identifiers never listed in identifiers_used (they are globals, not page data)
+  ignored_identifiers: [JSON, Object, Array, String, Number, Math, Date, Promise, window, document,
+                        navigator, console, undefined, encodeURIComponent, encodeURI, btoa, atob,
+                        location, self, this, globalThis, Boolean, RegExp, Error, parseInt, parseFloat]
+  # Hosts of well-known script CDNs (a domain match or a subdomain of these)
+  known_cdns: [cdnjs.cloudflare.com, cdn.jsdelivr.net, jsdelivr.net, unpkg.com, ajax.googleapis.com,
+               googleapis.com, gstatic.com, code.jquery.com, jquery.com, maxcdn.bootstrapcdn.com,
+               stackpath.bootstrapcdn.com, bootstrapcdn.com, cloudflare.com, cdn.cloudflare.net,
+               cloudflareinsights.com, googletagmanager.com, google-analytics.com, google.com,
+               recaptcha.net, hcaptcha.com, connect.facebook.net, fontawesome.com, kit.fontawesome.com,
+               polyfill.io, cdn.polyfill.io, akamaihd.net, cloudfront.net, azureedge.net,
+               aspnetcdn.com, ajax.aspnetcdn.com, yandex.ru, hotjar.com, clarity.ms, wp.com,
+               shopify.com, shopifycdn.com, squarespace.com, wixstatic.com, parastorage.com]
+  # Free / instant hosting often used for phishing kits (registrable domain or suffix)
+  free_hosting: [pages.dev, workers.dev, github.io, netlify.app, netlify.com, vercel.app, web.app,
+                 firebaseapp.com, glitch.me, herokuapp.com, onrender.com, surge.sh, weebly.com,
+                 000webhostapp.com, wixsite.com, blogspot.com, repl.co, replit.app, ngrok.io,
+                 ngrok-free.app, trycloudflare.com, azurewebsites.net, square.site, godaddysites.com,
+                 webflow.io, framer.app, ipfs.io, dweb.link, r2.dev, appspot.com, firebasestorage.googleapis.com]
+
+# Library awareness (js_analyzer/libraries.py). A script matches a library when
+#   - a `banner` pattern is found in its first `banner_chars` characters (license header), or
+#   - a `marker` pattern is found and the script is at most `max_chars` long (snippets like
+#     the GTM / Facebook pixel loader - a long script that merely CONTAINS the snippet is
+#     not hidden as a library).
+# External <script src> references are matched with `src` patterns (file / host names).
+library_settings:
+  banner_chars: 3000
+  default_snippet_chars: 4000
+libraries:
+  - name: jQuery
+    banner: ['jQuery (?:JavaScript Library )?v\d', 'jquery\.org/license', '\(c\) OpenJS Foundation and other contributors', '\(c\) jQuery Foundation']
+    src: ['jquery[.-]']
+  - name: jQuery UI
+    banner: ['jQuery UI - v\d', 'jqueryui\.com']
+    src: ['jquery-ui']
+  - name: Bootstrap
+    banner: ['Bootstrap v\d', 'getbootstrap\.com', 'Twitter, Inc\.']
+    src: ['bootstrap(?:\.bundle)?(?:\.min)?\.js']
+  - name: React
+    banner: ['@license React', 'React v\d', 'react(?:-dom)?\.production\.min\.js']
+    src: ['react(?:-dom)?(?:\.production)?(?:\.min)?\.js']
+  - name: Vue
+    banner: ['Vue\.js v\d', '@vue/', 'vuejs\.org']
+    src: ['vue(?:\.global|\.runtime)?(?:\.prod)?(?:\.min)?\.js']
+  - name: Angular
+    banner: ['@license AngularJS', '@license Angular v\d', 'angular\.io/license']
+    src: ['angular(?:\.min)?\.js']
+  - name: Lodash / Underscore
+    banner: ['@license Lodash', 'lodash\.com/license', 'Underscore\.js \d']
+    src: ['lodash', 'underscore']
+  - name: Webpack runtime
+    marker: ['__webpack_require__', 'webpackJsonp', 'webpackChunk', '__webpack_modules__']
+    max_chars: 20000
+    src: ['webpack', 'runtime[.~-]', 'chunk-vendors', '/_next/static/']
+  - name: Google Tag Manager
+    marker: ['googletagmanager\.com/gtm\.js', "'gtm\\.start'", '"gtm\.start"']
+    src: ['googletagmanager\.com/gtm\.js']
+  - name: Google gtag / Analytics
+    marker: ['function\s+gtag\s*\(\s*\)\s*\{\s*dataLayer\.push\(\s*arguments\s*\)', 'google-analytics\.com/(?:analytics|ga)\.js', 'GoogleAnalyticsObject', "gtag\\(\\s*['\"]config['\"]"]
+    src: ['googletagmanager\.com/gtag/js', 'google-analytics\.com']
+  - name: Facebook Pixel
+    marker: ['connect\.facebook\.net/[\w_]+/fbevents\.js', "fbq\\(\\s*['\"]init['\"]"]
+    src: ['connect\.facebook\.net']
+  - name: reCAPTCHA / hCaptcha
+    marker: ['grecaptcha\.', 'recaptcha/api\.js', 'hcaptcha\.com']
+    src: ['recaptcha', 'hcaptcha']
+  - name: Cloudflare
+    marker: ['__CF\$cv\$params', 'cdn-cgi/challenge-platform', 'cloudflare-static/email-decode', '/cdn-cgi/scripts/']
+    src: ['/cdn-cgi/', 'cloudflareinsights\.com', 'cloudflare-static']
+  - name: WordPress core
+    marker: ['_wpemojiSettings', 'wp-emoji-release', 'wpApiSettings']
+    src: ['/wp-includes/js/', 'wp-emoji']
+  - name: Hotjar / Clarity / Yandex Metrika
+    marker: ['static\.hotjar\.com', 'clarity\.ms/tag', 'mc\.yandex\.ru/metrika']
+    src: ['hotjar\.com', 'clarity\.ms', 'mc\.yandex\.ru']
+  - name: Font Awesome
+    banner: ['Font Awesome (?:Free|Pro) \d', 'fontawesome\.com/license']
+    src: ['fontawesome', 'font-awesome']
+
+# Safety limits (all checked before / while parsing; nothing here can hang a batch).
+limits:
+  max_script_bytes: 500000        # per script; a bigger one is analysed up to here (truncated=true)
+  parse_timeout_ms: 3000          # per script (tree-sitter's own in-process timeout, Windows-safe)
+  max_ast_depth: 1500             # the walker does not descend deeper (iterative, flag depth_capped)
+  max_error_ratio: 0.5            # more of the script inside ERROR nodes -> lexical fallback
+  max_scripts_per_page: 600       # more are listed but not analysed
+  max_page_bytes: 6000000         # total JS analysed per page
+  max_detections_per_page: 3000   # counts stay complete; the list is cut (meta.warnings)
+  max_lexical_matches_per_api: 200
+  snippet_chars: 200
+  literal_chars: 200
+  max_identifiers_used: 20
+
+# Obfuscation statistics (js_analyzer/obfuscation.py) - descriptive thresholds only.
+# "minified" (compression, normal on benign sites) and the obfuscation "signatures"
+# are reported separately on purpose.
+obfuscation:
+  min_chars: 200                  # entropy / escape statistics need at least this much code
+  minified_min_chars: 1000
+  minified_max_line: 500          # a line this long ...
+  minified_avg_line: 200          # ... or lines this long on average
+  minified_max_whitespace: 0.15   # ... and little whitespace -> minified
+  jsfuck_min_chars: 500
+  jsfuck_share: 0.95              # share of visible characters from []()!+
+  hex_identifier_ratio: 0.2       # share of _0x1a2b-style identifiers
+  hex_identifier_min: 20
+  string_array_min: 100           # strings in one array literal
+  string_array_with_hex_min: 50   # ... or this many when _0x names are present too
+  escape_ratio: 0.3               # share of characters inside \x / \u escapes

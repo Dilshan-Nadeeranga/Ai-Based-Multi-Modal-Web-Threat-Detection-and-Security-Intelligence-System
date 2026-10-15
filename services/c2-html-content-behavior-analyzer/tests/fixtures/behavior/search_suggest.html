@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shop</title>
+</head>
+<body>
+<input id="search" type="search" name="q">
+<ul id="suggestions"></ul>
+<script>
+  var box = document.getElementById("search");
+  box.addEventListener("input", function (e) {
+    var term = e.target.value;
+    fetch("/suggest?q=" + encodeURIComponent(term)).then(function (r) { return r.json(); });
+  });
+</script>
+</body>
+</html>

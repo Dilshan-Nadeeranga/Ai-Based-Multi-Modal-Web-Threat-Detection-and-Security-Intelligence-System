@@ -11,6 +11,7 @@ retried a few times before giving a clear "close the file" error.
 
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 import time
@@ -83,14 +84,38 @@ def read_csv_as_strings(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, dtype=str, keep_default_na=False, encoding="utf-8")
 
 
+def atomic_write_text(text: str, path: Path) -> None:
+    """Write UTF-8 text atomically (temp file + rename), like ``atomic_write_csv``.
+
+    Used for the Part 2 outputs: a crash or Ctrl+C never leaves a half-written
+    JSON file that a later run would mistake for a finished one.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temp_name = tempfile.mkstemp(prefix=f"{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        # newline="\n": the same bytes on Windows and Linux
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(text)
+        try:
+            replace_with_retry(Path(temp_name), path)
+        except PermissionError as error:
+            raise FileSaveError(
+                f"Could not save {path}: it is locked by another program."
+            ) from error
+    except BaseException:
+        remove_quietly(Path(temp_name))
+        raise
+
+
 def read_json(path: Path) -> Any:
-    """Read a JSON file."""
-    raise NotImplementedError
+    """Read a UTF-8 JSON file."""
+    return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
 def write_json(data: Any, path: Path) -> None:
-    """Write ``data`` as pretty UTF-8 JSON, creating parent dirs."""
-    raise NotImplementedError
+    """Write ``data`` as pretty UTF-8 JSON (Sinhala/Tamil stay readable), atomically."""
+    atomic_write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", path)
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:

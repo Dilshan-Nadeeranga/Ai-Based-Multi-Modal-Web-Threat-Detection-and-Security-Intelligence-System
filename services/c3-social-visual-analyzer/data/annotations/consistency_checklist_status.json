@@ -1,0 +1,55 @@
+{
+  "task": "Cross-Source Consistency Engine",
+  "items": [
+    {
+      "item": "Compare post text ↔ post image",
+      "done": true
+    },
+    {
+      "item": "Compare post text ↔ OCR",
+      "done": true
+    },
+    {
+      "item": "Compare text ↔ detected brand",
+      "done": true
+    },
+    {
+      "item": "Compare OCR ↔ detected brand",
+      "done": true
+    },
+    {
+      "item": "Compare post brand ↔ website brand",
+      "done": true
+    },
+    {
+      "item": "Compare post image ↔ website screenshot",
+      "done": true
+    },
+    {
+      "item": "Compare claimed brand ↔ destination dom",
+      "done": true
+    },
+    {
+      "item": "Calculate semantic similarity",
+      "done": true
+    },
+    {
+      "item": "Calculate visual similarity",
+      "done": true
+    },
+    {
+      "item": "Detect brand identity mismatch",
+      "done": true
+    },
+    {
+      "item": "Generate consistency flags",
+      "done": true
+    },
+    {
+      "item": "Produce evidence summary",
+      "done": true
+    }
+  ],
+  "done_count": 12,
+  "updated_at": "2026-10-15T05:02:47.353265+00:00"
+}

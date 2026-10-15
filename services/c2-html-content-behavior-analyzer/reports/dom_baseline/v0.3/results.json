@@ -1,0 +1,2016 @@
+{
+  "version": "v0.3",
+  "created_at": "2026-10-14T22:49:44+05:30",
+  "pilot": false,
+  "classes": [
+    "benign",
+    "phishing",
+    "fake_ecommerce",
+    "crypto_scam",
+    "malware_delivery"
+  ],
+  "excluded_classes": {},
+  "feature_set_version": "dom_v1",
+  "dictionary_hash": "8605201ec979e8ef1602ced8c43964fcb872580223c3503676d242164dead472",
+  "split": {
+    "seed": 42,
+    "target_ratios": {
+      "train": 0.7,
+      "val": 0.15,
+      "test": 0.15
+    },
+    "actual_ratios": {
+      "train": 0.7015,
+      "val": 0.1503,
+      "test": 0.1481
+    },
+    "max_ratio_difference": 0.0019,
+    "counts": {
+      "train": 322,
+      "val": 69,
+      "test": 68
+    },
+    "counts_per_label": {
+      "test": {
+        "benign": 34,
+        "crypto_scam": 4,
+        "fake_ecommerce": 8,
+        "malware_delivery": 9,
+        "phishing": 13
+      },
+      "train": {
+        "benign": 159,
+        "crypto_scam": 21,
+        "fake_ecommerce": 40,
+        "malware_delivery": 41,
+        "phishing": 61
+      },
+      "val": {
+        "benign": 34,
+        "crypto_scam": 4,
+        "fake_ecommerce": 9,
+        "malware_delivery": 9,
+        "phishing": 13
+      }
+    },
+    "counts_per_language": {
+      "test": {
+        "en": 63,
+        "si": 1,
+        "ta": 1,
+        "unknown": 3
+      },
+      "train": {
+        "en": 300,
+        "si": 7,
+        "ta": 2,
+        "unknown": 13
+      },
+      "val": {
+        "en": 64,
+        "si": 2,
+        "ta": 1,
+        "unknown": 2
+      }
+    },
+    "language_placement": {
+      "si": {
+        "train": 7,
+        "val": 2,
+        "test": 1
+      },
+      "ta": {
+        "train": 2,
+        "val": 1,
+        "test": 1
+      }
+    },
+    "clusters_in_two_splits": 0,
+    "cv_folds": 5,
+    "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f"
+  },
+  "manifest_fingerprint": "7a620c3b7ea05f42747d1a418a0663befa62a7c6ade6335f4557b52fda77cc26",
+  "features": {
+    "total": 52,
+    "used": 48,
+    "list": [
+      "node_count",
+      "max_depth",
+      "avg_depth",
+      "leaf_ratio",
+      "distinct_tag_count",
+      "text_to_html_ratio",
+      "form_count",
+      "has_form",
+      "inputs_total",
+      "inputs_outside_forms_count",
+      "password_field_count",
+      "has_password_field",
+      "email_field_count",
+      "username_field_count",
+      "otp_pin_field_count",
+      "card_field_count",
+      "sensitive_field_count",
+      "hidden_input_count",
+      "hidden_input_ratio",
+      "external_form_action_count",
+      "has_external_form_action",
+      "password_form_external_action",
+      "form_action_to_ip",
+      "form_action_empty_or_js",
+      "form_method_get_with_password",
+      "iframe_count",
+      "external_iframe_count",
+      "hidden_iframe_count",
+      "inline_script_count",
+      "external_script_count",
+      "external_script_domain_count",
+      "inline_script_chars_total",
+      "event_handler_count",
+      "javascript_url_count",
+      "hidden_element_count",
+      "hidden_text_chars",
+      "hidden_text_ratio",
+      "link_count",
+      "internal_link_count",
+      "external_link_count",
+      "external_link_ratio",
+      "null_link_count",
+      "null_link_ratio",
+      "distinct_external_domains",
+      "has_meta_refresh",
+      "external_stylesheet_ratio",
+      "has_title",
+      "title_length"
+    ],
+    "dropped": [
+      {
+        "feature": "base_url_known",
+        "reason": "constant",
+        "detail": "always 1"
+      },
+      {
+        "feature": "meta_refresh_external",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "element_count",
+        "reason": "correlated",
+        "detail": "|r| = 0.9964 with node_count (kept, earlier in dictionary)"
+      },
+      {
+        "feature": "form_action_to_known_form_service",
+        "reason": "correlated",
+        "detail": "|r| = 1.0000 with password_form_external_action (kept, earlier in dictionary)"
+      }
+    ]
+  },
+  "selection": "mean macro-F1 over grouped stratified CV folds on train+val (test never used)",
+  "best_model": "random_forest",
+  "benign_fpr_target": 0.02,
+  "models": {
+    "logreg": {
+      "display_name": "Logistic Regression",
+      "params": {
+        "max_iter": 5000,
+        "class_weight": "balanced",
+        "C": 0.1
+      },
+      "grid": [
+        {
+          "params": {
+            "max_iter": 5000,
+            "class_weight": "balanced",
+            "C": 0.01
+          },
+          "mean_macro_f1": 0.5819378193730586,
+          "std_macro_f1": 0.0666760234131738
+        },
+        {
+          "params": {
+            "max_iter": 5000,
+            "class_weight": "balanced",
+            "C": 0.1
+          },
+          "mean_macro_f1": 0.5988942047954218,
+          "std_macro_f1": 0.07882415704965272
+        },
+        {
+          "params": {
+            "max_iter": 5000,
+            "class_weight": "balanced",
+            "C": 1.0
+          },
+          "mean_macro_f1": 0.5879346878554909,
+          "std_macro_f1": 0.07905276660291594
+        },
+        {
+          "params": {
+            "max_iter": 5000,
+            "class_weight": "balanced",
+            "C": 10.0
+          },
+          "mean_macro_f1": 0.558148016994737,
+          "std_macro_f1": 0.07456585079344939
+        }
+      ],
+      "cv": {
+        "mean": {
+          "macro_f1": 0.5988942047954218,
+          "weighted_f1": 0.6980008874830665,
+          "accuracy": 0.6724115546900358,
+          "balanced_accuracy": 0.6184710494184179,
+          "roc_auc_ovr_macro": 0.8633223329226976,
+          "benign_fpr": 0.2746288798920378,
+          "f1_benign": 0.7990540204365354,
+          "f1_phishing": 0.6364835164835165,
+          "f1_fake_ecommerce": 0.6801670843776106,
+          "f1_crypto_scam": 0.24495576886881235,
+          "f1_malware_delivery": 0.6338106338106337
+        },
+        "std": {
+          "macro_f1": 0.07882415704965272,
+          "weighted_f1": 0.06206746245739781,
+          "accuracy": 0.07170804231513088,
+          "balanced_accuracy": 0.07392384630341761,
+          "roc_auc_ovr_macro": 0.03696516939097618,
+          "benign_fpr": 0.05757281783455208,
+          "f1_benign": 0.02406996814920832,
+          "f1_phishing": 0.1432899614135727,
+          "f1_fake_ecommerce": 0.15878787676819314,
+          "f1_crypto_scam": 0.06087810541290094,
+          "f1_malware_delivery": 0.15997211841859116
+        }
+      },
+      "cv_folds": [
+        {
+          "macro_f1": 0.7107231949337213,
+          "weighted_f1": 0.7825258611401184,
+          "accuracy": 0.759493670886076,
+          "balanced_accuracy": 0.7174358974358974,
+          "roc_auc_ovr_macro": 0.906282861038296,
+          "benign_fpr": 0.1794871794871795
+        },
+        {
+          "macro_f1": 0.4782791121921557,
+          "weighted_f1": 0.6011608235688504,
+          "accuracy": 0.5512820512820513,
+          "balanced_accuracy": 0.49963369963369964,
+          "roc_auc_ovr_macro": 0.8151323244841965,
+          "benign_fpr": 0.358974358974359
+        },
+        {
+          "macro_f1": 0.6208108884579472,
+          "weighted_f1": 0.7233435451761243,
+          "accuracy": 0.6923076923076923,
+          "balanced_accuracy": 0.6407017543859649,
+          "roc_auc_ovr_macro": 0.8775736228161055,
+          "benign_fpr": 0.2631578947368421
+        },
+        {
+          "macro_f1": 0.5508200719468326,
+          "weighted_f1": 0.659767462584364,
+          "accuracy": 0.6410256410256411,
+          "balanced_accuracy": 0.5791452991452992,
+          "roc_auc_ovr_macro": 0.824023218470557,
+          "benign_fpr": 0.28205128205128205
+        },
+        {
+          "macro_f1": 0.6338377564464521,
+          "weighted_f1": 0.7232067449458753,
+          "accuracy": 0.717948717948718,
+          "balanced_accuracy": 0.6554385964912282,
+          "roc_auc_ovr_macro": 0.8935996378043327,
+          "benign_fpr": 0.2894736842105263
+        }
+      ],
+      "test": {
+        "n": 68,
+        "macro_f1": 0.6581038589227943,
+        "weighted_f1": 0.7439914563829944,
+        "accuracy": 0.7352941176470589,
+        "balanced_accuracy": 0.7111739567621921,
+        "roc_auc_ovr_macro": 0.8996267573755606,
+        "benign_fpr": 0.20588235294117646,
+        "per_class": {
+          "benign": {
+            "precision": 0.9642857142857143,
+            "recall": 0.7941176470588235,
+            "f1": 0.8709677419354839,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.6428571428571429,
+            "recall": 0.6923076923076923,
+            "f1": 0.6666666666666666,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 0.6363636363636364,
+            "recall": 0.875,
+            "f1": 0.7368421052631579,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.42857142857142855,
+            "recall": 0.75,
+            "f1": 0.5454545454545454,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.5,
+            "recall": 0.4444444444444444,
+            "f1": 0.47058823529411764,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            27,
+            2,
+            2,
+            0,
+            3
+          ],
+          [
+            0,
+            9,
+            0,
+            3,
+            1
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            3,
+            0
+          ],
+          [
+            1,
+            3,
+            1,
+            0,
+            4
+          ]
+        ]
+      },
+      "benign_false_positives": [
+        "c2_benign_000024",
+        "c2_benign_000029",
+        "c2_benign_000040",
+        "c2_benign_000062",
+        "c2_benign_000076",
+        "c2_benign_000091",
+        "c2_benign_000187"
+      ],
+      "per_language": {
+        "en": {
+          "n": 63,
+          "accuracy": 0.7301587301587301,
+          "macro_f1": 0.6307435254803676,
+          "benign_fpr": 0.1935483870967742,
+          "labels": {
+            "benign": 31,
+            "phishing": 13,
+            "fake_ecommerce": 8,
+            "crypto_scam": 3,
+            "malware_delivery": 8
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "unknown": {
+          "n": 3,
+          "accuracy": 0.6666666666666666,
+          "macro_f1": 0.5555555555555555,
+          "benign_fpr": 1.0,
+          "labels": {
+            "benign": 1,
+            "crypto_scam": 1,
+            "malware_delivery": 1
+          },
+          "small_n": true
+        }
+      },
+      "misclassified": 18,
+      "training_seconds": 0.43
+    },
+    "random_forest": {
+      "display_name": "Random Forest",
+      "params": {
+        "n_estimators": 300,
+        "class_weight": "balanced_subsample",
+        "max_depth": 8,
+        "max_features": 0.5,
+        "min_samples_leaf": 3
+      },
+      "grid": [
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": null,
+            "max_features": "sqrt",
+            "min_samples_leaf": 1
+          },
+          "mean_macro_f1": 0.6257772734863004,
+          "std_macro_f1": 0.08447886050749044
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": null,
+            "max_features": "sqrt",
+            "min_samples_leaf": 3
+          },
+          "mean_macro_f1": 0.6797420479896712,
+          "std_macro_f1": 0.08385660529777204
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": null,
+            "max_features": 0.5,
+            "min_samples_leaf": 1
+          },
+          "mean_macro_f1": 0.6663268036203804,
+          "std_macro_f1": 0.06702944938618183
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": null,
+            "max_features": 0.5,
+            "min_samples_leaf": 3
+          },
+          "mean_macro_f1": 0.6879671561945029,
+          "std_macro_f1": 0.07418426450016646
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": 8,
+            "max_features": "sqrt",
+            "min_samples_leaf": 1
+          },
+          "mean_macro_f1": 0.6713525288700708,
+          "std_macro_f1": 0.07412083094760219
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": 8,
+            "max_features": "sqrt",
+            "min_samples_leaf": 3
+          },
+          "mean_macro_f1": 0.6874198097800424,
+          "std_macro_f1": 0.08004178225979221
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": 8,
+            "max_features": 0.5,
+            "min_samples_leaf": 1
+          },
+          "mean_macro_f1": 0.6699531205806226,
+          "std_macro_f1": 0.06182561508164009
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": 8,
+            "max_features": 0.5,
+            "min_samples_leaf": 3
+          },
+          "mean_macro_f1": 0.7006009011107482,
+          "std_macro_f1": 0.07717277879953352
+        }
+      ],
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7006009011107482,
+          "weighted_f1": 0.7770466263733632,
+          "accuracy": 0.7721194417396948,
+          "balanced_accuracy": 0.7088701240280187,
+          "roc_auc_ovr_macro": 0.9017026185660122,
+          "benign_fpr": 0.16072874493927122,
+          "f1_benign": 0.8648660921836637,
+          "f1_phishing": 0.7249861700165958,
+          "f1_fake_ecommerce": 0.7898412698412698,
+          "f1_crypto_scam": 0.475,
+          "f1_malware_delivery": 0.6483109735122119
+        },
+        "std": {
+          "macro_f1": 0.07717277879953352,
+          "weighted_f1": 0.056887270741427465,
+          "accuracy": 0.06301317969558377,
+          "balanced_accuracy": 0.0788432697390584,
+          "roc_auc_ovr_macro": 0.030811757424456424,
+          "benign_fpr": 0.07525283791030266,
+          "f1_benign": 0.041478779973555084,
+          "f1_phishing": 0.08590634355763961,
+          "f1_fake_ecommerce": 0.12018546178925972,
+          "f1_crypto_scam": 0.22570876022973602,
+          "f1_malware_delivery": 0.08668662287257539
+        }
+      },
+      "cv_folds": [
+        {
+          "macro_f1": 0.8412881323051554,
+          "weighted_f1": 0.8715873463150922,
+          "accuracy": 0.8734177215189873,
+          "balanced_accuracy": 0.8564102564102564,
+          "roc_auc_ovr_macro": 0.9572972972972973,
+          "benign_fpr": 0.05128205128205128
+        },
+        {
+          "macro_f1": 0.6157846128535319,
+          "weighted_f1": 0.7026077397846816,
+          "accuracy": 0.6794871794871795,
+          "balanced_accuracy": 0.6464468864468864,
+          "roc_auc_ovr_macro": 0.8913821298594552,
+          "benign_fpr": 0.28205128205128205
+        },
+        {
+          "macro_f1": 0.7031963470319635,
+          "weighted_f1": 0.7599227256761504,
+          "accuracy": 0.7564102564102564,
+          "balanced_accuracy": 0.7098245614035088,
+          "roc_auc_ovr_macro": 0.9036678392417608,
+          "benign_fpr": 0.18421052631578946
+        },
+        {
+          "macro_f1": 0.648177261335156,
+          "weighted_f1": 0.7490619030092714,
+          "accuracy": 0.7564102564102564,
+          "balanced_accuracy": 0.6365811965811966,
+          "roc_auc_ovr_macro": 0.8634217718282112,
+          "benign_fpr": 0.1282051282051282
+        },
+        {
+          "macro_f1": 0.6945581520279345,
+          "weighted_f1": 0.8020534170816201,
+          "accuracy": 0.7948717948717948,
+          "balanced_accuracy": 0.6950877192982456,
+          "roc_auc_ovr_macro": 0.8927440546033362,
+          "benign_fpr": 0.15789473684210525
+        }
+      ],
+      "test": {
+        "n": 68,
+        "macro_f1": 0.7861111111111111,
+        "weighted_f1": 0.8274101307189542,
+        "accuracy": 0.8235294117647058,
+        "balanced_accuracy": 0.8104323780794369,
+        "roc_auc_ovr_macro": 0.9679060562297066,
+        "benign_fpr": 0.17647058823529413,
+        "per_class": {
+          "benign": {
+            "precision": 0.9655172413793104,
+            "recall": 0.8235294117647058,
+            "f1": 0.8888888888888888,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.631578947368421,
+            "recall": 0.9230769230769231,
+            "f1": 0.75,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.6,
+            "recall": 0.75,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.7142857142857143,
+            "recall": 0.5555555555555556,
+            "f1": 0.625,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            28,
+            3,
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            12,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            8,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            3,
+            0
+          ],
+          [
+            1,
+            3,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "benign_false_positives": [
+        "c2_benign_000002",
+        "c2_benign_000011",
+        "c2_benign_000040",
+        "c2_benign_000062",
+        "c2_benign_000076",
+        "c2_benign_000122"
+      ],
+      "per_language": {
+        "en": {
+          "n": 63,
+          "accuracy": 0.8412698412698413,
+          "macro_f1": 0.7912919116478626,
+          "benign_fpr": 0.16129032258064516,
+          "labels": {
+            "benign": 31,
+            "phishing": 13,
+            "fake_ecommerce": 8,
+            "crypto_scam": 3,
+            "malware_delivery": 8
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "unknown": {
+          "n": 3,
+          "accuracy": 0.3333333333333333,
+          "macro_f1": 0.3333333333333333,
+          "benign_fpr": 1.0,
+          "labels": {
+            "benign": 1,
+            "crypto_scam": 1,
+            "malware_delivery": 1
+          },
+          "small_n": true
+        }
+      },
+      "misclassified": 12,
+      "training_seconds": 23.59
+    },
+    "xgboost": {
+      "display_name": "XGBoost",
+      "params": {
+        "n_estimators": 300,
+        "tree_method": "hist",
+        "objective": "multi:softprob",
+        "eval_metric": "mlogloss",
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "subsample": 0.8
+      },
+      "grid": [
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.05,
+            "max_depth": 3,
+            "subsample": 0.8
+          },
+          "mean_macro_f1": 0.6843486967140505,
+          "std_macro_f1": 0.09114157107656512
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.05,
+            "max_depth": 3,
+            "subsample": 1.0
+          },
+          "mean_macro_f1": 0.6834518808196022,
+          "std_macro_f1": 0.10035900399589671
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.05,
+            "max_depth": 6,
+            "subsample": 0.8
+          },
+          "mean_macro_f1": 0.6700878521227299,
+          "std_macro_f1": 0.09346737641241336
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.05,
+            "max_depth": 6,
+            "subsample": 1.0
+          },
+          "mean_macro_f1": 0.6401993833596313,
+          "std_macro_f1": 0.11515669204065866
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.1,
+            "max_depth": 3,
+            "subsample": 0.8
+          },
+          "mean_macro_f1": 0.6712912437281491,
+          "std_macro_f1": 0.0950072943467587
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.1,
+            "max_depth": 3,
+            "subsample": 1.0
+          },
+          "mean_macro_f1": 0.6732491088660335,
+          "std_macro_f1": 0.09591757524832008
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.1,
+            "max_depth": 6,
+            "subsample": 0.8
+          },
+          "mean_macro_f1": 0.6708071897238718,
+          "std_macro_f1": 0.0963666975163508
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.1,
+            "max_depth": 6,
+            "subsample": 1.0
+          },
+          "mean_macro_f1": 0.6482392437126145,
+          "std_macro_f1": 0.1111851781534175
+        }
+      ],
+      "cv": {
+        "mean": {
+          "macro_f1": 0.6843486967140505,
+          "weighted_f1": 0.7690726081425369,
+          "accuracy": 0.7721843557286595,
+          "balanced_accuracy": 0.6725482938114518,
+          "roc_auc_ovr_macro": 0.9070234029553463,
+          "benign_fpr": 0.11916329284750335,
+          "f1_benign": 0.8659293468194026,
+          "f1_phishing": 0.724953652206155,
+          "f1_fake_ecommerce": 0.7197493734335839,
+          "f1_crypto_scam": 0.4488888888888889,
+          "f1_malware_delivery": 0.6622222222222222
+        },
+        "std": {
+          "macro_f1": 0.09114157107656512,
+          "weighted_f1": 0.06140341929523002,
+          "accuracy": 0.06700615824800128,
+          "balanced_accuracy": 0.08793117257899957,
+          "roc_auc_ovr_macro": 0.02374345124767843,
+          "benign_fpr": 0.07536553210721474,
+          "f1_benign": 0.04576163596655654,
+          "f1_phishing": 0.09041129157482708,
+          "f1_fake_ecommerce": 0.12902662633085554,
+          "f1_crypto_scam": 0.25691426249160426,
+          "f1_malware_delivery": 0.06501661705923464
+        }
+      },
+      "cv_folds": [
+        {
+          "macro_f1": 0.8046606458675424,
+          "weighted_f1": 0.8462169081221896,
+          "accuracy": 0.8481012658227848,
+          "balanced_accuracy": 0.7964102564102564,
+          "roc_auc_ovr_macro": 0.9480498056585013,
+          "benign_fpr": 0.05128205128205128
+        },
+        {
+          "macro_f1": 0.5353634397325818,
+          "weighted_f1": 0.6665523853699773,
+          "accuracy": 0.6538461538461539,
+          "balanced_accuracy": 0.5372893772893772,
+          "roc_auc_ovr_macro": 0.8748221263019541,
+          "benign_fpr": 0.2564102564102564
+        },
+        {
+          "macro_f1": 0.6788127455259712,
+          "weighted_f1": 0.7516172536905841,
+          "accuracy": 0.7564102564102564,
+          "balanced_accuracy": 0.6603508771929825,
+          "roc_auc_ovr_macro": 0.9058379295000865,
+          "benign_fpr": 0.13157894736842105
+        },
+        {
+          "macro_f1": 0.6553741849116897,
+          "weighted_f1": 0.7663189288723685,
+          "accuracy": 0.782051282051282,
+          "balanced_accuracy": 0.6364102564102565,
+          "roc_auc_ovr_macro": 0.897369112000168,
+          "benign_fpr": 0.05128205128205128
+        },
+        {
+          "macro_f1": 0.7475324675324675,
+          "weighted_f1": 0.8146575646575647,
+          "accuracy": 0.8205128205128205,
+          "balanced_accuracy": 0.732280701754386,
+          "roc_auc_ovr_macro": 0.9090380413160218,
+          "benign_fpr": 0.10526315789473684
+        }
+      ],
+      "test": {
+        "n": 68,
+        "macro_f1": 0.764606877233652,
+        "weighted_f1": 0.8171785955761616,
+        "accuracy": 0.8235294117647058,
+        "balanced_accuracy": 0.7749748617395676,
+        "roc_auc_ovr_macro": 0.9637713388626,
+        "benign_fpr": 0.11764705882352941,
+        "per_class": {
+          "benign": {
+            "precision": 0.8823529411764706,
+            "recall": 0.8823529411764706,
+            "f1": 0.8823529411764706,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.75,
+            "recall": 0.9230769230769231,
+            "f1": 0.8275862068965517,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 0.875,
+            "recall": 0.875,
+            "f1": 0.875,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.6,
+            "recall": 0.75,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.8,
+            "recall": 0.4444444444444444,
+            "f1": 0.5714285714285714,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            30,
+            2,
+            0,
+            1,
+            1
+          ],
+          [
+            1,
+            12,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            3,
+            0
+          ],
+          [
+            3,
+            1,
+            1,
+            0,
+            4
+          ]
+        ]
+      },
+      "benign_false_positives": [
+        "c2_benign_000011",
+        "c2_benign_000040",
+        "c2_benign_000062",
+        "c2_benign_000122"
+      ],
+      "per_language": {
+        "en": {
+          "n": 63,
+          "accuracy": 0.8253968253968254,
+          "macro_f1": 0.7579847571783055,
+          "benign_fpr": 0.12903225806451613,
+          "labels": {
+            "benign": 31,
+            "phishing": 13,
+            "fake_ecommerce": 8,
+            "crypto_scam": 3,
+            "malware_delivery": 8
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "unknown": {
+          "n": 3,
+          "accuracy": 0.6666666666666666,
+          "macro_f1": 0.6666666666666666,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1,
+            "crypto_scam": 1,
+            "malware_delivery": 1
+          },
+          "small_n": true
+        }
+      },
+      "misclassified": 12,
+      "training_seconds": 13.48
+    }
+  },
+  "misclassified_total": 42,
+  "importance": {
+    "caveat": "Permutation importance and SHAP are computed on a small pilot test split; the rankings are indicative only (a few pages can reorder them).",
+    "top_n": 15,
+    "logreg": {
+      "standardized_coefficients": {
+        "benign": [
+          {
+            "feature": "distinct_external_domains",
+            "name": "Number of different domains that links point to [distinct_external_domains]",
+            "description": "Number of different domains that links point to.",
+            "value": 0.5086476225814148
+          },
+          {
+            "feature": "null_link_ratio",
+            "name": "Null links divided by all links [null_link_ratio]",
+            "description": "Null links divided by all links.",
+            "value": -0.4409080082252278
+          },
+          {
+            "feature": "hidden_iframe_count",
+            "name": "Frames that are invisible (zero size or hidde... [hidden_iframe_count]",
+            "description": "Frames that are invisible (zero size or hidden) - used for click-jacking, tracking or silent drive-by downloads.",
+            "value": 0.36258066742179035
+          },
+          {
+            "feature": "external_script_domain_count",
+            "name": "Distinct other domains that scripts are loade... [external_script_domain_count]",
+            "description": "Distinct other domains that scripts are loaded from - each one is a third party that can change the page.",
+            "value": 0.3392418780131734
+          },
+          {
+            "feature": "inline_script_count",
+            "name": "Number of inline <script> blocks with code (J... [inline_script_count]",
+            "description": "Number of inline <script> blocks with code (JSON-LD/templates excluded).",
+            "value": 0.29352749979546056
+          },
+          {
+            "feature": "hidden_text_ratio",
+            "name": "Hidden text divided by all text (hidden + vis... [hidden_text_ratio]",
+            "description": "Hidden text divided by all text (hidden + visible). A high share suggests keyword stuffing or cloaking.",
+            "value": 0.2877496463961316
+          },
+          {
+            "feature": "avg_depth",
+            "name": "Average nesting level of all elements - how \"... [avg_depth]",
+            "description": "Average nesting level of all elements - how \"layered\" the layout is.",
+            "value": 0.24910540446155338
+          },
+          {
+            "feature": "hidden_text_chars",
+            "name": "Characters of text inside hidden elements [hidden_text_chars]",
+            "description": "Characters of text inside hidden elements.",
+            "value": -0.23633202483787655
+          },
+          {
+            "feature": "internal_link_count",
+            "name": "Web links to the page's own registrable domai... [internal_link_count]",
+            "description": "Web links to the page's own registrable domain (null links not included).",
+            "value": 0.23318470028906074
+          },
+          {
+            "feature": "form_action_to_ip",
+            "name": "A form submits to a bare IP address instead o... [form_action_to_ip]",
+            "description": "A form submits to a bare IP address instead of a domain name - legitimate sites almost never do this.",
+            "value": -0.2202845884063522
+          },
+          {
+            "feature": "link_count",
+            "name": "Number of <a href> links [link_count]",
+            "description": "Number of <a href> links.",
+            "value": 0.21186438016105494
+          },
+          {
+            "feature": "node_count",
+            "name": "Elements plus non-empty text nodes [node_count]",
+            "description": "Elements plus non-empty text nodes. Phishing kits are usually small single-purpose pages; real sites are large.",
+            "value": 0.1978024814577552
+          },
+          {
+            "feature": "max_depth",
+            "name": "Deepest nesting level (html = 1) [max_depth]",
+            "description": "Deepest nesting level (html = 1). Very flat or extremely deep trees are unusual for genuine sites.",
+            "value": 0.19737563549730128
+          },
+          {
+            "feature": "form_action_empty_or_js",
+            "name": "Forms whose action is empty, \"#\" or javascrip... [form_action_empty_or_js]",
+            "description": "Forms whose action is empty, \"#\" or javascript: - the data is handled by JavaScript (often sent elsewhere) instead of a visible target.",
+            "value": -0.18590505346179664
+          },
+          {
+            "feature": "has_password_field",
+            "name": "The page asks for a password [has_password_field]",
+            "description": "The page asks for a password.",
+            "value": -0.1817401074917399
+          }
+        ],
+        "phishing": [
+          {
+            "feature": "null_link_ratio",
+            "name": "Null links divided by all links [null_link_ratio]",
+            "description": "Null links divided by all links.",
+            "value": 0.6234088178810411
+          },
+          {
+            "feature": "external_link_ratio",
+            "name": "External web links divided by all web links (... [external_link_ratio]",
+            "description": "External web links divided by all web links (internal + external).",
+            "value": 0.43639886937841765
+          },
+          {
+            "feature": "has_password_field",
+            "name": "The page asks for a password [has_password_field]",
+            "description": "The page asks for a password.",
+            "value": 0.39086496834559026
+          },
+          {
+            "feature": "distinct_tag_count",
+            "name": "Number of different tag names [distinct_tag_count]",
+            "description": "Number of different tag names. Real sites use a richer tag vocabulary than minimal kits.",
+            "value": -0.38128613349314217
+          },
+          {
+            "feature": "hidden_text_ratio",
+            "name": "Hidden text divided by all text (hidden + vis... [hidden_text_ratio]",
+            "description": "Hidden text divided by all text (hidden + visible). A high share suggests keyword stuffing or cloaking.",
+            "value": 0.3746947097155032
+          },
+          {
+            "feature": "form_method_get_with_password",
+            "name": "A form with a password field uses method GET,... [form_method_get_with_password]",
+            "description": "A form with a password field uses method GET, which puts the password in the URL - careless kit code or misconfiguration.",
+            "value": 0.3591843781979298
+          },
+          {
+            "feature": "max_depth",
+            "name": "Deepest nesting level (html = 1) [max_depth]",
+            "description": "Deepest nesting level (html = 1). Very flat or extremely deep trees are unusual for genuine sites.",
+            "value": 0.3361080203215624
+          },
+          {
+            "feature": "inputs_outside_forms_count",
+            "name": "Fields not inside any form - typical of kits... [inputs_outside_forms_count]",
+            "description": "Fields not inside any form - typical of kits that collect data with JavaScript instead of a normal form submit.",
+            "value": 0.2898521557609697
+          },
+          {
+            "feature": "leaf_ratio",
+            "name": "Share of elements with no child elements [leaf_ratio]",
+            "description": "Share of elements with no child elements. Copied login kits are often shallow with many leaves.",
+            "value": 0.2885434640475642
+          },
+          {
+            "feature": "internal_link_count",
+            "name": "Web links to the page's own registrable domai... [internal_link_count]",
+            "description": "Web links to the page's own registrable domain (null links not included).",
+            "value": -0.28245491459474226
+          },
+          {
+            "feature": "external_link_count",
+            "name": "Web links to other domains [external_link_count]",
+            "description": "Web links to other domains. Kits often link every menu item to the real brand's site.",
+            "value": 0.25822560000662376
+          },
+          {
+            "feature": "event_handler_count",
+            "name": "Inline on*= event handlers (onclick, onsubmit... [event_handler_count]",
+            "description": "Inline on*= event handlers (onclick, onsubmit, onload, ...) - code hidden in attributes.",
+            "value": 0.23695145485386934
+          },
+          {
+            "feature": "inline_script_chars_total",
+            "name": "Total characters of inline JavaScript [inline_script_chars_total]",
+            "description": "Total characters of inline JavaScript. Large inline code is typical of obfuscated kits and droppers.",
+            "value": -0.20445903017040398
+          },
+          {
+            "feature": "password_form_external_action",
+            "name": "A form containing a password field submits to... [password_form_external_action]",
+            "description": "A form containing a password field submits to an external domain - one of the strongest structural phishing signals.",
+            "value": 0.18864285350626958
+          },
+          {
+            "feature": "inline_script_count",
+            "name": "Number of inline <script> blocks with code (J... [inline_script_count]",
+            "description": "Number of inline <script> blocks with code (JSON-LD/templates excluded).",
+            "value": -0.17294252752040393
+          }
+        ],
+        "fake_ecommerce": [
+          {
+            "feature": "external_stylesheet_ratio",
+            "name": "Stylesheets loaded from other domains divided... [external_stylesheet_ratio]",
+            "description": "Stylesheets loaded from other domains divided by all linked stylesheets - kits often hot-link the real brand's CSS.",
+            "value": 0.41703267817458595
+          },
+          {
+            "feature": "external_script_count",
+            "name": "Number of <script src> references [external_script_count]",
+            "description": "Number of <script src> references.",
+            "value": 0.3813209967977871
+          },
+          {
+            "feature": "internal_link_count",
+            "name": "Web links to the page's own registrable domai... [internal_link_count]",
+            "description": "Web links to the page's own registrable domain (null links not included).",
+            "value": 0.34638847311431054
+          },
+          {
+            "feature": "max_depth",
+            "name": "Deepest nesting level (html = 1) [max_depth]",
+            "description": "Deepest nesting level (html = 1). Very flat or extremely deep trees are unusual for genuine sites.",
+            "value": -0.341734643029594
+          },
+          {
+            "feature": "external_script_domain_count",
+            "name": "Distinct other domains that scripts are loade... [external_script_domain_count]",
+            "description": "Distinct other domains that scripts are loaded from - each one is a third party that can change the page.",
+            "value": -0.33011056978862174
+          },
+          {
+            "feature": "iframe_count",
+            "name": "Number of <iframe>/<frame> elements [iframe_count]",
+            "description": "Number of <iframe>/<frame> elements. Frames can load another site's content into the page.",
+            "value": -0.2940006535221479
+          },
+          {
+            "feature": "email_field_count",
+            "name": "Fields asking for an e-mail address (type, au... [email_field_count]",
+            "description": "Fields asking for an e-mail address (type, autocomplete, name/id/placeholder/label in English, Sinhala or Tamil).",
+            "value": 0.29358823229149816
+          },
+          {
+            "feature": "form_count",
+            "name": "Number of <form> elements [form_count]",
+            "description": "Number of <form> elements. Credential theft happens through forms.",
+            "value": 0.2902479120864805
+          },
+          {
+            "feature": "distinct_external_domains",
+            "name": "Number of different domains that links point to [distinct_external_domains]",
+            "description": "Number of different domains that links point to.",
+            "value": -0.280325469929128
+          },
+          {
+            "feature": "inputs_outside_forms_count",
+            "name": "Fields not inside any form - typical of kits... [inputs_outside_forms_count]",
+            "description": "Fields not inside any form - typical of kits that collect data with JavaScript instead of a normal form submit.",
+            "value": -0.26991911978587985
+          },
+          {
+            "feature": "external_iframe_count",
+            "name": "Frames that load content from another domain [external_iframe_count]",
+            "description": "Frames that load content from another domain.",
+            "value": -0.2686944676888893
+          },
+          {
+            "feature": "event_handler_count",
+            "name": "Inline on*= event handlers (onclick, onsubmit... [event_handler_count]",
+            "description": "Inline on*= event handlers (onclick, onsubmit, onload, ...) - code hidden in attributes.",
+            "value": -0.2496032708012388
+          },
+          {
+            "feature": "leaf_ratio",
+            "name": "Share of elements with no child elements [leaf_ratio]",
+            "description": "Share of elements with no child elements. Copied login kits are often shallow with many leaves.",
+            "value": -0.2382156041840106
+          },
+          {
+            "feature": "external_link_count",
+            "name": "Web links to other domains [external_link_count]",
+            "description": "Web links to other domains. Kits often link every menu item to the real brand's site.",
+            "value": -0.2270659070500959
+          },
+          {
+            "feature": "hidden_text_ratio",
+            "name": "Hidden text divided by all text (hidden + vis... [hidden_text_ratio]",
+            "description": "Hidden text divided by all text (hidden + visible). A high share suggests keyword stuffing or cloaking.",
+            "value": -0.22486290021028096
+          }
+        ],
+        "crypto_scam": [
+          {
+            "feature": "distinct_tag_count",
+            "name": "Number of different tag names [distinct_tag_count]",
+            "description": "Number of different tag names. Real sites use a richer tag vocabulary than minimal kits.",
+            "value": 0.42985827035235696
+          },
+          {
+            "feature": "external_script_domain_count",
+            "name": "Distinct other domains that scripts are loade... [external_script_domain_count]",
+            "description": "Distinct other domains that scripts are loaded from - each one is a third party that can change the page.",
+            "value": 0.42963056702448243
+          },
+          {
+            "feature": "inline_script_chars_total",
+            "name": "Total characters of inline JavaScript [inline_script_chars_total]",
+            "description": "Total characters of inline JavaScript. Large inline code is typical of obfuscated kits and droppers.",
+            "value": -0.4181825550054245
+          },
+          {
+            "feature": "leaf_ratio",
+            "name": "Share of elements with no child elements [leaf_ratio]",
+            "description": "Share of elements with no child elements. Copied login kits are often shallow with many leaves.",
+            "value": 0.36548355916510367
+          },
+          {
+            "feature": "hidden_input_ratio",
+            "name": "Hidden inputs divided by all inputs [hidden_input_ratio]",
+            "description": "Hidden inputs divided by all inputs.",
+            "value": -0.34926863141158576
+          },
+          {
+            "feature": "hidden_text_ratio",
+            "name": "Hidden text divided by all text (hidden + vis... [hidden_text_ratio]",
+            "description": "Hidden text divided by all text (hidden + visible). A high share suggests keyword stuffing or cloaking.",
+            "value": -0.30734803273565464
+          },
+          {
+            "feature": "null_link_ratio",
+            "name": "Null links divided by all links [null_link_ratio]",
+            "description": "Null links divided by all links.",
+            "value": 0.2910937661772998
+          },
+          {
+            "feature": "external_link_ratio",
+            "name": "External web links divided by all web links (... [external_link_ratio]",
+            "description": "External web links divided by all web links (internal + external).",
+            "value": -0.28383710220005354
+          },
+          {
+            "feature": "card_field_count",
+            "name": "Fields asking for a card number, CVV or expir... [card_field_count]",
+            "description": "Fields asking for a card number, CVV or expiry date - payment-card theft (fake shops, fake payment pages).",
+            "value": 0.26992360109481484
+          },
+          {
+            "feature": "form_method_get_with_password",
+            "name": "A form with a password field uses method GET,... [form_method_get_with_password]",
+            "description": "A form with a password field uses method GET, which puts the password in the URL - careless kit code or misconfiguration.",
+            "value": -0.21732865942124144
+          },
+          {
+            "feature": "distinct_external_domains",
+            "name": "Number of different domains that links point to [distinct_external_domains]",
+            "description": "Number of different domains that links point to.",
+            "value": -0.20832101355251392
+          },
+          {
+            "feature": "internal_link_count",
+            "name": "Web links to the page's own registrable domai... [internal_link_count]",
+            "description": "Web links to the page's own registrable domain (null links not included).",
+            "value": -0.15334013583775308
+          },
+          {
+            "feature": "inline_script_count",
+            "name": "Number of inline <script> blocks with code (J... [inline_script_count]",
+            "description": "Number of inline <script> blocks with code (JSON-LD/templates excluded).",
+            "value": -0.14790122451019522
+          },
+          {
+            "feature": "has_title",
+            "name": "The page has a non-empty <title> [has_title]",
+            "description": "The page has a non-empty <title>.",
+            "value": -0.14541288390785648
+          },
+          {
+            "feature": "username_field_count",
+            "name": "Fields asking for a user name, login id, acco... [username_field_count]",
+            "description": "Fields asking for a user name, login id, account or customer number.",
+            "value": 0.14155556913781792
+          }
+        ],
+        "malware_delivery": [
+          {
+            "feature": "external_script_count",
+            "name": "Number of <script src> references [external_script_count]",
+            "description": "Number of <script src> references.",
+            "value": -0.5811660359816424
+          },
+          {
+            "feature": "form_action_to_ip",
+            "name": "A form submits to a bare IP address instead o... [form_action_to_ip]",
+            "description": "A form submits to a bare IP address instead of a domain name - legitimate sites almost never do this.",
+            "value": 0.42722166552502966
+          },
+          {
+            "feature": "leaf_ratio",
+            "name": "Share of elements with no child elements [leaf_ratio]",
+            "description": "Share of elements with no child elements. Copied login kits are often shallow with many leaves.",
+            "value": -0.3957250841945007
+          },
+          {
+            "feature": "null_link_ratio",
+            "name": "Null links divided by all links [null_link_ratio]",
+            "description": "Null links divided by all links.",
+            "value": -0.36842792167936944
+          },
+          {
+            "feature": "title_length",
+            "name": "Characters in the title [title_length]",
+            "description": "Characters in the title.",
+            "value": -0.3678956505945369
+          },
+          {
+            "feature": "external_script_domain_count",
+            "name": "Distinct other domains that scripts are loade... [external_script_domain_count]",
+            "description": "Distinct other domains that scripts are loaded from - each one is a third party that can change the page.",
+            "value": -0.34404435947823664
+          },
+          {
+            "feature": "inline_script_chars_total",
+            "name": "Total characters of inline JavaScript [inline_script_chars_total]",
+            "description": "Total characters of inline JavaScript. Large inline code is typical of obfuscated kits and droppers.",
+            "value": 0.33211908854084615
+          },
+          {
+            "feature": "external_stylesheet_ratio",
+            "name": "Stylesheets loaded from other domains divided... [external_stylesheet_ratio]",
+            "description": "Stylesheets loaded from other domains divided by all linked stylesheets - kits often hot-link the real brand's CSS.",
+            "value": -0.3240129912521975
+          },
+          {
+            "feature": "distinct_tag_count",
+            "name": "Number of different tag names [distinct_tag_count]",
+            "description": "Number of different tag names. Real sites use a richer tag vocabulary than minimal kits.",
+            "value": -0.3168009877630805
+          },
+          {
+            "feature": "node_count",
+            "name": "Elements plus non-empty text nodes [node_count]",
+            "description": "Elements plus non-empty text nodes. Phishing kits are usually small single-purpose pages; real sites are large.",
+            "value": -0.26114452533904975
+          },
+          {
+            "feature": "hidden_input_ratio",
+            "name": "Hidden inputs divided by all inputs [hidden_input_ratio]",
+            "description": "Hidden inputs divided by all inputs.",
+            "value": 0.19957922976843281
+          },
+          {
+            "feature": "has_meta_refresh",
+            "name": "A <meta http-equiv=refresh> redirects or relo... [has_meta_refresh]",
+            "description": "A <meta http-equiv=refresh> redirects or reloads the page automatically - common in redirect chains.",
+            "value": 0.19366409714589564
+          },
+          {
+            "feature": "inline_script_count",
+            "name": "Number of inline <script> blocks with code (J... [inline_script_count]",
+            "description": "Number of inline <script> blocks with code (JSON-LD/templates excluded).",
+            "value": -0.1661300901319641
+          },
+          {
+            "feature": "hidden_iframe_count",
+            "name": "Frames that are invisible (zero size or hidde... [hidden_iframe_count]",
+            "description": "Frames that are invisible (zero size or hidden) - used for click-jacking, tracking or silent drive-by downloads.",
+            "value": -0.161957133126235
+          },
+          {
+            "feature": "avg_depth",
+            "name": "Average nesting level of all elements - how \"... [avg_depth]",
+            "description": "Average nesting level of all elements - how \"layered\" the layout is.",
+            "value": -0.16097290837274084
+          }
+        ]
+      }
+    },
+    "random_forest": {
+      "impurity": [
+        {
+          "feature": "internal_link_count",
+          "name": "Web links to the page's own registrable domai... [internal_link_count]",
+          "description": "Web links to the page's own registrable domain (null links not included).",
+          "value": 0.12641715297909462
+        },
+        {
+          "feature": "inline_script_chars_total",
+          "name": "Total characters of inline JavaScript [inline_script_chars_total]",
+          "description": "Total characters of inline JavaScript. Large inline code is typical of obfuscated kits and droppers.",
+          "value": 0.09965318831389486
+        },
+        {
+          "feature": "external_script_count",
+          "name": "Number of <script src> references [external_script_count]",
+          "description": "Number of <script src> references.",
+          "value": 0.09876157511763516
+        },
+        {
+          "feature": "external_link_ratio",
+          "name": "External web links divided by all web links (... [external_link_ratio]",
+          "description": "External web links divided by all web links (internal + external).",
+          "value": 0.07621768702797571
+        },
+        {
+          "feature": "text_to_html_ratio",
+          "name": "Visible characters divided by HTML bytes [text_to_html_ratio]",
+          "description": "Visible characters divided by HTML bytes. Scam pages often have little real content and much markup or script.",
+          "value": 0.050270351394580685
+        },
+        {
+          "feature": "external_link_count",
+          "name": "Web links to other domains [external_link_count]",
+          "description": "Web links to other domains. Kits often link every menu item to the real brand's site.",
+          "value": 0.049845995055517345
+        },
+        {
+          "feature": "link_count",
+          "name": "Number of <a href> links [link_count]",
+          "description": "Number of <a href> links.",
+          "value": 0.04973244615422503
+        },
+        {
+          "feature": "node_count",
+          "name": "Elements plus non-empty text nodes [node_count]",
+          "description": "Elements plus non-empty text nodes. Phishing kits are usually small single-purpose pages; real sites are large.",
+          "value": 0.04703378441623752
+        },
+        {
+          "feature": "leaf_ratio",
+          "name": "Share of elements with no child elements [leaf_ratio]",
+          "description": "Share of elements with no child elements. Copied login kits are often shallow with many leaves.",
+          "value": 0.042138795492218065
+        },
+        {
+          "feature": "avg_depth",
+          "name": "Average nesting level of all elements - how \"... [avg_depth]",
+          "description": "Average nesting level of all elements - how \"layered\" the layout is.",
+          "value": 0.03657026301942327
+        },
+        {
+          "feature": "inline_script_count",
+          "name": "Number of inline <script> blocks with code (J... [inline_script_count]",
+          "description": "Number of inline <script> blocks with code (JSON-LD/templates excluded).",
+          "value": 0.03429571332811251
+        },
+        {
+          "feature": "distinct_external_domains",
+          "name": "Number of different domains that links point to [distinct_external_domains]",
+          "description": "Number of different domains that links point to.",
+          "value": 0.03338377898487561
+        },
+        {
+          "feature": "inputs_total",
+          "name": "All input/select/textarea fields, inside or o... [inputs_total]",
+          "description": "All input/select/textarea fields, inside or outside forms.",
+          "value": 0.028995946776472104
+        },
+        {
+          "feature": "title_length",
+          "name": "Characters in the title [title_length]",
+          "description": "Characters in the title.",
+          "value": 0.026468730219535278
+        },
+        {
+          "feature": "distinct_tag_count",
+          "name": "Number of different tag names [distinct_tag_count]",
+          "description": "Number of different tag names. Real sites use a richer tag vocabulary than minimal kits.",
+          "value": 0.02336867512027899
+        }
+      ],
+      "permutation_test": [
+        {
+          "feature": "internal_link_count",
+          "name": "Web links to the page's own registrable domai... [internal_link_count]",
+          "description": "Web links to the page's own registrable domain (null links not included).",
+          "value": 0.21418717004335935,
+          "std": 0.05304484226275403
+        },
+        {
+          "feature": "external_script_count",
+          "name": "Number of <script src> references [external_script_count]",
+          "description": "Number of <script src> references.",
+          "value": 0.09534207491947429,
+          "std": 0.033017527314780165
+        },
+        {
+          "feature": "node_count",
+          "name": "Elements plus non-empty text nodes [node_count]",
+          "description": "Elements plus non-empty text nodes. Phishing kits are usually small single-purpose pages; real sites are large.",
+          "value": 0.04049526453938224,
+          "std": 0.024908795696724263
+        },
+        {
+          "feature": "external_link_ratio",
+          "name": "External web links divided by all web links (... [external_link_ratio]",
+          "description": "External web links divided by all web links (internal + external).",
+          "value": 0.034492204032526605,
+          "std": 0.03304599522407502
+        },
+        {
+          "feature": "inputs_total",
+          "name": "All input/select/textarea fields, inside or o... [inputs_total]",
+          "description": "All input/select/textarea fields, inside or outside forms.",
+          "value": 0.033314110365967986,
+          "std": 0.036294662524945315
+        },
+        {
+          "feature": "hidden_text_ratio",
+          "name": "Hidden text divided by all text (hidden + vis... [hidden_text_ratio]",
+          "description": "Hidden text divided by all text (hidden + visible). A high share suggests keyword stuffing or cloaking.",
+          "value": 0.01750827603768783,
+          "std": 0.023601064118450112
+        },
+        {
+          "feature": "sensitive_field_count",
+          "name": "Fields for secrets that a scammer can use dir... [sensitive_field_count]",
+          "description": "Fields for secrets that a scammer can use directly - password + OTP/PIN + card fields.",
+          "value": 0.007689011968423765,
+          "std": 0.017200402195776985
+        },
+        {
+          "feature": "password_field_count",
+          "name": "Password fields (type=password or a password... [password_field_count]",
+          "description": "Password fields (type=password or a password autocomplete token). The core of a credential-phishing page.",
+          "value": 0.007196969696969724,
+          "std": 0.015381773109278019
+        },
+        {
+          "feature": "link_count",
+          "name": "Number of <a href> links [link_count]",
+          "description": "Number of <a href> links.",
+          "value": 0.006058087627110398,
+          "std": 0.0172440775843564
+        },
+        {
+          "feature": "has_password_field",
+          "name": "The page asks for a password [has_password_field]",
+          "description": "The page asks for a password.",
+          "value": 0.005984848484848515,
+          "std": 0.016348372510637168
+        },
+        {
+          "feature": "max_depth",
+          "name": "Deepest nesting level (html = 1) [max_depth]",
+          "description": "Deepest nesting level (html = 1). Very flat or extremely deep trees are unusual for genuine sites.",
+          "value": 0.0,
+          "std": 0.0
+        },
+        {
+          "feature": "avg_depth",
+          "name": "Average nesting level of all elements - how \"... [avg_depth]",
+          "description": "Average nesting level of all elements - how \"layered\" the layout is.",
+          "value": 0.0,
+          "std": 0.0
+        },
+        {
+          "feature": "text_to_html_ratio",
+          "name": "Visible characters divided by HTML bytes [text_to_html_ratio]",
+          "description": "Visible characters divided by HTML bytes. Scam pages often have little real content and much markup or script.",
+          "value": 0.0,
+          "std": 0.0
+        },
+        {
+          "feature": "form_count",
+          "name": "Number of <form> elements [form_count]",
+          "description": "Number of <form> elements. Credential theft happens through forms.",
+          "value": 0.0,
+          "std": 0.0
+        },
+        {
+          "feature": "has_form",
+          "name": "The page has at least one form [has_form]",
+          "description": "The page has at least one form.",
+          "value": 0.0,
+          "std": 0.0
+        }
+      ]
+    },
+    "xgboost": {
+      "gain": [
+        {
+          "feature": "form_action_to_ip",
+          "name": "A form submits to a bare IP address instead o... [form_action_to_ip]",
+          "description": "A form submits to a bare IP address instead of a domain name - legitimate sites almost never do this.",
+          "value": 4.2649712562561035
+        },
+        {
+          "feature": "internal_link_count",
+          "name": "Web links to the page's own registrable domai... [internal_link_count]",
+          "description": "Web links to the page's own registrable domain (null links not included).",
+          "value": 2.9961671829223633
+        },
+        {
+          "feature": "external_script_count",
+          "name": "Number of <script src> references [external_script_count]",
+          "description": "Number of <script src> references.",
+          "value": 2.917219877243042
+        },
+        {
+          "feature": "inputs_total",
+          "name": "All input/select/textarea fields, inside or o... [inputs_total]",
+          "description": "All input/select/textarea fields, inside or outside forms.",
+          "value": 2.9089252948760986
+        },
+        {
+          "feature": "form_method_get_with_password",
+          "name": "A form with a password field uses method GET,... [form_method_get_with_password]",
+          "description": "A form with a password field uses method GET, which puts the password in the URL - careless kit code or misconfiguration.",
+          "value": 2.90543794631958
+        },
+        {
+          "feature": "card_field_count",
+          "name": "Fields asking for a card number, CVV or expir... [card_field_count]",
+          "description": "Fields asking for a card number, CVV or expiry date - payment-card theft (fake shops, fake payment pages).",
+          "value": 2.5064785480499268
+        },
+        {
+          "feature": "sensitive_field_count",
+          "name": "Fields for secrets that a scammer can use dir... [sensitive_field_count]",
+          "description": "Fields for secrets that a scammer can use directly - password + OTP/PIN + card fields.",
+          "value": 2.3169326782226562
+        },
+        {
+          "feature": "link_count",
+          "name": "Number of <a href> links [link_count]",
+          "description": "Number of <a href> links.",
+          "value": 2.242666721343994
+        },
+        {
+          "feature": "inline_script_chars_total",
+          "name": "Total characters of inline JavaScript [inline_script_chars_total]",
+          "description": "Total characters of inline JavaScript. Large inline code is typical of obfuscated kits and droppers.",
+          "value": 2.0825302600860596
+        },
+        {
+          "feature": "external_link_ratio",
+          "name": "External web links divided by all web links (... [external_link_ratio]",
+          "description": "External web links divided by all web links (internal + external).",
+          "value": 1.808497428894043
+        },
+        {
+          "feature": "external_script_domain_count",
+          "name": "Distinct other domains that scripts are loade... [external_script_domain_count]",
+          "description": "Distinct other domains that scripts are loaded from - each one is a third party that can change the page.",
+          "value": 1.7618528604507446
+        },
+        {
+          "feature": "password_field_count",
+          "name": "Password fields (type=password or a password... [password_field_count]",
+          "description": "Password fields (type=password or a password autocomplete token). The core of a credential-phishing page.",
+          "value": 1.719754695892334
+        },
+        {
+          "feature": "inputs_outside_forms_count",
+          "name": "Fields not inside any form - typical of kits... [inputs_outside_forms_count]",
+          "description": "Fields not inside any form - typical of kits that collect data with JavaScript instead of a normal form submit.",
+          "value": 1.716431736946106
+        },
+        {
+          "feature": "null_link_ratio",
+          "name": "Null links divided by all links [null_link_ratio]",
+          "description": "Null links divided by all links.",
+          "value": 1.6699111461639404
+        },
+        {
+          "feature": "external_form_action_count",
+          "name": "Forms that submit to another registrable doma... [external_form_action_count]",
+          "description": "Forms that submit to another registrable domain than the page itself.",
+          "value": 1.6258306503295898
+        }
+      ],
+      "shap_global": [
+        {
+          "feature": "internal_link_count",
+          "name": "Web links to the page's own registrable domai... [internal_link_count]",
+          "description": "Web links to the page's own registrable domain (null links not included).",
+          "value": 2.4359800815582275,
+          "per_class": {
+            "benign": 0.8015567064285278,
+            "phishing": 0.8705493211746216,
+            "fake_ecommerce": 0.34180939197540283,
+            "crypto_scam": 0.3359200954437256,
+            "malware_delivery": 0.0861443430185318
+          }
+        },
+        {
+          "feature": "external_link_ratio",
+          "name": "External web links divided by all web links (... [external_link_ratio]",
+          "description": "External web links divided by all web links (internal + external).",
+          "value": 1.638828992843628,
+          "per_class": {
+            "benign": 0.3163691461086273,
+            "phishing": 0.4271247088909149,
+            "fake_ecommerce": 0.3470690846443176,
+            "crypto_scam": 0.517280101776123,
+            "malware_delivery": 0.030985943973064423
+          }
+        },
+        {
+          "feature": "inline_script_chars_total",
+          "name": "Total characters of inline JavaScript [inline_script_chars_total]",
+          "description": "Total characters of inline JavaScript. Large inline code is typical of obfuscated kits and droppers.",
+          "value": 1.5858098268508911,
+          "per_class": {
+            "benign": 0.39544615149497986,
+            "phishing": 0.16436298191547394,
+            "fake_ecommerce": 0.3833797872066498,
+            "crypto_scam": 0.43980494141578674,
+            "malware_delivery": 0.2028159648180008
+          }
+        },
+        {
+          "feature": "external_script_count",
+          "name": "Number of <script src> references [external_script_count]",
+          "description": "Number of <script src> references.",
+          "value": 1.4979681968688965,
+          "per_class": {
+            "benign": 0.0904381275177002,
+            "phishing": 0.06056497246026993,
+            "fake_ecommerce": 0.28353598713874817,
+            "crypto_scam": 0.2960805296897888,
+            "malware_delivery": 0.7673485279083252
+          }
+        },
+        {
+          "feature": "node_count",
+          "name": "Elements plus non-empty text nodes [node_count]",
+          "description": "Elements plus non-empty text nodes. Phishing kits are usually small single-purpose pages; real sites are large.",
+          "value": 1.3849698305130005,
+          "per_class": {
+            "benign": 0.04938697814941406,
+            "phishing": 0.14466898143291473,
+            "fake_ecommerce": 0.11554716527462006,
+            "crypto_scam": 0.5943711996078491,
+            "malware_delivery": 0.4809955060482025
+          }
+        },
+        {
+          "feature": "text_to_html_ratio",
+          "name": "Visible characters divided by HTML bytes [text_to_html_ratio]",
+          "description": "Visible characters divided by HTML bytes. Scam pages often have little real content and much markup or script.",
+          "value": 1.2243469953536987,
+          "per_class": {
+            "benign": 0.13587182760238647,
+            "phishing": 0.08439069986343384,
+            "fake_ecommerce": 0.31453561782836914,
+            "crypto_scam": 0.4035162925720215,
+            "malware_delivery": 0.2860325574874878
+          }
+        },
+        {
+          "feature": "distinct_tag_count",
+          "name": "Number of different tag names [distinct_tag_count]",
+          "description": "Number of different tag names. Real sites use a richer tag vocabulary than minimal kits.",
+          "value": 1.0504454374313354,
+          "per_class": {
+            "benign": 0.20010080933570862,
+            "phishing": 0.3441688120365143,
+            "fake_ecommerce": 0.32819056510925293,
+            "crypto_scam": 0.1630094200372696,
+            "malware_delivery": 0.01497583743184805
+          }
+        },
+        {
+          "feature": "leaf_ratio",
+          "name": "Share of elements with no child elements [leaf_ratio]",
+          "description": "Share of elements with no child elements. Copied login kits are often shallow with many leaves.",
+          "value": 0.9803645610809326,
+          "per_class": {
+            "benign": 0.24093081057071686,
+            "phishing": 0.22292931377887726,
+            "fake_ecommerce": 0.0713660940527916,
+            "crypto_scam": 0.297590434551239,
+            "malware_delivery": 0.1475478708744049
+          }
+        },
+        {
+          "feature": "avg_depth",
+          "name": "Average nesting level of all elements - how \"... [avg_depth]",
+          "description": "Average nesting level of all elements - how \"layered\" the layout is.",
+          "value": 0.8661366105079651,
+          "per_class": {
+            "benign": 0.23143446445465088,
+            "phishing": 0.029035715386271477,
+            "fake_ecommerce": 0.14724363386631012,
+            "crypto_scam": 0.2735256850719452,
+            "malware_delivery": 0.18489712476730347
+          }
+        },
+        {
+          "feature": "title_length",
+          "name": "Characters in the title [title_length]",
+          "description": "Characters in the title.",
+          "value": 0.8625761270523071,
+          "per_class": {
+            "benign": 0.15571163594722748,
+            "phishing": 0.056650154292583466,
+            "fake_ecommerce": 0.061280734837055206,
+            "crypto_scam": 0.2845107614994049,
+            "malware_delivery": 0.30442285537719727
+          }
+        },
+        {
+          "feature": "null_link_ratio",
+          "name": "Null links divided by all links [null_link_ratio]",
+          "description": "Null links divided by all links.",
+          "value": 0.7847905158996582,
+          "per_class": {
+            "benign": 0.1153746098279953,
+            "phishing": 0.2694397568702698,
+            "fake_ecommerce": 0.06783343851566315,
+            "crypto_scam": 0.2585616111755371,
+            "malware_delivery": 0.07358107715845108
+          }
+        },
+        {
+          "feature": "external_link_count",
+          "name": "Web links to other domains [external_link_count]",
+          "description": "Web links to other domains. Kits often link every menu item to the real brand's site.",
+          "value": 0.6990832090377808,
+          "per_class": {
+            "benign": 0.34606996178627014,
+            "phishing": 0.02575264684855938,
+            "fake_ecommerce": 0.2310323715209961,
+            "crypto_scam": 0.053553856909275055,
+            "malware_delivery": 0.04267437011003494
+          }
+        },
+        {
+          "feature": "link_count",
+          "name": "Number of <a href> links [link_count]",
+          "description": "Number of <a href> links.",
+          "value": 0.6459104418754578,
+          "per_class": {
+            "benign": 0.28809502720832825,
+            "phishing": 0.024867132306098938,
+            "fake_ecommerce": 0.035224758088588715,
+            "crypto_scam": 0.14922229945659637,
+            "malware_delivery": 0.1485012024641037
+          }
+        },
+        {
+          "feature": "external_stylesheet_ratio",
+          "name": "Stylesheets loaded from other domains divided... [external_stylesheet_ratio]",
+          "description": "Stylesheets loaded from other domains divided by all linked stylesheets - kits often hot-link the real brand's CSS.",
+          "value": 0.5893076658248901,
+          "per_class": {
+            "benign": 0.03855626657605171,
+            "phishing": 0.03809298202395439,
+            "fake_ecommerce": 0.21413743495941162,
+            "crypto_scam": 0.05689012259244919,
+            "malware_delivery": 0.24163083732128143
+          }
+        },
+        {
+          "feature": "max_depth",
+          "name": "Deepest nesting level (html = 1) [max_depth]",
+          "description": "Deepest nesting level (html = 1). Very flat or extremely deep trees are unusual for genuine sites.",
+          "value": 0.5533144474029541,
+          "per_class": {
+            "benign": 0.04866747558116913,
+            "phishing": 0.07274550199508667,
+            "fake_ecommerce": 0.27170178294181824,
+            "crypto_scam": 0.06351710855960846,
+            "malware_delivery": 0.09668263047933578
+          }
+        }
+      ]
+    }
+  }
+}

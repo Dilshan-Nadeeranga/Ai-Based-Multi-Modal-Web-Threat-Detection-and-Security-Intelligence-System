@@ -1,0 +1,333 @@
+{
+  "task": "category",
+  "model": "distilbert-base-uncased",
+  "labels": [
+    "legitimate",
+    "phishing",
+    "financial_scam",
+    "data_theft"
+  ],
+  "saved_model": "models/threat_category/distilbert-base-uncased",
+  "hyperparameters": {
+    "epochs": 5,
+    "batch_size": 8,
+    "max_length": 256,
+    "lr": 3e-05,
+    "seed": 42,
+    "class_weights": [
+      0.5017,
+      1.0464,
+      1.0464,
+      10.4643
+    ],
+    "device": "cpu"
+  },
+  "label_counts": {
+    "train": {
+      "legitimate": 146,
+      "data_theft": 7,
+      "phishing": 70,
+      "financial_scam": 70
+    },
+    "val": {
+      "legitimate": 31,
+      "data_theft": 2,
+      "phishing": 15,
+      "financial_scam": 15
+    },
+    "test": {
+      "legitimate": 32,
+      "data_theft": 1,
+      "phishing": 15,
+      "financial_scam": 15
+    }
+  },
+  "best_epoch": 4,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.2753,
+      "val_macro_f1": 0.5723,
+      "val_accuracy": 0.746
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.789,
+      "val_macro_f1": 0.596,
+      "val_accuracy": 0.7778
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.4712,
+      "val_macro_f1": 0.8644,
+      "val_accuracy": 0.8254
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.2683,
+      "val_macro_f1": 0.8785,
+      "val_accuracy": 0.8413
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.187,
+      "val_macro_f1": 0.8644,
+      "val_accuracy": 0.8254
+    }
+  ],
+  "validation": {
+    "accuracy": 0.8413,
+    "macro": {
+      "precision": 0.8816,
+      "recall": 0.8763,
+      "f1": 0.8785
+    },
+    "per_class": {
+      "legitimate": {
+        "precision": 0.8387,
+        "recall": 0.8387,
+        "f1": 0.8387,
+        "support": 31
+      },
+      "phishing": {
+        "precision": 1.0,
+        "recall": 0.9333,
+        "f1": 0.9655,
+        "support": 15
+      },
+      "financial_scam": {
+        "precision": 0.6875,
+        "recall": 0.7333,
+        "f1": 0.7097,
+        "support": 15
+      },
+      "data_theft": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 2
+      }
+    },
+    "confusion_matrix": {
+      "labels": [
+        "legitimate",
+        "phishing",
+        "financial_scam",
+        "data_theft"
+      ],
+      "rows_true_cols_pred": [
+        [
+          26,
+          0,
+          5,
+          0
+        ],
+        [
+          1,
+          14,
+          0,
+          0
+        ],
+        [
+          4,
+          0,
+          11,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2
+        ]
+      ]
+    }
+  },
+  "test": {
+    "accuracy": 0.7619,
+    "macro": {
+      "precision": 0.8158,
+      "recall": 0.812,
+      "f1": 0.8135
+    },
+    "per_class": {
+      "legitimate": {
+        "precision": 0.7812,
+        "recall": 0.7812,
+        "f1": 0.7812,
+        "support": 32
+      },
+      "phishing": {
+        "precision": 0.8571,
+        "recall": 0.8,
+        "f1": 0.8276,
+        "support": 15
+      },
+      "financial_scam": {
+        "precision": 0.625,
+        "recall": 0.6667,
+        "f1": 0.6452,
+        "support": 15
+      },
+      "data_theft": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      }
+    },
+    "confusion_matrix": {
+      "labels": [
+        "legitimate",
+        "phishing",
+        "financial_scam",
+        "data_theft"
+      ],
+      "rows_true_cols_pred": [
+        [
+          25,
+          1,
+          6,
+          0
+        ],
+        [
+          3,
+          12,
+          0,
+          0
+        ],
+        [
+          4,
+          1,
+          10,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ]
+      ]
+    }
+  },
+  "test_by_group": {
+    "data_theft": {
+      "n": 1,
+      "accuracy": 1.0
+    },
+    "financial_scam": {
+      "n": 15,
+      "accuracy": 0.6667
+    },
+    "legitimate": {
+      "n": 32,
+      "accuracy": 0.7812
+    },
+    "phishing": {
+      "n": 15,
+      "accuracy": 0.8
+    }
+  },
+  "test_errors": [
+    {
+      "sample_id": "SVT_001083",
+      "true": "legitimate",
+      "pred": "phishing",
+      "confidence": 0.5891
+    },
+    {
+      "sample_id": "SVT_001158",
+      "true": "phishing",
+      "pred": "legitimate",
+      "confidence": 0.8488
+    },
+    {
+      "sample_id": "SVT_001162",
+      "true": "phishing",
+      "pred": "legitimate",
+      "confidence": 0.8627
+    },
+    {
+      "sample_id": "SVT_001197",
+      "true": "phishing",
+      "pred": "legitimate",
+      "confidence": 0.6083
+    },
+    {
+      "sample_id": "SVT_001227",
+      "true": "legitimate",
+      "pred": "financial_scam",
+      "confidence": 0.7814
+    },
+    {
+      "sample_id": "SVT_001248",
+      "true": "legitimate",
+      "pred": "financial_scam",
+      "confidence": 0.541
+    },
+    {
+      "sample_id": "SVT_001252",
+      "true": "legitimate",
+      "pred": "financial_scam",
+      "confidence": 0.9314
+    },
+    {
+      "sample_id": "SVT_001263",
+      "true": "legitimate",
+      "pred": "financial_scam",
+      "confidence": 0.7442
+    },
+    {
+      "sample_id": "SVT_001272",
+      "true": "legitimate",
+      "pred": "financial_scam",
+      "confidence": 0.9269
+    },
+    {
+      "sample_id": "SVT_001305",
+      "true": "legitimate",
+      "pred": "financial_scam",
+      "confidence": 0.7531
+    },
+    {
+      "sample_id": "SVT_001361",
+      "true": "financial_scam",
+      "pred": "legitimate",
+      "confidence": 0.9099
+    },
+    {
+      "sample_id": "SVT_001385",
+      "true": "financial_scam",
+      "pred": "phishing",
+      "confidence": 0.6888
+    },
+    {
+      "sample_id": "SVT_001387",
+      "true": "financial_scam",
+      "pred": "legitimate",
+      "confidence": 0.7265
+    },
+    {
+      "sample_id": "SVT_001397",
+      "true": "financial_scam",
+      "pred": "legitimate",
+      "confidence": 0.5122
+    },
+    {
+      "sample_id": "SVT_001418",
+      "true": "financial_scam",
+      "pred": "legitimate",
+      "confidence": 0.6907
+    }
+  ],
+  "unlabelled_categories": [
+    "brand_impersonation",
+    "malware",
+    "browser_abuse",
+    "other_scam"
+  ],
+  "notes": "Each scam class comes from a single source dataset (phishing: Phish360 emails, financial_scam: DIFrauD job scams), so the model can partly learn source style; data_theft has 10 samples.",
+  "training_seconds": 500.0,
+  "created_at": "2026-10-15T13:10:29.447900+00:00"
+}

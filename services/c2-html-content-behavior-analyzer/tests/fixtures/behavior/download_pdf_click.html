@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Invoice</title>
+</head>
+<body>
+<button id="dl">Download invoice</button>
+<script>
+  document.getElementById("dl").addEventListener("click", function () {
+    var a = document.createElement("a");
+    a.href = "/files/invoice-2024.pdf";
+    a.download = "invoice-2024.pdf";
+    a.click();
+  });
+</script>
+</body>
+</html>

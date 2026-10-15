@@ -3,6 +3,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
+# The developer inspector (/inspector, /api/v1/dev/*) is never enabled in an image.
+ENV APP_ENV=production
 
 WORKDIR /app
 

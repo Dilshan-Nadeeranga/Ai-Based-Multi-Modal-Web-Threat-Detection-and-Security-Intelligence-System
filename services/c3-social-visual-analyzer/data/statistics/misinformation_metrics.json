@@ -1,0 +1,380 @@
+{
+  "task": "misinformation",
+  "model": "distilbert-base-uncased",
+  "labels": [
+    "real",
+    "fake"
+  ],
+  "saved_model": "models/misinformation/distilbert-base-uncased",
+  "hyperparameters": {
+    "epochs": 5,
+    "batch_size": 8,
+    "max_length": 64,
+    "lr": 3e-05,
+    "seed": 42,
+    "class_weights": [
+      1.0,
+      1.0
+    ],
+    "device": "cpu"
+  },
+  "label_counts": {
+    "train": {
+      "fake": 350,
+      "real": 350
+    },
+    "val": {
+      "fake": 75,
+      "real": 75
+    },
+    "test": {
+      "fake": 75,
+      "real": 75
+    }
+  },
+  "best_epoch": 2,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.5846,
+      "val_macro_f1": 0.7666,
+      "val_accuracy": 0.7667
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.3283,
+      "val_macro_f1": 0.8177,
+      "val_accuracy": 0.82
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.1795,
+      "val_macro_f1": 0.7994,
+      "val_accuracy": 0.8
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.0645,
+      "val_macro_f1": 0.7933,
+      "val_accuracy": 0.7933
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.0371,
+      "val_macro_f1": 0.7865,
+      "val_accuracy": 0.7867
+    }
+  ],
+  "validation": {
+    "accuracy": 0.82,
+    "macro": {
+      "precision": 0.8373,
+      "recall": 0.82,
+      "f1": 0.8177
+    },
+    "per_class": {
+      "real": {
+        "precision": 0.7609,
+        "recall": 0.9333,
+        "f1": 0.8383,
+        "support": 75
+      },
+      "fake": {
+        "precision": 0.9138,
+        "recall": 0.7067,
+        "f1": 0.797,
+        "support": 75
+      }
+    },
+    "confusion_matrix": {
+      "labels": [
+        "real",
+        "fake"
+      ],
+      "rows_true_cols_pred": [
+        [
+          70,
+          5
+        ],
+        [
+          22,
+          53
+        ]
+      ]
+    }
+  },
+  "test": {
+    "accuracy": 0.7733,
+    "macro": {
+      "precision": 0.7991,
+      "recall": 0.7733,
+      "f1": 0.7684
+    },
+    "per_class": {
+      "real": {
+        "precision": 0.7113,
+        "recall": 0.92,
+        "f1": 0.8023,
+        "support": 75
+      },
+      "fake": {
+        "precision": 0.8868,
+        "recall": 0.6267,
+        "f1": 0.7344,
+        "support": 75
+      }
+    },
+    "confusion_matrix": {
+      "labels": [
+        "real",
+        "fake"
+      ],
+      "rows_true_cols_pred": [
+        [
+          69,
+          6
+        ],
+        [
+          28,
+          47
+        ]
+      ]
+    }
+  },
+  "test_by_group": {
+    "false_connection": {
+      "n": 15,
+      "accuracy": 0.4
+    },
+    "imposter_content": {
+      "n": 15,
+      "accuracy": 0.4667
+    },
+    "manipulated_content": {
+      "n": 15,
+      "accuracy": 0.6667
+    },
+    "misleading_content": {
+      "n": 15,
+      "accuracy": 1.0
+    },
+    "real": {
+      "n": 75,
+      "accuracy": 0.92
+    },
+    "satire_parody": {
+      "n": 15,
+      "accuracy": 0.6
+    }
+  },
+  "test_errors": [
+    {
+      "sample_id": "SVT_000505",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9722
+    },
+    {
+      "sample_id": "SVT_000061",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9672
+    },
+    {
+      "sample_id": "SVT_000390",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9728
+    },
+    {
+      "sample_id": "SVT_000347",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9227
+    },
+    {
+      "sample_id": "SVT_000023",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9792
+    },
+    {
+      "sample_id": "SVT_000406",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9133
+    },
+    {
+      "sample_id": "SVT_000085",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9677
+    },
+    {
+      "sample_id": "SVT_000437",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9597
+    },
+    {
+      "sample_id": "SVT_000373",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9822
+    },
+    {
+      "sample_id": "SVT_000389",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.6045
+    },
+    {
+      "sample_id": "SVT_000042",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.7243
+    },
+    {
+      "sample_id": "SVT_000398",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9794
+    },
+    {
+      "sample_id": "SVT_000256",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9761
+    },
+    {
+      "sample_id": "SVT_000254",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9768
+    },
+    {
+      "sample_id": "SVT_000287",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9586
+    },
+    {
+      "sample_id": "SVT_000479",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.5806
+    },
+    {
+      "sample_id": "SVT_000450",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9669
+    },
+    {
+      "sample_id": "SVT_000551",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9003
+    },
+    {
+      "sample_id": "SVT_000589",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9775
+    },
+    {
+      "sample_id": "SVT_000549",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9003
+    },
+    {
+      "sample_id": "SVT_000550",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9744
+    },
+    {
+      "sample_id": "SVT_000102",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9793
+    },
+    {
+      "sample_id": "SVT_000663",
+      "true": "real",
+      "pred": "fake",
+      "confidence": 0.8962
+    },
+    {
+      "sample_id": "SVT_000913",
+      "true": "real",
+      "pred": "fake",
+      "confidence": 0.8652
+    },
+    {
+      "sample_id": "SVT_000695",
+      "true": "real",
+      "pred": "fake",
+      "confidence": 0.8034
+    },
+    {
+      "sample_id": "SVT_000702",
+      "true": "real",
+      "pred": "fake",
+      "confidence": 0.8851
+    },
+    {
+      "sample_id": "SVT_000761",
+      "true": "real",
+      "pred": "fake",
+      "confidence": 0.6701
+    },
+    {
+      "sample_id": "SVT_000790",
+      "true": "real",
+      "pred": "fake",
+      "confidence": 0.9501
+    },
+    {
+      "sample_id": "SVT_000508",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.6005
+    },
+    {
+      "sample_id": "SVT_000072",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.5391
+    },
+    {
+      "sample_id": "SVT_000467",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.8696
+    },
+    {
+      "sample_id": "SVT_000501",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9692
+    },
+    {
+      "sample_id": "SVT_000488",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.9147
+    },
+    {
+      "sample_id": "SVT_000397",
+      "true": "fake",
+      "pred": "real",
+      "confidence": 0.7646
+    }
+  ],
+  "unlabelled_categories": [],
+  "notes": "Fakeddit labels are provisional (derived from the subreddit); text-only on post titles.",
+  "training_seconds": 341.2,
+  "created_at": "2026-10-15T13:16:26.067056+00:00"
+}

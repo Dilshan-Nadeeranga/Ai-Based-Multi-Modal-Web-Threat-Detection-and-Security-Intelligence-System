@@ -46,7 +46,14 @@ data/tmp/**
 !data/tmp/**/
 !data/**/.gitkeep
 
-# Model artifacts
+# Model artifacts: everything under models/ is ignored (large, rebuildable with one
+# command) EXCEPT the small JSON that says what a model is (Part 4 model cards).
+models/**
+!models/**/
+!models/**/.gitkeep
+!models/**/model_card.json
+!models/**/label_mapping.json
+!models/**/features.json
 models/**/*.bin
 *.safetensors
 *.pt

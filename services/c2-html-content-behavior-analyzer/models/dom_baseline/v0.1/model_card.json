@@ -1,0 +1,242 @@
+{
+  "name": "C2 DOM baseline (Baseline 1: DOM-only structural classification)",
+  "created_at": "2026-10-14T15:26:55+05:30",
+  "dataset_version": "v0.1",
+  "manifest_fingerprint": "9098c1ebc998962294fb0856b2c0727ee462880f42e810bc1bed8d140c376b0e",
+  "split_fingerprint": "65b6b526faac46baa0ef40a8a368de7aae65db4aa4a8c474ce8f08235d859eb1",
+  "feature_set_version": "dom_v1",
+  "dictionary_hash": "8605201ec979e8ef1602ced8c43964fcb872580223c3503676d242164dead472",
+  "pilot": true,
+  "excluded_classes": {
+    "fake_ecommerce": 0,
+    "crypto_scam": 0
+  },
+  "label_mapping": {
+    "classes": [
+      "benign",
+      "phishing",
+      "malware_delivery"
+    ],
+    "index": {
+      "benign": 0,
+      "phishing": 1,
+      "malware_delivery": 2
+    },
+    "labels_yaml_id": {
+      "benign": 0,
+      "phishing": 1,
+      "malware_delivery": 4
+    },
+    "excluded_classes": {
+      "fake_ecommerce": 0,
+      "crypto_scam": 0
+    }
+  },
+  "final_features": [
+    "node_count",
+    "max_depth",
+    "avg_depth",
+    "leaf_ratio",
+    "distinct_tag_count",
+    "text_to_html_ratio",
+    "form_count",
+    "has_form",
+    "inputs_total",
+    "inputs_outside_forms_count",
+    "password_field_count",
+    "has_password_field",
+    "email_field_count",
+    "username_field_count",
+    "otp_pin_field_count",
+    "card_field_count",
+    "sensitive_field_count",
+    "hidden_input_count",
+    "hidden_input_ratio",
+    "external_form_action_count",
+    "password_form_external_action",
+    "form_action_to_ip",
+    "form_action_empty_or_js",
+    "form_method_get_with_password",
+    "iframe_count",
+    "external_iframe_count",
+    "hidden_iframe_count",
+    "inline_script_count",
+    "external_script_count",
+    "external_script_domain_count",
+    "inline_script_chars_total",
+    "event_handler_count",
+    "javascript_url_count",
+    "hidden_element_count",
+    "hidden_text_chars",
+    "hidden_text_ratio",
+    "link_count",
+    "internal_link_count",
+    "external_link_count",
+    "external_link_ratio",
+    "null_link_count",
+    "null_link_ratio",
+    "distinct_external_domains",
+    "has_meta_refresh",
+    "external_stylesheet_ratio",
+    "has_title",
+    "title_length"
+  ],
+  "dropped_features": [
+    {
+      "feature": "base_url_known",
+      "reason": "constant",
+      "detail": "always 1"
+    },
+    {
+      "feature": "meta_refresh_external",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "element_count",
+      "reason": "correlated",
+      "detail": "|r| = 0.9934 with node_count (kept, earlier in dictionary)"
+    },
+    {
+      "feature": "has_external_form_action",
+      "reason": "correlated",
+      "detail": "|r| = 1.0000 with external_form_action_count (kept, earlier in dictionary)"
+    },
+    {
+      "feature": "form_action_to_known_form_service",
+      "reason": "correlated",
+      "detail": "|r| = 1.0000 with password_form_external_action (kept, earlier in dictionary)"
+    }
+  ],
+  "selection": "mean macro-F1 over grouped stratified CV folds on train+val (test never used)",
+  "best_model": "random_forest",
+  "seed": 42,
+  "models": {
+    "logreg": {
+      "file": "logreg.joblib",
+      "display_name": "Logistic Regression",
+      "best_params": {
+        "max_iter": 5000,
+        "class_weight": "balanced",
+        "C": 0.1
+      },
+      "trained_on": "train+val",
+      "n_train": 236,
+      "trained_at": "2026-10-14T15:26:31+05:30",
+      "cv_mean": {
+        "macro_f1": 0.7474666949436661,
+        "weighted_f1": 0.7680962836562577,
+        "accuracy": 0.7627659574468085,
+        "balanced_accuracy": 0.7649287910157476,
+        "roc_auc_ovr_macro": 0.9007106919255257,
+        "benign_fpr": 0.24980237154150195
+      },
+      "cv_std": {
+        "macro_f1": 0.029602602409814948,
+        "weighted_f1": 0.030430264755085926,
+        "accuracy": 0.030759217648512662,
+        "balanced_accuracy": 0.02932624408898668,
+        "roc_auc_ovr_macro": 0.0319701095703898,
+        "benign_fpr": 0.09247322571313682
+      },
+      "test": {
+        "macro_f1": 0.7158730158730159,
+        "weighted_f1": 0.7492063492063492,
+        "accuracy": 0.7380952380952381,
+        "balanced_accuracy": 0.7380952380952381,
+        "roc_auc_ovr_macro": 0.9092350576594274,
+        "benign_fpr": 0.25
+      }
+    },
+    "random_forest": {
+      "file": "random_forest.joblib",
+      "display_name": "Random Forest",
+      "best_params": {
+        "n_estimators": 300,
+        "class_weight": "balanced_subsample",
+        "max_depth": null,
+        "max_features": 0.5,
+        "min_samples_leaf": 1
+      },
+      "trained_on": "train+val",
+      "n_train": 236,
+      "trained_at": "2026-10-14T15:26:46+05:30",
+      "cv_mean": {
+        "macro_f1": 0.7968896140940143,
+        "weighted_f1": 0.8131502323813716,
+        "accuracy": 0.8178191489361701,
+        "balanced_accuracy": 0.7909856327247631,
+        "roc_auc_ovr_macro": 0.9340624170688111,
+        "benign_fpr": 0.1324110671936759
+      },
+      "cv_std": {
+        "macro_f1": 0.010855681679948484,
+        "weighted_f1": 0.018636696243194195,
+        "accuracy": 0.021442174862496142,
+        "balanced_accuracy": 0.007628371166259289,
+        "roc_auc_ovr_macro": 0.012364092645523456,
+        "benign_fpr": 0.08168536698701206
+      },
+      "test": {
+        "macro_f1": 0.7548500881834214,
+        "weighted_f1": 0.782060972537163,
+        "accuracy": 0.7857142857142857,
+        "balanced_accuracy": 0.7464285714285714,
+        "roc_auc_ovr_macro": 0.909129788278948,
+        "benign_fpr": 0.1
+      }
+    },
+    "xgboost": {
+      "file": "xgboost.joblib",
+      "display_name": "XGBoost",
+      "best_params": {
+        "n_estimators": 300,
+        "tree_method": "hist",
+        "objective": "multi:softprob",
+        "eval_metric": "mlogloss",
+        "learning_rate": 0.1,
+        "max_depth": 6,
+        "subsample": 1.0
+      },
+      "trained_on": "train+val",
+      "n_train": 236,
+      "trained_at": "2026-10-14T15:26:54+05:30",
+      "cv_mean": {
+        "macro_f1": 0.7880259070361738,
+        "weighted_f1": 0.8042449487456793,
+        "accuracy": 0.8052304964539008,
+        "balanced_accuracy": 0.7901900997553172,
+        "roc_auc_ovr_macro": 0.9309710062638452,
+        "benign_fpr": 0.1691699604743083
+      },
+      "cv_std": {
+        "macro_f1": 0.023796723470401775,
+        "weighted_f1": 0.02517266748303197,
+        "accuracy": 0.026941604589262536,
+        "balanced_accuracy": 0.023107300386286358,
+        "roc_auc_ovr_macro": 0.021343371234162262,
+        "benign_fpr": 0.030529599236881453
+      },
+      "test": {
+        "macro_f1": 0.7530003871467286,
+        "weighted_f1": 0.7831978319783198,
+        "accuracy": 0.7857142857142857,
+        "balanced_accuracy": 0.7464285714285714,
+        "roc_auc_ovr_macro": 0.9127041725781222,
+        "benign_fpr": 0.1
+      }
+    }
+  },
+  "library_versions": {
+    "python": "3.13.3",
+    "numpy": "2.5.4",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "joblib": "1.6.0",
+    "shap": "0.53.0"
+  },
+  "git_commit": "21a8f33363a02250d185cb2e084ea8fa904f6c6c-dirty",
+  "intended_use": "Baseline for the ablation study (DOM-only vs NLP-only, behavior-only, fused). Research use on the C2 dataset; not a production detector.",
+  "limitations": "PILOT: trained on benign, phishing, malware_delivery only; excluded classes cannot be predicted. Small dataset with mostly unverified labels - test metrics have wide uncertainty."
+}
