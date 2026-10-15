@@ -91,6 +91,13 @@ class UrlLexicalFeatures(BaseModel):
     has_hex_obfuscation: bool = Field(..., description="True if hex IP or obfuscated hex present")
     has_misleading_delimiter: bool = Field(..., description="True if misleading delimiters present in host")
 
+    # Enhanced Features for FP/FN Reduction
+    is_shortened_url: bool = Field(False, description="True if domain is a recognized URL shortener")
+    base_url_entropy: float = Field(0.0, description="Shannon entropy of URL base (scheme + host + path)")
+    has_tracking_param: bool = Field(False, description="True if marketing or analytics tracking query parameter is present")
+    path_to_url_ratio: float = Field(0.0, description="Ratio of path length to full URL length")
+    is_standard_port: bool = Field(True, description="True if standard port (80, 443, or default)")
+
 
 class DomainRegistrationFeatures(BaseModel):
     """Structured registration and WHOIS/RDAP intelligence features."""
@@ -229,6 +236,8 @@ class MlPredictionResult(BaseModel):
     inference_time_ms: float = Field(0.0, description="Prediction latency in milliseconds")
     feature_count: int = Field(0, description="Total features evaluated by model")
     top_risk_features: List[str] = Field(default_factory=list, description="Primary features driving the prediction")
+    risk_category: str = Field("low", description="Risk category: 'low', 'suspicious_warning', 'high'")
+    explanation: str = Field("", description="Human-readable explanation of the model prediction and threshold evaluation")
 
 
 class ContributingRiskFactor(BaseModel):

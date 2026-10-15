@@ -95,6 +95,23 @@ class MlInferenceService:
 
         t0 = time.perf_counter()
 
+        # Handle empty, whitespace, or degenerate scheme-only inputs safely
+        clean_input = str(raw_url or "").strip().lower()
+        if not clean_input or clean_input in ("http://", "https://", "ftp://") or ":::" in clean_input:
+            return MlPredictionResult(
+                is_model_loaded=self.is_loaded,
+                model_name=self.metadata.get("model_name"),
+                malicious_probability=0.0,
+                predicted_label="legitimate",
+                decision_threshold=float(self.metadata.get("optimal_threshold", 0.5)),
+                confidence=100.0,
+                inference_time_ms=0.0,
+                feature_count=len(FEATURE_NAMES),
+                top_risk_features=[],
+                risk_category="low",
+                explanation="Empty or malformed URL input provided; defaulted to legitimate.",
+            )
+
         # 1. Extract feature dictionary and vector (incorporating domain data if present)
         feat_dict = self.feature_extractor.extract_dict(raw_url, domain_data=domain_data)
         df_input = pd.DataFrame([[feat_dict[name] for name in FEATURE_NAMES]], columns=FEATURE_NAMES)
@@ -114,6 +131,29 @@ class MlInferenceService:
         is_malicious = malicious_prob >= threshold
         label = "malicious" if is_malicious else "legitimate"
 
+        # Determine operational risk tier (Low, Suspicious Warning, High)
+        suspicious_lower = max(0.0, threshold - 0.15)
+        suspicious_upper = min(1.0, threshold + 0.15)
+
+        if malicious_prob < suspicious_lower:
+            risk_category = "low"
+            explanation = (
+                f"Model predicts legitimate URL with low malicious probability ({malicious_prob:.1%}). "
+                f"Well below operational threshold ({threshold:.2f})."
+            )
+        elif malicious_prob < suspicious_upper:
+            risk_category = "suspicious_warning"
+            explanation = (
+                f"Model identifies borderline/suspicious patterns (malicious probability {malicious_prob:.1%}, "
+                f"near threshold {threshold:.2f}). Advisory warning: contextual domain inspection recommended."
+            )
+        else:
+            risk_category = "high"
+            explanation = (
+                f"Model predicts high-risk malicious URL ({malicious_prob:.1%}), "
+                f"substantially exceeding operational decision threshold ({threshold:.2f})."
+            )
+
         # Confidence is distance from decision boundary
         confidence = round(abs(malicious_prob - 0.5) * 200.0, 1)
 
@@ -132,6 +172,8 @@ class MlInferenceService:
             inference_time_ms=latency_ms,
             feature_count=len(FEATURE_NAMES),
             top_risk_features=top_risk_features,
+            risk_category=risk_category,
+            explanation=explanation,
         )
 
     def _identify_top_risk_features(self, feat_dict: Dict[str, float]) -> List[str]:
@@ -141,14 +183,20 @@ class MlInferenceService:
             signals.append(f"Suspicious security keywords detected (count: {int(feat_dict['suspicious_keyword_count'])})")
         if feat_dict.get("is_ip_address", 0) > 0:
             signals.append("Direct IP address used as hostname")
+        if feat_dict.get("is_shortened_url", 0) > 0:
+            signals.append("Recognized URL shortener service utilized")
         if feat_dict.get("has_homoglyphs", 0) > 0:
             signals.append("Unicode confusable / homoglyph characters present")
         if feat_dict.get("is_punycode", 0) > 0:
             signals.append("Punycode (xn--) internationalized domain encoding")
-        if feat_dict.get("url_entropy", 0) > 4.2:
+        if feat_dict.get("base_url_entropy", 0) > 4.2:
+            signals.append(f"Elevated base URL Shannon entropy ({feat_dict['base_url_entropy']:.2f} bits/char)")
+        elif feat_dict.get("url_entropy", 0) > 4.5 and feat_dict.get("has_tracking_param", 0) == 0:
             signals.append(f"Elevated URL Shannon entropy ({feat_dict['url_entropy']:.2f} bits/char)")
         if feat_dict.get("dga_label_entropy", 0) >= 3.6:
             signals.append(f"Algorithmic DGA label entropy ({feat_dict['dga_label_entropy']:.2f} bits/char)")
+        if feat_dict.get("is_standard_port", 1.0) == 0.0:
+            signals.append("Non-standard network port observed in URL authority")
         if feat_dict.get("has_at_symbol", 0) > 0:
             signals.append("Misleading @ symbol in URL authority")
         if feat_dict.get("is_double_encoded", 0) > 0:
