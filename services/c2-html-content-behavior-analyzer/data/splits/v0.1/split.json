@@ -1,0 +1,172 @@
+{
+  "version": "v0.1",
+  "created_at": "2026-10-14T15:09:57+05:30",
+  "manifest": {
+    "fingerprint": "9098c1ebc998962294fb0856b2c0727ee462880f42e810bc1bed8d140c376b0e",
+    "created_at": "2026-10-12T21:25:42+05:30",
+    "total": 278
+  },
+  "seed": 42,
+  "target_ratios": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "actual_ratios": {
+    "train": 0.6978,
+    "val": 0.1511,
+    "test": 0.1511
+  },
+  "max_ratio_difference": 0.0022,
+  "stratify_by": [
+    "label",
+    "language"
+  ],
+  "group_by": "cluster_id",
+  "units": 20,
+  "search_iterations": 2000,
+  "min_samples_per_class": 15,
+  "included_classes": [
+    "benign",
+    "phishing",
+    "malware_delivery"
+  ],
+  "excluded_classes": {
+    "fake_ecommerce": 0,
+    "crypto_scam": 0
+  },
+  "pilot": true,
+  "total_included": 278,
+  "total_excluded": 0,
+  "counts": {
+    "train": 194,
+    "val": 42,
+    "test": 42
+  },
+  "counts_per_label": {
+    "test": {
+      "benign": 20,
+      "malware_delivery": 8,
+      "phishing": 14
+    },
+    "train": {
+      "benign": 92,
+      "malware_delivery": 42,
+      "phishing": 60
+    },
+    "val": {
+      "benign": 20,
+      "malware_delivery": 9,
+      "phishing": 13
+    }
+  },
+  "counts_per_language": {
+    "test": {
+      "en": 39,
+      "si": 1,
+      "ta": 1,
+      "unknown": 1
+    },
+    "train": {
+      "en": 178,
+      "si": 6,
+      "ta": 1,
+      "unknown": 9
+    },
+    "val": {
+      "en": 38,
+      "si": 2,
+      "ta": 1,
+      "unknown": 1
+    }
+  },
+  "counts_per_label_language": {
+    "test": {
+      "benign": {
+        "en": 18,
+        "si": 1,
+        "ta": 1
+      },
+      "malware_delivery": {
+        "en": 8
+      },
+      "phishing": {
+        "en": 13,
+        "unknown": 1
+      }
+    },
+    "train": {
+      "benign": {
+        "en": 80,
+        "si": 6,
+        "ta": 1,
+        "unknown": 5
+      },
+      "malware_delivery": {
+        "en": 40,
+        "unknown": 2
+      },
+      "phishing": {
+        "en": 58,
+        "unknown": 2
+      }
+    },
+    "val": {
+      "benign": {
+        "en": 17,
+        "si": 2,
+        "ta": 1
+      },
+      "malware_delivery": {
+        "en": 9
+      },
+      "phishing": {
+        "en": 12,
+        "unknown": 1
+      }
+    }
+  },
+  "language_placement": {
+    "si": {
+      "train": 6,
+      "val": 2,
+      "test": 1
+    },
+    "ta": {
+      "train": 1,
+      "val": 1,
+      "test": 1
+    }
+  },
+  "clusters": 278,
+  "clusters_in_two_splits": 0,
+  "cv_folds": 5,
+  "cv_counts_per_label": {
+    "0": {
+      "benign": 23,
+      "malware_delivery": 11,
+      "phishing": 14
+    },
+    "1": {
+      "benign": 22,
+      "malware_delivery": 10,
+      "phishing": 15
+    },
+    "2": {
+      "benign": 22,
+      "malware_delivery": 10,
+      "phishing": 15
+    },
+    "3": {
+      "benign": 23,
+      "malware_delivery": 10,
+      "phishing": 14
+    },
+    "4": {
+      "benign": 22,
+      "malware_delivery": 10,
+      "phishing": 15
+    }
+  },
+  "split_fingerprint": "65b6b526faac46baa0ef40a8a368de7aae65db4aa4a8c474ce8f08235d859eb1"
+}

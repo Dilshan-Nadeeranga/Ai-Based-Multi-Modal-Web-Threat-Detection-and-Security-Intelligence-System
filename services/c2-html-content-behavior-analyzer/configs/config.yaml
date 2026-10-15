@@ -14,11 +14,19 @@ paths:
   model_dir: models
   reports_dir: reports
 
+# Shared train/val/test split (Part 4, used by EVERY later part):
+# scripts/train_dom_baseline.py split --version v0.1 -> data/splits/<version>/
+# Stratified by label x language, grouped by near-duplicate cluster_id.
 split:
   train: 0.70
   val: 0.15
   test: 0.15
   stratify_by: [label, language]
+  group_by: cluster_id
+  min_samples_per_class: 15   # smaller classes are excluded from training (listed in split.json)
+  units: 20                   # StratifiedGroupKFold pieces (5 % each) that are combined into the splits
+  search_iterations: 2000     # seeded search over which pieces become val / test
+  cv_folds: 5                 # grouped stratified CV over train+val (model selection)
 
 # Near-duplicate clustering (Part 1 Batch C): scripts/deduplicate.py
 # Two pages are near-duplicates if
@@ -38,19 +46,12 @@ dedup:
   lsh_threshold: 0.60
   reports_dir: reports/dataset_stats
 
+# DOM baseline classifier (Part 4): scripts/train_dom_baseline.py
+# Models and hyperparameter grids live in configs/dom_baseline.yaml.
 dom_baseline:
-  models:
-    logistic_regression:
-      max_iter: 1000
-      class_weight: balanced
-    random_forest:
-      n_estimators: 300
-      max_depth: null
-      class_weight: balanced
-    xgboost:
-      n_estimators: 300
-      max_depth: 6
-      learning_rate: 0.1
+  models_dir: models/dom_baseline
+  reports_dir: reports/dom_baseline
+  n_jobs: 4                   # threads per model (RandomForest / XGBoost); 1 = single core
 
 xlmr:
   model_name: xlm-roberta-base
@@ -61,8 +62,29 @@ xlmr:
   weight_decay: 0.01
   warmup_ratio: 0.1
 
+# Static JavaScript analysis (Part 7): scripts/analyze_js.py
+# Rules, API catalogue, library signatures and safety limits (500 KB per script,
+# 3 s parse timeout, ...) live in configs/js_rules.yaml; the vector in js_features.yaml.
 js_analyzer:
-  max_script_bytes: 500000
+  output_dir: data/processed/js
+  reports_dir: reports/js_analysis
+  workers: 4
+
+# Behavioral intent mapping (Part 8): scripts/map_behavior.py
+# Sources / sinks / exfil endpoints / taint limits: configs/sources_sinks.yaml;
+# patterns + severities: behavior_patterns.yaml; intent vector: behavior_features.yaml.
+behavior:
+  output_dir: data/processed/behavior
+  reports_dir: reports/behavior
+  workers: 4
+
+# Behavior-only baseline (Part 8, ablation study): js_features + behavior_features with
+# Part 4's models, grids and protocol (configs/dom_baseline.yaml, same shared split).
+# scripts/map_behavior.py train-baseline --version v0.3
+behavior_baseline:
+  models_dir: models/behavior_baseline
+  reports_dir: reports/behavior_baseline
+  n_jobs: 4
 
 # Sample collection (Part 1 Batch B): scripts/collect.py
 collection:
@@ -80,3 +102,34 @@ collection:
   # Realistic desktop Chrome UA (some phishing kits hide from bots). Update occasionally.
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
   accept_language: "en,si;q=0.9,ta;q=0.8"
+
+# HTML preprocessing (Part 2): scripts/preprocess_html.py
+# Part 2 only extracts and organizes - limits keep one hostile page from
+# producing gigantic outputs or slowing the batch down.
+preprocessing:
+  output_dir: data/processed/parsed_html
+  reports_dir: reports/preprocessing
+  workers: 4
+  max_html_bytes: 5242880         # 5 MB, larger input is truncated (meta.truncated)
+  max_script_chars: 512000        # per inline script (500 KB)
+  max_handler_chars: 2048         # per on*= event handler / javascript: URL (2 KB)
+  max_structured_chars: 50000     # per JSON-LD / template block
+  max_value_chars: 200            # prefilled input value (after PII masking)
+  max_url_chars: 2048
+  max_link_text_chars: 200
+  max_meta_content_chars: 1000
+  comment_samples: 5
+  comment_sample_chars: 200
+  skeleton_max_nodes: 3000
+  skeleton_max_depth: 40
+
+# HTTP API (Part 9 groundwork; also used by the developer inspector)
+api:
+  max_body_bytes: 5242880         # 5 MB request body, larger -> 413 (checked before parsing)
+
+# DOM structural analysis (Part 3): scripts/extract_dom_features.py
+# The feature list itself lives in configs/dom_features.yaml.
+dom_features:
+  output_dir: data/processed/dom_features
+  reports_dir: reports/dom_features
+  workers: 4

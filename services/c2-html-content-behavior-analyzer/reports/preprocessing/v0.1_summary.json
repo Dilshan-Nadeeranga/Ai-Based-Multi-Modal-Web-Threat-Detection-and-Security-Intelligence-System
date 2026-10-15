@@ -1,0 +1,79 @@
+{
+  "version": "v0.1",
+  "generated_at": "2026-10-12T22:29:44+05:30",
+  "schema_version": "1.0",
+  "filters": {
+    "label": null,
+    "limit": null,
+    "force": false
+  },
+  "counts": {
+    "total": 278,
+    "processed": 278,
+    "skipped_unchanged": 0,
+    "failed": 0
+  },
+  "failures": [],
+  "pages_with_step_errors": [],
+  "parser_fallbacks": [],
+  "truncated": [
+    "c2_benign_000013",
+    "c2_benign_000019",
+    "c2_benign_000033",
+    "c2_benign_000037",
+    "c2_benign_000044",
+    "c2_benign_000045",
+    "c2_benign_000049",
+    "c2_benign_000071",
+    "c2_benign_000077",
+    "c2_benign_000078",
+    "c2_benign_000090",
+    "c2_benign_000096",
+    "c2_benign_000099",
+    "c2_benign_000101",
+    "c2_benign_000108",
+    "c2_benign_000115",
+    "c2_benign_000130",
+    "c2_benign_000133",
+    "c2_phishing_000006",
+    "c2_phishing_000060"
+  ],
+  "timing": {
+    "wall_seconds": 6.1,
+    "avg_processing_ms": 38.9,
+    "p95_processing_ms": 139.2,
+    "max_processing_ms": 277.36
+  },
+  "per_label": {
+    "benign": {
+      "pages": 132,
+      "median_visible_chars": 4567.0,
+      "pct_with_forms": 44.7,
+      "pct_with_password_input": 3.0,
+      "pct_with_inline_scripts": 92.4,
+      "pct_with_external_scripts": 93.2,
+      "pct_with_iframes": 38.6,
+      "pct_with_meta_refresh": 1.5
+    },
+    "phishing": {
+      "pages": 87,
+      "median_visible_chars": 640.0,
+      "pct_with_forms": 40.2,
+      "pct_with_password_input": 32.2,
+      "pct_with_inline_scripts": 82.8,
+      "pct_with_external_scripts": 80.5,
+      "pct_with_iframes": 20.7,
+      "pct_with_meta_refresh": 1.1
+    },
+    "malware_delivery": {
+      "pages": 59,
+      "median_visible_chars": 167.0,
+      "pct_with_forms": 30.5,
+      "pct_with_password_input": 5.1,
+      "pct_with_inline_scripts": 78.0,
+      "pct_with_external_scripts": 32.2,
+      "pct_with_iframes": 6.8,
+      "pct_with_meta_refresh": 1.7
+    }
+  }
+}

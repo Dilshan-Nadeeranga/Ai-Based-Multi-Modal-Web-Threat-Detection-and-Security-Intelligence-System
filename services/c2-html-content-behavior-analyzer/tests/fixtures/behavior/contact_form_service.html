@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contact us</title>
+</head>
+<body>
+<form id="contact">
+  <input type="text" id="name" name="name">
+  <input type="email" id="email" name="email">
+  <textarea id="message" name="message"></textarea>
+  <button type="submit">Send</button>
+</form>
+<script>
+  document.getElementById("contact").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var email = document.getElementById("email").value;
+    var message = document.getElementById("message").value;
+    fetch("https://formspree.io/f/abcd1234", { method: "POST", body: JSON.stringify({ email: email, message: message }) });
+  });
+</script>
+</body>
+</html>

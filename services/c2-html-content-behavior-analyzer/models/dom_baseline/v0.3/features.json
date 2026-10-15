@@ -1,0 +1,77 @@
+{
+  "feature_set_version": "dom_v1",
+  "dictionary_hash": "8605201ec979e8ef1602ced8c43964fcb872580223c3503676d242164dead472",
+  "features": [
+    "node_count",
+    "max_depth",
+    "avg_depth",
+    "leaf_ratio",
+    "distinct_tag_count",
+    "text_to_html_ratio",
+    "form_count",
+    "has_form",
+    "inputs_total",
+    "inputs_outside_forms_count",
+    "password_field_count",
+    "has_password_field",
+    "email_field_count",
+    "username_field_count",
+    "otp_pin_field_count",
+    "card_field_count",
+    "sensitive_field_count",
+    "hidden_input_count",
+    "hidden_input_ratio",
+    "external_form_action_count",
+    "has_external_form_action",
+    "password_form_external_action",
+    "form_action_to_ip",
+    "form_action_empty_or_js",
+    "form_method_get_with_password",
+    "iframe_count",
+    "external_iframe_count",
+    "hidden_iframe_count",
+    "inline_script_count",
+    "external_script_count",
+    "external_script_domain_count",
+    "inline_script_chars_total",
+    "event_handler_count",
+    "javascript_url_count",
+    "hidden_element_count",
+    "hidden_text_chars",
+    "hidden_text_ratio",
+    "link_count",
+    "internal_link_count",
+    "external_link_count",
+    "external_link_ratio",
+    "null_link_count",
+    "null_link_ratio",
+    "distinct_external_domains",
+    "has_meta_refresh",
+    "external_stylesheet_ratio",
+    "has_title",
+    "title_length"
+  ],
+  "dropped": [
+    {
+      "feature": "base_url_known",
+      "reason": "constant",
+      "detail": "always 1"
+    },
+    {
+      "feature": "meta_refresh_external",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "element_count",
+      "reason": "correlated",
+      "detail": "|r| = 0.9964 with node_count (kept, earlier in dictionary)"
+    },
+    {
+      "feature": "form_action_to_known_form_service",
+      "reason": "correlated",
+      "detail": "|r| = 1.0000 with password_form_external_action (kept, earlier in dictionary)"
+    }
+  ],
+  "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f"
+}

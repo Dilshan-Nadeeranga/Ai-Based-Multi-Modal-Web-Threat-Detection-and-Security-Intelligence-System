@@ -1,0 +1,121 @@
+{
+  "version": "v0.3",
+  "generated_at": "2026-10-14T22:47:03+05:30",
+  "schema_version": "1.0",
+  "filters": {
+    "label": null,
+    "limit": null,
+    "force": false
+  },
+  "counts": {
+    "total": 459,
+    "processed": 459,
+    "skipped_unchanged": 0,
+    "failed": 0
+  },
+  "failures": [],
+  "pages_with_step_errors": [],
+  "parser_fallbacks": [],
+  "truncated": [
+    "c2_benign_000013",
+    "c2_benign_000019",
+    "c2_benign_000033",
+    "c2_benign_000037",
+    "c2_benign_000044",
+    "c2_benign_000045",
+    "c2_benign_000049",
+    "c2_benign_000071",
+    "c2_benign_000077",
+    "c2_benign_000078",
+    "c2_benign_000090",
+    "c2_benign_000096",
+    "c2_benign_000099",
+    "c2_benign_000101",
+    "c2_benign_000108",
+    "c2_benign_000115",
+    "c2_benign_000130",
+    "c2_benign_000133",
+    "c2_benign_000147",
+    "c2_benign_000167",
+    "c2_benign_000170",
+    "c2_benign_000171",
+    "c2_benign_000173",
+    "c2_benign_000176",
+    "c2_benign_000182",
+    "c2_benign_000191",
+    "c2_benign_000194",
+    "c2_benign_000196",
+    "c2_benign_000198",
+    "c2_benign_000211",
+    "c2_benign_000215",
+    "c2_benign_000216",
+    "c2_benign_000224",
+    "c2_benign_000225",
+    "c2_benign_000226",
+    "c2_benign_000228",
+    "c2_benign_000229",
+    "c2_benign_000234",
+    "c2_fake_ecommerce_000001",
+    "c2_fake_ecommerce_000002",
+    "c2_phishing_000006",
+    "c2_phishing_000060"
+  ],
+  "timing": {
+    "wall_seconds": 8.8,
+    "avg_processing_ms": 46.4,
+    "p95_processing_ms": 180.1,
+    "max_processing_ms": 584.04
+  },
+  "per_label": {
+    "benign": {
+      "pages": 227,
+      "median_visible_chars": 5101.0,
+      "pct_with_forms": 57.7,
+      "pct_with_password_input": 5.3,
+      "pct_with_inline_scripts": 93.4,
+      "pct_with_external_scripts": 95.2,
+      "pct_with_iframes": 42.3,
+      "pct_with_meta_refresh": 0.9
+    },
+    "phishing": {
+      "pages": 87,
+      "median_visible_chars": 640.0,
+      "pct_with_forms": 40.2,
+      "pct_with_password_input": 32.2,
+      "pct_with_inline_scripts": 82.8,
+      "pct_with_external_scripts": 80.5,
+      "pct_with_iframes": 20.7,
+      "pct_with_meta_refresh": 1.1
+    },
+    "fake_ecommerce": {
+      "pages": 57,
+      "median_visible_chars": 1979.0,
+      "pct_with_forms": 78.9,
+      "pct_with_password_input": 7.0,
+      "pct_with_inline_scripts": 96.5,
+      "pct_with_external_scripts": 98.2,
+      "pct_with_iframes": 3.5,
+      "pct_with_meta_refresh": 0.0
+    },
+    "crypto_scam": {
+      "pages": 29,
+      "median_visible_chars": 3314.0,
+      "pct_with_forms": 31.0,
+      "pct_with_password_input": 3.4,
+      "pct_with_inline_scripts": 89.7,
+      "pct_with_external_scripts": 96.6,
+      "pct_with_iframes": 13.8,
+      "pct_with_meta_refresh": 0.0
+    },
+    "malware_delivery": {
+      "pages": 59,
+      "median_visible_chars": 167.0,
+      "pct_with_forms": 30.5,
+      "pct_with_password_input": 5.1,
+      "pct_with_inline_scripts": 78.0,
+      "pct_with_external_scripts": 32.2,
+      "pct_with_iframes": 6.8,
+      "pct_with_meta_refresh": 1.7
+    }
+  }
+}

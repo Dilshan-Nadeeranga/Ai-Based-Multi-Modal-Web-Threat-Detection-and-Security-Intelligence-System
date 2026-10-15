@@ -194,7 +194,12 @@ class MetadataStore:
             )
 
         row = record_to_row(record)
+        was_empty = self._df.empty
         self._df.loc[len(self._df)] = [row[column] for column in COLUMNS]
+        if was_empty:
+            # pandas 3: the first row appended to an empty frame is stored in
+            # read-only arrays, so a later update() would fail. A copy owns its data.
+            self._df = self._df.copy()
         return warnings
 
     def update(self, sample_id: str, **fields: object) -> SampleMetadata:

