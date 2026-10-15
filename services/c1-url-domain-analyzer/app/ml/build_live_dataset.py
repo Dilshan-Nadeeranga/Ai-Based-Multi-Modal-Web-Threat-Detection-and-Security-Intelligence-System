@@ -95,17 +95,22 @@ def build_live_dataset(
         "/products",
         "/products/featured",
         "/products/category/all",
+        "/products/apparel/activewear?category=mens&sort=popular&page=2",
         "/services",
         "/blog",
         "/blog/news/latest",
         "/blog/2026/updates",
+        "/blog/2026/09/threat-intelligence-frameworks-and-indicators?utm_campaign=spring_promo",
         "/news",
         "/news/technology",
+        "/news/2026/08/advancements-in-artificial-intelligence-and-cloud-infrastructure",
         "/docs",
         "/docs/guide/overview",
         "/docs/api/reference",
+        "/docs/api/v2/endpoints/webhooks?version=latest&format=json",
         "/search",
         "/search?q=security",
+        "/search?q=cybersecurity+research+papers+and+benchmarks&ref=hp_search",
         "/account",
         "/account/settings",
         "/features",
@@ -124,8 +129,30 @@ def build_live_dataset(
         "/en-us/windows",
         "/explore/topics/today",
         "/category/items?page=1",
+        "/category/apparel/men?sort=newest&filter_color=black&page=3",
         "/articles/read?id=452",
+        "/items/view?item_id=9847291&tracking_id=tr_8371920&source=direct",
+        "/?utm_source=google&utm_medium=organic&utm_campaign=brand_search",
+        "/?utm_source=newsletter&utm_medium=email&utm_campaign=weekly_digest_2026",
+        "/?srsltid=AU7gw4Xh3ZyZaUEd7vknNJwSALGGys4-rUHXNgX9HwyRGK2QXX7UpLyN",
+        "/?srsltid=AU7gw4VyCJedlpQaxcKzoDu14iOixOwPx6q4bKsOTgzlarQyW",
+        "/?gclid=Cj0KCQjwlZixBhCoARIsADSpUTdY8xLqJv2uP7oMn3kZbR1mK",
+        "/?fbclid=IwAR2yH8oM6zG9kL4vW1xQ3pT7sR5uN0mK8jV2cF",
         "/torvalds/linux",
+        "/torvalds/linux/commits/master",
+        "/gp/help/customer/display.html",
+        "/3/library/urllib.parse.html",
+        "/learning/security/threats/",
+        "/questions/tagged/python",
+        "/security-center/overview/",
+        "/t5/Security/bd-p/Security",
+        "/en-us/HT204144",
+        "/wiki/Domain_Name_System",
+    ]
+
+    COMMON_PREFIXES = [
+        "", "", "www.", "www.", "en.", "docs.", "support.", "api.", "m.", "blog.",
+        "store.", "news.", "app.", "mail.", "help.", "community.", "portal.", "developer.",
     ]
 
     benign_rows: List[Tuple[str, int, str]] = []
@@ -143,7 +170,7 @@ def build_live_dataset(
                         idx = len(benign_rows)
                         path_suffix = COMMON_BENIGN_PATHS[idx % len(COMMON_BENIGN_PATHS)]
                         scheme = "https://" if (idx % 8) != 0 else "http://"
-                        prefix = "www." if (idx % 5 == 1) else ""
+                        prefix = COMMON_PREFIXES[idx % len(COMMON_PREFIXES)]
                         url = f"{scheme}{prefix}{domain}{path_suffix}"
                         benign_rows.append((url, 0, "tranco_top1m"))
                         if len(benign_rows) >= target_benign:

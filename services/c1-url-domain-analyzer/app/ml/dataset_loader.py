@@ -200,12 +200,32 @@ class DatasetLoader:
         df["label"] = df["normalized_label"].astype(int)
         df = df.drop(columns=["normalized_label"])
 
+        # Investigate and eliminate conflicting labels across duplicate URLs instead of silently choosing one
+        conflicting_mask = df.groupby("url")["label"].transform("nunique") > 1
+        if conflicting_mask.any():
+            conflict_count = int(df.loc[conflicting_mask, "url"].nunique())
+            logger.warning(
+                "Detected %d URLs with conflicting labels across records! Dropping ambiguous conflicting URLs.",
+                conflict_count,
+            )
+            df = df[~conflicting_mask]
+
         # Deduplicate identical URLs
         if seen_urls is not None:
-            # Streaming deduplication across chunks
-            mask = ~df["url"].isin(seen_urls)
-            df = df[mask]
-            seen_urls.update(df["url"].tolist())
+            if isinstance(seen_urls, dict):
+                conflicts = [u for u, l in zip(df["url"], df["label"]) if u in seen_urls and seen_urls[u] != l]
+                if conflicts:
+                    logger.warning("Detected %d streaming URLs with conflicting labels! Discarding conflicting records.", len(conflicts))
+                    df = df[~df["url"].isin(set(conflicts))]
+                mask = ~df["url"].isin(seen_urls)
+                df = df[mask]
+                for u, l in zip(df["url"], df["label"]):
+                    seen_urls[u] = l
+            else:
+                # Streaming deduplication across chunks
+                mask = ~df["url"].isin(seen_urls)
+                df = df[mask]
+                seen_urls.update(df["url"].tolist())
         else:
             df = df.drop_duplicates(subset=["url"]).reset_index(drop=True)
 

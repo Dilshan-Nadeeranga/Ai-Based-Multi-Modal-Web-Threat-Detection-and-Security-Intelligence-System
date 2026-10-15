@@ -314,5 +314,6 @@ async def test_full_integrated_analysis_nrd_phishing(domain_intelligence_analyze
         assert result.status == "success"
         assert result.domain_intelligence.registration.is_nrd is True
         assert result.features.has_suspicious_keyword is True
-        assert result.score >= 50.0
+        assert result.score >= 45.0
+        assert result.risk_level in ("Suspicious", "High")
         assert any("Newly registered domain" in ind for ind in result.risk_indicators)

@@ -63,6 +63,8 @@ class ModelEvaluationResult:
     is_baseline: bool
     hyperparameters: Dict[str, Any]
     training_time_sec: float = 0.0
+    false_negative_rate: float = 0.0
+    threshold_tuning_summary: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -179,6 +181,7 @@ class MlTrainingPipeline:
         # 6. Train, evaluate, and calibrate thresholds for each model
         evaluation_results: Dict[str, ModelEvaluationResult] = {}
         fitted_models: Dict[str, Any] = {}
+        threshold_reports: Dict[str, Any] = {}
 
         for model_id, (display_name, model_inst, is_baseline) in models.items():
             logger.info("Training %s (%s)...", display_name, model_id)
@@ -188,9 +191,17 @@ class MlTrainingPipeline:
             fitted_models[model_id] = model_inst
             logger.info("Finished training %s in %.2f seconds.", display_name, fit_time_sec)
 
-            # Find optimal decision threshold on validation set
+            # Find optimal decision threshold on validation set across [0.20, 0.80]
             val_probs = model_inst.predict_proba(X_val_proc)[:, 1] if hasattr(model_inst, "predict_proba") else model_inst.predict(X_val_proc)
-            opt_thresh = self._calibrate_decision_threshold(y_val, val_probs, max_fpr=target_max_fpr)
+            opt_thresh, grid_res, best_tuning = self._calibrate_decision_threshold(
+                y_val, val_probs, max_fpr=target_max_fpr
+            )
+            threshold_reports[model_id] = {
+                "model_name": display_name,
+                "optimal_threshold": opt_thresh,
+                "validation_summary": best_tuning,
+                "grid_evaluations": grid_res,
+            }
 
             # Evaluate on held-out test set
             eval_res = self._evaluate_model(
@@ -201,6 +212,7 @@ class MlTrainingPipeline:
                 threshold=opt_thresh,
                 is_baseline=is_baseline,
                 training_time_sec=fit_time_sec,
+                tuning_summary=best_tuning,
             )
             evaluation_results[model_id] = eval_res
             joblib.dump(model_inst, self.output_dir / f"{model_id}.joblib")
@@ -223,13 +235,13 @@ class MlTrainingPipeline:
             recommendation_rationale=rationale,
         )
 
-        self._save_reports(report, preprocessor, evaluation_results[recommended_model_id])
+        self._save_reports(report, preprocessor, evaluation_results[recommended_model_id], threshold_reports)
         return report
 
     def _initialize_models(self, model_selection: str = "all") -> Dict[str, Tuple[str, Any, bool]]:
         """Instantiate models with balanced weights and reproducible seeds."""
         all_models = {
-            "random_forest": (
+            "random_forest_baseline": (
                 "Random Forest (Baseline)",
                 RandomForestClassifier(
                     n_estimators=100,
@@ -241,6 +253,19 @@ class MlTrainingPipeline:
                     n_jobs=-1,
                 ),
                 True,
+            ),
+            "random_forest": (
+                "Random Forest (Tuned & Improved)",
+                RandomForestClassifier(
+                    n_estimators=150,
+                    max_depth=20,
+                    min_samples_split=4,
+                    min_samples_leaf=1,
+                    class_weight="balanced",
+                    random_state=self.random_seed,
+                    n_jobs=-1,
+                ),
+                False,
             ),
             "decision_tree": (
                 "Decision Tree",
@@ -275,7 +300,13 @@ class MlTrainingPipeline:
                 False,
             ),
         }
-        if model_selection in all_models:
+        if model_selection == "random_forest":
+            # Train both baseline and improved models for direct comparative evaluation
+            return {
+                "random_forest_baseline": all_models["random_forest_baseline"],
+                "random_forest": all_models["random_forest"],
+            }
+        elif model_selection in all_models:
             return {model_selection: all_models[model_selection]}
         return all_models
 
@@ -284,25 +315,70 @@ class MlTrainingPipeline:
         y_true: np.ndarray,
         y_probs: np.ndarray,
         max_fpr: float = 0.05,
-    ) -> float:
-        """Select decision threshold balancing low false positives and high recall."""
-        thresholds = np.linspace(0.1, 0.9, 81)
-        best_thresh = 0.5
-        best_f1 = -1.0
+        min_thresh: float = 0.20,
+        max_thresh: float = 0.80,
+        steps: int = 61,
+    ) -> Tuple[float, List[Dict[str, Any]], Dict[str, Any]]:
+        """Select decision threshold balancing low false positives and low false negatives.
+
+        Systematically evaluates thresholds from 0.20 to 0.80 using validation data only.
+        Calculates precision, recall, F1, FPR (FP / (FP + TN)), and FNR (FN / (FN + TP)).
+        Selects threshold using documented validation criteria balancing FP and FN.
+        """
+        thresholds = np.linspace(min_thresh, max_thresh, steps)
+        grid_results: List[Dict[str, Any]] = []
+
+        best_thresh = 0.50
+        best_score = -999.0
+        best_metrics: Dict[str, Any] = {}
 
         for thresh in thresholds:
-            preds = (y_probs >= thresh).astype(int)
-            tn, fp, fn, tp = confusion_matrix(y_true, preds, labels=[0, 1]).ravel()
-            fpr = fp / (fp + tn) if (fp + tn) > 0 else 0.0
+            t = float(thresh)
+            preds = (y_probs >= t).astype(int)
+            cm = confusion_matrix(y_true, preds, labels=[0, 1])
+            tn, fp, fn, tp = cm.ravel()
 
+            total = float(len(y_true))
+            acc = float((tp + tn) / total) if total > 0 else 0.0
+            prec = float(tp / (tp + fp)) if (tp + fp) > 0 else 0.0
+            rec = float(tp / (tp + fn)) if (tp + fn) > 0 else 0.0
+            f1 = float(2.0 * (prec * rec) / (prec + rec)) if (prec + rec) > 0 else 0.0
+            fpr = float(fp / (fp + tn)) if (fp + tn) > 0 else 0.0
+            fnr = float(fn / (fn + tp)) if (fn + tp) > 0 else 0.0
+
+            entry = {
+                "threshold": round(t, 4),
+                "tn": int(tn),
+                "fp": int(fp),
+                "fn": int(fn),
+                "tp": int(tp),
+                "accuracy": round(acc, 4),
+                "precision": round(prec, 4),
+                "recall": round(rec, 4),
+                "f1_score": round(f1, 4),
+                "fpr": round(fpr, 4),
+                "fnr": round(fnr, 4),
+                "combined_error": round(fpr + fnr, 4),
+            }
+            grid_results.append(entry)
+
+            # Documented operational selection criteria:
+            # 1. Enforce strict False Positive Rate safety boundary (fpr <= max_fpr)
+            # 2. Maximize F1-score while penalizing both false positives and false negatives
             if fpr <= max_fpr:
-                f1 = f1_score(y_true, preds, zero_division=0)
-                if f1 > best_f1:
-                    best_f1 = f1
-                    best_thresh = float(thresh)
+                score = f1 * 2.0 - (fpr * 3.0) - fnr
+                if score > best_score:
+                    best_score = score
+                    best_thresh = t
+                    best_metrics = entry
 
-        # Fallback to default if no threshold satisfies strict FPR
-        return best_thresh
+        # Fallback if no threshold satisfies strict FPR boundary: choose threshold with lowest FPR
+        if not best_metrics:
+            lowest_fpr_entry = min(grid_results, key=lambda x: (x["fpr"], -x["f1_score"]))
+            best_thresh = lowest_fpr_entry["threshold"]
+            best_metrics = lowest_fpr_entry
+
+        return best_thresh, grid_results, best_metrics
 
     def _evaluate_model(
         self,
@@ -313,6 +389,7 @@ class MlTrainingPipeline:
         threshold: float,
         is_baseline: bool,
         training_time_sec: float = 0.0,
+        tuning_summary: Optional[Dict[str, Any]] = None,
     ) -> ModelEvaluationResult:
         """Evaluate classifier metrics and benchmark inference speed."""
         # 1. Prediction probabilities and labels
@@ -329,7 +406,7 @@ class MlTrainingPipeline:
         total_time = (time.perf_counter() - t0) * 1000.0  # ms
         avg_latency_ms = total_time / max(len(X_test_proc), 1)
 
-        # 3. Compute metrics
+        # 3. Compute metrics with safe zero-division handling
         acc = float(accuracy_score(y_test, y_preds))
         prec = float(precision_score(y_test, y_preds, zero_division=0))
         rec = float(recall_score(y_test, y_preds, zero_division=0))
@@ -343,6 +420,7 @@ class MlTrainingPipeline:
         cm = confusion_matrix(y_test, y_preds, labels=[0, 1])
         tn, fp, fn, tp = cm.ravel()
         fpr = float(fp / (fp + tn)) if (fp + tn) > 0 else 0.0
+        fnr = float(fn / (fn + tp)) if (fn + tp) > 0 else 0.0
         tnr = float(tn / (fp + tn)) if (fp + tn) > 0 else 0.0
 
         return ModelEvaluationResult(
@@ -354,20 +432,22 @@ class MlTrainingPipeline:
             f1_score=round(f1, 4),
             roc_auc=round(auc, 4),
             false_positive_rate=round(fpr, 4),
+            false_negative_rate=round(fnr, 4),
             true_negative_rate=round(tnr, 4),
             confusion_matrix=cm.tolist(),
             optimal_threshold=round(threshold, 4),
             avg_latency_ms=round(avg_latency_ms, 4),
             is_baseline=is_baseline,
-            hyperparameters=model.get_params(),
+            hyperparameters=model.get_params() if hasattr(model, "get_params") else {},
             training_time_sec=round(training_time_sec, 3),
+            threshold_tuning_summary=tuning_summary,
         )
 
     def _select_recommended_model(
         self,
         results: Dict[str, ModelEvaluationResult],
     ) -> Tuple[str, str]:
-        """Rank models based on False Positive Rate, F1-Score, and inference speed."""
+        """Rank models based on balanced reduction of False Positives, False Negatives, and F1."""
         best_id = next(iter(results.keys()))
         highest_composite = -100.0
 
@@ -375,7 +455,8 @@ class MlTrainingPipeline:
             composite = (
                 (res.f1_score * 40.0)
                 + (res.roc_auc * 30.0)
-                - (res.false_positive_rate * 40.0)
+                - (res.false_positive_rate * 50.0)
+                - (res.false_negative_rate * 30.0)
                 - min(res.avg_latency_ms * 2.0, 10.0)
             )
             if composite > highest_composite:
@@ -383,19 +464,22 @@ class MlTrainingPipeline:
                 best_id = mid
 
         winner = results[best_id]
-        baseline = results.get("random_forest", winner)
+        baseline = results.get("random_forest_baseline", results.get("random_forest", winner))
 
         rationale = (
             f"Model '{winner.model_name}' achieved the strongest operational balance: "
             f"F1-Score: {winner.f1_score:.4f}, ROC-AUC: {winner.roc_auc:.4f}, "
             f"False Positive Rate: {winner.false_positive_rate:.4f}, "
+            f"False Negative Rate: {winner.false_negative_rate:.4f}, "
             f"and Inference Latency: {winner.avg_latency_ms:.4f} ms/sample "
             f"(Training Time: {winner.training_time_sec:.2f}s). "
         )
-        if best_id != "random_forest" and "random_forest" in results:
+        if best_id != "random_forest_baseline" and "random_forest_baseline" in results:
+            fp_delta = baseline.confusion_matrix[0][1] - winner.confusion_matrix[0][1]
+            fn_delta = baseline.confusion_matrix[1][0] - winner.confusion_matrix[1][0]
             rationale += (
-                f"Outperformed Random Forest baseline (FPR: {baseline.false_positive_rate:.4f}, "
-                f"F1: {baseline.f1_score:.4f}) with lower false alarms and faster evaluation."
+                f"Compared to Baseline (FPR: {baseline.false_positive_rate:.4f}, FNR: {baseline.false_negative_rate:.4f}), "
+                f"reduced False Positives by {fp_delta:+d} and False Negatives by {fn_delta:+d}."
             )
         else:
             rationale += "Maintained the most reliable generalization boundary across all tested metrics."
@@ -407,8 +491,9 @@ class MlTrainingPipeline:
         report: ComparisonReport,
         preprocessor: Pipeline,
         best_eval: ModelEvaluationResult,
+        threshold_reports: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """Write model metadata, JSON report, and markdown comparison document."""
+        """Write model metadata, JSON report, markdown comparison document, and threshold tuning tables."""
         # 1. JSON Report
         json_path = self.output_dir / "model_comparison_report.json"
         with open(json_path, "w", encoding="utf-8") as f:
@@ -428,6 +513,7 @@ class MlTrainingPipeline:
                 "f1_score": best_eval.f1_score,
                 "roc_auc": best_eval.roc_auc,
                 "false_positive_rate": best_eval.false_positive_rate,
+                "false_negative_rate": best_eval.false_negative_rate,
                 "avg_latency_ms": best_eval.avg_latency_ms,
             },
             "trained_at": report.timestamp,
@@ -435,22 +521,71 @@ class MlTrainingPipeline:
         with open(self.output_dir / "model_metadata.json", "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
 
-        # 3. Markdown Comparison Report
+        # 3. Save Threshold Tuning Report if available
+        if threshold_reports:
+            with open(self.output_dir / "threshold_tuning_report.json", "w", encoding="utf-8") as f:
+                json.dump(threshold_reports, f, indent=2)
+
+            # Generate Threshold Tuning Markdown
+            thresh_md = self._render_threshold_report(threshold_reports)
+            with open(self.output_dir / "threshold_tuning_report.md", "w", encoding="utf-8") as f:
+                f.write(thresh_md)
+
+        # 4. Markdown Comparison Report
         md_content = self._render_markdown_report(report)
         with open(self.output_dir / "model_comparison_report.md", "w", encoding="utf-8") as f:
             f.write(md_content)
+
+    def _render_threshold_report(self, threshold_reports: Dict[str, Any]) -> str:
+        """Generate markdown report documenting threshold calibration across [0.20, 0.80]."""
+        lines = [
+            "# Decision Threshold Calibration & Tuning Report",
+            "**Validation Range Evaluated**: `0.20` to `0.80` (step: 0.01)",
+            "**Criteria**: Enforce operational safety boundary on False Positive Rate (FPR) while minimizing False Negative Rate (FNR) and maximizing F1-score.",
+            "",
+        ]
+        for mid, t_data in threshold_reports.items():
+            m_name = t_data.get("model_name", mid)
+            opt_t = t_data.get("optimal_threshold", 0.5)
+            summary = t_data.get("validation_summary", {})
+            lines.extend([
+                f"## Model: {m_name}",
+                f"- **Selected Threshold**: `{opt_t:.4f}`",
+                f"- **Validation Accuracy**: `{summary.get('accuracy', 0.0):.4f}`",
+                f"- **Validation Precision**: `{summary.get('precision', 0.0):.4f}`",
+                f"- **Validation Recall**: `{summary.get('recall', 0.0):.4f}`",
+                f"- **Validation F1-Score**: `{summary.get('f1_score', 0.0):.4f}`",
+                f"- **Validation FPR**: `{summary.get('fpr', 0.0):.4f}` (FP: {summary.get('fp', 0)})",
+                f"- **Validation FNR**: `{summary.get('fnr', 0.0):.4f}` (FN: {summary.get('fn', 0)})",
+                "",
+                "### Threshold Comparison Curve Sample (Validation Set)",
+                "| Threshold | Precision | Recall | F1-Score | FPR | FNR | TP | FP | TN | FN |",
+                "| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
+            ])
+            grid = t_data.get("grid_evaluations", [])
+            # Sample every 5 steps for readable table
+            sample_grid = [row for i, row in enumerate(grid) if i % 5 == 0 or row.get("threshold") == opt_t]
+            for row in sample_grid:
+                highlight = " ⭐ Selected" if row.get("threshold") == opt_t else ""
+                lines.append(
+                    f"| **{row['threshold']:.2f}** | {row['precision']:.4f} | {row['recall']:.4f} | "
+                    f"{row['f1_score']:.4f} | {row['fpr']:.4f} | {row['fnr']:.4f} | "
+                    f"{row['tp']} | {row['fp']} | {row['tn']} | {row['fn']} |{highlight}"
+                )
+            lines.append("")
+        return "\n".join(lines)
 
     def _render_markdown_report(self, report: ComparisonReport) -> str:
         """Generate formatted Markdown comparison document with metrics and matrices."""
         lines = [
             "# Machine Learning Model Comparison & Evaluation Report",
             f"**Generated At**: `{report.timestamp}`",
-            f"**Feature Count**: `{report.feature_count}` lexical and DGA statistical features",
+            f"**Feature Count**: `{report.feature_count}` lexical, structural, and DGA features",
             f"**Data Splitting Strategy**: `{report.dataset_metadata.get('strategy', 'unknown')}` (Zero-leakage)",
             "",
             "## 1. Summary Performance Metrics Table",
-            "| Model | Accuracy | Precision | Recall | F1-Score | ROC-AUC | FPR | Latency (ms) | Status |",
-            "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
+            "| Model | Accuracy | Precision | Recall | F1-Score | ROC-AUC | FPR | FNR | Latency (ms) | Status |",
+            "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
         ]
 
         for mid, m in report.models.items():
@@ -458,7 +593,7 @@ class MlTrainingPipeline:
             lines.append(
                 f"| **{m.model_name}** | {m.accuracy:.4f} | {m.precision:.4f} | "
                 f"{m.recall:.4f} | {m.f1_score:.4f} | {m.roc_auc:.4f} | "
-                f"{m.false_positive_rate:.4f} | {m.avg_latency_ms:.3f} | {is_best} |"
+                f"{m.false_positive_rate:.4f} | {m.false_negative_rate:.4f} | {m.avg_latency_ms:.3f} | {is_best} |"
             )
 
         lines.extend([
@@ -472,19 +607,47 @@ class MlTrainingPipeline:
             cm = m.confusion_matrix
             lines.extend([
                 f"### {m.model_name}",
-                f"- **TN**: `{cm[0][0]}`, **FP**: `{cm[0][1]}`, **FN**: `{cm[1][0]}`, **TP**: `{cm[1][1]}`",
-                f"- **Calibrated Threshold**: `{m.optimal_threshold:.4f}`",
-                f"- **False Positive Rate**: `{m.false_positive_rate:.4f}`",
+                f"- **True Negatives (TN)**: `{cm[0][0]}`",
+                f"- **False Positives (FP)**: `{cm[0][1]}`",
+                f"- **False Negatives (FN)**: `{cm[1][0]}`",
+                f"- **True Positives (TP)**: `{cm[1][1]}`",
+                f"- **Calibrated Decision Threshold**: `{m.optimal_threshold:.4f}`",
+                f"- **False Positive Rate [FP / (FP + TN)]**: `{m.false_positive_rate:.4f}`",
+                f"- **False Negative Rate [FN / (FN + TP)]**: `{m.false_negative_rate:.4f}`",
+                "",
+            ])
+
+        # Baseline vs Improved comparative section if baseline exists
+        baseline = report.models.get("random_forest_baseline")
+        improved = report.models.get("random_forest")
+        if baseline and improved:
+            b_cm = baseline.confusion_matrix
+            i_cm = improved.confusion_matrix
+            fp_diff = i_cm[0][1] - b_cm[0][1]
+            fn_diff = i_cm[1][0] - b_cm[1][0]
+            lines.extend([
+                "## 3. Baseline vs. Improved Model Comparison (FP & FN Reduction)",
+                "| Evaluation Metric | Baseline (RF Default) | Improved (RF Tuned + Enhanced Features) | Delta / Improvement |",
+                "| :--- | :---: | :---: | :---: |",
+                f"| **False Positives (FP)** | `{b_cm[0][1]}` | `{i_cm[0][1]}` | **{fp_diff:+d}** |",
+                f"| **False Negatives (FN)** | `{b_cm[1][0]}` | `{i_cm[1][0]}` | **{fn_diff:+d}** |",
+                f"| **False Positive Rate (FPR)** | `{baseline.false_positive_rate:.4%}` | `{improved.false_positive_rate:.4%}` | `{improved.false_positive_rate - baseline.false_positive_rate:+.4%}` |",
+                f"| **False Negative Rate (FNR)** | `{baseline.false_negative_rate:.4%}` | `{improved.false_negative_rate:.4%}` | `{improved.false_negative_rate - baseline.false_negative_rate:+.4%}` |",
+                f"| **Accuracy** | `{baseline.accuracy:.4%}` | `{improved.accuracy:.4%}` | `{improved.accuracy - baseline.accuracy:+.4%}` |",
+                f"| **Precision** | `{baseline.precision:.4%}` | `{improved.precision:.4%}` | `{improved.precision - baseline.precision:+.4%}` |",
+                f"| **Recall** | `{baseline.recall:.4%}` | `{improved.recall:.4%}` | `{improved.recall - baseline.recall:+.4%}` |",
+                f"| **F1-Score** | `{baseline.f1_score:.4f}` | `{improved.f1_score:.4f}` | `{improved.f1_score - baseline.f1_score:+.4f}` |",
+                f"| **ROC-AUC** | `{baseline.roc_auc:.4f}` | `{improved.roc_auc:.4f}` | `{improved.roc_auc - baseline.roc_auc:+.4f}` |",
                 "",
             ])
 
         lines.extend([
-            "## 3. Recommended Production Model & Operational Rationale",
+            "## 4. Recommended Production Model & Operational Rationale",
             f"> **Selected Model**: `{report.models[report.recommended_model].model_name}`",
             "",
             f"{report.recommendation_rationale}",
             "",
-            "## 4. Dataset Hygiene & Leakage Prevention",
+            "## 5. Dataset Hygiene & Leakage Prevention",
             f"- **Total Samples**: `{report.dataset_metadata.get('total_samples')}`",
             f"- **Train Samples**: `{report.dataset_metadata.get('train_samples')}`",
             f"- **Validation Samples**: `{report.dataset_metadata.get('val_samples')}`",
