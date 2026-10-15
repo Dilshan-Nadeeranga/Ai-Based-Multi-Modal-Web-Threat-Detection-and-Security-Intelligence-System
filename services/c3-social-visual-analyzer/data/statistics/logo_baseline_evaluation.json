@@ -1,0 +1,157 @@
+{
+  "detector": "models/logo_detector/yolo11n_logo_baseline_best.pt",
+  "clip": "openai/clip-vit-base-patch16",
+  "det_conf": 0.25,
+  "iou_match": 0.5,
+  "brand_threshold": 0.78,
+  "threshold_selection": "max F1 on val (synthetic detected boxes + dom phishing pages)",
+  "yolo_metrics": {
+    "val": {
+      "precision": 0.8034,
+      "recall": 0.6777,
+      "mAP50": 0.7327,
+      "mAP50_95": 0.6013
+    },
+    "test": {
+      "precision": 0.8499,
+      "recall": 0.7322,
+      "mAP50": 0.7988,
+      "mAP50_95": 0.6615
+    },
+    "val_dom": {
+      "precision": 0.7668,
+      "recall": 0.6023,
+      "mAP50": 0.6261,
+      "mAP50_95": 0.4563
+    },
+    "val_synthetic": {
+      "precision": 0.8091,
+      "recall": 0.8288,
+      "mAP50": 0.8571,
+      "mAP50_95": 0.7751
+    },
+    "test_dom": {
+      "precision": 0.7974,
+      "recall": 0.6917,
+      "mAP50": 0.7056,
+      "mAP50_95": 0.4952
+    },
+    "test_synthetic": {
+      "precision": 0.8841,
+      "recall": 0.8175,
+      "mAP50": 0.9066,
+      "mAP50_95": 0.84
+    }
+  },
+  "detection_at_conf": {
+    "val": {
+      "all": {
+        "tp": 161,
+        "fp": 41,
+        "fn": 81,
+        "precision": 0.797,
+        "recall": 0.6653,
+        "f1": 0.7252
+      },
+      "dom": {
+        "tp": 78,
+        "fp": 27,
+        "fn": 53,
+        "precision": 0.7429,
+        "recall": 0.5954,
+        "f1": 0.661
+      },
+      "synthetic": {
+        "tp": 83,
+        "fp": 14,
+        "fn": 28,
+        "precision": 0.8557,
+        "recall": 0.7477,
+        "f1": 0.7981
+      }
+    },
+    "test": {
+      "all": {
+        "tp": 170,
+        "fp": 41,
+        "fn": 62,
+        "precision": 0.8057,
+        "recall": 0.7328,
+        "f1": 0.7675
+      },
+      "dom": {
+        "tp": 84,
+        "fp": 34,
+        "fn": 36,
+        "precision": 0.7119,
+        "recall": 0.7,
+        "f1": 0.7059
+      },
+      "synthetic": {
+        "tp": 86,
+        "fp": 7,
+        "fn": 26,
+        "precision": 0.9247,
+        "recall": 0.7679,
+        "f1": 0.839
+      }
+    }
+  },
+  "brand_matching_test": {
+    "synthetic_gt_crop": {
+      "top1": 0.9554,
+      "n": 112,
+      "precision": 0.972,
+      "recall": 0.9286,
+      "f1": 0.9498
+    },
+    "synthetic_detected": {
+      "top1": 0.9767,
+      "n": 86,
+      "precision": 0.988,
+      "recall": 0.9535,
+      "f1": 0.9704
+    },
+    "dom_page": {
+      "top1": 0.7333,
+      "n": 55,
+      "precision": 0.6364,
+      "recall": 0.7,
+      "f1": 0.6667
+    }
+  },
+  "dataset": {
+    "post_images": 1019,
+    "post_images_with_logo": 98,
+    "website_screenshots": 4,
+    "accepted_brands": {
+      "facebook": 1,
+      "whatsapp": 1,
+      "apple": 22,
+      "adobe": 7,
+      "google": 1,
+      "amazon": 3,
+      "coinbase": 2,
+      "linkedin": 1,
+      "netflix": 1
+    }
+  },
+  "post_web_pairs": [
+    {
+      "sample_id": "SVT_000002",
+      "global_cosine": 0.6069,
+      "global_phash_distance": 30,
+      "post_logos": 0,
+      "web_logos": 1,
+      "best_logo_pair_cosine": null,
+      "post_best_brand": null,
+      "post_best_cosine": 0.0,
+      "web_best_brand": "whatsapp",
+      "web_best_cosine": 0.7255,
+      "same_reference_brand": false,
+      "created_at": "2026-10-15T04:30:52.787216+00:00"
+    }
+  ],
+  "runtime_seconds": 280.1,
+  "created_at": "2026-10-15T04:30:52.787216+00:00"
+}

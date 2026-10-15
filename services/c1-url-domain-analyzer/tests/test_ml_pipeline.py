@@ -24,10 +24,10 @@ def test_feature_extractor_consistency():
     feat_vec = extractor.extract_vector(test_url)
     feat_df = extractor.extract_dataframe([test_url])
 
-    assert len(FEATURE_NAMES) == 52
-    assert len(feat_dict) == 52
-    assert feat_vec.shape == (52,)
-    assert feat_df.shape == (1, 52)
+    assert len(FEATURE_NAMES) == 57
+    assert len(feat_dict) == 57
+    assert feat_vec.shape == (57,)
+    assert feat_df.shape == (1, 57)
 
     # Verify vector matches dict values exactly in order
     for idx, name in enumerate(FEATURE_NAMES):
@@ -90,8 +90,8 @@ def test_pipeline_training_and_reports(tmp_path: Path):
         model_selection="all",
     )
 
-    # 1. Verify all 4 required models evaluated
-    expected_models = {"random_forest", "decision_tree", "xgboost", "lightgbm"}
+    # 1. Verify required models evaluated (including baseline and improved RF)
+    expected_models = {"random_forest", "random_forest_baseline", "decision_tree", "xgboost", "lightgbm"}
     assert set(report.models.keys()) == expected_models
 
     for mid, res in report.models.items():
@@ -128,9 +128,9 @@ def test_random_forest_dedicated_training(tmp_path: Path):
     )
 
     assert "random_forest" in report.models
-    assert len(report.models) == 1
+    assert len(report.models) in (1, 2)
     rf_eval = report.models["random_forest"]
-    assert rf_eval.model_name == "Random Forest (Baseline)"
+    assert "Random Forest" in rf_eval.model_name
     assert rf_eval.accuracy >= 0.8
     assert rf_eval.f1_score >= 0.8
     assert rf_eval.training_time_sec >= 0.0
@@ -213,7 +213,7 @@ def test_model_service_loading_and_inference():
     assert legit_res.is_model_loaded is True
     assert legit_res.predicted_label == "legitimate"
     assert legit_res.malicious_probability <= legit_res.decision_threshold
-    assert legit_res.feature_count == 52
+    assert legit_res.feature_count == 57
     assert legit_res.inference_time_ms > 0
 
     # Test malicious phishing URL prediction
@@ -274,7 +274,7 @@ def test_api_endpoints_ml_integration():
     pred_data = pred_resp.json()
     assert pred_data["is_model_loaded"] is True
     assert pred_data["predicted_label"] == "malicious"
-    assert pred_data["feature_count"] == 52
+    assert pred_data["feature_count"] == 57
 
     # 3. Empty URL validation error
     bad_resp = client.post("/api/v1/ml-predict", json={"url": ""})

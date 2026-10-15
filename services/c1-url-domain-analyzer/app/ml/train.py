@@ -36,7 +36,7 @@ def main() -> None:
         "--model-type",
         type=str,
         default="random_forest",
-        choices=["random_forest", "decision_tree", "xgboost", "lightgbm", "all"],
+        choices=["random_forest", "random_forest_baseline", "decision_tree", "xgboost", "lightgbm", "all"],
         help="Model architecture to train (default: random_forest)",
     )
     parser.add_argument(

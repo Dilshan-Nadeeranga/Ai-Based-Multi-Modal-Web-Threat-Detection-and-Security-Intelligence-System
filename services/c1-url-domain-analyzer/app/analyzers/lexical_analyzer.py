@@ -37,6 +37,13 @@ HEX_IP_PATTERN = re.compile(r'^(0x[0-9a-fA-F]+(\.0x[0-9a-fA-F]+){3}|0x[0-9a-fA-F
 OCTAL_IP_PATTERN = re.compile(r'^0[0-7]+(\.0[0-7]+){3}$')
 DECIMAL_INT_IP_PATTERN = re.compile(r'^\d{8,11}$')
 
+# Marketing and analytics tracking parameter keys commonly causing entropy spikes
+TRACKING_PARAM_KEYS = {
+    "srsltid", "gclid", "fbclid", "msclkid", "yclid", "dclid",
+    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    "mc_cid", "mc_eid", "igshid", "adgroupid", "campaignid", "ref", "affiliate", "sessionid",
+}
+
 
 def calculate_shannon_entropy(text: str) -> float:
     """Calculate the Shannon entropy of a string (in bits per character).
@@ -313,6 +320,30 @@ class UrlLexicalAnalyzer:
 
         is_suspicious_tld = tld.lower() in self.settings.suspicious_tlds
 
+        # Base URL entropy (scheme + authority + path without query string)
+        base_url_str = f"{scheme}://{netloc}{path}"
+        base_url_entropy = calculate_shannon_entropy(base_url_str)
+
+        # Tracking parameter indicator
+        query_keys = set(re.findall(r'(?:^|[&?])([^=&#]+)=', query.lower())) if query else set()
+        has_tracking_param = bool(query_keys & TRACKING_PARAM_KEYS)
+
+        # URL Shortener indicator
+        is_shortened_url = False
+        if registered_domain in self.settings.known_shorteners or hostname in self.settings.known_shorteners:
+            is_shortened_url = True
+        elif len(hostname) <= 10 and len(path.strip("/").split("/")[0]) <= 8 and (path.strip("/") != ""):
+            for s in self.settings.known_shorteners:
+                if s.startswith(registered_domain):
+                    is_shortened_url = True
+                    break
+
+        # Path to URL ratio
+        path_to_url_ratio = round(path_length / url_length, 4) if url_length > 0 else 0.0
+
+        # Standard port indicator
+        is_standard_port = port is None or port in (80, 443)
+
         return UrlLexicalFeatures(
             original_url=original_url,
             normalized_url=normalized_url,
@@ -368,6 +399,11 @@ class UrlLexicalAnalyzer:
             has_at_symbol=has_at_symbol,
             has_hex_obfuscation=has_hex_obfuscation,
             has_misleading_delimiter=has_misleading_delimiter,
+            is_shortened_url=is_shortened_url,
+            base_url_entropy=base_url_entropy,
+            has_tracking_param=has_tracking_param,
+            path_to_url_ratio=path_to_url_ratio,
+            is_standard_port=is_standard_port,
         )
 
     def analyze(self, raw_url: str) -> Layer1LexicalAnalysisResult:
@@ -541,4 +577,9 @@ class UrlLexicalAnalyzer:
             has_at_symbol=False,
             has_hex_obfuscation=False,
             has_misleading_delimiter=False,
+            is_shortened_url=False,
+            base_url_entropy=0.0,
+            has_tracking_param=False,
+            path_to_url_ratio=0.0,
+            is_standard_port=True,
         )

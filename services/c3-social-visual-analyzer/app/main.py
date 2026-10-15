@@ -6,16 +6,18 @@ import logging
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app import __version__
-from app.api import capture_routes, dataset_routes, health_routes, preprocessing_routes
+from app.api import capture_routes, dataset_routes, health_routes, preprocessing_routes, social_routes
 from app.api.responses import error_response, service_error_response
 from app.config import Settings, get_settings
 from app.exceptions import ServiceError
 from app.services.capture_service import WebCaptureService
 from app.services.dataset_service import DatasetService
 from app.services.image_pipeline import ImagePipeline
+from app.services.social_analysis_service import SocialAnalysisService
 from app.services.statistics_service import StatisticsService
 
 logger = logging.getLogger(__name__)
@@ -46,6 +48,11 @@ def create_app(
     app.state.dataset_service = DatasetService(settings)
     app.state.statistics_service = StatisticsService(settings)
     app.state.capture_service = capture_service or WebCaptureService(settings)
+    app.state.social_service = SocialAnalysisService(settings, app.state.pipeline)
+
+    origins = [origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()]
+    if origins:
+        app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST"], allow_headers=["*"])
 
     @app.exception_handler(RequestValidationError)
     async def _request_validation_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
@@ -71,6 +78,7 @@ def create_app(
     app.include_router(preprocessing_routes.router)
     app.include_router(dataset_routes.router)
     app.include_router(capture_routes.router)
+    app.include_router(social_routes.router)
     return app
 
 
