@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     service_name: str = "social-visual-analyzer"
     log_level: str = "INFO"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     data_dir: Path = Field(default=SERVICE_ROOT / "data")
 

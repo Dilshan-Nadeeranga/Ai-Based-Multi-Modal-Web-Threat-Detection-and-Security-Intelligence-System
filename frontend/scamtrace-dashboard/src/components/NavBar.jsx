@@ -6,6 +6,7 @@ import { useAuth } from '../features/auth/hooks/useAuth.js'
 const USER_LINKS = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/url-analyzer', label: 'Threat Analysis' },
+  { to: '/social-visual-analysis', label: 'Social Visual Analysis' },
   { to: '/code-audit', label: 'Repository Audit', end: true },
   { to: '/history', label: 'History' },
   { to: '/profile', label: 'Profile' },

@@ -20,6 +20,9 @@ import Profile from './features/profile/pages/Profile.jsx'
 // C1 — Intelligent URL & Domain Analyzer
 import UrlAnalyzer from './features/url-analyzer/pages/UrlAnalyzer.jsx'
 
+// C3 — Social Media & Web Visual Threat Analyzer
+import SocialVisualAnalysis from './features/social-visual/pages/SocialVisualAnalysis.jsx'
+
 // C4 — Code Quality & Vulnerability Auditor
 import AuditProgress from './features/code-audit/pages/AuditProgress.jsx'
 import PatchReview from './features/code-audit/pages/PatchReview.jsx'
@@ -47,6 +50,9 @@ function App() {
         {/* C1 — Intelligent URL & Domain Analyzer */}
         <Route path="/url-analyzer" element={protect(<UrlAnalyzer />)} />
 
+        {/* C3 — Social Media & Web Visual Threat Analyzer */}
+        <Route path="/social-visual-analysis" element={protect(<SocialVisualAnalysis />)} />
+
         {/* C4 — Code Quality & Vulnerability Auditor */}
         <Route path="/code-audit" element={protect(<RepositoryAudit />)} />
         <Route path="/code-audit/progress" element={protect(<AuditProgress />)} />
@@ -66,6 +72,9 @@ function Home() {
       <nav style={{ padding: '16px', background: '#0f172a', display: 'flex', gap: '16px', justifyContent: 'center' }}>
         <Link to="/url-analyzer" style={{ padding: '8px 16px', background: '#0284c7', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>
           🛡️ Intelligent URL & Domain Analyzer (C1)
+        </Link>
+        <Link to="/social-visual-analysis" style={{ padding: '8px 16px', background: '#7c3aed', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>
+          🖼️ Social Media Visual Analyzer (C3)
         </Link>
         <Link to="/code-audit" style={{ padding: '8px 16px', background: '#334155', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>
           🔍 Code Audit (C4)

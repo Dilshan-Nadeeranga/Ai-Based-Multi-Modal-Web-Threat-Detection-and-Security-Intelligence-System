@@ -57,6 +57,32 @@ _BROWSER_ERRORS: list[tuple[re.Pattern[str], CaptureErrorCode]] = [
     (re.compile(r"ERR_UNSAFE_PORT|ERR_INVALID_URL", re.I), CaptureErrorCode.INVALID_URL),
     (re.compile(r"Download is starting|ERR_ABORTED", re.I), CaptureErrorCode.DOWNLOAD_BLOCKED),
 ]
+_PAGE_TEXT_CHARS = 4000
+# Counts permission prompts without granting anything (the context has no permissions anyway).
+_PERMISSION_PROBE_JS = """
+(() => {
+  window.__scamtraceNotifications = 0;
+  if (window.Notification) {
+    window.Notification.requestPermission = () => {
+      window.__scamtraceNotifications += 1;
+      return Promise.resolve('denied');
+    };
+  }
+  if (navigator.permissions && navigator.permissions.query) {
+    const query = navigator.permissions.query.bind(navigator.permissions);
+    navigator.permissions.query = (desc) => {
+      if (desc && (desc.name === 'notifications' || desc.name === 'push')) window.__scamtraceNotifications += 1;
+      return query(desc);
+    };
+  }
+})();
+"""
+_READ_PROBE_JS = """
+() => ({
+  notifications: window.__scamtraceNotifications || 0,
+  text: document.body ? document.body.innerText.replace(/\\s+/g, ' ').trim() : '',
+})
+"""
 
 
 @dataclass
@@ -71,6 +97,11 @@ class PageCaptureResult:
     error_code: CaptureErrorCode | None = None
     error_message: str | None = None
     browser: str | None = None
+    page_text: str | None = None
+    popups_blocked: int = 0
+    dialogs: list[str] = field(default_factory=list)
+    downloads: list[str] = field(default_factory=list)
+    notification_requests: int = 0
 
 
 class PageCapturer(Protocol):
@@ -167,9 +198,11 @@ class PlaywrightCapturer:
         )
         try:
             context.set_default_timeout(timeout_ms)
+            context.add_init_script(_PERMISSION_PROBE_JS)
             page = context.new_page()
-            context.on("page", lambda popup: popup.close() if popup is not page else None)
-            page.on("dialog", lambda dialog: dialog.dismiss())
+            context.on("page", lambda popup: self._close_popup(result, page, popup))
+            page.on("dialog", lambda dialog: self._dismiss_dialog(result, dialog))
+            page.on("download", lambda download: result.downloads.append(download.suggested_filename[:120]))
 
             try:
                 response = page.goto(verdict.url, wait_until="domcontentloaded", timeout=timeout_ms)
@@ -195,6 +228,12 @@ class PlaywrightCapturer:
                 result.title = (page.title() or "").strip()[: settings.web_capture_max_title_length] or None
             except PlaywrightError:
                 result.title = None
+            try:
+                probe = page.evaluate(_READ_PROBE_JS)
+                result.notification_requests = int(probe.get("notifications") or 0)
+                result.page_text = (probe.get("text") or "")[:_PAGE_TEXT_CHARS] or None
+            except PlaywrightError:
+                pass
             try:
                 result.png, result.truncated = self._screenshot(page, deadline)
             except PlaywrightError as exc:
@@ -232,6 +271,17 @@ class PlaywrightCapturer:
         result.error_message = message[:500]
         result.png = None
         return result
+
+    @staticmethod
+    def _close_popup(result: PageCaptureResult, page, popup) -> None:
+        if popup is not page:
+            result.popups_blocked += 1
+            popup.close()
+
+    @staticmethod
+    def _dismiss_dialog(result: PageCaptureResult, dialog) -> None:
+        result.dialogs.append(f"{dialog.type}: {dialog.message[:160]}")
+        dialog.dismiss()
 
     def _settle(self, page, deadline: float, error_type: type[Exception]) -> None:
         for state, cap_ms in (("load", None), ("networkidle", _NETWORK_IDLE_MS)):
