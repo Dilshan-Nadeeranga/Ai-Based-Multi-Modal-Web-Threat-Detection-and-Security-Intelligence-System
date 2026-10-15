@@ -289,6 +289,11 @@ function AnalystReview({ remediationId }) {
             The review start time could not be recorded; review duration will not be available.
           </p>
         )}
+        <p className="ca-detail__note">
+          <Link to={`/code-audit/report?scan=${encodeURIComponent(finding.scan_id)}`}>
+            View preliminary risk score for this scan →
+          </Link>
+        </p>
       </Section>
     </main>
   )

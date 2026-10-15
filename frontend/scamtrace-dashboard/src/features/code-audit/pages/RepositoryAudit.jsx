@@ -1,6 +1,7 @@
 import FindingDetails from '../components/FindingDetails.jsx'
 import FindingTable from '../components/FindingTable.jsx'
 import RepositoryInput from '../components/RepositoryInput.jsx'
+import RiskScorePanel from '../components/RiskScorePanel.jsx'
 import ScanSummary from '../components/ScanSummary.jsx'
 import SeverityCard from '../components/SeverityCard.jsx'
 import { useCodeAudit } from '../hooks/useCodeAudit.js'
@@ -42,6 +43,8 @@ export default function RepositoryAudit() {
       </section>
 
       {result && <ScanSummary result={result} />}
+
+      {result?.scan_id && <RiskScorePanel scanId={result.scan_id} />}
 
       {result && summary && (
         <section className="ca-summary ca-security">
