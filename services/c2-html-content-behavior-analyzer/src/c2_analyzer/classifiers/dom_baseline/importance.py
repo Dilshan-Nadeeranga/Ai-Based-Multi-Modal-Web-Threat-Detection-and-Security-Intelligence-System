@@ -43,13 +43,13 @@ CAVEAT = (
 )
 
 
-def _top(scores: dict[str, float], n: int, by_abs: bool = True) -> list[dict]:
+def _top(scores: dict[str, float], n: int, by_abs: bool = True, source=None) -> list[dict]:
     order = sorted(scores, key=lambda f: -abs(scores[f]) if by_abs else -scores[f])
     return [
         {
             "feature": name,
-            "name": readable_name(name),
-            "description": describe_feature(name),
+            "name": readable_name(name, source=source),
+            "description": describe_feature(name, source=source),
             "value": float(scores[name]),
         }
         for name in order[:n]
@@ -59,7 +59,7 @@ def _top(scores: dict[str, float], n: int, by_abs: bool = True) -> list[dict]:
 # ---- per model ----------------------------------------------------------------------------
 
 
-def logreg_coefficients(bundle: dict[str, Any], n: int) -> dict[str, list[dict]]:
+def logreg_coefficients(bundle: dict[str, Any], n: int, source=None) -> dict[str, list[dict]]:
     """Standardized coefficients per class (binary: one row = the positive class)."""
     model = bundle["estimator"].named_steps["model"]
     features, labels = bundle["features"], bundle["labels"]
@@ -67,7 +67,7 @@ def logreg_coefficients(bundle: dict[str, Any], n: int) -> dict[str, list[dict]]
     if coefficients.shape[0] == 1:  # binary logistic regression: class 0 = minus class 1
         coefficients = np.vstack([-coefficients[0], coefficients[0]])
     return {
-        label: _top(dict(zip(features, coefficients[i], strict=True)), n)
+        label: _top(dict(zip(features, coefficients[i], strict=True)), n, source=source)
         for i, label in enumerate(labels)
     }
 
@@ -89,17 +89,17 @@ def forest_importance(
         n_jobs=1,
     )
     mean = dict(zip(features, permutation.importances_mean, strict=True))
-    top_permutation = _top(mean, config.top_n, by_abs=False)
+    top_permutation = _top(mean, config.top_n, by_abs=False, source=config.source)
     std = dict(zip(features, permutation.importances_std, strict=True))
     for row in top_permutation:
         row["std"] = float(std[row["feature"]])
     return {
-        "impurity": _top(impurity, config.top_n, by_abs=False),
+        "impurity": _top(impurity, config.top_n, by_abs=False, source=config.source),
         "permutation_test": top_permutation,
     }
 
 
-def xgb_gain(bundle: dict[str, Any], n: int) -> list[dict]:
+def xgb_gain(bundle: dict[str, Any], n: int, source=None) -> list[dict]:
     """Average gain per split; features never used in a split have gain 0."""
     features = bundle["features"]
     scores = bundle["estimator"].get_booster().get_score(importance_type="gain")
@@ -107,7 +107,8 @@ def xgb_gain(bundle: dict[str, Any], n: int) -> list[dict]:
         features[int(key[1:])] if key.startswith("f") and key[1:].isdigit() else key: value
         for key, value in scores.items()
     }
-    return _top({name: float(by_name.get(name, 0.0)) for name in features}, n, by_abs=False)
+    gains = {name: float(by_name.get(name, 0.0)) for name in features}
+    return _top(gains, n, by_abs=False, source=source)
 
 
 def shap_values(estimator, X: np.ndarray, n_classes: int) -> np.ndarray:
@@ -122,13 +123,13 @@ def shap_values(estimator, X: np.ndarray, n_classes: int) -> np.ndarray:
     return values
 
 
-def shap_summary(bundle: dict[str, Any], X: np.ndarray, n: int) -> dict[str, Any]:
+def shap_summary(bundle: dict[str, Any], X: np.ndarray, n: int, source=None) -> dict[str, Any]:
     """Global SHAP: mean |SHAP| per feature (overall and per class) on the given pages."""
     features, labels = bundle["features"], bundle["labels"]
     values = shap_values(bundle["estimator"], X, len(labels))
     per_class = np.abs(values).mean(axis=0)  # (features, classes)
     overall = per_class.sum(axis=1)
-    top = _top(dict(zip(features, overall, strict=True)), n, by_abs=False)
+    top = _top(dict(zip(features, overall, strict=True)), n, by_abs=False, source=source)
     for row in top:
         index = features.index(row["feature"])
         row["per_class"] = {label: float(per_class[index, j]) for j, label in enumerate(labels)}
@@ -138,7 +139,9 @@ def shap_summary(bundle: dict[str, Any], X: np.ndarray, n: int) -> dict[str, Any
 # ---- contributions for ONE page (predict / inspector) --------------------------------------
 
 
-def contributions(bundle: dict[str, Any], x: np.ndarray, class_index: int, top: int) -> list[dict]:
+def contributions(
+    bundle: dict[str, Any], x: np.ndarray, class_index: int, top: int, source=None
+) -> list[dict]:
     """The features that move ``class_index``'s score most for one page.
 
     Logistic Regression: coefficient x z-score (exact contribution to that
@@ -171,13 +174,13 @@ def contributions(bundle: dict[str, Any], x: np.ndarray, class_index: int, top: 
         result.append(
             {
                 "feature": name,
-                "name": readable_name(name),
-                "description": describe_feature(name),
+                "name": readable_name(name, source=source),
+                "description": describe_feature(name, source=source),
                 "value": feature_value,
                 "contribution": value,
                 "direction": direction,
                 "method": method,
-                "text": f"{readable_name(name)} = {shown} pushes "
+                "text": f"{readable_name(name, source=source)} = {shown} pushes "
                 + ("towards " if value > 0 else "away from ")
                 + label,
             }
@@ -241,7 +244,13 @@ def plot_shap_global(top: list[dict], labels: list[str], path: Path) -> Path:
 
 
 def plot_shap_beeswarm(
-    values: np.ndarray, X: np.ndarray, features: list[str], label: str, n: int, path: Path
+    values: np.ndarray,
+    X: np.ndarray,
+    features: list[str],
+    label: str,
+    n: int,
+    path: Path,
+    source=None,
 ) -> Path:
     """SHAP's own beeswarm for one class (pyplot-based, so it gets its own figure)."""
     import matplotlib
@@ -251,7 +260,7 @@ def plot_shap_beeswarm(
     import shap
 
     explanation = shap.Explanation(
-        values=values, data=X, feature_names=[readable_name(f) for f in features]
+        values=values, data=X, feature_names=[readable_name(f, source=source) for f in features]
     )
     plt.figure()
     shap.plots.beeswarm(explanation, max_display=n, show=False, plot_size=(10, 0.4 * n + 1.5))
@@ -276,7 +285,7 @@ def compute_importance(
     n = config.top_n
     result: dict[str, Any] = {"caveat": CAVEAT, "top_n": n}
     if "logreg" in bundles:
-        coefficients = logreg_coefficients(bundles["logreg"], n)
+        coefficients = logreg_coefficients(bundles["logreg"], n, config.source)
         result["logreg"] = {"standardized_coefficients": coefficients}
         if figures:
             plot_per_class(
@@ -303,8 +312,8 @@ def compute_importance(
             )
     if "xgboost" in bundles:
         bundle = bundles["xgboost"]
-        gain = xgb_gain(bundle, n)
-        summary = shap_summary(bundle, X_test, n)
+        gain = xgb_gain(bundle, n, config.source)
+        summary = shap_summary(bundle, X_test, n, config.source)
         result["xgboost"] = {"gain": gain, "shap_global": summary["global"]}
         if figures:
             plot_bars(
@@ -324,5 +333,6 @@ def compute_importance(
                     label,
                     n,
                     figures / f"shap_beeswarm_{label}.png",
+                    config.source,
                 )
     return result

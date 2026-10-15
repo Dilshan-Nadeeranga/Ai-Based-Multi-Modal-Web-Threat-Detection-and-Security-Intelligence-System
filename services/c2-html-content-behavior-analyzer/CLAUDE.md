@@ -16,7 +16,7 @@ Threat classes: `benign`, `phishing`, `fake_ecommerce`, `crypto_scam`, `malware_
 5. Multilingual content analyzer → `content/` (language ID, intent taxonomy, corpus)
 6. XLM-R classification → `nlp/` (training designed for Colab: `notebooks/04_xlmr_finetune_colab.ipynb`)
 7. Static JS analyzer → `js_analyzer/` (tree-sitter AST + lexical fallback; unparsable JS must fail gracefully)
-8. Behavioral intent mapping → `behavior/` (rules in `configs/sources_sinks.yaml`)
+8. Behavioral intent mapping → `behavior/` (sources / sinks in `configs/sources_sinks.yaml`, patterns in `behavior_patterns.yaml`, vector in `behavior_features.yaml`)
 9. Fusion + API → `fusion/`, `api/`
 
 Implement one part (or batch) at a time, when asked. See **Progress** below.
@@ -74,7 +74,7 @@ Implement one part (or batch) at a time, when asked. See **Progress** below.
   - `GET /api/v1/dev/versions | samples?version&label&language&q&has_password&external_form_action | samples/{id}/parsed?version | samples/{id}/safe-preview?version` backed by `api/dev_data.py::DevDataset` (READ ONLY; manifest + stored JSON, per-file summary cache keyed by mtime/size; missing JSON → processed on the fly, not saved, header `X-Parsed-Source`; ids validated against pattern AND manifest; raw paths must stay in data/raw). Response models in `schemas/inspector.py`. Safe preview = Part 1 `sanitize_html` with CSP `default-src 'none'; style-src 'unsafe-inline'` + nosniff.
   - `GET /inspector` → `api/static/inspector.html` + `inspector.js` (vanilla, offline, CSP `script-src 'self'`). **XSS rule:** API values only via `el()`/textContent; no HTML-parsing sinks (grep test in `tests/test_inspector.py`); `el()` refuses href/src/on* attrs; page URLs are plain text; Safe Preview is an `<iframe sandbox="">`.
   - `scripts/run_api.py`: binds 127.0.0.1 (`--host` to change, warns if dev + non-loopback), port from API_PORT (8002), chdirs to the service folder so `.env` is found, prints the URLs.
-  - **Inspector: add a tab per future part.** In `inspector.js` call `registerTab({id, title, render(ctx, box)})` (replace the disabled placeholder: "Content / NLP (Part 5–6)", "Behavior Intent (Part 8)", "Unified Result (Part 9)"); add a dev endpoint for the part's output (e.g. `samples/{id}/dom-features`) in `dev_routes.py` + `DevDataset`; render with the text-only helpers; extend `tests/test_inspector.py`.
+  - **Inspector: add a tab per future part.** In `inspector.js` call `registerTab({id, title, render(ctx, box)})` (replace the disabled placeholder: "Content / NLP (Part 5–6)", "Unified Result (Part 9)"); add a dev endpoint for the part's output (e.g. `samples/{id}/dom-features`) in `dev_routes.py` + `DevDataset`; render with the text-only helpers; extend `tests/test_inspector.py`.
 - [x] **Part 3 – DOM structural analysis** (Tasks 1–14)
   - Principle: ParsedPage → FIXED-ORDER numeric vector + evidence. Raw HTML is re-parsed (Part 2's `parse_html`) only for tree metrics Part 2 doesn't store (avg depth, leaf ratio, hidden elements); Part 2 visibility helpers reused. No ML (Part 4), no JS semantics (Part 7, scripts only counted). One entry point: `dom/pipeline.py::extract_dom_features(page, html=None)` (`dom_features_for_html` for the API).
   - **`configs/dom_features.yaml` is the single source of truth** (`feature_set_version: dom_v1`, 52 features in 11 groups): order = CSV/vector order; each feature has type (int/float/binary), description (viva), source, `needs_page_url`, optional evidence template `{message, severity high|medium|info, min_value}`. Also `field_rules` (classes password > card > otp_pin > email > username; types/autocomplete/patterns/exclude, en+si+ta + a few zh/ko/ru kit words), `known_form_services`, `hidden_elements` (offscreen_px, never_visible_tags), `report` thresholds. Rename/reorder/add → bump feature_set_version. `dom/dictionary.py` loads + validates; `dictionary_hash()` decides skip/redo.
@@ -88,6 +88,7 @@ Implement one part (or batch) at a time, when asked. See **Progress** below.
   - **Shared split `dataset/splits.py` (used by EVERY later part):** `data/splits/<version>/{split.csv, split.json, cv_folds.csv}` (tracked: ids/labels only). By sample_id from the frozen manifest, never by modality. StratifiedGroupKFold makes 20 cluster-pure pieces stratified by label × language; a seeded search (2000 tries) picks which pieces are val/test (ratios + label mix + si/ta spread). No cluster in two splits. Classes < `split.min_samples_per_class` (15) → split="excluded", listed in split.json (`pilot: true`). Refuses to overwrite without `--force`, refuses a manifest that no longer verifies; `check_current` refuses a split made from another manifest fingerprint. `cv_folds.csv` = grouped stratified 5-fold over train+val (test never in a fold). Config `split:` in config.yaml (seed = project.random_seed).
   - `classifiers/dom_baseline/`: `common` (BaselineConfig from `configs/dom_baseline.yaml` + config.yaml `dom_baseline:` paths/n_jobs; bundles = plain dicts in joblib; `readable_name` = first sentence of the dictionary description + [name]), `data` (feature CSV must equal feature_dictionary.json AND the current dictionary hash; labels in labels.yaml order restricted to included classes, contiguous 0..k-1; cleaning on TRAIN only: constant + |r| > 0.98 → drop the later one), `train` (grid per model, selected by mean macro-F1 over cv_folds, refit on train+val; LR = StandardScaler + lbfgs multinomial balanced; RF balanced_subsample, `n_jobs: 1` (threads slower on ~200 pages); XGB multi:softprob hist + balanced sample weights), `evaluate` (metrics, benign FPR, per-language with small-n flag, confusion PNG/text, misclassified rows), `importance` (LR std. coefficients, RF impurity + permutation on test, XGB gain + SHAP global/beeswarm; per-page `contributions`: LR coef×z, trees TreeExplainer), `predict` (`predict_features` → `schemas/dom_baseline.py::DomPrediction`; best model = highest CV macro-F1), `report` (`run_report`: checks bundles vs current split/features/classes/dictionary (StaleModelError), evaluates test ONCE, writes reports + model card).
   - Outputs: `models/dom_baseline/<v>/{logreg,random_forest,xgboost}.joblib` (git-ignored) + `model_card.json`, `label_mapping.json`, `features.json` (tracked; `.gitignore` ignores `models/**` except these); `reports/dom_baseline/<v>/{results.json, results.md, misclassified.csv, dropped_features.csv, figures/}`.
+  - **Reuse:** the protocol is modality-independent; a `FeatureSource` (common.py) says which feature table to load and how to name / fingerprint it (DOM = `sources.DOM_SOURCE`, default). Part 8's behavior-only baseline passes its own.
   - CLI `scripts/train_dom_baseline.py split|train|evaluate|all|predict` (`all` = split if missing → train → evaluate+importance+report; `predict --sample-id | --file [--url] [--json]` uses XGBoost SHAP for the explanation).
   - API/inspector: dev `GET /api/v1/dev/samples/{id}/dom-prediction` (404 no models, 409 stale), `samples?misclassified=true` (best model's test mistakes; `SampleSummary.misclassified`). DOM Features tab has a "DOM baseline prediction (Part 4)" card (PILOT badge, probability bars, top 5 pushes towards/away); sidebar checkbox "misclassified (test)".
   - v0.1 pilot (3 classes; fake_ecommerce/crypto_scam excluded, 0 pages): split 194/42/42, si 6/2/1, ta 1/1/1. 52 → 47 features (dropped base_url_known, meta_refresh_external constant; element_count, has_external_form_action, form_action_to_known_form_service correlated). CV macro-F1 LR 0.747±0.030, RF 0.797±0.011 (best), XGB 0.788±0.024; test macro-F1 0.716 / 0.755 / 0.753; benign FPR 25 % / 10 % / 10 % (target ≤ 2 % NOT met). Run takes ~40 s.
@@ -124,13 +125,71 @@ Implement one part (or batch) at a time, when asked. See **Progress** below.
     - Each is `count: {apis, categories, access, external, credential}` over page-own detections, or `compute:` (`features.py`).
     - Outputs: `data/processed/js/<v>/{<id>.json, js_features.csv, js_feature_dictionary.json}`; batch rules as in Part 3 (verify, Part 2 produced + saved if missing, skip by sha + rules_hash + mtime, CSV always complete).
     - Report: `reports/js_analysis/<v>_summary.{json,md}`, with per-page times taken from the stored results.
-  - **CLI:** `scripts/analyze_js.py run|one|describe`. API: public `POST /api/v1/js-analysis` (Swagger examples) and dev `GET /api/v1/dev/samples/{id}/js-analysis` (`X-Js-Source`, `DevDataset.js_root`). Inspector tab "JS Analysis (Part 7)" with snippets via textContent only; placeholder "Behavior Intent (Part 8)".
+  - **CLI:** `scripts/analyze_js.py run|one|describe`. API: public `POST /api/v1/js-analysis` (Swagger examples) and dev `GET /api/v1/dev/samples/{id}/js-analysis` (`X-Js-Source`, `DevDataset.js_root`). Inspector tab "JS Analysis (Part 7)" with snippets via textContent only.
   - **v0.2 run (306 pages):**
     - 0 failures; parse success 99.6 % (23 of 6,039 lexical; the 4 truncated 500 KB data scripts end inside strings, 19 are broken handlers).
     - Library scripts: 5.9 %. Time: avg 47 ms, median 8 ms per page; 5.4 s wall with 4 workers.
     - Phishing vs benign (page-own): credential read 19.5 % vs 2.6 %, external request 16.1 vs 4.5, external redirect 11.5 vs 0.6, key listener 26.4 vs 9.7.
     - malware_delivery has 42–44 % for `location.replace` / beacons / XHR / decoding (one kit family).
-- [ ] Parts 5, 6, 8, 9
+- [x] **Part 8 – Behavioral intent mapping** (Tasks 1–12) + behavior-only baseline, on v0.3 (5 classes)
+  - **Principles (module docstrings):**
+    - Part 7 says WHAT APIs are used; Part 8 says what the code is TRYING TO DO by linking SOURCE (sensitive data) → FLOW → SINK. A single API is never a pattern (fetch alone is normal; reading #password.value is what validation does).
+    - Static only, no network. Re-parses with Part 7's `parse_js` (same limits → same tree → Part 7 byte ranges map to nodes, `code_index.find_node`); sources / sinks come from Part 7's detections (Part 8 only matches what Part 7 does not record: event.key in key listeners, navigator / screen fingerprint props, location.href reads, jQuery serialize, ws.send).
+    - Lightweight, explainable intra-page taint analysis, NOT an interpreter; the limitations are listed in every result.
+    - One entry point, `behavior/pipeline.py::map_behavior(page, js_result)` (`behavior_for_html` for the API). It refuses a Part 7 result of another page (sha / script list).
+  - **Modules (`behavior/`):**
+    - `rules` (3 YAMLs validated, every Part 7 api id checked; `rules_hash` = YAMLs + Part 3 field_rules + `ANALYZER_VERSION` "8.2").
+    - `code_index` (scopes per function, block scopes NOT modelled; functions + params; string constants; preventDefault / debugger / click / href / history / devtools facts).
+    - `triggers` (auto / user / unknown).
+    - `sources_sinks` (`PageFields` looks JS selectors up in Part 2 forms with Part 3's `classify_field`; sink destinations from the literal URL or a string constant; known endpoints).
+    - `dataflow` (`TaintEngine`); `patterns` (`PatternMatcher`); `intent_vector`; `batch`, `report`, `baseline`.
+  - **Configs:**
+    - `configs/sources_sinks.yaml`: 11 sources with sensitivity; 16 sinks with destination.
+    - **`exfil_endpoints`** with kind: `collector` (Telegram, Discord / Slack webhooks, ngrok, webhook.site, pipedream …) vs `form_service` (Formspree, Getform, Web3Forms, EmailJS, Google Apps Script …).
+    - `propagation` (encoders, pass-through calls, mutators, callbacks, non-propagating methods).
+    - `events` (user vs auto; message / error / focus stay unknown).
+    - `limits` (6 passes, 12 steps, 6 labels per value, 2000 vars per script, 4000 nodes per expression, 2 s per script, 5 s per page).
+    - `configs/behavior_patterns.yaml`: patterns with variants (severity + message template), factors, risk weights, crypto / ClickFix regexes, risky extensions, active-content regex. `configs/behavior_features.yaml`: beh_v1, 39 features.
+  - **Taint:**
+    - **Labels:** a label per (scope, variable) = source + evidence steps (source / assign / concat / call / encode / sink) + encodings + via_function / via_object.
+    - **What propagates:**
+      - declarations and destructuring, `=` and `+=`;
+      - concatenation, template literals, object and array literals;
+      - `obj.p = v` taints obj; `push` / `append` / `set` / `Object.assign`;
+      - pass-through calls; encoders, which mark the flow "encoded";
+      - user functions by NAME (parameters + return), `.then` / `forEach` callbacks;
+      - HTML handlers see inline-script globals.
+    - **What does not:** comparisons, `.length`, `includes()` and the like are not data.
+    - **Passes:** flow-insensitive but ordered fixed-point passes. Each nested helper call needs one more pass, so the cap is 6.
+    - **Steps:** de-duplicated only when identical (line AND column; minified one-line code keeps its chain).
+    - **Lexical scripts:** a sensitive source + a sink in the same script = co-occurrence flow, confidence low.
+    - **Decoded strings:** recorded only into code_execution / html_injection / download sinks.
+    - **Confidence:** high = direct, ≤ 4 steps; medium = function / object; low = regex-only or inside an ERROR region.
+  - **Credential rules (from the v0.3 false-positive review):**
+    - **Forms:** a form is a credential form only with a "secret" class (password / card / otp_pin). Email-only forms are newsletters, so `form_data_generic`; an unresolved FormData is also generic.
+    - **Identity-only flows:** flows with only email / username are one level lower, two for a `form_service`; a `collector` stays critical.
+    - **Keystrokes:** only per-key properties count (event.key / keyCode / which / code / charCode / data). A typed value read in an input listener is `user_input` (search-as-you-type is not a keylogger).
+    - **Decode → HTML:** high only when the statically decoded literal contains active content (`<script`, `<iframe`, `on*=`, javascript:, eval). A dynamic decode is medium; decoded CSS / markup is no finding. Decode → eval through more than 6 steps is medium.
+  - **Severities:**
+    - credential_exfiltration is critical (external / collector / redirect URL / external form action), high for an unknown destination, medium for form data without credentials. Factors: known endpoint, encoded, submit handler with preventDefault().
+    - keylogging: critical to the network, medium to storage.
+    - forced_redirect: high (automatic, after credentials, history hijack, meta refresh); cloaking medium.
+    - clipboard: ClickFix critical; wallet in a copy listener / auto critical, on a click high; copy_rewrite / clipboard → network high.
+    - suspicious_download: risky + auto high (+1 if the content is decoded), risky + click medium.
+    - obfuscated_execution: decode → exec / active HTML high; packed / entropy ≥ 5.5 + eval medium; minified never counts.
+    - anti_analysis: low, several medium.
+    - `behavior_risk_score` = capped sum of each pattern's highest-severity weight (50 / 25 / 10 / 3). It is descriptive.
+  - **Schema** `schemas/behavior.py` (behavior_v1): `BehaviorResult` = meta (+ js_rules_hash, rules_hash, truncated, warnings), summary, sources_found, sinks_found (with trigger), flows (path of `FlowStep`), findings (sorted by severity, evidence = numbered chain), intent_vector, behavior_risk_score, top_findings (≤ 5 lines for Part 9), errors, limitations. The old stubs were replaced.
+  - **Outputs:** `data/processed/behavior/<v>/{<id>.json, behavior_features.csv, behavior_feature_dictionary.json}`. Batch rules as in Part 7; it also runs and saves Part 2 / Part 7 for missing samples and rebuilds Part 7's CSV then. Skip uses sha + Part 8 hash + Part 7 hash + mtimes. Report `reports/behavior/<v>_summary.{json,md}` (per-label pattern / severity tables, flows, top 10 critical, benign false-positive list, timing).
+  - **Behavior-only baseline:** Part 4 was generalized with `classifiers/dom_baseline/common.py::FeatureSource` (DOM = `sources.DOM_SOURCE`, the default; `BaselineConfig.load(source)` reads that source's config.yaml section). `behavior/baseline.py::BEHAVIOR_SOURCE` = js_features + behavior_features joined on sample_id, both checked against their rule hashes. The protocol is the same (shared split, grids, CV selection, one test evaluation, report, model card), plus `comparison.{json,md}`. Re-running the DOM v0.3 baseline after the refactor gave results.json / model_card.json identical to the committed ones (timestamps aside).
+  - **CLI:** `scripts/map_behavior.py run|one|describe|train-baseline`. API: public `POST /api/v1/behavior` (Swagger examples), dev `GET /api/v1/dev/samples/{id}/behavior` (`X-Behavior-Source`, `DevDataset.behavior_root`), `samples?has_critical_behavior=`. Inspector tab "Behavior (Part 8)": risk gauge, severity-coloured finding cards with numbered evidence chains (text only), flows table, intent vector, sinks with triggers; sidebar checkbox "has critical behavior finding".
+  - **v0.3 run (459 pages):**
+    - 0 failures, 26 s wall with 4 workers; median 15 ms, p95 2.2 s, max 3.5 s per page.
+    - 39 pages truncated: 34 are large minified bundles where taint still grows after 6 passes, 5 hit the path cap.
+    - **0 of 227 benign pages have a critical / high finding.**
+    - Phishing: credential exfiltration on 13.8 % (most go to a Telegram bot / form-service endpoint), forced redirect 8.0 %, critical / high on 14.9 %. No keylogging / clipboard / download pattern occurs in v0.3.
+  - **Baseline v0.3 (test 68 pages):** behavior-only best RF test macro-F1 0.682 (CV 0.620 ± 0.078, benign FPR 20.6 %) vs DOM-only RF 0.786 (benign FPR 17.6 %); 90 → 70 features after train-only cleaning. crypto_scam is the weakest class (F1 0.29).
+- [ ] Parts 5, 6, 9
 
 ## Conventions
 - Python ≥ 3.11, src layout, package `c2_analyzer`. Absolute imports (`from c2_analyzer.x import y`).

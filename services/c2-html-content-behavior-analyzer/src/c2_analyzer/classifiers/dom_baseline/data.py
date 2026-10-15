@@ -33,6 +33,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from c2_analyzer.classifiers.dom_baseline.common import FeatureSource, default_source
 from c2_analyzer.config import get_labels
 from c2_analyzer.dataset.splits import EXCLUDED, check_current, load_cv_folds, load_split
 from c2_analyzer.dom.dictionary import dictionary_hash, feature_names, load_dictionary
@@ -205,13 +206,17 @@ def prepare_dataset(
     features_dir: Path | None = None,
     splits_root: Path | None = None,
     manifests: Path | None = None,
+    source: FeatureSource | None = None,
 ) -> DomDataset:
-    """Join features + split, encode labels, clean features on train. Nothing is written."""
+    """Join features + split, encode labels, clean features on train. Nothing is written.
+
+    ``source`` picks the feature table (default: Part 3's DOM features)."""
+    source = source or default_source()
     split, info = load_split(version, splits_root)
     if manifests is not None:
         check_current(info, manifests, version)
-    table = load_feature_table(version, features_dir)
-    names = list(feature_names())
+    table = source.load_table(version, features_dir)
+    names = list(source.names())
 
     included = split[split["split"] != EXCLUDED]
     frame = included.merge(
@@ -224,8 +229,8 @@ def prepare_dataset(
     missing = frame.loc[frame["_merge"] != "both", "sample_id"].tolist()
     if missing:
         raise DatasetError(
-            f"{len(missing)} split sample(s) have no DOM features (e.g. {missing[:5]}) - "
-            f"run extract_dom_features.py run --version {version}"
+            f"{len(missing)} split sample(s) have no {source.key} features (e.g. {missing[:5]}) - "
+            f"run {source.produce_hint.format(version=version)}"
         )
     mismatch = frame.loc[frame["label"] != frame["label_features"], "sample_id"].tolist()
     if mismatch:
@@ -250,6 +255,6 @@ def prepare_dataset(
         labels=labels,
         dropped=dropped,
         split_info=info,
-        feature_set_version=load_dictionary().feature_set_version,
-        dictionary_hash=dictionary_hash(),
+        feature_set_version=source.feature_set_version(),
+        dictionary_hash=source.fingerprint(),
     )

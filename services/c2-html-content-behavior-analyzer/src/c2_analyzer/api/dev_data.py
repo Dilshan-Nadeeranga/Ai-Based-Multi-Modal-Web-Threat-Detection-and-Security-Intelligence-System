@@ -39,6 +39,9 @@ from pathlib import Path
 import joblib
 import pandas as pd
 
+from c2_analyzer.behavior.batch import output_dir as behavior_output_dir
+from c2_analyzer.behavior.batch import stored_result as stored_behavior_result
+from c2_analyzer.behavior.pipeline import map_behavior
 from c2_analyzer.classifiers.dom_baseline.common import MODEL_NAMES, BaselineConfig
 from c2_analyzer.classifiers.dom_baseline.predict import predict_features
 from c2_analyzer.dataset.manifest import list_versions, manifest_paths, manifests_dir
@@ -65,6 +68,7 @@ from c2_analyzer.schemas.inspector import (
     SampleSummary,
     VersionInfo,
 )
+from c2_analyzer.schemas.js import JsAnalysisResult
 from c2_analyzer.schemas.parsed_page import ParsedPage
 
 SAMPLE_ID_PATTERN = re.compile(r"^c2_[a-z_]+_\d{6}$")  # the Part 1 id format
@@ -112,6 +116,7 @@ class DevDataset:
         baseline_reports: Path | None = None,
         splits: Path | None = None,
         js_root: Path | None = None,
+        behavior_root: Path | None = None,
     ) -> None:
         self.manifests = manifests
         self.parsed_root = parsed_root  # data/processed/parsed_html (one folder per version)
@@ -123,6 +128,7 @@ class DevDataset:
         self.baseline_reports = baseline_reports  # reports/dom_baseline (misclassified.csv)
         self.splits = splits  # data/splits (None = split unknown)
         self.js_root = js_root  # data/processed/js (None = never stored)
+        self.behavior_root = behavior_root  # data/processed/behavior (None = never stored)
         self._bundles: dict[str, tuple[tuple, dict]] = {}
         self._files: dict[Path, tuple[int, object]] = {}
         self._facts: dict[Path, tuple[int, int, _Facts | None]] = {}
@@ -144,6 +150,7 @@ class DevDataset:
             baseline_reports=baseline.reports_dir,
             splits=splits_root(),
             js_root=js_output_dir(None).parent,
+            behavior_root=behavior_output_dir(None).parent,
         )
 
     # ---- versions ---------------------------------------------------------------
@@ -218,6 +225,7 @@ class DevDataset:
         has_password: bool | None = None,
         external_form_action: bool | None = None,
         misclassified: bool | None = None,
+        has_critical_behavior: bool | None = None,
     ) -> list[SampleSummary]:
         """The (filtered) sample list of one version, in manifest order."""
         rows = self.manifest(version)
@@ -237,8 +245,13 @@ class DevDataset:
                 language=row["language"],
                 processed=facts is not None,
                 misclassified=row["sample_id"] in wrong,
+                behavior_max_severity=self._behavior_severity(version, row["sample_id"]),
                 **(asdict(facts) if facts is not None else {}),
             )
+            if has_critical_behavior is not None and (
+                (summary.behavior_max_severity == "critical") != has_critical_behavior
+            ):
+                continue
             if misclassified is not None and summary.misclassified != misclassified:
                 continue
             if has_password is not None and summary.has_password != has_password:
@@ -350,6 +363,35 @@ class DevDataset:
         text, _ = self.parsed(version, sample_id)
         page = ParsedPage.model_validate_json(text)
         return analyze_js(page).model_dump_json(), "on-the-fly"
+
+    def _behavior_severity(self, version: str, sample_id: str) -> str | None:
+        """Highest finding severity of the STORED Part 8 result (for the sample list)."""
+        if self.behavior_root is None:
+            return None
+
+        def load(path: Path) -> str | None:
+            try:
+                return (json.loads(path.read_bytes()).get("summary") or {}).get("max_severity")
+            except (OSError, ValueError, AttributeError):
+                return None
+
+        return self._cached_file(self.behavior_root / version / f"{sample_id}.json", load)
+
+    def behavior(self, version: str, sample_id: str) -> tuple[str, str]:
+        """(BehaviorResult JSON text, "stored" | "on-the-fly") - Part 8 for one sample.
+
+        The stored result is used when it was made from the same file with the
+        current Part 7 + Part 8 rules; otherwise it is computed now from the
+        (stored or fresh) ParsedPage and Part 7 result - not saved.
+        """
+        row = self._row(version, sample_id)
+        if self.behavior_root is not None:
+            path = self.behavior_root / version / f"{sample_id}.json"
+            if stored_behavior_result(path, row["sha256"]) is not None:
+                return path.read_text(encoding="utf-8"), "stored"
+        page = ParsedPage.model_validate_json(self.parsed(version, sample_id)[0])
+        js_result = JsAnalysisResult.model_validate_json(self.js_analysis(version, sample_id)[0])
+        return map_behavior(page, js_result).model_dump_json(), "on-the-fly"
 
     def dom_dictionary(self, version: str | None) -> DomDictionaryInfo:
         """The Part 3 feature dictionary + per-label medians of a version (if reported)."""

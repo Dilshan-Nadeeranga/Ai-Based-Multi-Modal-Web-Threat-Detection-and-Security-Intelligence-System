@@ -898,11 +898,150 @@ registerTab({
   },
 });
 
+// ---- 9. Behavior (Part 8) ---------------------------------------------------
+// What the page's code is TRYING TO DO: sources -> flows -> sinks, patterns with
+// severity and the evidence chain (source line -> assignments -> sink line).
+// Evidence lines are page code: shown ONLY as text (textContent, monospace).
+
+const behaviorCache = new WeakMap();
+const SEVERITY_BADGE = { critical: "danger", high: "danger", medium: "warn", low: "info" };
+
+function behaviorResult(ctx) {
+  return cached(behaviorCache, ctx, () => {
+    if (ctx.kind === "sample") {
+      return api(`/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/behavior` + query({ version: ctx.version }))
+        .then((r) => ({ data: r.data, source: r.headers.get("X-Behavior-Source") || "stored" }));
+    }
+    return api("/api/v1/behavior", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html: ctx.html || "", url: ctx.url || null }),
+    }).then((r) => ({ data: r.data, source: "api" }));
+  });
+}
+
+function riskGauge(score) {
+  const value = typeof score === "number" ? Math.max(0, Math.min(100, score)) : 0;
+  const kind = value >= 50 ? "danger" : value >= 25 ? "warn" : value > 0 ? "info" : "ok";
+  const fillBar = el("div", { cls: "gauge-fill " + kind });
+  fillBar.style.width = value.toFixed(0) + "%"; // a number, not page data
+  return el("div", { cls: "gauge-wrap" },
+    el("div", { cls: "gauge" }, fillBar),
+    el("span", { cls: "gauge-num", text: `${value.toFixed(0)} / 100` }),
+    el("span", { cls: "muted", text: "behavior risk score (descriptive: sum of each pattern's highest severity, capped - not the verdict)" }));
+}
+
+function evidenceChain(items) {
+  if (!items || !items.length) return el("p", { cls: "muted", text: "No evidence lines." });
+  return el("ol", { cls: "chain" }, items.map((item) => {
+    const where = item.kind === "html" ? "HTML"
+      : item.line ? `script ${show(item.script_index)} · line ${item.line}` : `script ${show(item.script_index)}`;
+    return el("li", {},
+      el("span", { cls: "where", text: where }),
+      item.note ? el("span", { cls: "step-note", text: item.note }) : null,
+      el("code", { cls: "step-code", text: show(item.code) }));
+  }));
+}
+
+function findingCard(f) {
+  return el("div", { cls: `card finding sev-${f.severity}` },
+    el("h3", {},
+      badge(f.severity.toUpperCase(), SEVERITY_BADGE[f.severity]),
+      el("span", { text: f.name }),
+      badge(f.variant),
+      badge(`confidence ${f.confidence}`, f.confidence === "high" ? "ok" : f.confidence === "medium" ? "info" : "warn"),
+      f.count > 1 ? badge(`×${f.count}`) : null,
+      f.script_index !== null && f.script_index !== undefined ? badge(`script ${f.script_index}`) : null),
+    el("p", { cls: "finding-msg", text: f.message }),
+    (f.factors || []).length ? el("ul", { cls: "factors" }, f.factors.map((x) => el("li", { text: x }))) : null,
+    el("div", { cls: "muted", text: "Evidence chain (follow the data):" }),
+    evidenceChain(f.evidence));
+}
+
+registerTab({
+  id: "behavior",
+  title: "Behavior (Part 8)",
+  async render(ctx, box) {
+    fill(box, el("p", { cls: "muted", text: "Mapping sources to sinks (static taint analysis, nothing is executed)…" }));
+    const result = await behaviorResult(ctx);
+    if (state.ctx !== ctx || !box.isConnected) return; // the user moved on meanwhile
+    const r = result.data;
+    const meta = r.meta || {};
+    const summary = r.summary || {};
+    const findings = r.findings || [];
+    const flows = r.flows || [];
+    clear(box);
+
+    fill(box,
+      el("div", { cls: "toolbar" },
+        badge(r.feature_set_version, "info"),
+        badge(result.source === "on-the-fly" ? "computed on the fly" : result.source, result.source === "on-the-fly" ? "warn" : null),
+        meta.truncated ? badge("truncated (a cap was hit)", "warn") : null,
+        el("span", { cls: "muted", text: `${fmtValue(meta.processing_ms)} ms · rules ${(meta.rules_hash || "").slice(0, 12)} · ${fmtInt(summary.passes)} pass(es)` })),
+      (r.errors || []).length ? el("div", { cls: "error-box" }, el("ul", {}, r.errors.map((e) => el("li", { text: e })))) : null,
+      (meta.warnings || []).length ? el("p", { cls: "note", text: "Note: " + meta.warnings.join(" · ") }) : null,
+      riskGauge(r.behavior_risk_score));
+
+    fill(box, section("Summary",
+      el("div", { cls: "cards" },
+        countCard("findings", findings.length, Object.entries(summary.findings_by_severity || {}).map(([k, v]) => `${k} ${v}`).join(" · ")),
+        countCard("flows", summary.flows_total),
+        countCard("sources", summary.sources_total),
+        countCard("sinks", summary.sinks_total),
+        countCard("scripts (AST)", summary.scripts_analyzed, `${fmtInt(summary.scripts_lexical)} regex-only · ${fmtInt(summary.library_scripts_skipped)} library skipped`)),
+      el("h3", { cls: "heading" }, "Sources found"),
+      Object.keys(summary.sources_by_id || {}).length
+        ? el("div", { cls: "toolbar" }, Object.entries(summary.sources_by_id).map(([k, v]) => badge(`${k}: ${fmtInt(v)}`)))
+        : el("p", { cls: "muted", text: "None." }),
+      el("h3", { cls: "heading" }, "Sinks found"),
+      Object.keys(summary.sinks_by_id || {}).length
+        ? el("div", { cls: "toolbar" }, Object.entries(summary.sinks_by_id).map(([k, v]) => badge(`${k}: ${fmtInt(v)}`, k.endsWith("external") ? "warn" : null)))
+        : el("p", { cls: "muted", text: "None." })));
+
+    fill(box, section(`Findings (${findings.length}) - most severe first`,
+      findings.length ? findings.map(findingCard)
+        : el("p", { cls: "muted", text: "No behavioral pattern found (single API calls are never a pattern on their own)." })));
+
+    fill(box, section(`Flows (${flows.length}) - source → sink`,
+      table(["#", "source", "sink", "destination", "steps", "confidence", "flags"], flows, (f) => [
+        `#${f.id}`, f.source_id,
+        el("span", {}, el("strong", { text: f.sink_id }), " ", el("span", { cls: "muted", text: f.sink_api })),
+        f.known_endpoint ? el("span", {}, badge(f.known_endpoint, "danger"), " ", codeText(f.sink_url_domain))
+          : f.sink_url_domain ? el("span", {}, codeText(f.sink_url_domain), " ", f.sink_is_external ? badge("external", "danger") : badge("same site", "ok"))
+            : el("span", { cls: "muted", text: f.sink_is_external === null ? "built at run time" : "—" }),
+        el("details", {}, el("summary", { text: `${f.path.length} steps` }),
+          evidenceChain(f.path.map((s) => ({ kind: "flow_step", script_index: s.script_index, line: s.line, code: s.code, note: s.step + (s.note ? `: ${s.note}` : "") })))),
+        badge(f.confidence, f.confidence === "high" ? "ok" : f.confidence === "medium" ? "info" : "warn"),
+        el("span", {}, f.encoded ? badge(`encoded ${f.encodings.join("/")}`, "warn") : null, " ",
+          f.via_function ? badge("via function") : null, " ", f.truncated ? badge("cut", "warn") : null),
+      ], 100)));
+
+    const vector = Object.entries(r.intent_vector || {});
+    const nonZero = vector.filter(([, v]) => v);
+    const vectorBox = el("div");
+    const all = el("input", { attrs: { type: "checkbox" } });
+    const drawVector = () => fill(clear(vectorBox), table(["feature", "value"], all.checked ? vector : nonZero, ([k, v]) => [codeText(k), fmtValue(v)], 100));
+    all.addEventListener("change", drawVector);
+    fill(box, section(`Intent vector (${vector.length} features, ${nonZero.length} non-zero)`,
+      el("label", { cls: "row" }, all, " show all features"), vectorBox));
+    drawVector();
+
+    fill(box, section(`Sinks (${(r.sinks_found || []).length}) - with who triggers them`,
+      table(["sink", "api", "line", "destination", "trigger", "code (text only)"], r.sinks_found || [], (s) => [
+        s.sink_id, s.api, s.script_index >= 0 ? `#${s.script_index} ${s.line}:${s.column}` : "HTML",
+        s.url_domain ? codeText(s.url_domain) : el("span", { cls: "muted", text: "—" }),
+        el("span", {}, badge(s.trigger, s.trigger === "auto" ? "warn" : s.trigger === "user" ? "ok" : null), " ", el("span", { cls: "muted", text: show(s.trigger_reason) })),
+        codeText(s.code),
+      ], 100)));
+
+    fill(box, section("Limitations (static analysis)", el("ul", {}, (r.limitations || []).map((x) => el("li", { text: x })))));
+  },
+});
+
 // ---- Future parts (disabled placeholders) -------------------------------------------------
 
 for (const [id, title] of [
   ["content-nlp", "Content / NLP (Part 5–6)"],
-  ["behavior", "Behavior Intent (Part 8)"],
   ["unified", "Unified Result (Part 9)"],
 ]) {
   registerTab({ id, title, enabled: false, render() {} });
@@ -1066,6 +1205,7 @@ async function loadSamples() {
       has_password: $("password-filter").checked ? "true" : "",
       external_form_action: $("external-filter").checked ? "true" : "",
       misclassified: $("misclassified-filter").checked ? "true" : "",
+      has_critical_behavior: $("critical-filter").checked ? "true" : "",
     }));
     if (token !== state.loadToken) return; // a newer filter change is already loading
     state.samples = data;
@@ -1089,6 +1229,8 @@ function sampleItem(s) {
     s.has_password ? badge("password", "warn") : null,
     s.external_form_action ? badge("ext form", "danger") : null,
     s.misclassified ? badge("misclassified", "danger") : null,
+    s.behavior_max_severity === "critical" || s.behavior_max_severity === "high"
+      ? badge(`behavior ${s.behavior_max_severity}`, "danger") : null,
     s.processed ? null : badge("not processed")));
   return el("li", {}, button);
 }
@@ -1216,7 +1358,7 @@ async function start() {
     loadSamples();
     writeHash();
   });
-  for (const id of ["label-filter", "language-filter", "password-filter", "external-filter", "misclassified-filter"]) {
+  for (const id of ["label-filter", "language-filter", "password-filter", "external-filter", "misclassified-filter", "critical-filter"]) {
     $(id).addEventListener("change", loadSamples);
   }
   $("search-input").addEventListener("input", debounce(loadSamples, 250));

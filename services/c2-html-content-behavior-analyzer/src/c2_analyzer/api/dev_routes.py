@@ -28,6 +28,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from c2_analyzer.api.dependencies import get_dev_dataset
 from c2_analyzer.api.dev_data import DevDataset, NotFoundError
 from c2_analyzer.classifiers.dom_baseline.predict import PredictionError
+from c2_analyzer.schemas.behavior import BehaviorResult
 from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.schemas.dom_baseline import DomPrediction
 from c2_analyzer.schemas.inspector import DomDictionaryInfo, SampleSummary, VersionInfo
@@ -76,6 +77,9 @@ def samples(
     q: str | None = Query(None, max_length=200, description="search in sample id and title"),
     has_password: bool | None = Query(None),
     external_form_action: bool | None = Query(None),
+    has_critical_behavior: bool | None = Query(
+        None, description="stored Part 8 result has a critical finding"
+    ),
     misclassified: bool | None = Query(
         None, description="test pages the best Part 4 baseline got wrong"
     ),
@@ -90,6 +94,7 @@ def samples(
             has_password,
             external_form_action,
             misclassified,
+            has_critical_behavior,
         )
     except NotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from None
@@ -156,6 +161,27 @@ def js_analysis(
     except NotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from None
     return Response(text, media_type="application/json", headers={"X-Js-Source": source})
+
+
+@router.get(
+    "/samples/{sample_id}/behavior",
+    response_model=BehaviorResult,
+    summary="Part 8 behavioral intent mapping of a sample",
+)
+def behavior(
+    dataset: DatasetDep,
+    sample_id: str,
+    version: str | None = Query(None, examples=["v0.3"], description="default: newest"),
+) -> Response:
+    """The stored BehaviorResult; computed on the fly (not saved) if missing or outdated.
+
+    Header ``X-Behavior-Source`` says which: ``stored`` or ``on-the-fly``.
+    """
+    try:
+        text, source = dataset.behavior(_version(dataset, version), sample_id)
+    except NotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from None
+    return Response(text, media_type="application/json", headers={"X-Behavior-Source": source})
 
 
 @router.get(

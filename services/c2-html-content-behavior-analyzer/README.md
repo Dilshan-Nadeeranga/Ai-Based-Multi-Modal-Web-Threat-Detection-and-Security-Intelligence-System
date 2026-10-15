@@ -12,7 +12,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 
 **Threat classes:** `benign`, `phishing`, `fake_ecommerce`, `crypto_scam`, `malware_delivery`.
 
-> **Status:** Part 1 (dataset preparation), Part 2 (HTML preprocessing), Part 3 (DOM features), Part 4 (DOM baseline, pilot) and Part 7 (static JavaScript analysis) are done. `GET /health`, `POST /api/v1/preprocess`, `POST /api/v1/dom-features`, `POST /api/v1/js-analysis` and the [developer inspector](#developer-inspector) work. Parts 5, 6, 8 and 9 are still stubs (`NotImplementedError`), implemented part by part.
+> **Status:** Part 1 (dataset preparation), Part 2 (HTML preprocessing), Part 3 (DOM features), Part 4 (DOM baseline), Part 7 (static JavaScript analysis) and Part 8 (behavioral intent mapping + behavior-only baseline) are done. `GET /health`, `POST /api/v1/preprocess`, `POST /api/v1/dom-features`, `POST /api/v1/js-analysis`, `POST /api/v1/behavior` and the [developer inspector](#developer-inspector) work. Parts 5, 6 and 9 are still stubs (`NotImplementedError`), implemented part by part.
 
 ## Implementation parts
 
@@ -333,6 +333,82 @@ v0.2, from `reports/js_analysis/v0.2_summary.md`:
 | key / input listener | 9.7 | 26.4 | 1.7 |
 | `location.replace` | 1.3 | 8.0 | 42.4 |
 
+## Behavioral intent mapping
+
+Part 7 says **which APIs** a page uses; Part 8 says **what the code is trying to do** by linking them: a sensitive **source** → the **flow** through variables, objects and calls → a dangerous **sink**. A single API is never a pattern on its own: `fetch` is on every modern site, and every login form's validation reads `#password.value`. Only the connection (this password reaches that external request) counts as evidence. Static only: nothing is executed and nothing is downloaded. Part 8 re-parses with Part 7's parser and builds on Part 7's detections; it does not detect APIs a second time.
+
+```bash
+python scripts/map_behavior.py run --version v0.3 [--force] [--workers 4]   # runs Part 2 / Part 7 for missing samples
+python scripts/map_behavior.py one --sample-id c2_phishing_000081           # findings with numbered evidence chains
+python scripts/map_behavior.py one --file page.html --url https://example.com/login [--json]
+python scripts/map_behavior.py describe [--markdown]                         # the beh_v1 vector + pattern catalogue
+python scripts/map_behavior.py train-baseline --version v0.3                 # behavior-only baseline + DOM comparison
+```
+
+- **Sources and sinks** (`configs/sources_sinks.yaml`):
+  - **Sources:** credential fields, classified with Part 3's field rules by looking the selector up in the page's forms; per-key capture (`event.key` in key listeners); cookies, storage and clipboard reads; whole forms (`FormData`, `serialize`); page URL, referrer and browser fingerprint.
+  - **Sinks:** requests external / internal / unknown, external form actions, redirects, clipboard writes, code execution, HTML injection, downloads and storage writes.
+  - **Known collection endpoints:** collectors (Telegram bot API, Discord webhooks, ngrok, webhook.site …) and legitimate form services (Formspree, Getform, Web3Forms, Google Apps Script …). These raise the severity.
+- **Data flow** (`behavior/dataflow.py`): a lightweight, explainable taint analysis over the AST, not a JavaScript interpreter.
+  - **What carries taint:** `var` / `let` / `=` (with destructuring), `+=`, concatenation and template literals, object and array literals, `obj.p = v`, `push` / `append` / `Object.assign`, `JSON.stringify` and other pass-through calls, and encoders (`btoa` / `encodeURIComponent`, which mark the flow "encoded").
+  - **Across functions:** function parameters and return values (matched by name), and `.then` / `forEach` callbacks.
+  - **Across scripts:** HTML handlers see the inline scripts' global names.
+  - **Order:** it is flow-insensitive but ordered, repeating passes until nothing changes (at most 6).
+  - **Confidence:** each flow keeps the evidence chain and a confidence: high = direct and short; medium = through a function or object; low = a regex-only script.
+  - **Caps:** chain length, labels per variable, nodes per expression, and time per script and page. Hitting one marks the result `truncated`; it never hangs.
+- **Who triggers a sink** (`behavior/triggers.py`):
+  - **auto:** top-level code, load / ready / timer callbacks, and named functions called from those.
+  - **user:** click, submit and key handlers, including HTML `onclick="f()"`.
+  - **unknown:** anything else.
+  This separates a forced redirect or drive-by download from one the user asked for.
+- **Patterns** (`configs/behavior_patterns.yaml`), each with a plain-English message, the evidence chain and its severity; library code never counts:
+
+  | pattern | what triggers it | severity |
+  |---|---|---|
+  | credential_access | a credential field read in page code | low |
+  | external_data_transmission | data from the page reaching another site | medium or low |
+  | credential_exfiltration | credentials reaching another site, a collector or a redirect URL, or a form action changed to another site | **critical** |
+  | | an address built at run time | high |
+  | | only email / username | one level lower |
+  | | a contact form to a form service | medium |
+  | | boosted by: known endpoint, encoded data, `preventDefault()` in a submit handler | |
+  | keylogging | keystrokes reaching the network | critical |
+  | | keystrokes reaching storage | medium |
+  | forced_redirect | an external redirect with no user action, right after reading credentials, with history manipulation, or by meta refresh | high |
+  | | only after browser checks (cloaking) | medium |
+  | clipboard_manipulation | a ClickFix command, or a wallet address written without a click / in a copy listener | critical |
+  | | a wallet address on a click, a rewritten copy, or the clipboard sent away | high |
+  | suspicious_download | a risky extension downloaded automatically | high |
+  | | the same, with content decoded in the page | one level up |
+  | | a risky extension on a click | medium |
+  | obfuscated_execution | decode → eval / Function | high |
+  | | decode → HTML containing `<script` / `<iframe` / handlers | high |
+  | | a packed script that calls eval | medium |
+  | anti_analysis | right-click / F12 / debugger traps / DevTools checks | low, or medium for several |
+- **Intent vector and outputs:**
+  - **Vector:** `configs/behavior_features.yaml` (`beh_v1`, 39 features): present / count / max severity per pattern, flow statistics, signals, and `behavior_risk_score`.
+  - **Risk score:** 0–100, the capped sum of each pattern's highest-severity weight. It is descriptive; the verdict is Part 9's.
+  - **Files:** `data/processed/behavior/<v>/<id>.json` (`BehaviorResult`), `behavior_features.csv`, and `reports/behavior/<v>_summary.{json,md}`.
+  - **Report contents:** per-label pattern table, severities, flows, the top 10 findings, and the **false-positive check** (every benign page with a critical / high finding).
+- **Behavior-only baseline** (ablation): Part 4's training and evaluation code, unchanged in protocol, on `js_features` + `behavior_features`. It uses the same split and the same CV / test protocol, and writes the same report format plus `comparison.md` (DOM-only vs behavior-only), to `reports/behavior_baseline/<v>/` and `models/behavior_baseline/<v>/`.
+
+v0.3 (459 pages, 5 classes), from `reports/behavior/v0.3_summary.md`:
+- **Run:** 0 failures; 26 s wall time with 4 workers; median 15 ms per page.
+- **False positives:** **0 of 227 benign pages have a critical / high finding.**
+
+| % of pages | benign | phishing | fake_ecommerce | crypto_scam | malware_delivery |
+|---|---|---|---|---|---|
+| credential exfiltration | 0 | 13.8 | 0 | 0 | 1.7 |
+| forced redirect | 0 | 8.0 | 0 | 0 | 0 |
+| anti-analysis | 3.5 | 8.0 | 0 | 0 | 1.7 |
+| credential access (low) | 4.4 | 23.0 | 7.0 | 6.9 | 1.7 |
+| highest severity critical / high | 0 | 14.9 | 0 | 0 | 0 |
+
+| v0.3 test (68 pages) | best model | test macro-F1 | benign FPR |
+|---|---|---|---|
+| DOM-only (Part 4) | Random Forest | 0.786 | 17.6 % |
+| Behavior-only (Part 7+8) | Random Forest | 0.682 | 20.6 % |
+
 ## API
 
 | Method | Path | Status |
@@ -341,6 +417,7 @@ v0.2, from `reports/js_analysis/v0.2_summary.md`:
 | POST | `/api/v1/dom-features` | ✅ Part 3: same body → `DomResult` (52-feature vector in dictionary order + evidence). No `url` → `base_url_known = 0` and external features 0 |
 | POST | `/api/v1/preprocess` | ✅ Part 2: body `{"html": "...", "url": "..." or null}` → `ParsedPage` JSON (same as the stored files). `url` is never fetched. Body > 5 MB → `413` |
 | POST | `/api/v1/js-analysis` | ✅ Part 7: same body → `JsAnalysisResult` (detections with line numbers / arguments / masked snippets, scripts with obfuscation stats, external scripts, js_v1 features). Nothing is executed or downloaded |
+| POST | `/api/v1/behavior` | ✅ Part 8: same body → `BehaviorResult` (sources, sinks, flows with evidence chains, findings with severity and message, beh_v1 intent vector, risk score). Runs Part 2 + 7 + 8; nothing is executed or downloaded |
 | POST | `/api/v1/analyze` | stub (501) – body `{"html": "...", "url": "..."}` |
 | POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}` |
 | GET | `/api/v1/dev/...`, `/inspector` | developer only – see below (404 unless `APP_ENV=development`) |
@@ -357,9 +434,9 @@ python scripts/run_api.py        # APP_ENV=development (default in .env.example)
 
 Then open **http://127.0.0.1:8002/inspector** (Swagger: http://127.0.0.1:8002/docs).
 
-- **Left:** pick a frozen dataset version, filter by label, language, "has password input", "external form action" or "misclassified (test)" (test pages the best Part 4 model got wrong), search by id or title, and click a sample. Up/Down arrows move through the list.
+- **Left:** pick a frozen dataset version, filter by label, language, "has password input", "external form action", "misclassified (test)" (test pages the best Part 4 model got wrong) or "has critical behavior finding" (stored Part 8 results), search by id or title, and click a sample. Up/Down arrows move through the list.
 - **Top:** paste HTML (and optionally its URL) or choose a local `.html` file, then press **Analyze**. This calls `POST /api/v1/preprocess`. The file is read as text and never rendered.
-- **Tabs:** DOM Features (Part 3, plus the Part 4 "DOM baseline prediction" card with the predicted class, probability bars, the top 5 features pushing towards or away from it, and a PILOT badge; then evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only) · JS Analysis (Part 7: summary chips per API category, the detections table with snippets shown as monospace text only, external-URL / library / confidence badges, per-script obfuscation cards and the external scripts table). Greyed-out tabs are placeholders for Parts 5–6, 8 and 9.
+- **Tabs:** DOM Features (Part 3, plus the Part 4 "DOM baseline prediction" card with the predicted class, probability bars, the top 5 features pushing towards or away from it, and a PILOT badge; then evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only) · JS Analysis (Part 7: summary chips per API category, the detections table with snippets shown as monospace text only, external-URL / library / confidence badges, per-script obfuscation cards and the external scripts table) · Behavior (Part 8: risk-score gauge, finding cards coloured by severity with the message, factors and the **evidence chain as numbered steps** (line + code, monospace, text only), the flows table with expandable chains, the intent vector and the sinks with their triggers). Greyed-out tabs are placeholders for Parts 5–6 and 9.
 - **Deep links:** the URL hash remembers the version, sample and tab (e.g. `/inspector#v=v0.1&sample=c2_phishing_000081&tab=forms`). This is handy for presentations.
 
 Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
@@ -367,11 +444,12 @@ Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
 | Path | Returns |
 |---|---|
 | `GET /api/v1/dev/versions` | frozen versions (newest first) with counts and how many samples Part 2 processed |
-| `GET /api/v1/dev/samples?version=v0.1&label=&language=&q=&has_password=&external_form_action=&misclassified=` | sample list from the manifest + stored Part 2 JSON (HTML is not re-parsed) |
+| `GET /api/v1/dev/samples?version=v0.1&label=&language=&q=&has_password=&external_form_action=&misclassified=&has_critical_behavior=` | sample list from the manifest + stored Part 2 JSON (HTML is not re-parsed) |
 | `GET /api/v1/dev/samples/{id}/parsed?version=v0.1` | the stored `ParsedPage`. A missing one is processed on the fly but not saved (header `X-Parsed-Source`) |
 | `GET /api/v1/dev/samples/{id}/dom-features?version=v0.1` | the stored Part 3 `DomResult`, or one computed on the fly (header `X-Features-Source`) |
 | `GET /api/v1/dev/samples/{id}/dom-prediction?version=v0.1` | Part 4: probabilities from every trained baseline, the best model's top 5 contributions, the split and whether it is misclassified on test (`404` if no model has been trained) |
 | `GET /api/v1/dev/samples/{id}/js-analysis?version=v0.2` | the stored Part 7 `JsAnalysisResult`, or one computed on the fly (header `X-Js-Source`) |
+| `GET /api/v1/dev/samples/{id}/behavior?version=v0.3` | the stored Part 8 `BehaviorResult`, or one computed on the fly (header `X-Behavior-Source`) |
 | `GET /api/v1/dev/dom-dictionary?version=v0.1` | the feature dictionary plus per-label medians from the Part 3 report |
 | `GET /api/v1/dev/samples/{id}/safe-preview` | Part 1's sanitized copy, with `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'` and `nosniff` |
 

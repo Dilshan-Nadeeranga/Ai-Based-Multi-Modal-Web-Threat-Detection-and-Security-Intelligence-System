@@ -1,0 +1,340 @@
+{
+  "name": "C2 behavior-only baseline (Part 7 js_features + Part 8 behavior_features)",
+  "created_at": "2026-10-15T01:25:39+05:30",
+  "dataset_version": "v0.3",
+  "manifest_fingerprint": "7a620c3b7ea05f42747d1a418a0663befa62a7c6ade6335f4557b52fda77cc26",
+  "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+  "feature_set_version": "js_v1+beh_v1",
+  "dictionary_hash": "0a8054dc9209c6f0489d2b49cd00ddff28f3dcee873bb159b471be7b346e27f1",
+  "pilot": false,
+  "excluded_classes": {},
+  "label_mapping": {
+    "classes": [
+      "benign",
+      "phishing",
+      "fake_ecommerce",
+      "crypto_scam",
+      "malware_delivery"
+    ],
+    "index": {
+      "benign": 0,
+      "phishing": 1,
+      "fake_ecommerce": 2,
+      "crypto_scam": 3,
+      "malware_delivery": 4
+    },
+    "labels_yaml_id": {
+      "benign": 0,
+      "phishing": 1,
+      "fake_ecommerce": 2,
+      "crypto_scam": 3,
+      "malware_delivery": 4
+    },
+    "excluded_classes": {}
+  },
+  "final_features": [
+    "eval_count",
+    "function_constructor_count",
+    "string_timer_count",
+    "document_write_count",
+    "innerhtml_assign_count",
+    "fetch_count",
+    "beacon_count",
+    "websocket_count",
+    "xhr_count",
+    "external_request_count",
+    "form_submit_count",
+    "form_action_assign_count",
+    "redirect_count",
+    "external_redirect_count",
+    "location_replace_count",
+    "window_open_count",
+    "cookie_read_count",
+    "cookie_write_count",
+    "storage_read_count",
+    "storage_write_count",
+    "clipboard_write_count",
+    "clipboard_listener_count",
+    "input_value_read_count",
+    "credential_value_read_count",
+    "formdata_count",
+    "key_listener_count",
+    "submit_listener_count",
+    "beforeunload_listener_count",
+    "contextmenu_block_count",
+    "decode_call_count",
+    "escape_heavy_string_count",
+    "download_trigger_count",
+    "inline_script_count",
+    "library_script_count",
+    "event_handler_count",
+    "javascript_url_count",
+    "page_own_js_chars",
+    "external_script_count",
+    "third_party_script_count",
+    "known_cdn_script_count",
+    "external_script_suspicious_host_count",
+    "max_script_entropy",
+    "max_string_literal_length",
+    "max_escape_ratio",
+    "obfuscation_signature_count",
+    "minified_script_count",
+    "parse_failure_ratio",
+    "truncated_script_count",
+    "api_category_count",
+    "credential_access_present",
+    "credential_access_count",
+    "external_data_transmission_present",
+    "external_data_transmission_max_severity",
+    "credential_exfiltration_present",
+    "credential_exfiltration_count",
+    "forced_redirect_present",
+    "forced_redirect_count",
+    "obfuscated_execution_present",
+    "obfuscated_execution_count",
+    "anti_analysis_present",
+    "anti_analysis_count",
+    "tainted_flow_count",
+    "external_tainted_flow_count",
+    "credential_flow_to_external",
+    "flow_to_known_exfil_endpoint",
+    "encoded_flow_count",
+    "max_flow_confidence",
+    "auto_redirect_external",
+    "decode_to_exec",
+    "behavior_risk_score"
+  ],
+  "dropped_features": [
+    {
+      "feature": "clipboard_read_count",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "keylogging_present",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "keylogging_count",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "keylogging_max_severity",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "clipboard_manipulation_present",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "clipboard_manipulation_count",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "clipboard_manipulation_max_severity",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "suspicious_download_present",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "suspicious_download_count",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "suspicious_download_max_severity",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "clipboard_crypto_address",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "clickfix_command",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "risky_auto_download",
+      "reason": "constant",
+      "detail": "always 0"
+    },
+    {
+      "feature": "third_party_script_no_integrity_count",
+      "reason": "correlated",
+      "detail": "|r| = 0.9979 with third_party_script_count (kept, earlier in dictionary)"
+    },
+    {
+      "feature": "credential_access_max_severity",
+      "reason": "correlated",
+      "detail": "|r| = 1.0000 with credential_access_present (kept, earlier in dictionary)"
+    },
+    {
+      "feature": "external_data_transmission_count",
+      "reason": "correlated",
+      "detail": "|r| = 0.9897 with external_data_transmission_present (kept, earlier in dictionary)"
+    },
+    {
+      "feature": "credential_exfiltration_max_severity",
+      "reason": "correlated",
+      "detail": "|r| = 0.9849 with credential_exfiltration_present (kept, earlier in dictionary)"
+    },
+    {
+      "feature": "forced_redirect_max_severity",
+      "reason": "correlated",
+      "detail": "|r| = 1.0000 with forced_redirect_present (kept, earlier in dictionary)"
+    },
+    {
+      "feature": "obfuscated_execution_max_severity",
+      "reason": "correlated",
+      "detail": "|r| = 1.0000 with obfuscated_execution_present (kept, earlier in dictionary)"
+    },
+    {
+      "feature": "anti_analysis_max_severity",
+      "reason": "correlated",
+      "detail": "|r| = 1.0000 with anti_analysis_count (kept, earlier in dictionary)"
+    }
+  ],
+  "selection": "mean macro-F1 over grouped stratified CV folds on train+val (test never used)",
+  "best_model": "random_forest",
+  "seed": 42,
+  "models": {
+    "logreg": {
+      "file": "logreg.joblib",
+      "display_name": "Logistic Regression",
+      "best_params": {
+        "max_iter": 5000,
+        "class_weight": "balanced",
+        "C": 0.01
+      },
+      "trained_on": "train+val",
+      "n_train": 391,
+      "trained_at": "2026-10-15T01:25:08+05:30",
+      "cv_mean": {
+        "macro_f1": 0.5003693073933504,
+        "weighted_f1": 0.5731077126006415,
+        "accuracy": 0.521713729308666,
+        "balanced_accuracy": 0.557968253968254,
+        "roc_auc_ovr_macro": 0.8157861994794999,
+        "benign_fpr": 0.4666666666666667
+      },
+      "cv_std": {
+        "macro_f1": 0.05361660288819991,
+        "weighted_f1": 0.046569981526488224,
+        "accuracy": 0.04044060759937795,
+        "balanced_accuracy": 0.04770773470143986,
+        "roc_auc_ovr_macro": 0.03206978292639855,
+        "benign_fpr": 0.05652668637191949
+      },
+      "test": {
+        "macro_f1": 0.41437788018433175,
+        "weighted_f1": 0.5102130001560741,
+        "accuracy": 0.45588235294117646,
+        "balanced_accuracy": 0.44914529914529916,
+        "roc_auc_ovr_macro": 0.7583331633672614,
+        "benign_fpr": 0.5
+      }
+    },
+    "random_forest": {
+      "file": "random_forest.joblib",
+      "display_name": "Random Forest",
+      "best_params": {
+        "n_estimators": 300,
+        "class_weight": "balanced_subsample",
+        "max_depth": 8,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1
+      },
+      "trained_on": "train+val",
+      "n_train": 391,
+      "trained_at": "2026-10-15T01:25:26+05:30",
+      "cv_mean": {
+        "macro_f1": 0.6198821254374565,
+        "weighted_f1": 0.7074975027993703,
+        "accuracy": 0.7005842259006816,
+        "balanced_accuracy": 0.6154262579525737,
+        "roc_auc_ovr_macro": 0.8606791539282621,
+        "benign_fpr": 0.18191632928475032
+      },
+      "cv_std": {
+        "macro_f1": 0.07778488901007173,
+        "weighted_f1": 0.04495505065527781,
+        "accuracy": 0.04355288460457087,
+        "balanced_accuracy": 0.08669674315105894,
+        "roc_auc_ovr_macro": 0.035585583787041124,
+        "benign_fpr": 0.06287930065723464
+      },
+      "test": {
+        "macro_f1": 0.6823368869936034,
+        "weighted_f1": 0.7554780718257453,
+        "accuracy": 0.7352941176470589,
+        "balanced_accuracy": 0.6833961789844143,
+        "roc_auc_ovr_macro": 0.8607863239902874,
+        "benign_fpr": 0.20588235294117646
+      }
+    },
+    "xgboost": {
+      "file": "xgboost.joblib",
+      "display_name": "XGBoost",
+      "best_params": {
+        "n_estimators": 300,
+        "tree_method": "hist",
+        "objective": "multi:softprob",
+        "eval_metric": "mlogloss",
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "subsample": 0.8
+      },
+      "trained_on": "train+val",
+      "n_train": 391,
+      "trained_at": "2026-10-15T01:25:39+05:30",
+      "cv_mean": {
+        "macro_f1": 0.5820111571454868,
+        "weighted_f1": 0.6873109424802253,
+        "accuracy": 0.6852645245050308,
+        "balanced_accuracy": 0.5831455561981878,
+        "roc_auc_ovr_macro": 0.8683037730556548,
+        "benign_fpr": 0.1766531713900135
+      },
+      "cv_std": {
+        "macro_f1": 0.06381220092226458,
+        "weighted_f1": 0.029857701419443754,
+        "accuracy": 0.037850004910717716,
+        "balanced_accuracy": 0.07109162678766158,
+        "roc_auc_ovr_macro": 0.029757682174547467,
+        "benign_fpr": 0.06111796101639605
+      },
+      "test": {
+        "macro_f1": 0.686031746031746,
+        "weighted_f1": 0.7534780578898227,
+        "accuracy": 0.75,
+        "balanced_accuracy": 0.7082830568124686,
+        "roc_auc_ovr_macro": 0.8658245753563844,
+        "benign_fpr": 0.23529411764705882
+      }
+    }
+  },
+  "library_versions": {
+    "python": "3.13.3",
+    "numpy": "2.5.4",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "joblib": "1.6.0",
+    "shap": "0.53.0"
+  },
+  "git_commit": "f03564908efdae01360e4a058e9e439faf8a6a23-dirty",
+  "intended_use": "Behavior-only arm of the ablation study (DOM-only vs NLP-only vs behavior-only vs fused). Research use on the C2 dataset; not a production detector.",
+  "limitations": "Small dataset - test metrics have wide uncertainty."
+}

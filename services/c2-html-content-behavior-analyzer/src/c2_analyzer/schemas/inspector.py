@@ -42,6 +42,7 @@ class SampleSummary(BaseModel):
     external_form_action: bool = False  # a form whose action is on another site (Part 2 fact)
     processed: bool = False
     misclassified: bool = False  # a test page the best Part 4 baseline got wrong
+    behavior_max_severity: str | None = None  # stored Part 8 result (None = none / not run)
 
 
 class DomFeatureInfo(BaseModel):

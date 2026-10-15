@@ -179,6 +179,23 @@ def test_parsed_processes_on_the_fly_without_saving(client, dataset, tmp_path):
     assert not (tmp_path / "metadata.csv").exists()
 
 
+def test_behavior_on_the_fly_and_critical_filter(client, dataset):
+    response = client.get(
+        "/api/v1/dev/samples/c2_phishing_000003/behavior", params={"version": VERSION}
+    )
+    assert response.status_code == 200, response.text
+    assert response.headers["x-behavior-source"] == "on-the-fly"
+    result = response.json()
+    assert result["meta"]["sample_id"] == "c2_phishing_000003"
+    assert result["findings"][0]["pattern_id"] == "credential_exfiltration"
+    # no stored Part 8 results in this dataset: the filter finds nothing, and nothing was saved
+    assert ids(client.get("/api/v1/dev/samples", params={"has_critical_behavior": "true"})) == []
+    assert (
+        len(ids(client.get("/api/v1/dev/samples", params={"has_critical_behavior": "false"}))) == 4
+    )
+    assert client.get("/api/v1/dev/samples/c2_phishing_999999/behavior").status_code == 404
+
+
 @pytest.mark.parametrize(
     "sample_id",
     ["c2_phishing_999999", "not-an-id", "..%2F..%2Fsecret", "c2_benign_000001.json"],
@@ -260,7 +277,10 @@ def test_js_has_no_external_urls_and_a_tab_registry():
     js = read_static("inspector.js")
     assert "http://" not in js and "https://" not in js
     assert "SECURITY RULE" in js and "function registerTab" in js
-    for tab in ("Part 3", "Part 5–6", "JS Analysis (Part 7)", "Behavior Intent (Part 8)", "Part 9"):
+    for tab in ("Part 3", "Part 5–6", "JS Analysis (Part 7)", "Behavior (Part 8)", "Part 9"):
         assert tab in js
     # Part 7 snippets are page CODE: they must reach the screen as text only
     assert "js-analysis" in js and 'codeText = (text) => el("span"' in js
+    # Part 8 evidence chains are page code too: el() with text only (no HTML sinks, see above)
+    assert "/behavior" in js and 'el("code", { cls: "step-code", text: show(item.code) })' in js
+    assert "has_critical_behavior" in js

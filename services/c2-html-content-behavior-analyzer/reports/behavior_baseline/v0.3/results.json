@@ -1,0 +1,2133 @@
+{
+  "version": "v0.3",
+  "created_at": "2026-10-15T01:25:39+05:30",
+  "pilot": false,
+  "classes": [
+    "benign",
+    "phishing",
+    "fake_ecommerce",
+    "crypto_scam",
+    "malware_delivery"
+  ],
+  "excluded_classes": {},
+  "feature_set_version": "js_v1+beh_v1",
+  "dictionary_hash": "0a8054dc9209c6f0489d2b49cd00ddff28f3dcee873bb159b471be7b346e27f1",
+  "split": {
+    "seed": 42,
+    "target_ratios": {
+      "train": 0.7,
+      "val": 0.15,
+      "test": 0.15
+    },
+    "actual_ratios": {
+      "train": 0.7015,
+      "val": 0.1503,
+      "test": 0.1481
+    },
+    "max_ratio_difference": 0.0019,
+    "counts": {
+      "train": 322,
+      "val": 69,
+      "test": 68
+    },
+    "counts_per_label": {
+      "test": {
+        "benign": 34,
+        "crypto_scam": 4,
+        "fake_ecommerce": 8,
+        "malware_delivery": 9,
+        "phishing": 13
+      },
+      "train": {
+        "benign": 159,
+        "crypto_scam": 21,
+        "fake_ecommerce": 40,
+        "malware_delivery": 41,
+        "phishing": 61
+      },
+      "val": {
+        "benign": 34,
+        "crypto_scam": 4,
+        "fake_ecommerce": 9,
+        "malware_delivery": 9,
+        "phishing": 13
+      }
+    },
+    "counts_per_language": {
+      "test": {
+        "en": 63,
+        "si": 1,
+        "ta": 1,
+        "unknown": 3
+      },
+      "train": {
+        "en": 300,
+        "si": 7,
+        "ta": 2,
+        "unknown": 13
+      },
+      "val": {
+        "en": 64,
+        "si": 2,
+        "ta": 1,
+        "unknown": 2
+      }
+    },
+    "language_placement": {
+      "si": {
+        "train": 7,
+        "val": 2,
+        "test": 1
+      },
+      "ta": {
+        "train": 2,
+        "val": 1,
+        "test": 1
+      }
+    },
+    "clusters_in_two_splits": 0,
+    "cv_folds": 5,
+    "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f"
+  },
+  "manifest_fingerprint": "7a620c3b7ea05f42747d1a418a0663befa62a7c6ade6335f4557b52fda77cc26",
+  "features": {
+    "total": 90,
+    "used": 70,
+    "list": [
+      "eval_count",
+      "function_constructor_count",
+      "string_timer_count",
+      "document_write_count",
+      "innerhtml_assign_count",
+      "fetch_count",
+      "beacon_count",
+      "websocket_count",
+      "xhr_count",
+      "external_request_count",
+      "form_submit_count",
+      "form_action_assign_count",
+      "redirect_count",
+      "external_redirect_count",
+      "location_replace_count",
+      "window_open_count",
+      "cookie_read_count",
+      "cookie_write_count",
+      "storage_read_count",
+      "storage_write_count",
+      "clipboard_write_count",
+      "clipboard_listener_count",
+      "input_value_read_count",
+      "credential_value_read_count",
+      "formdata_count",
+      "key_listener_count",
+      "submit_listener_count",
+      "beforeunload_listener_count",
+      "contextmenu_block_count",
+      "decode_call_count",
+      "escape_heavy_string_count",
+      "download_trigger_count",
+      "inline_script_count",
+      "library_script_count",
+      "event_handler_count",
+      "javascript_url_count",
+      "page_own_js_chars",
+      "external_script_count",
+      "third_party_script_count",
+      "known_cdn_script_count",
+      "external_script_suspicious_host_count",
+      "max_script_entropy",
+      "max_string_literal_length",
+      "max_escape_ratio",
+      "obfuscation_signature_count",
+      "minified_script_count",
+      "parse_failure_ratio",
+      "truncated_script_count",
+      "api_category_count",
+      "credential_access_present",
+      "credential_access_count",
+      "external_data_transmission_present",
+      "external_data_transmission_max_severity",
+      "credential_exfiltration_present",
+      "credential_exfiltration_count",
+      "forced_redirect_present",
+      "forced_redirect_count",
+      "obfuscated_execution_present",
+      "obfuscated_execution_count",
+      "anti_analysis_present",
+      "anti_analysis_count",
+      "tainted_flow_count",
+      "external_tainted_flow_count",
+      "credential_flow_to_external",
+      "flow_to_known_exfil_endpoint",
+      "encoded_flow_count",
+      "max_flow_confidence",
+      "auto_redirect_external",
+      "decode_to_exec",
+      "behavior_risk_score"
+    ],
+    "dropped": [
+      {
+        "feature": "clipboard_read_count",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "keylogging_present",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "keylogging_count",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "keylogging_max_severity",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "clipboard_manipulation_present",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "clipboard_manipulation_count",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "clipboard_manipulation_max_severity",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "suspicious_download_present",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "suspicious_download_count",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "suspicious_download_max_severity",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "clipboard_crypto_address",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "clickfix_command",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "risky_auto_download",
+        "reason": "constant",
+        "detail": "always 0"
+      },
+      {
+        "feature": "third_party_script_no_integrity_count",
+        "reason": "correlated",
+        "detail": "|r| = 0.9979 with third_party_script_count (kept, earlier in dictionary)"
+      },
+      {
+        "feature": "credential_access_max_severity",
+        "reason": "correlated",
+        "detail": "|r| = 1.0000 with credential_access_present (kept, earlier in dictionary)"
+      },
+      {
+        "feature": "external_data_transmission_count",
+        "reason": "correlated",
+        "detail": "|r| = 0.9897 with external_data_transmission_present (kept, earlier in dictionary)"
+      },
+      {
+        "feature": "credential_exfiltration_max_severity",
+        "reason": "correlated",
+        "detail": "|r| = 0.9849 with credential_exfiltration_present (kept, earlier in dictionary)"
+      },
+      {
+        "feature": "forced_redirect_max_severity",
+        "reason": "correlated",
+        "detail": "|r| = 1.0000 with forced_redirect_present (kept, earlier in dictionary)"
+      },
+      {
+        "feature": "obfuscated_execution_max_severity",
+        "reason": "correlated",
+        "detail": "|r| = 1.0000 with obfuscated_execution_present (kept, earlier in dictionary)"
+      },
+      {
+        "feature": "anti_analysis_max_severity",
+        "reason": "correlated",
+        "detail": "|r| = 1.0000 with anti_analysis_count (kept, earlier in dictionary)"
+      }
+    ]
+  },
+  "selection": "mean macro-F1 over grouped stratified CV folds on train+val (test never used)",
+  "best_model": "random_forest",
+  "benign_fpr_target": 0.02,
+  "models": {
+    "logreg": {
+      "display_name": "Logistic Regression",
+      "params": {
+        "max_iter": 5000,
+        "class_weight": "balanced",
+        "C": 0.01
+      },
+      "grid": [
+        {
+          "params": {
+            "max_iter": 5000,
+            "class_weight": "balanced",
+            "C": 0.01
+          },
+          "mean_macro_f1": 0.5003693073933504,
+          "std_macro_f1": 0.05361660288819991
+        },
+        {
+          "params": {
+            "max_iter": 5000,
+            "class_weight": "balanced",
+            "C": 0.1
+          },
+          "mean_macro_f1": 0.49010857613525366,
+          "std_macro_f1": 0.05065403234422546
+        },
+        {
+          "params": {
+            "max_iter": 5000,
+            "class_weight": "balanced",
+            "C": 1.0
+          },
+          "mean_macro_f1": 0.4573112371304637,
+          "std_macro_f1": 0.030951512784026233
+        },
+        {
+          "params": {
+            "max_iter": 5000,
+            "class_weight": "balanced",
+            "C": 10.0
+          },
+          "mean_macro_f1": 0.42930094942608416,
+          "std_macro_f1": 0.029530078512961428
+        }
+      ],
+      "cv": {
+        "mean": {
+          "macro_f1": 0.5003693073933504,
+          "weighted_f1": 0.5731077126006415,
+          "accuracy": 0.521713729308666,
+          "balanced_accuracy": 0.557968253968254,
+          "roc_auc_ovr_macro": 0.8157861994794999,
+          "benign_fpr": 0.4666666666666667,
+          "f1_benign": 0.6627051849377974,
+          "f1_phishing": 0.42655505279034694,
+          "f1_fake_ecommerce": 0.5928715068303169,
+          "f1_crypto_scam": 0.23668073668073672,
+          "f1_malware_delivery": 0.5830340557275542
+        },
+        "std": {
+          "macro_f1": 0.05361660288819991,
+          "weighted_f1": 0.046569981526488224,
+          "accuracy": 0.04044060759937795,
+          "balanced_accuracy": 0.04770773470143986,
+          "roc_auc_ovr_macro": 0.03206978292639855,
+          "benign_fpr": 0.05652668637191949,
+          "f1_benign": 0.028082182595970985,
+          "f1_phishing": 0.17833927354130644,
+          "f1_fake_ecommerce": 0.0878722781861575,
+          "f1_crypto_scam": 0.02277934916974096,
+          "f1_malware_delivery": 0.10081796883223576
+        }
+      },
+      "cv_folds": [
+        {
+          "macro_f1": 0.5229946524064171,
+          "weighted_f1": 0.5814887520025271,
+          "accuracy": 0.5316455696202531,
+          "balanced_accuracy": 0.581025641025641,
+          "roc_auc_ovr_macro": 0.8407947851697852,
+          "benign_fpr": 0.46153846153846156
+        },
+        {
+          "macro_f1": 0.3993889784251879,
+          "weighted_f1": 0.4836618300274243,
+          "accuracy": 0.44871794871794873,
+          "balanced_accuracy": 0.49172161172161166,
+          "roc_auc_ovr_macro": 0.7609318436312409,
+          "benign_fpr": 0.5128205128205128
+        },
+        {
+          "macro_f1": 0.5127315663979356,
+          "weighted_f1": 0.5805346568744634,
+          "accuracy": 0.5128205128205128,
+          "balanced_accuracy": 0.5533333333333333,
+          "roc_auc_ovr_macro": 0.8101641863186033,
+          "benign_fpr": 0.5
+        },
+        {
+          "macro_f1": 0.5075352408169745,
+          "weighted_f1": 0.6081130209791796,
+          "accuracy": 0.5641025641025641,
+          "balanced_accuracy": 0.5304273504273505,
+          "roc_auc_ovr_macro": 0.8129368903162086,
+          "benign_fpr": 0.358974358974359
+        },
+        {
+          "macro_f1": 0.5591960989202368,
+          "weighted_f1": 0.6117403031196132,
+          "accuracy": 0.5512820512820513,
+          "balanced_accuracy": 0.6333333333333333,
+          "roc_auc_ovr_macro": 0.8541032919616617,
+          "benign_fpr": 0.5
+        }
+      ],
+      "test": {
+        "n": 68,
+        "macro_f1": 0.41437788018433175,
+        "weighted_f1": 0.5102130001560741,
+        "accuracy": 0.45588235294117646,
+        "balanced_accuracy": 0.44914529914529916,
+        "roc_auc_ovr_macro": 0.7583331633672614,
+        "benign_fpr": 0.5,
+        "per_class": {
+          "benign": {
+            "precision": 0.8095238095238095,
+            "recall": 0.5,
+            "f1": 0.6181818181818182,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.625,
+            "recall": 0.38461538461538464,
+            "f1": 0.47619047619047616,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 0.6,
+            "recall": 0.75,
+            "f1": 0.6666666666666666,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.07407407407407407,
+            "recall": 0.5,
+            "f1": 0.12903225806451613,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.5,
+            "recall": 0.1111111111111111,
+            "f1": 0.18181818181818182,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            17,
+            3,
+            3,
+            10,
+            1
+          ],
+          [
+            0,
+            5,
+            1,
+            7,
+            0
+          ],
+          [
+            0,
+            0,
+            6,
+            2,
+            0
+          ],
+          [
+            2,
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            2,
+            0,
+            0,
+            6,
+            1
+          ]
+        ]
+      },
+      "benign_false_positives": [
+        "c2_benign_000002",
+        "c2_benign_000003",
+        "c2_benign_000008",
+        "c2_benign_000011",
+        "c2_benign_000024",
+        "c2_benign_000025",
+        "c2_benign_000029",
+        "c2_benign_000040",
+        "c2_benign_000048",
+        "c2_benign_000062",
+        "c2_benign_000069",
+        "c2_benign_000076",
+        "c2_benign_000077",
+        "c2_benign_000083",
+        "c2_benign_000087",
+        "c2_benign_000109",
+        "c2_benign_000136"
+      ],
+      "per_language": {
+        "en": {
+          "n": 63,
+          "accuracy": 0.4603174603174603,
+          "macro_f1": 0.4136383442265795,
+          "benign_fpr": 0.4838709677419355,
+          "labels": {
+            "benign": 31,
+            "phishing": 13,
+            "fake_ecommerce": 8,
+            "crypto_scam": 3,
+            "malware_delivery": 8
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 0.0,
+          "macro_f1": 0.0,
+          "benign_fpr": 1.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "unknown": {
+          "n": 3,
+          "accuracy": 0.3333333333333333,
+          "macro_f1": 0.16666666666666666,
+          "benign_fpr": 1.0,
+          "labels": {
+            "benign": 1,
+            "crypto_scam": 1,
+            "malware_delivery": 1
+          },
+          "small_n": true
+        }
+      },
+      "misclassified": 37,
+      "training_seconds": 0.48
+    },
+    "random_forest": {
+      "display_name": "Random Forest",
+      "params": {
+        "n_estimators": 300,
+        "class_weight": "balanced_subsample",
+        "max_depth": 8,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1
+      },
+      "grid": [
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": null,
+            "max_features": "sqrt",
+            "min_samples_leaf": 1
+          },
+          "mean_macro_f1": 0.5919976341315877,
+          "std_macro_f1": 0.07231538522689458
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": null,
+            "max_features": "sqrt",
+            "min_samples_leaf": 3
+          },
+          "mean_macro_f1": 0.595697769765809,
+          "std_macro_f1": 0.08670214100074061
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": null,
+            "max_features": 0.5,
+            "min_samples_leaf": 1
+          },
+          "mean_macro_f1": 0.5930958552290271,
+          "std_macro_f1": 0.07403866924360658
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": null,
+            "max_features": 0.5,
+            "min_samples_leaf": 3
+          },
+          "mean_macro_f1": 0.5833403662237189,
+          "std_macro_f1": 0.08760792996551556
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": 8,
+            "max_features": "sqrt",
+            "min_samples_leaf": 1
+          },
+          "mean_macro_f1": 0.6198821254374565,
+          "std_macro_f1": 0.07778488901007173
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": 8,
+            "max_features": "sqrt",
+            "min_samples_leaf": 3
+          },
+          "mean_macro_f1": 0.5860919266421423,
+          "std_macro_f1": 0.07683333537932378
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": 8,
+            "max_features": 0.5,
+            "min_samples_leaf": 1
+          },
+          "mean_macro_f1": 0.6036425660657725,
+          "std_macro_f1": 0.08600791065528135
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "class_weight": "balanced_subsample",
+            "max_depth": 8,
+            "max_features": 0.5,
+            "min_samples_leaf": 3
+          },
+          "mean_macro_f1": 0.5800060437098159,
+          "std_macro_f1": 0.08475719592222368
+        }
+      ],
+      "cv": {
+        "mean": {
+          "macro_f1": 0.6198821254374565,
+          "weighted_f1": 0.7074975027993703,
+          "accuracy": 0.7005842259006816,
+          "balanced_accuracy": 0.6154262579525737,
+          "roc_auc_ovr_macro": 0.8606791539282621,
+          "benign_fpr": 0.18191632928475032,
+          "f1_benign": 0.8053498308919996,
+          "f1_phishing": 0.5862805991962001,
+          "f1_fake_ecommerce": 0.7438556799237913,
+          "f1_crypto_scam": 0.2864527629233512,
+          "f1_malware_delivery": 0.67747175425194
+        },
+        "std": {
+          "macro_f1": 0.07778488901007173,
+          "weighted_f1": 0.04495505065527781,
+          "accuracy": 0.04355288460457087,
+          "balanced_accuracy": 0.08669674315105894,
+          "roc_auc_ovr_macro": 0.035585583787041124,
+          "benign_fpr": 0.06287930065723464,
+          "f1_benign": 0.028702472592353548,
+          "f1_phishing": 0.046606031734873536,
+          "f1_fake_ecommerce": 0.14518583210688074,
+          "f1_crypto_scam": 0.16639105200520168,
+          "f1_malware_delivery": 0.06448546077357334
+        }
+      },
+      "cv_folds": [
+        {
+          "macro_f1": 0.7038847117794487,
+          "weighted_f1": 0.7654182925668601,
+          "accuracy": 0.7721518987341772,
+          "balanced_accuracy": 0.6979487179487179,
+          "roc_auc_ovr_macro": 0.8892475481334177,
+          "benign_fpr": 0.07692307692307693
+        },
+        {
+          "macro_f1": 0.6044242202809978,
+          "weighted_f1": 0.6984916192077318,
+          "accuracy": 0.6794871794871795,
+          "balanced_accuracy": 0.6046886446886447,
+          "roc_auc_ovr_macro": 0.8135010732056192,
+          "benign_fpr": 0.20512820512820512
+        },
+        {
+          "macro_f1": 0.6353969559851913,
+          "weighted_f1": 0.6978372306426606,
+          "accuracy": 0.6923076923076923,
+          "balanced_accuracy": 0.6112280701754387,
+          "roc_auc_ovr_macro": 0.8599936367240959,
+          "benign_fpr": 0.21052631578947367
+        },
+        {
+          "macro_f1": 0.47991526545743407,
+          "weighted_f1": 0.6339949824657888,
+          "accuracy": 0.6410256410256411,
+          "balanced_accuracy": 0.4625641025641025,
+          "roc_auc_ovr_macro": 0.8309368964213408,
+          "benign_fpr": 0.15384615384615385
+        },
+        {
+          "macro_f1": 0.6757894736842106,
+          "weighted_f1": 0.7417453891138103,
+          "accuracy": 0.717948717948718,
+          "balanced_accuracy": 0.7007017543859648,
+          "roc_auc_ovr_macro": 0.9097166151568373,
+          "benign_fpr": 0.2631578947368421
+        }
+      ],
+      "test": {
+        "n": 68,
+        "macro_f1": 0.6823368869936034,
+        "weighted_f1": 0.7554780718257453,
+        "accuracy": 0.7352941176470589,
+        "balanced_accuracy": 0.6833961789844143,
+        "roc_auc_ovr_macro": 0.8607863239902874,
+        "benign_fpr": 0.20588235294117646,
+        "per_class": {
+          "benign": {
+            "precision": 0.8181818181818182,
+            "recall": 0.7941176470588235,
+            "f1": 0.8059701492537313,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.75,
+            "recall": 0.6923076923076923,
+            "f1": 0.72,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.2,
+            "recall": 0.5,
+            "f1": 0.2857142857142857,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.8333333333333334,
+            "recall": 0.5555555555555556,
+            "f1": 0.6666666666666666,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            27,
+            2,
+            0,
+            4,
+            1
+          ],
+          [
+            1,
+            9,
+            0,
+            3,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            3,
+            1,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "benign_false_positives": [
+        "c2_benign_000011",
+        "c2_benign_000024",
+        "c2_benign_000040",
+        "c2_benign_000076",
+        "c2_benign_000077",
+        "c2_benign_000083",
+        "c2_benign_000087"
+      ],
+      "per_language": {
+        "en": {
+          "n": 63,
+          "accuracy": 0.7301587301587301,
+          "macro_f1": 0.6543672456575682,
+          "benign_fpr": 0.1935483870967742,
+          "labels": {
+            "benign": 31,
+            "phishing": 13,
+            "fake_ecommerce": 8,
+            "crypto_scam": 3,
+            "malware_delivery": 8
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "unknown": {
+          "n": 3,
+          "accuracy": 0.6666666666666666,
+          "macro_f1": 0.6666666666666666,
+          "benign_fpr": 1.0,
+          "labels": {
+            "benign": 1,
+            "crypto_scam": 1,
+            "malware_delivery": 1
+          },
+          "small_n": true
+        }
+      },
+      "misclassified": 18,
+      "training_seconds": 17.54
+    },
+    "xgboost": {
+      "display_name": "XGBoost",
+      "params": {
+        "n_estimators": 300,
+        "tree_method": "hist",
+        "objective": "multi:softprob",
+        "eval_metric": "mlogloss",
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "subsample": 0.8
+      },
+      "grid": [
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.05,
+            "max_depth": 3,
+            "subsample": 0.8
+          },
+          "mean_macro_f1": 0.5820111571454868,
+          "std_macro_f1": 0.06381220092226458
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.05,
+            "max_depth": 3,
+            "subsample": 1.0
+          },
+          "mean_macro_f1": 0.5778238888229734,
+          "std_macro_f1": 0.07161943089732443
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.05,
+            "max_depth": 6,
+            "subsample": 0.8
+          },
+          "mean_macro_f1": 0.5677432628490184,
+          "std_macro_f1": 0.056693133606060264
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.05,
+            "max_depth": 6,
+            "subsample": 1.0
+          },
+          "mean_macro_f1": 0.5481604360196924,
+          "std_macro_f1": 0.03192341098278729
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.1,
+            "max_depth": 3,
+            "subsample": 0.8
+          },
+          "mean_macro_f1": 0.5597342103050957,
+          "std_macro_f1": 0.05640670196660484
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.1,
+            "max_depth": 3,
+            "subsample": 1.0
+          },
+          "mean_macro_f1": 0.5559885859488551,
+          "std_macro_f1": 0.037751645501436115
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.1,
+            "max_depth": 6,
+            "subsample": 0.8
+          },
+          "mean_macro_f1": 0.5465426362803948,
+          "std_macro_f1": 0.04577082089299467
+        },
+        {
+          "params": {
+            "n_estimators": 300,
+            "tree_method": "hist",
+            "objective": "multi:softprob",
+            "eval_metric": "mlogloss",
+            "learning_rate": 0.1,
+            "max_depth": 6,
+            "subsample": 1.0
+          },
+          "mean_macro_f1": 0.5686650370570678,
+          "std_macro_f1": 0.05258811502948162
+        }
+      ],
+      "cv": {
+        "mean": {
+          "macro_f1": 0.5820111571454868,
+          "weighted_f1": 0.6873109424802253,
+          "accuracy": 0.6852645245050308,
+          "balanced_accuracy": 0.5831455561981878,
+          "roc_auc_ovr_macro": 0.8683037730556548,
+          "benign_fpr": 0.1766531713900135,
+          "f1_benign": 0.8226940773451306,
+          "f1_phishing": 0.5304843304843304,
+          "f1_fake_ecommerce": 0.6721979520606522,
+          "f1_crypto_scam": 0.2690909090909091,
+          "f1_malware_delivery": 0.6155885167464115
+        },
+        "std": {
+          "macro_f1": 0.06381220092226458,
+          "weighted_f1": 0.029857701419443754,
+          "accuracy": 0.037850004910717716,
+          "balanced_accuracy": 0.07109162678766158,
+          "roc_auc_ovr_macro": 0.029757682174547467,
+          "benign_fpr": 0.06111796101639605,
+          "f1_benign": 0.023219851452498167,
+          "f1_phishing": 0.06376040369723278,
+          "f1_fake_ecommerce": 0.13136340456722226,
+          "f1_crypto_scam": 0.22604029480610985,
+          "f1_malware_delivery": 0.03854025665960396
+        }
+      },
+      "cv_folds": [
+        {
+          "macro_f1": 0.6755163963122884,
+          "weighted_f1": 0.7380334765736367,
+          "accuracy": 0.7468354430379747,
+          "balanced_accuracy": 0.6794871794871795,
+          "roc_auc_ovr_macro": 0.8781080516134864,
+          "benign_fpr": 0.10256410256410256
+        },
+        {
+          "macro_f1": 0.5208280060882801,
+          "weighted_f1": 0.6622409553916403,
+          "accuracy": 0.6410256410256411,
+          "balanced_accuracy": 0.5195604395604395,
+          "roc_auc_ovr_macro": 0.8502041631984723,
+          "benign_fpr": 0.23076923076923078
+        },
+        {
+          "macro_f1": 0.5743108081536343,
+          "weighted_f1": 0.6597707147454803,
+          "accuracy": 0.6538461538461539,
+          "balanced_accuracy": 0.5792982456140351,
+          "roc_auc_ovr_macro": 0.879711906792678,
+          "benign_fpr": 0.23684210526315788
+        },
+        {
+          "macro_f1": 0.5084182885387705,
+          "weighted_f1": 0.6725085747328565,
+          "accuracy": 0.6794871794871795,
+          "balanced_accuracy": 0.49282051282051287,
+          "roc_auc_ovr_macro": 0.8227650560603879,
+          "benign_fpr": 0.10256410256410256
+        },
+        {
+          "macro_f1": 0.6309822866344605,
+          "weighted_f1": 0.7040009909575128,
+          "accuracy": 0.7051282051282052,
+          "balanced_accuracy": 0.6445614035087719,
+          "roc_auc_ovr_macro": 0.9107296876132492,
+          "benign_fpr": 0.21052631578947367
+        }
+      ],
+      "test": {
+        "n": 68,
+        "macro_f1": 0.686031746031746,
+        "weighted_f1": 0.7534780578898227,
+        "accuracy": 0.75,
+        "balanced_accuracy": 0.7082830568124686,
+        "roc_auc_ovr_macro": 0.8658245753563844,
+        "benign_fpr": 0.23529411764705882,
+        "per_class": {
+          "benign": {
+            "precision": 0.8387096774193549,
+            "recall": 0.7647058823529411,
+            "f1": 0.8,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.7333333333333333,
+            "recall": 0.8461538461538461,
+            "f1": 0.7857142857142857,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 0.7,
+            "recall": 0.875,
+            "f1": 0.7777777777777778,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.3333333333333333,
+            "recall": 0.5,
+            "f1": 0.4,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.8333333333333334,
+            "recall": 0.5555555555555556,
+            "f1": 0.6666666666666666,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            26,
+            3,
+            2,
+            2,
+            1
+          ],
+          [
+            1,
+            11,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            2,
+            0
+          ],
+          [
+            3,
+            1,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "benign_false_positives": [
+        "c2_benign_000024",
+        "c2_benign_000040",
+        "c2_benign_000062",
+        "c2_benign_000069",
+        "c2_benign_000076",
+        "c2_benign_000077",
+        "c2_benign_000091",
+        "c2_benign_000122"
+      ],
+      "per_language": {
+        "en": {
+          "n": 63,
+          "accuracy": 0.746031746031746,
+          "macro_f1": 0.6515954415954416,
+          "benign_fpr": 0.22580645161290322,
+          "labels": {
+            "benign": 31,
+            "phishing": 13,
+            "fake_ecommerce": 8,
+            "crypto_scam": 3,
+            "malware_delivery": 8
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "unknown": {
+          "n": 3,
+          "accuracy": 0.6666666666666666,
+          "macro_f1": 0.6666666666666666,
+          "benign_fpr": 1.0,
+          "labels": {
+            "benign": 1,
+            "crypto_scam": 1,
+            "malware_delivery": 1
+          },
+          "small_n": true
+        }
+      },
+      "misclassified": 17,
+      "training_seconds": 12.56
+    }
+  },
+  "misclassified_total": 72,
+  "importance": {
+    "caveat": "Permutation importance and SHAP are computed on a small pilot test split; the rankings are indicative only (a few pages can reorder them).",
+    "top_n": 15,
+    "logreg": {
+      "standardized_coefficients": {
+        "benign": [
+          {
+            "feature": "library_script_count",
+            "name": "Inline scripts recognised as a well-known lib... [library_script_count]",
+            "description": "Inline scripts recognised as a well-known library (jQuery, GTM, Facebook pixel ...).",
+            "value": 0.24135740535205705
+          },
+          {
+            "feature": "cookie_read_count",
+            "name": "document.cookie reads (and cookieStore.get) [cookie_read_count]",
+            "description": "document.cookie reads (and cookieStore.get).",
+            "value": 0.13341928971634245
+          },
+          {
+            "feature": "cookie_write_count",
+            "name": "document.cookie writes (and cookieStore.set /... [cookie_write_count]",
+            "description": "document.cookie writes (and cookieStore.set / delete).",
+            "value": 0.10787243987959427
+          },
+          {
+            "feature": "inline_script_count",
+            "name": "Inline <script> blocks that are code (JSON-LD... [inline_script_count]",
+            "description": "Inline <script> blocks that are code (JSON-LD / templates excluded by Part 2), incl. library ones.",
+            "value": 0.08896529260367148
+          },
+          {
+            "feature": "external_script_suspicious_host_count",
+            "name": "External scripts from a raw IP, a free hostin... [external_script_suspicious_host_count]",
+            "description": "External scripts from a raw IP, a free hosting service, a data: URL or plain http.",
+            "value": -0.08757057694769718
+          },
+          {
+            "feature": "api_category_count",
+            "name": "Number of distinct API categories used by pag... [api_category_count]",
+            "description": "Number of distinct API categories used by page-own code.",
+            "value": 0.0814785535088193
+          },
+          {
+            "feature": "location_replace_count",
+            "name": "location.replace calls (navigation that remov... [location_replace_count]",
+            "description": "location.replace calls (navigation that removes the Back button entry).",
+            "value": -0.07585191186458855
+          },
+          {
+            "feature": "truncated_script_count",
+            "name": "Scripts analysed only up to the size limit (5... [truncated_script_count]",
+            "description": "Scripts analysed only up to the size limit (500 KB).",
+            "value": 0.07521329606997171
+          },
+          {
+            "feature": "credential_access_present",
+            "name": "1 if the page has a credential_access finding... [credential_access_present]",
+            "description": "1 if the page has a credential_access finding: credential fields read in page-own code (context only, low).",
+            "value": -0.07409068878857425
+          },
+          {
+            "feature": "known_cdn_script_count",
+            "name": "External scripts from a well-known CDN / serv... [known_cdn_script_count]",
+            "description": "External scripts from a well-known CDN / service (cdnjs, jsdelivr, googleapis ...).",
+            "value": 0.06712622619630089
+          },
+          {
+            "feature": "external_script_count",
+            "name": "<script src> references (their content is NOT... [external_script_count]",
+            "description": "<script src> references (their content is NOT analysed in static mode).",
+            "value": 0.066823292839775
+          },
+          {
+            "feature": "storage_read_count",
+            "name": "localStorage / sessionStorage reads (getItem,... [storage_read_count]",
+            "description": "localStorage / sessionStorage reads (getItem, key, property or bracket access).",
+            "value": 0.06681409262116582
+          },
+          {
+            "feature": "document_write_count",
+            "name": "document.write / writeln calls (raw HTML writ... [document_write_count]",
+            "description": "document.write / writeln calls (raw HTML written into the page).",
+            "value": 0.06477994255721885
+          },
+          {
+            "feature": "decode_call_count",
+            "name": "Decoder calls (atob, unescape, decodeURI(Comp... [decode_call_count]",
+            "description": "Decoder calls (atob, unescape, decodeURI(Component), String.fromCharCode).",
+            "value": -0.05634157568584025
+          },
+          {
+            "feature": "max_script_entropy",
+            "name": "Highest Shannon entropy (bits per character)... [max_script_entropy]",
+            "description": "Highest Shannon entropy (bits per character) of a page-own script of at least 200 characters.",
+            "value": 0.053451566560980476
+          }
+        ],
+        "phishing": [
+          {
+            "feature": "third_party_script_count",
+            "name": "External scripts from another site than the page [third_party_script_count]",
+            "description": "External scripts from another site than the page.",
+            "value": 0.15856849920519486
+          },
+          {
+            "feature": "external_script_suspicious_host_count",
+            "name": "External scripts from a raw IP, a free hostin... [external_script_suspicious_host_count]",
+            "description": "External scripts from a raw IP, a free hosting service, a data: URL or plain http.",
+            "value": 0.11010901100139521
+          },
+          {
+            "feature": "behavior_risk_score",
+            "name": "0-100: sum of each pattern's highest-severity... [behavior_risk_score]",
+            "description": "0-100: sum of each pattern's highest-severity weight (critical 50, high 25, medium 10, low 3), capped at 100. Descriptive, not the verdict.",
+            "value": 0.10658991095353768
+          },
+          {
+            "feature": "decode_call_count",
+            "name": "Decoder calls (atob, unescape, decodeURI(Comp... [decode_call_count]",
+            "description": "Decoder calls (atob, unescape, decodeURI(Component), String.fromCharCode).",
+            "value": -0.09917343636552416
+          },
+          {
+            "feature": "anti_analysis_count",
+            "name": "Distinct anti-analysis techniques (right-clic... [anti_analysis_count]",
+            "description": "Distinct anti-analysis techniques (right-click block, DevTools keys, debugger trap, DevTools size check, selection block).",
+            "value": 0.0920119898978237
+          },
+          {
+            "feature": "event_handler_count",
+            "name": "on*= event-handler attributes analysed as sma... [event_handler_count]",
+            "description": "on*= event-handler attributes analysed as small scripts.",
+            "value": 0.0904993806840418
+          },
+          {
+            "feature": "max_script_entropy",
+            "name": "Highest Shannon entropy (bits per character)... [max_script_entropy]",
+            "description": "Highest Shannon entropy (bits per character) of a page-own script of at least 200 characters.",
+            "value": -0.08931707212090345
+          },
+          {
+            "feature": "minified_script_count",
+            "name": "Page-own scripts that look minified (long lin... [minified_script_count]",
+            "description": "Page-own scripts that look minified (long lines, little whitespace) - NOT the same as obfuscated.",
+            "value": -0.08915870863529562
+          },
+          {
+            "feature": "credential_access_present",
+            "name": "1 if the page has a credential_access finding... [credential_access_present]",
+            "description": "1 if the page has a credential_access finding: credential fields read in page-own code (context only, low).",
+            "value": 0.08441973243410053
+          },
+          {
+            "feature": "location_replace_count",
+            "name": "location.replace calls (navigation that remov... [location_replace_count]",
+            "description": "location.replace calls (navigation that removes the Back button entry).",
+            "value": 0.07862554657963597
+          },
+          {
+            "feature": "credential_access_count",
+            "name": "Occurrences behind the credential_access find... [credential_access_count]",
+            "description": "Occurrences behind the credential_access findings (flows, reads or techniques).",
+            "value": 0.0760822983811516
+          },
+          {
+            "feature": "string_timer_count",
+            "name": "setTimeout / setInterval called with a string... [string_timer_count]",
+            "description": "setTimeout / setInterval called with a string (the browser evals it).",
+            "value": 0.07197336960788188
+          },
+          {
+            "feature": "page_own_js_chars",
+            "name": "Characters of page-own JavaScript analysed (i... [page_own_js_chars]",
+            "description": "Characters of page-own JavaScript analysed (inline + handlers + javascript: URLs, libraries excluded).",
+            "value": -0.0706244197923485
+          },
+          {
+            "feature": "library_script_count",
+            "name": "Inline scripts recognised as a well-known lib... [library_script_count]",
+            "description": "Inline scripts recognised as a well-known library (jQuery, GTM, Facebook pixel ...).",
+            "value": -0.06936346712840258
+          },
+          {
+            "feature": "anti_analysis_present",
+            "name": "1 if the page has a anti_analysis finding: ri... [anti_analysis_present]",
+            "description": "1 if the page has a anti_analysis finding: right-click / DevTools / view-source blocking, debugger traps, DevTools detection.",
+            "value": 0.06902552305555065
+          }
+        ],
+        "fake_ecommerce": [
+          {
+            "feature": "max_string_literal_length",
+            "name": "Longest string literal in page-own code (pack... [max_string_literal_length]",
+            "description": "Longest string literal in page-own code (packed payloads are long strings).",
+            "value": 0.23852581300814069
+          },
+          {
+            "feature": "minified_script_count",
+            "name": "Page-own scripts that look minified (long lin... [minified_script_count]",
+            "description": "Page-own scripts that look minified (long lines, little whitespace) - NOT the same as obfuscated.",
+            "value": 0.20620972093861717
+          },
+          {
+            "feature": "page_own_js_chars",
+            "name": "Characters of page-own JavaScript analysed (i... [page_own_js_chars]",
+            "description": "Characters of page-own JavaScript analysed (inline + handlers + javascript: URLs, libraries excluded).",
+            "value": 0.16372724368820957
+          },
+          {
+            "feature": "max_script_entropy",
+            "name": "Highest Shannon entropy (bits per character)... [max_script_entropy]",
+            "description": "Highest Shannon entropy (bits per character) of a page-own script of at least 200 characters.",
+            "value": 0.12527417519975045
+          },
+          {
+            "feature": "external_script_count",
+            "name": "<script src> references (their content is NOT... [external_script_count]",
+            "description": "<script src> references (their content is NOT analysed in static mode).",
+            "value": 0.08979334963821213
+          },
+          {
+            "feature": "decode_call_count",
+            "name": "Decoder calls (atob, unescape, decodeURI(Comp... [decode_call_count]",
+            "description": "Decoder calls (atob, unescape, decodeURI(Component), String.fromCharCode).",
+            "value": -0.08704239778693997
+          },
+          {
+            "feature": "location_replace_count",
+            "name": "location.replace calls (navigation that remov... [location_replace_count]",
+            "description": "location.replace calls (navigation that removes the Back button entry).",
+            "value": -0.0823757825354489
+          },
+          {
+            "feature": "inline_script_count",
+            "name": "Inline <script> blocks that are code (JSON-LD... [inline_script_count]",
+            "description": "Inline <script> blocks that are code (JSON-LD / templates excluded by Part 2), incl. library ones.",
+            "value": 0.08000463797093119
+          },
+          {
+            "feature": "third_party_script_count",
+            "name": "External scripts from another site than the page [third_party_script_count]",
+            "description": "External scripts from another site than the page.",
+            "value": -0.07408053714061148
+          },
+          {
+            "feature": "api_category_count",
+            "name": "Number of distinct API categories used by pag... [api_category_count]",
+            "description": "Number of distinct API categories used by page-own code.",
+            "value": -0.07076435970307195
+          },
+          {
+            "feature": "beacon_count",
+            "name": "navigator.sendBeacon calls and image beacons... [beacon_count]",
+            "description": "navigator.sendBeacon calls and image beacons (new Image().src = url).",
+            "value": -0.061049110495602944
+          },
+          {
+            "feature": "external_script_suspicious_host_count",
+            "name": "External scripts from a raw IP, a free hostin... [external_script_suspicious_host_count]",
+            "description": "External scripts from a raw IP, a free hosting service, a data: URL or plain http.",
+            "value": -0.057736532426671955
+          },
+          {
+            "feature": "storage_read_count",
+            "name": "localStorage / sessionStorage reads (getItem,... [storage_read_count]",
+            "description": "localStorage / sessionStorage reads (getItem, key, property or bracket access).",
+            "value": -0.052458874783947895
+          },
+          {
+            "feature": "event_handler_count",
+            "name": "on*= event-handler attributes analysed as sma... [event_handler_count]",
+            "description": "on*= event-handler attributes analysed as small scripts.",
+            "value": -0.050915716157012694
+          },
+          {
+            "feature": "library_script_count",
+            "name": "Inline scripts recognised as a well-known lib... [library_script_count]",
+            "description": "Inline scripts recognised as a well-known library (jQuery, GTM, Facebook pixel ...).",
+            "value": -0.04694781744479092
+          }
+        ],
+        "crypto_scam": [
+          {
+            "feature": "page_own_js_chars",
+            "name": "Characters of page-own JavaScript analysed (i... [page_own_js_chars]",
+            "description": "Characters of page-own JavaScript analysed (inline + handlers + javascript: URLs, libraries excluded).",
+            "value": -0.12015054924901601
+          },
+          {
+            "feature": "library_script_count",
+            "name": "Inline scripts recognised as a well-known lib... [library_script_count]",
+            "description": "Inline scripts recognised as a well-known library (jQuery, GTM, Facebook pixel ...).",
+            "value": -0.1169595113675126
+          },
+          {
+            "feature": "decode_call_count",
+            "name": "Decoder calls (atob, unescape, decodeURI(Comp... [decode_call_count]",
+            "description": "Decoder calls (atob, unescape, decodeURI(Component), String.fromCharCode).",
+            "value": -0.09747235116231867
+          },
+          {
+            "feature": "max_string_literal_length",
+            "name": "Longest string literal in page-own code (pack... [max_string_literal_length]",
+            "description": "Longest string literal in page-own code (packed payloads are long strings).",
+            "value": -0.09586037461836303
+          },
+          {
+            "feature": "location_replace_count",
+            "name": "location.replace calls (navigation that remov... [location_replace_count]",
+            "description": "location.replace calls (navigation that removes the Back button entry).",
+            "value": -0.09398102027627032
+          },
+          {
+            "feature": "submit_listener_count",
+            "name": "Submit listeners (code that runs when a form... [submit_listener_count]",
+            "description": "Submit listeners (code that runs when a form is sent).",
+            "value": 0.07162782766237975
+          },
+          {
+            "feature": "form_action_assign_count",
+            "name": "Form destinations changed from code (form.act... [form_action_assign_count]",
+            "description": "Form destinations changed from code (form.action = url, setAttribute('action')).",
+            "value": 0.06878110556686924
+          },
+          {
+            "feature": "external_script_count",
+            "name": "<script src> references (their content is NOT... [external_script_count]",
+            "description": "<script src> references (their content is NOT analysed in static mode).",
+            "value": -0.06865098663117512
+          },
+          {
+            "feature": "key_listener_count",
+            "name": "keydown / keypress / keyup / input listeners... [key_listener_count]",
+            "description": "keydown / keypress / keyup / input listeners (keylogging is possible).",
+            "value": 0.05977157301309177
+          },
+          {
+            "feature": "beacon_count",
+            "name": "navigator.sendBeacon calls and image beacons... [beacon_count]",
+            "description": "navigator.sendBeacon calls and image beacons (new Image().src = url).",
+            "value": -0.05821340483656273
+          },
+          {
+            "feature": "inline_script_count",
+            "name": "Inline <script> blocks that are code (JSON-LD... [inline_script_count]",
+            "description": "Inline <script> blocks that are code (JSON-LD / templates excluded by Part 2), incl. library ones.",
+            "value": -0.05589115853954078
+          },
+          {
+            "feature": "obfuscation_signature_count",
+            "name": "Obfuscation indicators found in page-own scri... [obfuscation_signature_count]",
+            "description": "Obfuscation indicators found in page-own scripts (packer, JSFuck, string array, _0x names, ...).",
+            "value": -0.055719301700955896
+          },
+          {
+            "feature": "xhr_count",
+            "name": "XMLHttpRequest objects created plus jQuery aj... [xhr_count]",
+            "description": "XMLHttpRequest objects created plus jQuery ajax calls.",
+            "value": -0.05324244751527069
+          },
+          {
+            "feature": "cookie_write_count",
+            "name": "document.cookie writes (and cookieStore.set /... [cookie_write_count]",
+            "description": "document.cookie writes (and cookieStore.set / delete).",
+            "value": -0.05259261728836747
+          },
+          {
+            "feature": "redirect_count",
+            "name": "Navigations from code (location =, location.h... [redirect_count]",
+            "description": "Navigations from code (location =, location.href =, assign, replace, window.open, meta refresh, external pushState).",
+            "value": -0.050098781713634466
+          }
+        ],
+        "malware_delivery": [
+          {
+            "feature": "decode_call_count",
+            "name": "Decoder calls (atob, unescape, decodeURI(Comp... [decode_call_count]",
+            "description": "Decoder calls (atob, unescape, decodeURI(Component), String.fromCharCode).",
+            "value": 0.3400297610006234
+          },
+          {
+            "feature": "location_replace_count",
+            "name": "location.replace calls (navigation that remov... [location_replace_count]",
+            "description": "location.replace calls (navigation that removes the Back button entry).",
+            "value": 0.17358316809667146
+          },
+          {
+            "feature": "beacon_count",
+            "name": "navigator.sendBeacon calls and image beacons... [beacon_count]",
+            "description": "navigator.sendBeacon calls and image beacons (new Image().src = url).",
+            "value": 0.13754954810969672
+          },
+          {
+            "feature": "external_script_count",
+            "name": "<script src> references (their content is NOT... [external_script_count]",
+            "description": "<script src> references (their content is NOT analysed in static mode).",
+            "value": -0.12748003479173073
+          },
+          {
+            "feature": "max_script_entropy",
+            "name": "Highest Shannon entropy (bits per character)... [max_script_entropy]",
+            "description": "Highest Shannon entropy (bits per character) of a page-own script of at least 200 characters.",
+            "value": -0.09292877073926424
+          },
+          {
+            "feature": "known_cdn_script_count",
+            "name": "External scripts from a well-known CDN / serv... [known_cdn_script_count]",
+            "description": "External scripts from a well-known CDN / service (cdnjs, jsdelivr, googleapis ...).",
+            "value": -0.08419570588499492
+          },
+          {
+            "feature": "max_string_literal_length",
+            "name": "Longest string literal in page-own code (pack... [max_string_literal_length]",
+            "description": "Longest string literal in page-own code (packed payloads are long strings).",
+            "value": -0.07792219690001793
+          },
+          {
+            "feature": "external_script_suspicious_host_count",
+            "name": "External scripts from a raw IP, a free hostin... [external_script_suspicious_host_count]",
+            "description": "External scripts from a raw IP, a free hosting service, a data: URL or plain http.",
+            "value": 0.07297730109919859
+          },
+          {
+            "feature": "minified_script_count",
+            "name": "Page-own scripts that look minified (long lin... [minified_script_count]",
+            "description": "Page-own scripts that look minified (long lines, little whitespace) - NOT the same as obfuscated.",
+            "value": -0.06724092383867225
+          },
+          {
+            "feature": "key_listener_count",
+            "name": "keydown / keypress / keyup / input listeners... [key_listener_count]",
+            "description": "keydown / keypress / keyup / input listeners (keylogging is possible).",
+            "value": -0.06646174654695995
+          },
+          {
+            "feature": "inline_script_count",
+            "name": "Inline <script> blocks that are code (JSON-LD... [inline_script_count]",
+            "description": "Inline <script> blocks that are code (JSON-LD / templates excluded by Part 2), incl. library ones.",
+            "value": -0.06618193868303529
+          },
+          {
+            "feature": "credential_access_present",
+            "name": "1 if the page has a credential_access finding... [credential_access_present]",
+            "description": "1 if the page has a credential_access finding: credential fields read in page-own code (context only, low).",
+            "value": -0.06076168755904801
+          },
+          {
+            "feature": "credential_exfiltration_count",
+            "name": "Occurrences behind the credential_exfiltratio... [credential_exfiltration_count]",
+            "description": "Occurrences behind the credential_exfiltration findings (flows, reads or techniques).",
+            "value": 0.052717850487376566
+          },
+          {
+            "feature": "storage_write_count",
+            "name": "localStorage / sessionStorage writes (setItem... [storage_write_count]",
+            "description": "localStorage / sessionStorage writes (setItem, removeItem, clear, assignment).",
+            "value": -0.05225673987055716
+          },
+          {
+            "feature": "storage_read_count",
+            "name": "localStorage / sessionStorage reads (getItem,... [storage_read_count]",
+            "description": "localStorage / sessionStorage reads (getItem, key, property or bracket access).",
+            "value": -0.05165167283547966
+          }
+        ]
+      }
+    },
+    "random_forest": {
+      "impurity": [
+        {
+          "feature": "max_string_literal_length",
+          "name": "Longest string literal in page-own code (pack... [max_string_literal_length]",
+          "description": "Longest string literal in page-own code (packed payloads are long strings).",
+          "value": 0.10627422078779412
+        },
+        {
+          "feature": "external_script_count",
+          "name": "<script src> references (their content is NOT... [external_script_count]",
+          "description": "<script src> references (their content is NOT analysed in static mode).",
+          "value": 0.10574441854148912
+        },
+        {
+          "feature": "page_own_js_chars",
+          "name": "Characters of page-own JavaScript analysed (i... [page_own_js_chars]",
+          "description": "Characters of page-own JavaScript analysed (inline + handlers + javascript: URLs, libraries excluded).",
+          "value": 0.08879476089384722
+        },
+        {
+          "feature": "minified_script_count",
+          "name": "Page-own scripts that look minified (long lin... [minified_script_count]",
+          "description": "Page-own scripts that look minified (long lines, little whitespace) - NOT the same as obfuscated.",
+          "value": 0.07942465788987367
+        },
+        {
+          "feature": "inline_script_count",
+          "name": "Inline <script> blocks that are code (JSON-LD... [inline_script_count]",
+          "description": "Inline <script> blocks that are code (JSON-LD / templates excluded by Part 2), incl. library ones.",
+          "value": 0.06621020044259927
+        },
+        {
+          "feature": "max_script_entropy",
+          "name": "Highest Shannon entropy (bits per character)... [max_script_entropy]",
+          "description": "Highest Shannon entropy (bits per character) of a page-own script of at least 200 characters.",
+          "value": 0.06125920710051859
+        },
+        {
+          "feature": "third_party_script_count",
+          "name": "External scripts from another site than the page [third_party_script_count]",
+          "description": "External scripts from another site than the page.",
+          "value": 0.04837877170363771
+        },
+        {
+          "feature": "decode_call_count",
+          "name": "Decoder calls (atob, unescape, decodeURI(Comp... [decode_call_count]",
+          "description": "Decoder calls (atob, unescape, decodeURI(Component), String.fromCharCode).",
+          "value": 0.03670921065175943
+        },
+        {
+          "feature": "api_category_count",
+          "name": "Number of distinct API categories used by pag... [api_category_count]",
+          "description": "Number of distinct API categories used by page-own code.",
+          "value": 0.0327709041605321
+        },
+        {
+          "feature": "library_script_count",
+          "name": "Inline scripts recognised as a well-known lib... [library_script_count]",
+          "description": "Inline scripts recognised as a well-known library (jQuery, GTM, Facebook pixel ...).",
+          "value": 0.02983005523295208
+        },
+        {
+          "feature": "beacon_count",
+          "name": "navigator.sendBeacon calls and image beacons... [beacon_count]",
+          "description": "navigator.sendBeacon calls and image beacons (new Image().src = url).",
+          "value": 0.022808206379458712
+        },
+        {
+          "feature": "event_handler_count",
+          "name": "on*= event-handler attributes analysed as sma... [event_handler_count]",
+          "description": "on*= event-handler attributes analysed as small scripts.",
+          "value": 0.022588539508767536
+        },
+        {
+          "feature": "location_replace_count",
+          "name": "location.replace calls (navigation that remov... [location_replace_count]",
+          "description": "location.replace calls (navigation that removes the Back button entry).",
+          "value": 0.022334559059310574
+        },
+        {
+          "feature": "known_cdn_script_count",
+          "name": "External scripts from a well-known CDN / serv... [known_cdn_script_count]",
+          "description": "External scripts from a well-known CDN / service (cdnjs, jsdelivr, googleapis ...).",
+          "value": 0.020852131349090093
+        },
+        {
+          "feature": "tainted_flow_count",
+          "name": "Source-to-sink flows found (page-own code, de... [tainted_flow_count]",
+          "description": "Source-to-sink flows found (page-own code, decoded-string flows excluded).",
+          "value": 0.018250381275697575
+        }
+      ],
+      "permutation_test": [
+        {
+          "feature": "external_script_count",
+          "name": "<script src> references (their content is NOT... [external_script_count]",
+          "description": "<script src> references (their content is NOT analysed in static mode).",
+          "value": 0.14366081490014482,
+          "std": 0.029936507924251923
+        },
+        {
+          "feature": "api_category_count",
+          "name": "Number of distinct API categories used by pag... [api_category_count]",
+          "description": "Number of distinct API categories used by page-own code.",
+          "value": 0.05628411024228393,
+          "std": 0.03257962507503835
+        },
+        {
+          "feature": "max_script_entropy",
+          "name": "Highest Shannon entropy (bits per character)... [max_script_entropy]",
+          "description": "Highest Shannon entropy (bits per character) of a page-own script of at least 200 characters.",
+          "value": 0.050227270930188264,
+          "std": 0.029103034003600883
+        },
+        {
+          "feature": "third_party_script_count",
+          "name": "External scripts from another site than the page [third_party_script_count]",
+          "description": "External scripts from another site than the page.",
+          "value": 0.04562976691866453,
+          "std": 0.021389584509148688
+        },
+        {
+          "feature": "inline_script_count",
+          "name": "Inline <script> blocks that are code (JSON-LD... [inline_script_count]",
+          "description": "Inline <script> blocks that are code (JSON-LD / templates excluded by Part 2), incl. library ones.",
+          "value": 0.04513194471625011,
+          "std": 0.02568257958186393
+        },
+        {
+          "feature": "page_own_js_chars",
+          "name": "Characters of page-own JavaScript analysed (i... [page_own_js_chars]",
+          "description": "Characters of page-own JavaScript analysed (inline + handlers + javascript: URLs, libraries excluded).",
+          "value": 0.04300249234715866,
+          "std": 0.030635796081328236
+        },
+        {
+          "feature": "max_string_literal_length",
+          "name": "Longest string literal in page-own code (pack... [max_string_literal_length]",
+          "description": "Longest string literal in page-own code (packed payloads are long strings).",
+          "value": 0.025350552401358434,
+          "std": 0.025739281910995903
+        },
+        {
+          "feature": "event_handler_count",
+          "name": "on*= event-handler attributes analysed as sma... [event_handler_count]",
+          "description": "on*= event-handler attributes analysed as small scripts.",
+          "value": 0.02215552206654626,
+          "std": 0.01626829537863466
+        },
+        {
+          "feature": "library_script_count",
+          "name": "Inline scripts recognised as a well-known lib... [library_script_count]",
+          "description": "Inline scripts recognised as a well-known library (jQuery, GTM, Facebook pixel ...).",
+          "value": 0.01944178323414522,
+          "std": 0.012593714080431317
+        },
+        {
+          "feature": "minified_script_count",
+          "name": "Page-own scripts that look minified (long lin... [minified_script_count]",
+          "description": "Page-own scripts that look minified (long lines, little whitespace) - NOT the same as obfuscated.",
+          "value": 0.017114950266865065,
+          "std": 0.02712352270228097
+        },
+        {
+          "feature": "decode_call_count",
+          "name": "Decoder calls (atob, unescape, decodeURI(Comp... [decode_call_count]",
+          "description": "Decoder calls (atob, unescape, decodeURI(Component), String.fromCharCode).",
+          "value": 0.011414051961322664,
+          "std": 0.014433761584285491
+        },
+        {
+          "feature": "max_flow_confidence",
+          "name": "Best flow confidence: 0 no flow, 1 low (regex... [max_flow_confidence]",
+          "description": "Best flow confidence: 0 no flow, 1 low (regex-only script), 2 medium (through a function / object), 3 high (direct).",
+          "value": 0.011210207527327837,
+          "std": 0.01357708628590304
+        },
+        {
+          "feature": "redirect_count",
+          "name": "Navigations from code (location =, location.h... [redirect_count]",
+          "description": "Navigations from code (location =, location.href =, assign, replace, window.open, meta refresh, external pushState).",
+          "value": 0.007383339770735298,
+          "std": 0.017149205591394025
+        },
+        {
+          "feature": "behavior_risk_score",
+          "name": "0-100: sum of each pattern's highest-severity... [behavior_risk_score]",
+          "description": "0-100: sum of each pattern's highest-severity weight (critical 50, high 25, medium 10, low 3), capped at 100. Descriptive, not the verdict.",
+          "value": 0.006441774255803523,
+          "std": 0.018268315804251138
+        },
+        {
+          "feature": "tainted_flow_count",
+          "name": "Source-to-sink flows found (page-own code, de... [tainted_flow_count]",
+          "description": "Source-to-sink flows found (page-own code, decoded-string flows excluded).",
+          "value": 0.0062032632213492814,
+          "std": 0.0159391756277874
+        }
+      ]
+    },
+    "xgboost": {
+      "gain": [
+        {
+          "feature": "decode_call_count",
+          "name": "Decoder calls (atob, unescape, decodeURI(Comp... [decode_call_count]",
+          "description": "Decoder calls (atob, unescape, decodeURI(Component), String.fromCharCode).",
+          "value": 6.931693077087402
+        },
+        {
+          "feature": "cookie_read_count",
+          "name": "document.cookie reads (and cookieStore.get) [cookie_read_count]",
+          "description": "document.cookie reads (and cookieStore.get).",
+          "value": 3.324990749359131
+        },
+        {
+          "feature": "behavior_risk_score",
+          "name": "0-100: sum of each pattern's highest-severity... [behavior_risk_score]",
+          "description": "0-100: sum of each pattern's highest-severity weight (critical 50, high 25, medium 10, low 3), capped at 100. Descriptive, not the verdict.",
+          "value": 2.9051339626312256
+        },
+        {
+          "feature": "location_replace_count",
+          "name": "location.replace calls (navigation that remov... [location_replace_count]",
+          "description": "location.replace calls (navigation that removes the Back button entry).",
+          "value": 2.477022647857666
+        },
+        {
+          "feature": "anti_analysis_count",
+          "name": "Distinct anti-analysis techniques (right-clic... [anti_analysis_count]",
+          "description": "Distinct anti-analysis techniques (right-click block, DevTools keys, debugger trap, DevTools size check, selection block).",
+          "value": 2.4107508659362793
+        },
+        {
+          "feature": "contextmenu_block_count",
+          "name": "contextmenu listeners (usually block right-cl... [contextmenu_block_count]",
+          "description": "contextmenu listeners (usually block right-click / 'view source').",
+          "value": 2.203199625015259
+        },
+        {
+          "feature": "form_action_assign_count",
+          "name": "Form destinations changed from code (form.act... [form_action_assign_count]",
+          "description": "Form destinations changed from code (form.action = url, setAttribute('action')).",
+          "value": 2.0815229415893555
+        },
+        {
+          "feature": "max_string_literal_length",
+          "name": "Longest string literal in page-own code (pack... [max_string_literal_length]",
+          "description": "Longest string literal in page-own code (packed payloads are long strings).",
+          "value": 1.9690122604370117
+        },
+        {
+          "feature": "credential_access_present",
+          "name": "1 if the page has a credential_access finding... [credential_access_present]",
+          "description": "1 if the page has a credential_access finding: credential fields read in page-own code (context only, low).",
+          "value": 1.876430630683899
+        },
+        {
+          "feature": "credential_flow_to_external",
+          "name": "1 if credential / form data reaches another s... [credential_flow_to_external]",
+          "description": "1 if credential / form data reaches another site (or a run-time-built address).",
+          "value": 1.7864487171173096
+        },
+        {
+          "feature": "innerhtml_assign_count",
+          "name": "HTML strings put into elements (innerHTML / o... [innerhtml_assign_count]",
+          "description": "HTML strings put into elements (innerHTML / outerHTML assignment, insertAdjacentHTML, srcdoc).",
+          "value": 1.7754888534545898
+        },
+        {
+          "feature": "cookie_write_count",
+          "name": "document.cookie writes (and cookieStore.set /... [cookie_write_count]",
+          "description": "document.cookie writes (and cookieStore.set / delete).",
+          "value": 1.7571231126785278
+        },
+        {
+          "feature": "library_script_count",
+          "name": "Inline scripts recognised as a well-known lib... [library_script_count]",
+          "description": "Inline scripts recognised as a well-known library (jQuery, GTM, Facebook pixel ...).",
+          "value": 1.7283371686935425
+        },
+        {
+          "feature": "external_script_count",
+          "name": "<script src> references (their content is NOT... [external_script_count]",
+          "description": "<script src> references (their content is NOT analysed in static mode).",
+          "value": 1.5876274108886719
+        },
+        {
+          "feature": "encoded_flow_count",
+          "name": "Flows whose data is encoded on the way (btoa,... [encoded_flow_count]",
+          "description": "Flows whose data is encoded on the way (btoa, encodeURIComponent, escape).",
+          "value": 1.4706780910491943
+        }
+      ],
+      "shap_global": [
+        {
+          "feature": "external_script_count",
+          "name": "<script src> references (their content is NOT... [external_script_count]",
+          "description": "<script src> references (their content is NOT analysed in static mode).",
+          "value": 2.845463752746582,
+          "per_class": {
+            "benign": 0.25633159279823303,
+            "phishing": 0.2453833520412445,
+            "fake_ecommerce": 0.5554167628288269,
+            "crypto_scam": 0.7376689314842224,
+            "malware_delivery": 1.050662875175476
+          }
+        },
+        {
+          "feature": "page_own_js_chars",
+          "name": "Characters of page-own JavaScript analysed (i... [page_own_js_chars]",
+          "description": "Characters of page-own JavaScript analysed (inline + handlers + javascript: URLs, libraries excluded).",
+          "value": 1.9318110942840576,
+          "per_class": {
+            "benign": 0.3152942657470703,
+            "phishing": 0.33533990383148193,
+            "fake_ecommerce": 0.430399626493454,
+            "crypto_scam": 0.3093297779560089,
+            "malware_delivery": 0.5414475202560425
+          }
+        },
+        {
+          "feature": "max_string_literal_length",
+          "name": "Longest string literal in page-own code (pack... [max_string_literal_length]",
+          "description": "Longest string literal in page-own code (packed payloads are long strings).",
+          "value": 1.5781153440475464,
+          "per_class": {
+            "benign": 0.1825488805770874,
+            "phishing": 0.26044994592666626,
+            "fake_ecommerce": 0.5823822617530823,
+            "crypto_scam": 0.18083123862743378,
+            "malware_delivery": 0.37190309166908264
+          }
+        },
+        {
+          "feature": "library_script_count",
+          "name": "Inline scripts recognised as a well-known lib... [library_script_count]",
+          "description": "Inline scripts recognised as a well-known library (jQuery, GTM, Facebook pixel ...).",
+          "value": 1.330930471420288,
+          "per_class": {
+            "benign": 0.49909985065460205,
+            "phishing": 0.15346920490264893,
+            "fake_ecommerce": 0.1329563856124878,
+            "crypto_scam": 0.4165320098400116,
+            "malware_delivery": 0.12887294590473175
+          }
+        },
+        {
+          "feature": "third_party_script_count",
+          "name": "External scripts from another site than the page [third_party_script_count]",
+          "description": "External scripts from another site than the page.",
+          "value": 1.2547169923782349,
+          "per_class": {
+            "benign": 0.3338983654975891,
+            "phishing": 0.3602105975151062,
+            "fake_ecommerce": 0.2679908275604248,
+            "crypto_scam": 0.11058994382619858,
+            "malware_delivery": 0.1820271760225296
+          }
+        },
+        {
+          "feature": "max_script_entropy",
+          "name": "Highest Shannon entropy (bits per character)... [max_script_entropy]",
+          "description": "Highest Shannon entropy (bits per character) of a page-own script of at least 200 characters.",
+          "value": 1.2090346813201904,
+          "per_class": {
+            "benign": 0.11370252817869186,
+            "phishing": 0.19151602685451508,
+            "fake_ecommerce": 0.3658234775066376,
+            "crypto_scam": 0.2806665599346161,
+            "malware_delivery": 0.2573260962963104
+          }
+        },
+        {
+          "feature": "inline_script_count",
+          "name": "Inline <script> blocks that are code (JSON-LD... [inline_script_count]",
+          "description": "Inline <script> blocks that are code (JSON-LD / templates excluded by Part 2), incl. library ones.",
+          "value": 1.1692707538604736,
+          "per_class": {
+            "benign": 0.09266539663076401,
+            "phishing": 0.590865969657898,
+            "fake_ecommerce": 0.12671013176441193,
+            "crypto_scam": 0.15703539550304413,
+            "malware_delivery": 0.20199386775493622
+          }
+        },
+        {
+          "feature": "minified_script_count",
+          "name": "Page-own scripts that look minified (long lin... [minified_script_count]",
+          "description": "Page-own scripts that look minified (long lines, little whitespace) - NOT the same as obfuscated.",
+          "value": 0.915040910243988,
+          "per_class": {
+            "benign": 0.15748001635074615,
+            "phishing": 0.08067886531352997,
+            "fake_ecommerce": 0.2813301086425781,
+            "crypto_scam": 0.33121103048324585,
+            "malware_delivery": 0.06434088200330734
+          }
+        },
+        {
+          "feature": "known_cdn_script_count",
+          "name": "External scripts from a well-known CDN / serv... [known_cdn_script_count]",
+          "description": "External scripts from a well-known CDN / service (cdnjs, jsdelivr, googleapis ...).",
+          "value": 0.8113482594490051,
+          "per_class": {
+            "benign": 0.22995412349700928,
+            "phishing": 0.031135892495512962,
+            "fake_ecommerce": 0.4006682336330414,
+            "crypto_scam": 0.11527005583047867,
+            "malware_delivery": 0.034319918602705
+          }
+        },
+        {
+          "feature": "event_handler_count",
+          "name": "on*= event-handler attributes analysed as sma... [event_handler_count]",
+          "description": "on*= event-handler attributes analysed as small scripts.",
+          "value": 0.7451448440551758,
+          "per_class": {
+            "benign": 0.1942252367734909,
+            "phishing": 0.21502617001533508,
+            "fake_ecommerce": 0.11235601454973221,
+            "crypto_scam": 0.14070762693881989,
+            "malware_delivery": 0.08282986283302307
+          }
+        },
+        {
+          "feature": "api_category_count",
+          "name": "Number of distinct API categories used by pag... [api_category_count]",
+          "description": "Number of distinct API categories used by page-own code.",
+          "value": 0.4907960295677185,
+          "per_class": {
+            "benign": 0.2144709825515747,
+            "phishing": 0.09390371292829514,
+            "fake_ecommerce": 0.07099795341491699,
+            "crypto_scam": 0.05974602699279785,
+            "malware_delivery": 0.05167733505368233
+          }
+        },
+        {
+          "feature": "redirect_count",
+          "name": "Navigations from code (location =, location.h... [redirect_count]",
+          "description": "Navigations from code (location =, location.href =, assign, replace, window.open, meta refresh, external pushState).",
+          "value": 0.482944130897522,
+          "per_class": {
+            "benign": 0.0776023417711258,
+            "phishing": 0.014171384274959564,
+            "fake_ecommerce": 0.1770985722541809,
+            "crypto_scam": 0.07993251085281372,
+            "malware_delivery": 0.13413934409618378
+          }
+        },
+        {
+          "feature": "behavior_risk_score",
+          "name": "0-100: sum of each pattern's highest-severity... [behavior_risk_score]",
+          "description": "0-100: sum of each pattern's highest-severity weight (critical 50, high 25, medium 10, low 3), capped at 100. Descriptive, not the verdict.",
+          "value": 0.32788464426994324,
+          "per_class": {
+            "benign": 0.004292623605579138,
+            "phishing": 0.24172525107860565,
+            "fake_ecommerce": 0.002237735316157341,
+            "crypto_scam": 0.02943146973848343,
+            "malware_delivery": 0.05019757151603699
+          }
+        },
+        {
+          "feature": "cookie_read_count",
+          "name": "document.cookie reads (and cookieStore.get) [cookie_read_count]",
+          "description": "document.cookie reads (and cookieStore.get).",
+          "value": 0.28087979555130005,
+          "per_class": {
+            "benign": 0.2443176954984665,
+            "phishing": 0.027979454025626183,
+            "fake_ecommerce": 0.0020149738993495703,
+            "crypto_scam": 0.0,
+            "malware_delivery": 0.006567677482962608
+          }
+        },
+        {
+          "feature": "external_script_suspicious_host_count",
+          "name": "External scripts from a raw IP, a free hostin... [external_script_suspicious_host_count]",
+          "description": "External scripts from a raw IP, a free hosting service, a data: URL or plain http.",
+          "value": 0.2544112205505371,
+          "per_class": {
+            "benign": 0.05598011612892151,
+            "phishing": 0.09866955876350403,
+            "fake_ecommerce": 0.0,
+            "crypto_scam": 0.02220962755382061,
+            "malware_delivery": 0.07755190879106522
+          }
+        }
+      ]
+    }
+  }
+}

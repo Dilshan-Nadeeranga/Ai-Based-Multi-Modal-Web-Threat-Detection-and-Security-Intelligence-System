@@ -12,11 +12,20 @@ never depends on how this package's classes looked when it was saved:
     {"estimator", "model", "display_name", "params", "features", "labels",
      "cv", "grid", "split_fingerprint", "feature_set_version", "dictionary_hash",
      "seed", "trained_at", "library_versions"}
+
+Reuse by later parts (ablation study): the whole protocol (split, grids, CV
+selection, one test evaluation, importance, report, model card) is the same
+for every modality; only the FEATURE TABLE differs. A ``FeatureSource`` says
+which table to load and how to name / describe / fingerprint its features
+(``sources.DOM_SOURCE`` is the default; Part 8's behavior-only baseline passes
+its own). ``BaselineConfig.load(source)`` reads that source's paths from
+configs/config.yaml (``dom_baseline:`` / ``behavior_baseline:``).
 """
 
 from __future__ import annotations
 
 import platform
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -39,8 +48,51 @@ ALIASES = {
 
 
 @dataclass(frozen=True)
+class FeatureSource:
+    """Which feature table a baseline is trained on, and how its features are named.
+
+    ``load_table(version, folder)`` returns the checked table (ID columns + the
+    ``names()`` columns); ``fingerprint()`` changes whenever the feature
+    definitions change (stored as ``dictionary_hash`` in every bundle, so a model
+    trained on other definitions is refused, never silently reused).
+    """
+
+    key: str  # "dom", "behavior"
+    title: str  # report title: "DOM baseline (Baseline 1)"
+    heading: str  # "Baseline 1 - DOM-only structural classification"
+    short: str  # console: "Baseline 1 - DOM only"
+    card_name: str
+    intended_use: str
+    config_section: str  # configs/config.yaml section with models_dir / reports_dir / n_jobs
+    default_models_dir: str
+    default_reports_dir: str
+    command: str  # "scripts/train_dom_baseline.py" (+ " all --version v" etc.)
+    train_command: str  # "{command} train --version {version}"
+    all_command: str  # "{command} all --version {version}"
+    produce_hint: str  # how to make the feature table: "extract_dom_features.py run ..."
+    load_table: Callable[[str, Path | None], Any]
+    names: Callable[[], list[str]]
+    descriptions: Callable[[], dict[str, str]]
+    feature_set_version: Callable[[], str]
+    fingerprint: Callable[[], str]
+
+    def train_hint(self, version: str) -> str:
+        return self.train_command.format(command=self.command, version=version)
+
+    def all_hint(self, version: str) -> str:
+        return self.all_command.format(command=self.command, version=version)
+
+
+def default_source() -> FeatureSource:
+    from c2_analyzer.classifiers.dom_baseline.sources import DOM_SOURCE
+
+    return DOM_SOURCE
+
+
+@dataclass(frozen=True)
 class BaselineConfig:
-    """configs/dom_baseline.yaml + the ``dom_baseline:`` paths of configs/config.yaml."""
+    """configs/dom_baseline.yaml + the paths of the source's section of configs/config.yaml
+    (``dom_baseline:`` for the DOM baseline)."""
 
     models: dict[str, dict[str, Any]]
     seed: int = 42
@@ -55,11 +107,13 @@ class BaselineConfig:
     models_dir: Path = Path("models/dom_baseline")
     reports_dir: Path = Path("reports/dom_baseline")
     raw: dict[str, Any] = field(default_factory=dict)
+    source: FeatureSource | None = None  # None = the DOM features (Part 4)
 
     @classmethod
-    def load(cls) -> BaselineConfig:
+    def load(cls, source: FeatureSource | None = None) -> BaselineConfig:
+        source = source or default_source()
         main = load_yaml_config("config")
-        paths = main.get("dom_baseline", {})
+        paths = main.get(source.config_section, {})
         raw = load_yaml_config("dom_baseline")
         evaluation = raw.get("evaluation", {})
         importance = raw.get("importance", {})
@@ -76,10 +130,15 @@ class BaselineConfig:
             top_n=int(importance.get("top_n", 15)),
             permutation_repeats=int(importance.get("permutation_repeats", 20)),
             contributions=int(importance.get("contributions", 5)),
-            models_dir=resolve_path(Path(paths.get("models_dir", "models/dom_baseline"))),
-            reports_dir=resolve_path(Path(paths.get("reports_dir", "reports/dom_baseline"))),
+            models_dir=resolve_path(Path(paths.get("models_dir", source.default_models_dir))),
+            reports_dir=resolve_path(Path(paths.get("reports_dir", source.default_reports_dir))),
             raw=raw,
+            source=source,
         )
+
+    @property
+    def features(self) -> FeatureSource:
+        return self.source or default_source()
 
     def jobs(self, model: str) -> int:
         """Threads for one model: its own ``n_jobs`` in dom_baseline.yaml, else the global one."""
@@ -135,25 +194,27 @@ def load_bundles(config: BaselineConfig, version: str) -> dict[str, dict[str, An
     return bundles
 
 
-def readable_name(feature: str, width: int = 48) -> str:
+def readable_name(feature: str, width: int = 48, source: FeatureSource | None = None) -> str:
     """'node_count' -> 'Elements plus non-empty text nodes [node_count]' (for plots/tables).
 
     The first sentence of the dictionary description, shortened, plus the name
     (the name keeps it unambiguous; the description keeps it human).
     """
-    specs = {spec.name: spec for spec in load_dictionary().features}
-    spec = specs.get(feature)
-    if spec is None:
+    description = (source or default_source()).descriptions().get(feature)
+    if description is None:
         return feature
-    first = spec.description.split(". ")[0].rstrip(".")
+    first = description.split(". ")[0].rstrip(".")
     if len(first) > width:
         first = first[: width - 3].rstrip() + "..."
     return f"{first} [{feature}]"
 
 
-def describe_feature(feature: str) -> str:
-    specs = {spec.name: spec for spec in load_dictionary().features}
-    return specs[feature].description if feature in specs else feature
+def describe_feature(feature: str, source: FeatureSource | None = None) -> str:
+    return (source or default_source()).descriptions().get(feature, feature)
+
+
+def dom_descriptions() -> dict[str, str]:
+    return {spec.name: spec.description for spec in load_dictionary().features}
 
 
 def library_versions() -> dict[str, str]:

@@ -27,6 +27,8 @@ import pandas as pd
 from c2_analyzer.classifiers.dom_baseline.common import (
     MODEL_NAMES,
     BaselineConfig,
+    FeatureSource,
+    default_source,
     model_dir,
     readable_name,
     report_dir,
@@ -61,7 +63,10 @@ class StaleModelError(RuntimeError):
     """A saved model does not match the current split / features (retrain it)."""
 
 
-def check_bundles(bundles: dict[str, dict[str, Any]], dataset: DomDataset) -> None:
+def check_bundles(
+    bundles: dict[str, dict[str, Any]], dataset: DomDataset, source: FeatureSource | None = None
+) -> None:
+    source = source or default_source()
     for name, bundle in bundles.items():
         problems = []
         if bundle["split_fingerprint"] != dataset.split_info.get("split_fingerprint"):
@@ -75,7 +80,7 @@ def check_bundles(bundles: dict[str, dict[str, Any]], dataset: DomDataset) -> No
         if problems:
             raise StaleModelError(
                 f"{name} was trained on {', '.join(problems)} - run: python "
-                f"scripts/train_dom_baseline.py train --version {dataset.version}"
+                f"{source.train_hint(dataset.version)}"
             )
 
 
@@ -94,12 +99,13 @@ def evaluate_version(
     figures: bool = True,
 ) -> tuple[dict[str, Any], list[dict]]:
     """(results dict, misclassified rows) - the ONE evaluation on the test split."""
+    source = config.features
     if not bundles:
         raise FileNotFoundError(
             f"no trained models for {dataset.version} - run: python "
-            f"scripts/train_dom_baseline.py train --version {dataset.version}"
+            f"{source.train_hint(dataset.version)}"
         )
-    check_bundles(bundles, dataset)
+    check_bundles(bundles, dataset, source)
     folder = report_dir(config, dataset.version) / "figures"
     test = dataset.rows("test").reset_index(drop=True)
     X_test, y_test = dataset.X("test"), dataset.y("test")
@@ -201,14 +207,14 @@ def run_report(
         folder / "figures" if figures else None,
     )
     write_json(results, folder / "results.json")
-    atomic_write_text(render_markdown(results), folder / "results.md")
+    atomic_write_text(render_markdown(results, config.features), folder / "results.md")
     _write_csv(pd.DataFrame(wrong, columns=MISCLASSIFIED_COLUMNS), folder / "misclassified.csv")
     _write_csv(
         pd.DataFrame(dataset.dropped, columns=["feature", "reason", "detail"]),
         folder / "dropped_features.csv",
     )
     write_json(
-        model_card(results, dataset, bundles),
+        model_card(results, dataset, bundles, config.features),
         model_dir(config, dataset.version) / "model_card.json",
     )
     return results
@@ -220,11 +226,17 @@ def _write_csv(frame: pd.DataFrame, path) -> None:
     atomic_write_text(buffer.getvalue(), path)
 
 
-def model_card(results: dict, dataset: DomDataset, bundles: dict[str, dict[str, Any]]) -> dict:
+def model_card(
+    results: dict,
+    dataset: DomDataset,
+    bundles: dict[str, dict[str, Any]],
+    source: FeatureSource | None = None,
+) -> dict:
     """model_card.json: enough to know exactly what each saved model is and how good it is."""
+    source = source or default_source()
     first = next(iter(bundles.values()))
     return {
-        "name": "C2 DOM baseline (Baseline 1: DOM-only structural classification)",
+        "name": source.card_name,
         "created_at": results["created_at"],
         "dataset_version": dataset.version,
         "manifest_fingerprint": results["manifest_fingerprint"],
@@ -259,8 +271,7 @@ def model_card(results: dict, dataset: DomDataset, bundles: dict[str, dict[str, 
         },
         "library_versions": first["library_versions"],
         "git_commit": git_commit(),
-        "intended_use": "Baseline for the ablation study (DOM-only vs NLP-only, behavior-only, "
-        "fused). Research use on the C2 dataset; not a production detector.",
+        "intended_use": source.intended_use,
         "limitations": (
             "PILOT: trained on "
             + ", ".join(dataset.labels)
@@ -293,25 +304,26 @@ def _table(headers: list[str], rows: list[list[str]]) -> list[str]:
     return lines
 
 
-def render_markdown(results: dict) -> str:
+def render_markdown(results: dict, source: FeatureSource | None = None) -> str:
+    source = source or default_source()
     version, labels, models = results["version"], results["classes"], results["models"]
     split = results["split"]
     best = results["best_model"]
-    lines = [f"# DOM baseline (Baseline 1) - {version}", ""]
+    lines = [f"# {source.title} - {version}", ""]
     if results["pilot"]:
         excluded = ", ".join(f"{k} ({v})" for k, v in results["excluded_classes"].items())
         lines += [
             f"> **PILOT run.** {len(labels)} classes ({', '.join(labels)}); excluded because "
             f"they have too few pages: {excluded}. Labels of {version} are mostly unverified. "
             "Re-run unchanged on the next dataset version with "
-            f"`python scripts/train_dom_baseline.py all --version <version>`.",
+            f"`python {source.all_hint('<version>')}`.",
             "",
         ]
     lines += [
         f"Created {results['created_at']} · feature set `{results['feature_set_version']}` · "
         f"model selection: {results['selection']}.",
         "",
-        "## Baseline 1 - DOM-only structural classification",
+        f"## {source.heading}",
         "",
     ]
     rows = []
@@ -530,7 +542,7 @@ def render_markdown(results: dict) -> str:
         "## Reproduce",
         "",
         "```bash",
-        f"python scripts/train_dom_baseline.py all --version {version}",
+        f"python {source.all_hint(version)}",
         "```",
         "",
     ]
@@ -544,10 +556,10 @@ def _ranked(rows: list[dict]) -> list[str]:
     )
 
 
-def shap_top_text(results: dict, n: int = 10) -> list[str]:
+def shap_top_text(results: dict, n: int = 10, source: FeatureSource | None = None) -> list[str]:
     """'1. <readable name>  0.123' lines of the global SHAP ranking (for the CLI)."""
     rows = (results.get("importance") or {}).get("xgboost", {}).get("shap_global", [])
     return [
-        f"{i + 1:2d}. {readable_name(row['feature'])}  {row['value']:.3f}"
+        f"{i + 1:2d}. {readable_name(row['feature'], source=source)}  {row['value']:.3f}"
         for i, row in enumerate(rows[:n])
     ]

@@ -70,6 +70,22 @@ js_analyzer:
   reports_dir: reports/js_analysis
   workers: 4
 
+# Behavioral intent mapping (Part 8): scripts/map_behavior.py
+# Sources / sinks / exfil endpoints / taint limits: configs/sources_sinks.yaml;
+# patterns + severities: behavior_patterns.yaml; intent vector: behavior_features.yaml.
+behavior:
+  output_dir: data/processed/behavior
+  reports_dir: reports/behavior
+  workers: 4
+
+# Behavior-only baseline (Part 8, ablation study): js_features + behavior_features with
+# Part 4's models, grids and protocol (configs/dom_baseline.yaml, same shared split).
+# scripts/map_behavior.py train-baseline --version v0.3
+behavior_baseline:
+  models_dir: models/behavior_baseline
+  reports_dir: reports/behavior_baseline
+  n_jobs: 4
+
 # Sample collection (Part 1 Batch B): scripts/collect.py
 collection:
   candidates_csv: data/metadata/candidates.csv
