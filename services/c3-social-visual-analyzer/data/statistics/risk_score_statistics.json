@@ -1,0 +1,179 @@
+{
+  "samples": 1419,
+  "level_counts": {
+    "LOW": 688,
+    "MEDIUM": 395,
+    "HIGH": 336
+  },
+  "level_counts_by_source": {
+    "DIFrauD job_scams": {
+      "LOW": 96,
+      "HIGH": 98,
+      "MEDIUM": 6
+    },
+    "Fakeddit v2.0 multimodal_only_samples (train)": {
+      "LOW": 485,
+      "MEDIUM": 382,
+      "HIGH": 133
+    },
+    "Phish360 (Multimodal-Phishing-Benchmarks)": {
+      "LOW": 102,
+      "HIGH": 95,
+      "MEDIUM": 3
+    },
+    "manual": {
+      "LOW": 5,
+      "MEDIUM": 4,
+      "HIGH": 10
+    }
+  },
+  "component_coverage": {
+    "text": 1419,
+    "ocr": 122,
+    "visual": 1019,
+    "brand": 1019,
+    "website": 1
+  },
+  "evaluation_test_split": {
+    "n": 63,
+    "levels_by_label": {
+      "legit": {
+        "LOW": 25,
+        "MEDIUM": 2,
+        "HIGH": 5
+      },
+      "scam": {
+        "LOW": 4,
+        "MEDIUM": 3,
+        "HIGH": 24
+      }
+    },
+    "auc": {
+      "text": {
+        "n": 63,
+        "auc": 0.8876
+      },
+      "ocr": {
+        "n": 3,
+        "auc": 1.0
+      },
+      "visual": {
+        "n": 3,
+        "auc": 0.0
+      },
+      "brand": {
+        "n": 3,
+        "auc": 0.0
+      },
+      "score": {
+        "n": 63,
+        "auc": 0.8886
+      }
+    },
+    "high_or_medium_recall_scam": 0.871,
+    "high_precision": 0.8276
+  },
+  "evaluation_all_verified_optimistic": {
+    "n": 419,
+    "levels_by_label": {
+      "legit": {
+        "LOW": 188,
+        "MEDIUM": 8,
+        "HIGH": 13
+      },
+      "scam": {
+        "LOW": 15,
+        "MEDIUM": 5,
+        "HIGH": 190
+      }
+    },
+    "auc_score": {
+      "n": 419,
+      "auc": 0.9705
+    }
+  },
+  "manual_posts": {
+    "n": 19,
+    "levels_by_label": {
+      "legit": {
+        "LOW": 5,
+        "MEDIUM": 4,
+        "HIGH": 0
+      },
+      "scam": {
+        "LOW": 0,
+        "MEDIUM": 0,
+        "HIGH": 10
+      }
+    },
+    "auc": {
+      "text": {
+        "n": 19,
+        "auc": 1.0
+      },
+      "ocr": {
+        "n": 18,
+        "auc": 0.9375
+      },
+      "visual": {
+        "n": 19,
+        "auc": 0.3222
+      },
+      "brand": {
+        "n": 19,
+        "auc": 0.3111
+      },
+      "score": {
+        "n": 19,
+        "auc": 1.0
+      }
+    }
+  },
+  "fusion_rule": {
+    "weights": {
+      "text": 0.5,
+      "ocr": 0.15,
+      "visual": 0.15,
+      "website": 0.2
+    },
+    "brand_weight_if_mismatch": 0.1,
+    "mismatch_boost": {
+      "strong": 0.25,
+      "moderate": 0.15,
+      "weak": 0.05
+    },
+    "low_flag_boost": 0.03,
+    "low_flag_cap": 0.09,
+    "levels": {
+      "HIGH": ">= 0.7",
+      "MEDIUM": ">= 0.4",
+      "LOW": "< 0.4"
+    },
+    "floor": "LOOKALIKE_DOMAIN or claimed-brand BRAND_DOMAIN_MISMATCH -> at least MEDIUM"
+  },
+  "visual_prompts": {
+    "threat": [
+      "a fake giveaway post asking people to click a link",
+      "a scam advertisement promising free money or prizes",
+      "a phishing login page asking for a password",
+      "a fake bank or delivery notice asking for payment details",
+      "a cryptocurrency investment scam post",
+      "a fake job offer asking for a fee"
+    ],
+    "benign": [
+      "an ordinary personal photo",
+      "a normal news photo",
+      "a legitimate company advertisement",
+      "a meme or funny picture",
+      "a screenshot of an ordinary website",
+      "a photo of everyday objects or places"
+    ]
+  },
+  "notes": [
+    "Preliminary hand-set rule; weights are not learned.",
+    "Text model saw the train split, so 'all verified' metrics are optimistic; use the test split.",
+    "Fakeddit rows are not_annotated: their levels are not evaluated."
+  ],
+  "runtime_seconds": 172.8,
+  "created_at": "2026-10-15T10:14:59.827072+00:00"
+}

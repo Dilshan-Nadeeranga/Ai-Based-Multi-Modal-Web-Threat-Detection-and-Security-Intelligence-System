@@ -1,0 +1,39 @@
+{
+  "task": "Preliminary Multimodal Risk Score",
+  "items": [
+    {
+      "item": "Collect text threat score",
+      "done": true
+    },
+    {
+      "item": "Collect OCR threat score",
+      "done": true
+    },
+    {
+      "item": "Collect visual threat score",
+      "done": true
+    },
+    {
+      "item": "Collect brand similarity score",
+      "done": true
+    },
+    {
+      "item": "Collect website similarity score",
+      "done": true
+    },
+    {
+      "item": "Add consistency/mismatch features",
+      "done": true
+    },
+    {
+      "item": "Create preliminary fusion rule",
+      "done": true
+    },
+    {
+      "item": "Generate LOW / MEDIUM / HIGH result",
+      "done": true
+    }
+  ],
+  "done_count": 8,
+  "updated_at": "2026-10-15T10:14:59.865679+00:00"
+}
