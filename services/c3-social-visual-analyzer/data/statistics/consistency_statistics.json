@@ -1,0 +1,77 @@
+{
+  "samples": 1419,
+  "coverage": {
+    "brand_domain:mismatch": 43,
+    "brand_domain:name_in_domain": 1,
+    "brand_domain:not_available": 1343,
+    "brand_domain:unverifiable": 32,
+    "ocr_brand:computed": 40,
+    "ocr_brand:no_visual_brand": 2,
+    "ocr_brand:not_available": 1377,
+    "post_web_brand:computed": 1,
+    "post_web_brand:not_available": 1418,
+    "post_web_image:computed": 1,
+    "post_web_image:not_available": 1418,
+    "text_brand:computed": 190,
+    "text_brand:no_visual_brand": 58,
+    "text_brand:not_available": 1171,
+    "text_image:computed": 1019,
+    "text_image:not_available": 400,
+    "text_ocr:computed": 122,
+    "text_ocr:not_available": 1297
+  },
+  "flag_counts": {
+    "VISUAL_BRAND_UNMENTIONED": 184,
+    "TEXT_IMAGE_LOW_ALIGNMENT": 58,
+    "BRAND_DOMAIN_MISMATCH": 43,
+    "TEXT_OCR_DIVERGENT": 14,
+    "UNRESOLVED_SHORT_LINK": 3,
+    "POST_WEBSITE_BRAND_CONFLICT": 1,
+    "TEXT_VISUAL_BRAND_CONFLICT": 1
+  },
+  "samples_with_flags": 289,
+  "brand_identity_mismatch": 45,
+  "verified_label_rates": {
+    "legit": {
+      "n": 209,
+      "any_flag": 0.0622,
+      "brand_mismatch": 0.0431,
+      "high_flag": 0.0,
+      "POST_WEBSITE_BRAND_CONFLICT": 0.0048,
+      "VISUAL_BRAND_UNMENTIONED": 0.0191,
+      "BRAND_DOMAIN_MISMATCH": 0.0383
+    },
+    "scam": {
+      "n": 210,
+      "any_flag": 0.1952,
+      "brand_mismatch": 0.1667,
+      "high_flag": 0.1571,
+      "VISUAL_BRAND_UNMENTIONED": 0.0238,
+      "UNRESOLVED_SHORT_LINK": 0.0143,
+      "BRAND_DOMAIN_MISMATCH": 0.1667
+    }
+  },
+  "brand_mismatch_as_scam_signal": {
+    "precision": 0.7955,
+    "recall": 0.1667,
+    "note": "Verified rows only. Flags are evidence for review, not labels."
+  },
+  "text_image_cosine": {
+    "n": 1019,
+    "p10": 0.1983,
+    "median": 0.2839
+  },
+  "thresholds": {
+    "text_image_low": 0.18,
+    "text_ocr_semantic_low": 0.6,
+    "text_ocr_lexical_low": 0.1,
+    "post_web_visual_low": 0.5,
+    "min_ocr_chars": 15
+  },
+  "models": {
+    "clip": "openai/clip-vit-base-patch16",
+    "visual_brand": "logo detector match (>=0.78) else CLIP zero-shot (accepted)"
+  },
+  "runtime_seconds": 285.1,
+  "created_at": "2026-10-15T05:02:46.509227+00:00"
+}
