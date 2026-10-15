@@ -1,0 +1,21 @@
+feature,reason,detail
+clipboard_read_count,constant,always 0
+keylogging_present,constant,always 0
+keylogging_count,constant,always 0
+keylogging_max_severity,constant,always 0
+clipboard_manipulation_present,constant,always 0
+clipboard_manipulation_count,constant,always 0
+clipboard_manipulation_max_severity,constant,always 0
+suspicious_download_present,constant,always 0
+suspicious_download_count,constant,always 0
+suspicious_download_max_severity,constant,always 0
+clipboard_crypto_address,constant,always 0
+clickfix_command,constant,always 0
+risky_auto_download,constant,always 0
+third_party_script_no_integrity_count,correlated,"|r| = 0.9979 with third_party_script_count (kept, earlier in dictionary)"
+credential_access_max_severity,correlated,"|r| = 1.0000 with credential_access_present (kept, earlier in dictionary)"
+external_data_transmission_count,correlated,"|r| = 0.9897 with external_data_transmission_present (kept, earlier in dictionary)"
+credential_exfiltration_max_severity,correlated,"|r| = 0.9849 with credential_exfiltration_present (kept, earlier in dictionary)"
+forced_redirect_max_severity,correlated,"|r| = 1.0000 with forced_redirect_present (kept, earlier in dictionary)"
+obfuscated_execution_max_severity,correlated,"|r| = 1.0000 with obfuscated_execution_present (kept, earlier in dictionary)"
+anti_analysis_max_severity,correlated,"|r| = 1.0000 with anti_analysis_count (kept, earlier in dictionary)"

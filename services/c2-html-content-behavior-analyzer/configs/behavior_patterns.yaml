@@ -1,0 +1,164 @@
+# Behavioral patterns (Part 8, tasks 4-10). Read by c2_analyzer/behavior/rules.py,
+# applied by c2_analyzer/behavior/patterns.py.
+#
+# Severity scheme (viva):
+#   critical  data theft / malware delivery is directly visible in the code
+#             (credential -> external request, keylogger -> network, ClickFix command)
+#   high      strong intent, one link missing or typical of scams
+#             (auto redirect to another site, decode -> eval, auto .exe download)
+#   medium    suspicious, but also seen on normal sites (cloaking checks, packed + eval)
+#   low       context only (credential fields read, right-click blocked)
+# A finding is DESCRIPTIVE evidence for Part 9's fusion and explanations - not a verdict.
+#
+# Each pattern has a plain-English description (used in explanations), the evidence it
+# needs, and one or more VARIANTS (severity + message template). Template fields are
+# filled by patterns.py: {source}, {destination}, {sink_api}, {sink_line}, {count}, {fields},
+# {endpoint}, {trigger}, {kind}, {file}, {delay}, {checks}, {signatures}, {techniques},
+# {decoder}, {executor}.
+# Library code (Part 7 in_library) never produces a finding.
+version: behavior_patterns_v1
+
+severity_scores: {low: 1, medium: 2, high: 3, critical: 4}
+
+# behavior_risk_score (0-100): sum over patterns of the weight of that pattern's
+# highest severity, capped. Descriptive only - Part 9 decides the verdict.
+risk_score:
+  weights: {critical: 50, high: 25, medium: 10, low: 3}
+  cap: 100
+
+patterns:
+  credential_access:
+    name: Credential access
+    task: 4
+    description: "Page code reads the value of credential fields (password, email, OTP, card ...). Normal for login validation - context only."
+    evidence: "a credential_input source in page-own code"
+    variants:
+      read: {severity: low, message: "Page code reads {count} credential field value(s) ({fields})."}
+
+  external_data_transmission:
+    name: External data transmission
+    task: 5
+    description: "Data read in the page (cookies, storage, form fields, page address ...) is sent to another site. Untainted external requests (plain analytics calls) are only counted, never flagged."
+    evidence: "a flow from any non-credential source to a network_external sink"
+    variants:
+      sensitive: {severity: medium, message: "Sends {source} to {destination} ({sink_api}, line {sink_line})."}
+      low_sensitivity: {severity: low, message: "Sends {source} to {destination} ({sink_api}, line {sink_line})."}
+
+  credential_exfiltration:
+    name: Credential exfiltration
+    task: 6
+    description: "Credentials typed into the page are sent somewhere else than a normal form post: to another site, a data-collection service, inside a redirect URL, or by changing where the form submits."
+    evidence: "a flow from credential_input / form data to network_external, network_unknown or a redirect URL; or form.action set to another site"
+    variants:
+      external: {severity: critical, message: "Sends {source} to {destination} ({sink_api}, line {sink_line})."}
+      known_endpoint: {severity: critical, message: "Sends {source} to {endpoint} ({destination}, {sink_api}, line {sink_line})."}
+      redirect_url: {severity: critical, message: "Puts {source} into the URL of a redirect to {destination} (line {sink_line})."}
+      form_action: {severity: critical, message: "Changes the form's action to {destination} (line {sink_line}) - the next submit sends {fields} there."}
+      unknown_destination: {severity: high, message: "Sends {source} to an address built at run time ({sink_api}, line {sink_line})."}
+      form_data_external: {severity: medium, message: "Sends a whole form without credential fields ({source}) to {destination} ({sink_api}, line {sink_line})."}
+    factors:
+      known_endpoint: "destination is a known data-collection service ({endpoint})"
+      encoded: "data is encoded before sending ({encodings})"
+      submit_hijack: "runs in a submit handler that calls preventDefault() - the real submit is stopped and the data sent elsewhere"
+      unknown_destination: "destination is built at run time"
+      identity_only: "only identity fields (email / username), no password, card or OTP - one level lower (two for a legitimate form service)"
+
+  keylogging:
+    name: Keylogging
+    task: 6
+    description: "Every key the user types is captured and sent away (or stored) - a keylogger."
+    evidence: "a flow from keystrokes (event.key / keyCode inside a key listener) to a network sink or storage"
+    variants:
+      network: {severity: critical, message: "Captures keystrokes and sends them to {destination} ({sink_api}, line {sink_line})."}
+      storage: {severity: medium, message: "Captures keystrokes and stores them ({sink_api}, line {sink_line})."}
+
+  forced_redirect:
+    name: Forced redirect
+    task: 7
+    description: "The page sends the visitor to another site by itself (on load, on a timer, right after credentials are captured, or only when it is not being analysed)."
+    evidence: "a redirect_external sink that runs without a user action, after a credential read, after history manipulation, a meta refresh to another site, or a redirect gated on browser checks"
+    variants:
+      automatic: {severity: high, message: "Redirects to {destination} without any user action ({trigger}; line {sink_line})."}
+      after_credentials: {severity: high, message: "Redirects to {destination} right after reading credentials (line {sink_line})."}
+      history_hijack: {severity: high, message: "Manipulates the browser history and redirects to {destination} (line {sink_line}) - the Back button is hijacked."}
+      meta_refresh: {severity: high, message: "A meta refresh sends the visitor to {destination} after {delay} s."}
+      cloaking: {severity: medium, message: "Redirects to {destination} only after checking {checks} (line {sink_line}) - cloaking from scanners / bots."}
+    factors:
+      cloaking: "the redirect depends on {checks}"
+      history: "history.pushState / popstate handling on the same page"
+
+  clipboard_manipulation:
+    name: Clipboard manipulation
+    task: 8
+    description: "The page puts attacker-chosen content in the clipboard: a crypto wallet address (clipboard hijacking) or a command the victim is told to paste and run (ClickFix / paste-and-run), or it reads and sends the clipboard."
+    evidence: "a clipboard_write of a crypto address / shell command, a copy listener rewriting clipboardData, or clipboard_read -> network"
+    variants:
+      clickfix: {severity: critical, message: "Copies a {kind} command to the clipboard ({trigger}; line {sink_line}) - the classic 'paste this into Run / PowerShell' lure."}
+      crypto_hijack: {severity: critical, message: "Replaces the clipboard with a {kind} wallet address ({trigger}; line {sink_line})."}
+      crypto_on_click: {severity: high, message: "Copies a {kind} wallet address when the user clicks (line {sink_line}) - check the address really belongs to the site."}
+      copy_rewrite: {severity: high, message: "A copy/cut listener rewrites what the user copies (clipboardData.setData, line {sink_line})."}
+      clipboard_exfiltration: {severity: high, message: "Reads the clipboard and sends it to {destination} ({sink_api}, line {sink_line})."}
+
+  suspicious_download:
+    name: Suspicious download
+    task: 9
+    description: "The page starts a download of a risky file type (executable, script, installer, archive) from code, often without a click, sometimes with the file built from base64 in the page."
+    evidence: "a programmatic download (a.download + click, Blob URL, msSaveBlob, location to a file) of a risky extension; auto-triggered and/or decoded content raise the level"
+    variants:
+      auto_risky: {severity: high, message: "Downloads {file} automatically ({trigger}; line {sink_line})."}
+      user_risky: {severity: medium, message: "Downloads {file} from code when the user clicks (line {sink_line})."}
+      decoded_blob: {severity: medium, message: "Builds a file from decoded data in the page and downloads it ({trigger}; line {sink_line})."}
+    factors:
+      decoded: "the file content is decoded in the page (atob / fromCharCode) - no server request to inspect"
+      auto: "no click needed ({trigger})"
+
+  obfuscated_execution:
+    name: Obfuscated execution
+    task: 10
+    description: "Hidden code is decoded and run (eval(atob(...)), Function(unescape(...)), document.write of decoded HTML), or a packed / obfuscated script calls eval. Minified code alone never counts."
+    evidence: "a flow from decoded_string to code_execution / html_injection, or an obfuscation signature (Part 7) plus code execution in the same script"
+    variants:
+      decode_to_exec: {severity: high, message: "Decodes a hidden string ({decoder}) and runs it with {executor} (line {sink_line})."}
+      decode_to_html: {severity: high, message: "Decodes a hidden string ({decoder}) containing {active} and writes it into the page with {executor} (line {sink_line})."}
+      decode_to_html_dynamic: {severity: medium, message: "Decodes a string built at run time ({decoder}) and writes it into the page with {executor} (line {sink_line})."}
+      packed_eval: {severity: medium, message: "An obfuscated script ({signatures}) runs code with {executor} (line {sink_line})."}
+      lexical: {severity: medium, message: "An unparsable script both decodes ({decoder}) and executes strings ({executor}) - regex evidence only."}
+    # packed_eval: an obfuscation signature from Part 7 (packer, jjencode, string_array ...)
+    # or very high entropy, plus code execution in the SAME script. "minified" never counts.
+    # decode -> HTML: a decoded LITERAL is read statically; it is only "high" when it contains
+    # active content (decoded CSS / plain markup from a plugin is normal)
+    active_content: '(?i)<\s*(?:script|iframe|object|embed|form|meta|base)\b|javascript:|\bon[a-z]{3,}\s*=|\beval\s*\(|document\.write|\blocation\s*[.=]'
+    max_exec_chain_steps: 6                # decode -> eval through a longer chain is medium (imprecise)
+    high_entropy: 5.5                      # bits per character (normal code ~4.5-5.0)
+    high_entropy_min_chars: 2000
+
+  anti_analysis:
+    name: Anti-analysis
+    task: extra
+    description: "The page tries to stop people from inspecting it: blocks right-click / view-source / F12, detects DevTools, or traps debuggers."
+    evidence: "contextmenu blocking, DevTools key blocking (F12, Ctrl+Shift+I/J/C, Ctrl+U), debugger traps, DevTools size checks, text-selection blocking"
+    variants:
+      one: {severity: low, message: "Anti-analysis: {techniques}."}
+      several: {severity: medium, message: "Anti-analysis ({count} techniques): {techniques}."}
+
+# Literal content checks (clipboard_manipulation, suspicious_download).
+crypto_address_patterns:
+  Bitcoin: '^(?:bc1[ac-hj-np-z02-9]{25,87}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$'
+  Ethereum: '^0x[a-fA-F0-9]{40}$'
+  Tron: '^T[1-9A-HJ-NP-Za-km-z]{33}$'
+  Solana: '^[1-9A-HJ-NP-Za-km-z]{32,44}$'
+clickfix_patterns:
+  PowerShell: '(?i)\b(?:powershell|pwsh)(?:\.exe)?\b|\biex\b|invoke-expression|invoke-webrequest|\biwr\s'
+  mshta: '(?i)\bmshta(?:\.exe)?\b'
+  cmd: '(?i)\bcmd(?:\.exe)?\s+/[ck]\b'
+  curl|bash: '(?i)\b(?:curl|wget)\b[^\n|]{0,300}\|\s*(?:ba|z)?sh\b'
+  LOLBin: '(?i)\b(?:certutil|bitsadmin|rundll32|regsvr32|wscript|cscript)(?:\.exe)?\b'
+risky_download_extensions: [exe, msi, apk, scr, js, jse, vbs, vbe, hta, bat, cmd, ps1, zip, rar, 7z,
+                            iso, img, dmg, pkg, jar, lnk, appx, msix, xll, wsf, cab]
+
+# anti_analysis: key codes / letters that open DevTools or the source view
+devtools_keys:
+  key_codes: [123]                       # F12
+  ctrl_shift_letters: [I, J, C, K]       # with ctrlKey && shiftKey (73, 74, 67, 75)
+  ctrl_letters: [U]                      # view source (85)
+selection_events: [selectstart, dragstart]

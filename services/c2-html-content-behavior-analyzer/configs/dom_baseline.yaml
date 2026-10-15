@@ -1,0 +1,63 @@
+# DOM baseline classifier (Part 4) - "Baseline 1" of the ablation study.
+#
+# Three classic models on the Part 3 feature vector (configs/dom_features.yaml).
+# Each model has FIXED settings (never searched) and a SMALL grid. The grid point
+# with the best mean macro-F1 over the grouped CV folds (train+val) wins, is refit
+# on train+val, and only then evaluated once on the test split.
+#
+# Why small grids: v0.1 has ~240 training pages. A big search on so little data
+# mostly fits noise in the CV folds ("winner's curse"); a few sensible values per
+# knob are enough for a baseline and keep the run under a minute.
+
+selection_metric: macro_f1     # every class counts the same, whatever its size
+
+feature_cleaning:
+  # decided on the TRAIN split only (never val/test): drop constant features and
+  # one of each pair with |Pearson r| above this (the later one in the dictionary)
+  correlation_threshold: 0.98
+
+models:
+  logreg:
+    display_name: Logistic Regression
+    # StandardScaler + multinomial (softmax) logistic regression
+    fixed:
+      max_iter: 5000
+      class_weight: balanced
+    grid:
+      C: [0.01, 0.1, 1.0, 10.0]          # inverse L2 strength (small = simpler model)
+
+  random_forest:
+    display_name: Random Forest
+    # 1 thread: on ~200 pages the thread start-up costs more than 300 small trees
+    # (measured on Windows: fit 0.5 s vs 1.0 s, predict 11 ms vs 92 ms). Remove this
+    # line to use the global dom_baseline.n_jobs once the dataset is much larger.
+    n_jobs: 1
+    fixed:
+      n_estimators: 300
+      class_weight: balanced_subsample   # re-balanced inside every bootstrap sample
+    grid:
+      max_depth: [null, 8]
+      min_samples_leaf: [1, 3]
+      max_features: [sqrt, 0.5]
+
+  xgboost:
+    display_name: XGBoost
+    # multi:softprob; class balance via sample weights (XGBoost has no class_weight)
+    fixed:
+      n_estimators: 300
+      tree_method: hist
+      objective: multi:softprob
+      eval_metric: mlogloss
+    grid:
+      max_depth: [3, 6]
+      learning_rate: [0.05, 0.1]
+      subsample: [0.8, 1.0]
+
+evaluation:
+  benign_fpr_target: 0.02        # proposal: at most 2 % of benign pages flagged as a threat
+  min_language_support: 10       # per-language results below this many test pages get a small-n warning
+
+importance:
+  top_n: 15
+  permutation_repeats: 20        # Random Forest permutation importance on test (macro-F1 drop)
+  contributions: 5               # top features shown by predict / the inspector

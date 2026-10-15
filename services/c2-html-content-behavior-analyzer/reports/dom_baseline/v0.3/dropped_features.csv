@@ -1,0 +1,5 @@
+feature,reason,detail
+base_url_known,constant,always 1
+meta_refresh_external,constant,always 0
+element_count,correlated,"|r| = 0.9964 with node_count (kept, earlier in dictionary)"
+form_action_to_known_form_service,correlated,"|r| = 1.0000 with password_form_external_action (kept, earlier in dictionary)"

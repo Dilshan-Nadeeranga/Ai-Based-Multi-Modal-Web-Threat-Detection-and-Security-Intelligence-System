@@ -1,0 +1,121 @@
+{
+  "version": "v0.3",
+  "created_at": "2026-10-15T06:55:55+05:30",
+  "test_pages": 68,
+  "classes": [
+    "benign",
+    "phishing",
+    "fake_ecommerce",
+    "crypto_scam",
+    "malware_delivery"
+  ],
+  "best": {
+    "dom": {
+      "model": "Random Forest",
+      "cv_macro_f1": 0.7006009011107482,
+      "cv_macro_f1_std": 0.07717277879953352,
+      "macro_f1": 0.7861111111111111,
+      "weighted_f1": 0.8274101307189542,
+      "accuracy": 0.8235294117647058,
+      "balanced_accuracy": 0.8104323780794369,
+      "roc_auc_ovr_macro": 0.9679060562297066,
+      "benign_fpr": 0.17647058823529413,
+      "per_class_f1": {
+        "benign": 0.8888888888888888,
+        "phishing": 0.75,
+        "fake_ecommerce": 1.0,
+        "crypto_scam": 0.6666666666666666,
+        "malware_delivery": 0.625
+      }
+    },
+    "behavior": {
+      "model": "Random Forest",
+      "cv_macro_f1": 0.6198821254374565,
+      "cv_macro_f1_std": 0.07778488901007173,
+      "macro_f1": 0.6823368869936034,
+      "weighted_f1": 0.7554780718257453,
+      "accuracy": 0.7352941176470589,
+      "balanced_accuracy": 0.6833961789844143,
+      "roc_auc_ovr_macro": 0.8607863239902874,
+      "benign_fpr": 0.20588235294117646,
+      "per_class_f1": {
+        "benign": 0.8059701492537313,
+        "phishing": 0.72,
+        "fake_ecommerce": 0.9333333333333333,
+        "crypto_scam": 0.2857142857142857,
+        "malware_delivery": 0.6666666666666666
+      }
+    }
+  },
+  "models": {
+    "dom": {
+      "logreg": {
+        "display_name": "Logistic Regression",
+        "cv_macro_f1": 0.5988942047954218,
+        "macro_f1": 0.6581038589227943,
+        "weighted_f1": 0.7439914563829944,
+        "accuracy": 0.7352941176470589,
+        "balanced_accuracy": 0.7111739567621921,
+        "roc_auc_ovr_macro": 0.8996267573755606,
+        "benign_fpr": 0.20588235294117646
+      },
+      "random_forest": {
+        "display_name": "Random Forest",
+        "cv_macro_f1": 0.7006009011107482,
+        "macro_f1": 0.7861111111111111,
+        "weighted_f1": 0.8274101307189542,
+        "accuracy": 0.8235294117647058,
+        "balanced_accuracy": 0.8104323780794369,
+        "roc_auc_ovr_macro": 0.9679060562297066,
+        "benign_fpr": 0.17647058823529413
+      },
+      "xgboost": {
+        "display_name": "XGBoost",
+        "cv_macro_f1": 0.6843486967140505,
+        "macro_f1": 0.764606877233652,
+        "weighted_f1": 0.8171785955761616,
+        "accuracy": 0.8235294117647058,
+        "balanced_accuracy": 0.7749748617395676,
+        "roc_auc_ovr_macro": 0.9637713388626,
+        "benign_fpr": 0.11764705882352941
+      }
+    },
+    "behavior": {
+      "logreg": {
+        "display_name": "Logistic Regression",
+        "cv_macro_f1": 0.5003693073933504,
+        "macro_f1": 0.41437788018433175,
+        "weighted_f1": 0.5102130001560741,
+        "accuracy": 0.45588235294117646,
+        "balanced_accuracy": 0.44914529914529916,
+        "roc_auc_ovr_macro": 0.7583331633672614,
+        "benign_fpr": 0.5
+      },
+      "random_forest": {
+        "display_name": "Random Forest",
+        "cv_macro_f1": 0.6198821254374565,
+        "macro_f1": 0.6823368869936034,
+        "weighted_f1": 0.7554780718257453,
+        "accuracy": 0.7352941176470589,
+        "balanced_accuracy": 0.6833961789844143,
+        "roc_auc_ovr_macro": 0.8607863239902874,
+        "benign_fpr": 0.20588235294117646
+      },
+      "xgboost": {
+        "display_name": "XGBoost",
+        "cv_macro_f1": 0.5820111571454868,
+        "macro_f1": 0.686031746031746,
+        "weighted_f1": 0.7534780578898227,
+        "accuracy": 0.75,
+        "balanced_accuracy": 0.7082830568124686,
+        "roc_auc_ovr_macro": 0.8658245753563844,
+        "benign_fpr": 0.23529411764705882
+      }
+    }
+  },
+  "features": {
+    "behavior": 70,
+    "dom": 48
+  },
+  "notes": []
+}
