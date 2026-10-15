@@ -9,15 +9,15 @@ export default function DuplicateEvidence({ preprocessing }) {
         <div className="grid grid-cols-2 gap-4">
           <Field label="pHash" mono>{preprocessing.phash}</Field>
           <Field label="Duplicate status">
-            <span className={duplicate.is_duplicate ? 'text-amber-400 font-semibold' : 'text-emerald-400 font-semibold'}>
+            <span className={duplicate.is_duplicate ? 'text-amber-700 font-semibold' : 'text-emerald-700 font-semibold'}>
               {duplicate.is_duplicate ? `${duplicate.duplicate_type} duplicate` : 'No duplicate'}
             </span>
           </Field>
           <Field label="Matched sample" mono>{duplicate.matched_sample_id}</Field>
           <Field label="Hamming distance">
-            {duplicate.hash_distance ?? '—'} <span className="text-slate-500">(threshold ≤ {duplicate.threshold})</span>
+            {duplicate.hash_distance ?? '—'} <span className="text-st-muted">(threshold ≤ {duplicate.threshold})</span>
           </Field>
-          <p className="col-span-2 text-[11px] text-slate-500">Compared against {duplicate.compared_against} stored hashes. The live upload is not added to the hash store.</p>
+          <p className="col-span-2 text-[11px] text-st-muted">Compared against {duplicate.compared_against} stored hashes. The live upload is not added to the hash store.</p>
         </div>
       )}
     </Card>

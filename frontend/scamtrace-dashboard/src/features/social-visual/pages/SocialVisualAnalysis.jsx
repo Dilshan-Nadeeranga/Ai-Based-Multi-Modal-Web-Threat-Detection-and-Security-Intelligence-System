@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { DownloadCloud, ImagePlus, Loader2, Search } from 'lucide-react'
+import { BarChart3, Database, DownloadCloud, ImagePlus, Link2, Loader2, PencilLine, Search } from 'lucide-react'
+import AppShell from '../../../components/AppShell.jsx'
 import { analyzePost, dataUrlToFile, fetchSocialPost } from '../api/socialVisualApi.js'
 import AnalysisProgress from '../components/AnalysisProgress.jsx'
 import BrandAnalysisCard from '../components/BrandAnalysisCard.jsx'
@@ -19,13 +20,16 @@ import ThreatAssessment from '../components/ThreatAssessment.jsx'
 import VisualComparison from '../components/VisualComparison.jsx'
 
 const TABS = [
-  { id: 'analyze', label: 'Analyze Post' },
-  { id: 'dataset', label: 'Dataset' },
-  { id: 'models', label: 'Model Results' },
+  { id: 'analyze', label: 'Analyze Post', icon: Search },
+  { id: 'dataset', label: 'Dataset', icon: Database },
+  { id: 'models', label: 'Model Results', icon: BarChart3 },
 ]
 const PLATFORMS = ['facebook', 'instagram', 'x', 'tiktok', 'whatsapp', 'telegram', 'reddit', 'linkedin', 'youtube', 'other']
 
-const inputClass = 'w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500'
+const inputClass = 'st-autofill w-full rounded-lg bg-st-low/60 px-3 py-2.5 text-sm text-st-navy outline-none ring-1 ring-st-container transition placeholder:text-st-outline focus:bg-white focus:ring-2 focus:ring-st-blue-dark'
+const labelClass = 'text-xs font-bold uppercase tracking-wider text-st-muted'
+const cardClass = 'rounded-xl bg-white p-6 shadow-sm ring-1 ring-st-container/60'
+const primaryButton = 'flex items-center justify-center gap-2 rounded-lg bg-st-navy px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-st-navy/20 transition hover:bg-st-blue-dark disabled:cursor-not-allowed disabled:opacity-50'
 
 export default function SocialVisualAnalysis() {
   const [tab, setTab] = useState('analyze')
@@ -91,20 +95,24 @@ export default function SocialVisualAnalysis() {
   const captureStep = result?.pipeline.find((step) => step.key === 'web_capture')
 
   return (
-    <main className="flex-1 w-full bg-slate-950 text-slate-100">
-      <div className="max-w-6xl mx-auto px-4 py-10 space-y-6">
-        <header>
-          <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">ScamTrace</p>
-          <h1 className="text-2xl font-bold">Social Media &amp; Web Visual Threat Analyzer</h1>
-          <p className="text-sm text-slate-400">Analyze multimodal evidence from social-media posts</p>
+    <AppShell title="Social Visual Analysis">
+      <div className="flex w-full flex-col gap-6 px-4 py-8 md:px-8">
+        <header className="flex flex-col gap-1">
+          <span className="w-fit rounded-full bg-st-container px-2 py-0.5 text-[0.6875rem] font-bold uppercase tracking-widest text-st-blue-dark">
+            Component C3
+          </span>
+          <h1 className="font-manrope text-[1.75rem] font-bold tracking-tight text-st-navy lg:text-4xl">Social Media &amp; Web Visual Threat Analyzer</h1>
+          <p className="max-w-3xl text-base text-st-muted">
+            Analyze multimodal evidence from social media posts: text, images, logos, brands and the linked web page.
+          </p>
         </header>
 
-        <nav className="flex gap-1 border-b border-slate-800">
-          {TABS.map(({ id, label }) => (
-            <button key={id} type="button" onClick={() => setTab(id)}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === id
-                      ? 'border-sky-500 text-white' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
-              {label}
+        <nav className="flex w-fit flex-wrap gap-1 rounded-lg bg-white p-1 shadow-sm ring-1 ring-st-container/60" role="tablist">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
+                    className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold transition ${tab === id
+                      ? 'bg-st-navy-2 text-white shadow-sm' : 'text-st-muted hover:bg-st-container hover:text-st-navy'}`}>
+              <Icon className="h-4 w-4" aria-hidden="true" /> {label}
             </button>
           ))}
         </nav>
@@ -114,70 +122,88 @@ export default function SocialVisualAnalysis() {
 
         {tab === 'analyze' && (
           <>
-            <form onSubmit={handleFetch} className="bg-slate-900/80 border border-sky-900/70 rounded-xl p-6 space-y-3">
+            <form onSubmit={handleFetch} className={`${cardClass} space-y-3`}>
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-st-low text-st-blue-dark">
+                  <Link2 className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="font-manrope text-lg font-semibold text-st-navy">Fetch a Social Post</h2>
+                  <p className="text-xs text-st-muted">Paste a public Reddit or Facebook post URL to extract and analyze it automatically.</p>
+                </div>
+              </div>
               <label className="block">
-                <span className="text-xs uppercase tracking-wide text-slate-400">Social post URL (Reddit or Facebook)</span>
+                <span className={labelClass}>Social post URL (Reddit or Facebook)</span>
                 <div className="mt-1 flex flex-col sm:flex-row gap-3">
                   <input type="text" value={postUrl} onChange={(e) => setPostUrl(e.target.value)}
                          placeholder="https://www.reddit.com/r/Scams/comments/... or https://www.facebook.com/<page>/posts/..."
                          className={`flex-1 font-mono ${inputClass}`} />
-                  <button type="submit" disabled={busy || !postUrl.trim()}
-                          className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-400 px-5 py-2 text-sm font-bold tracking-wide">
-                    {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <DownloadCloud className="w-4 h-4" />} FETCH &amp; ANALYZE
+                  <button type="submit" disabled={busy || !postUrl.trim()} className={primaryButton}>
+                    {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <DownloadCloud className="w-4 h-4" />} Fetch &amp; Analyze
                   </button>
                 </div>
               </label>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-st-muted">
                 {fetching ? 'Opening the post and extracting its text, embedded URL and image…'
                   : 'Extracts the post text, embedded URL and image, fills the fields below and runs the analysis. '
                     + 'Facebook works only for public posts visible without login. You can also fill the fields manually.'}
               </p>
               {fetched && (
-                <p className="text-xs text-slate-300">
-                  Fetched {fetched.platform} · <span className="text-slate-100 font-semibold">{fetched.source_name}</span> · {fetched.post_type} post ·{' '}
+                <p className="rounded-lg bg-st-low px-3 py-2 text-xs text-st-ink">
+                  Fetched {fetched.platform} · <span className="font-semibold text-st-navy">{fetched.source_name}</span> · {fetched.post_type} post ·{' '}
                   {fetched.post_text ? 'text extracted' : 'no text'} · {fetched.image ? 'image extracted' : 'no image'} ·{' '}
                   {fetched.embedded_urls.length} embedded URL(s) ·{' '}
-                  <a href={fetched.permalink} target="_blank" rel="noreferrer" className="text-sky-400 hover:underline">open post</a>
+                  <a href={fetched.permalink} target="_blank" rel="noreferrer" className="font-semibold text-st-blue-dark hover:underline">open post</a>
                 </p>
               )}
             </form>
 
-            <form onSubmit={handleSubmit} className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 grid md:grid-cols-[1fr_260px] gap-6">
-              <div className="space-y-4">
-                <label className="block">
-                  <span className="text-xs uppercase tracking-wide text-slate-400">Platform</span>
-                  <select value={platform} onChange={(e) => setPlatform(e.target.value)} className={`mt-1 ${inputClass}`}>
-                    {PLATFORMS.map((p) => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </label>
-                <label className="block">
-                  <span className="text-xs uppercase tracking-wide text-slate-400">Post text</span>
-                  <textarea rows={5} value={postText} onChange={(e) => setPostText(e.target.value)}
-                            placeholder="Paste the caption / message of the post" className={`mt-1 ${inputClass}`} />
-                </label>
-                <label className="block">
-                  <span className="text-xs uppercase tracking-wide text-slate-400">Embedded URL</span>
-                  <input type="text" value={embeddedUrl} onChange={(e) => setEmbeddedUrl(e.target.value)}
-                         placeholder="https://example.com/..." className={`mt-1 font-mono ${inputClass}`} />
-                </label>
+            <form onSubmit={handleSubmit} className={`${cardClass} space-y-5`}>
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-st-low text-st-blue-dark">
+                  <PencilLine className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="font-manrope text-lg font-semibold text-st-navy">Enter Post Details</h2>
+                  <p className="text-xs text-st-muted">Provide the post text, an image, an embedded URL, or any combination.</p>
+                </div>
               </div>
-              <div className="flex flex-col gap-4">
-                <label className="flex-1 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-700 hover:border-sky-600 p-4 cursor-pointer text-center">
-                  {preview
-                    ? <img src={preview} alt="Selected post" className="max-h-48 rounded object-contain" />
-                    : <><ImagePlus className="w-8 h-8 text-slate-500" /><span className="text-sm text-slate-400">Upload post image</span></>}
-                  <span className="text-[11px] text-slate-500 break-all">{image ? image.name : 'JPEG, PNG, WebP'}</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => setImage(e.target.files?.[0] || null)} />
-                </label>
-                {image && <button type="button" onClick={() => setImage(null)} className="text-xs text-slate-400 hover:text-slate-200">Remove image</button>}
-                <button type="submit" disabled={!canSubmit}
-                        className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-400 px-4 py-3 text-sm font-bold tracking-wide">
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} ANALYZE POST
-                </button>
+              <div className="grid md:grid-cols-[1fr_280px] gap-6">
+                <div className="space-y-4">
+                  <label className="block">
+                    <span className={labelClass}>Platform</span>
+                    <select value={platform} onChange={(e) => setPlatform(e.target.value)} className={`mt-1 capitalize ${inputClass}`}>
+                      {PLATFORMS.map((p) => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className={labelClass}>Post text</span>
+                    <textarea rows={5} value={postText} onChange={(e) => setPostText(e.target.value)}
+                              placeholder="Paste the caption / message of the post" className={`mt-1 ${inputClass}`} />
+                  </label>
+                  <label className="block">
+                    <span className={labelClass}>Embedded URL</span>
+                    <input type="text" value={embeddedUrl} onChange={(e) => setEmbeddedUrl(e.target.value)}
+                           placeholder="https://example.com/..." className={`mt-1 font-mono ${inputClass}`} />
+                  </label>
+                </div>
+                <div className="flex flex-col gap-4">
+                  <label className="flex-1 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-st-outline/60 bg-st-low/60 hover:border-st-blue hover:bg-st-low p-4 cursor-pointer text-center transition">
+                    {preview
+                      ? <img src={preview} alt="Selected post" className="max-h-48 rounded object-contain" />
+                      : <><ImagePlus className="w-8 h-8 text-st-blue-dark" /><span className="text-sm font-semibold text-st-navy">Upload post image</span></>}
+                    <span className="text-[11px] text-st-muted break-all">{image ? image.name : 'JPEG, PNG, WebP'}</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => setImage(e.target.files?.[0] || null)} />
+                  </label>
+                  {image && <button type="button" onClick={() => setImage(null)} className="text-xs font-semibold text-st-muted hover:text-st-error">Remove image</button>}
+                  <button type="submit" disabled={!canSubmit} className={`${primaryButton} py-3`}>
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Analyze Post
+                  </button>
+                </div>
               </div>
             </form>
 
-            {error && <p className="rounded-lg border border-red-800 bg-red-950/50 p-4 text-sm text-red-300">{error}</p>}
+            {error && <p role="alert" className="rounded-lg bg-st-error-bg p-4 text-sm text-st-error-ink">{error}</p>}
             {(loading || result) && <AnalysisProgress running={loading} pipeline={result?.pipeline} />}
 
             {result && (
@@ -202,6 +228,6 @@ export default function SocialVisualAnalysis() {
           </>
         )}
       </div>
-    </main>
+    </AppShell>
   )
 }

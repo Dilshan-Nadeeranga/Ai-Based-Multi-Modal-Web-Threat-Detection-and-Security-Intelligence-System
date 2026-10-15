@@ -8,12 +8,12 @@ export default function VisualComparison({ postImage, screenshot, visual }) {
         <>
           <div className="grid grid-cols-2 gap-4">
             <figure>
-              <img src={postImage} alt="Post" className="w-full h-64 object-contain rounded-lg border border-slate-800 bg-slate-950" />
-              <figcaption className="mt-1 text-center text-xs text-slate-500">Post image</figcaption>
+              <img src={postImage} alt="Post" className="w-full h-64 object-contain rounded-lg border border-st-container bg-st-low" />
+              <figcaption className="mt-1 text-center text-xs text-st-muted">Post image</figcaption>
             </figure>
             <figure>
-              <img src={screenshot} alt="Website" className="w-full h-64 object-contain rounded-lg border border-slate-800 bg-slate-950" />
-              <figcaption className="mt-1 text-center text-xs text-slate-500">Website screenshot</figcaption>
+              <img src={screenshot} alt="Website" className="w-full h-64 object-contain rounded-lg border border-st-container bg-st-low" />
+              <figcaption className="mt-1 text-center text-xs text-st-muted">Website screenshot</figcaption>
             </figure>
           </div>
           <div className="mt-4 space-y-3">

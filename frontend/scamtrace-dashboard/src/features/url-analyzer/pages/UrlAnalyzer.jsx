@@ -1,8 +1,100 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import axios from 'axios';
-import { Search, ShieldAlert, ShieldCheck, AlertTriangle, Layers, Globe, Code, Key, Terminal, GitFork, Cpu, Shield, CornerDownRight, ExternalLink, Link2, BrainCircuit, Scale, Sliders, FileText, CheckCircle2, Info, ArrowLeft } from 'lucide-react';
+import { Search, ShieldAlert, ShieldCheck, AlertTriangle, Globe, Code, Key, Terminal, GitFork, Cpu, Shield, CornerDownRight, ExternalLink, Link2, BrainCircuit, Scale, Sliders, FileText, CheckCircle2, Info, Network, Fingerprint } from 'lucide-react';
+import AppShell from '../../../components/AppShell.jsx';
 
+const TONES = {
+  danger: 'text-st-error font-bold',
+  warn: 'text-amber-700 font-semibold',
+  ok: 'text-emerald-700',
+  accent: 'text-st-blue-dark',
+  muted: 'text-st-outline',
+  default: 'text-st-ink',
+};
+
+const LAYERS = [
+  { icon: Fingerprint, title: 'Lexical & Structural', text: 'URL length, entropy, homoglyphs, punycode and suspicious keywords.' },
+  { icon: Globe, title: 'Domain Intelligence', text: 'Registration age, RDAP, DNS records and reputation feeds.' },
+  { icon: Network, title: 'Threat Infrastructure', text: 'DGA patterns, URL shorteners and safe redirect-chain tracing.' },
+  { icon: BrainCircuit, title: 'Machine Learning', text: 'Supervised classifier probability with explainable risk scoring.' },
+];
+
+function scoreTone(score) {
+  if (score >= 75) return 'danger';
+  if (score >= 50) return 'orange';
+  if (score >= 25) return 'amber';
+  return 'safe';
+}
+
+const SCORE_STYLES = {
+  danger: { text: 'text-st-error', badge: 'bg-st-error-bg text-st-error-ink', Icon: ShieldAlert },
+  orange: { text: 'text-orange-600', badge: 'bg-orange-100 text-orange-800', Icon: AlertTriangle },
+  amber: { text: 'text-amber-600', badge: 'bg-amber-100 text-amber-800', Icon: AlertTriangle },
+  safe: { text: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-800', Icon: ShieldCheck },
+};
+
+function Card({ className = '', children }) {
+  return <div className={`rounded-xl bg-white p-6 shadow-sm ring-1 ring-st-container/60 ${className}`}>{children}</div>;
+}
+
+function SectionHeader({ icon: Icon, iconClass = 'text-st-blue-dark', title, text, children }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-st-container pb-4">
+      <div className="flex items-start gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-st-low ${iconClass}`}>
+          <Icon className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div>
+          <h3 className="font-manrope text-lg font-semibold text-st-navy">{title}</h3>
+          {text && <p className="text-xs text-st-muted">{text}</p>}
+        </div>
+      </div>
+      {children && <div className="flex flex-wrap items-center gap-2 text-xs">{children}</div>}
+    </div>
+  );
+}
+
+function Chip({ className = 'bg-st-low text-st-muted', children }) {
+  return <span className={`rounded-full px-2.5 py-1 font-mono text-[0.6875rem] font-semibold ${className}`}>{children}</span>;
+}
+
+function SubCard({ title, icon: Icon, titleClass = 'text-st-blue-dark', badge, className = '', children }) {
+  return (
+    <div className={`space-y-3 rounded-lg bg-st-low/70 p-4 ring-1 ring-st-container/70 ${className}`}>
+      <div className="flex items-center justify-between gap-2">
+        <h4 className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${titleClass}`}>
+          {Icon && <Icon className="h-4 w-4" aria-hidden="true" />} {title}
+        </h4>
+        {badge}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Row({ label, value, tone = 'default', truncate = false }) {
+  return (
+    <div className="flex justify-between gap-3 border-b border-st-container/80 py-1.5 text-xs last:border-b-0">
+      <span className="text-st-muted">{label}</span>
+      <span className={`text-right font-mono ${TONES[tone]} ${truncate ? 'max-w-[150px] truncate' : ''}`} title={truncate ? String(value) : undefined}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function BulletList({ items, dotClass, textClass = 'text-st-ink' }) {
+  return (
+    <ul className="space-y-1.5 text-xs">
+      {items.map((item, idx) => (
+        <li key={idx} className={`flex items-start gap-1.5 ${textClass}`}>
+          <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`} />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export default function UrlAnalyzer() {
   const [urlInput, setUrlInput] = useState('');
@@ -26,7 +118,7 @@ export default function UrlAnalyzer() {
       let response;
       try {
         response = await axios.post(`${c1Url}/analyze-url`, { url: urlInput });
-      } catch (directErr) {
+      } catch {
         // Fallback to gateway if direct C1 fails
         const gwRes = await axios.post(`${gatewayUrl}/api/analyze`, { url: urlInput });
         response = { data: gwRes.data.component_results.c1_url_domain };
@@ -41,182 +133,159 @@ export default function UrlAnalyzer() {
   };
 
   const getRiskBadge = (level, score) => {
-    if (score >= 75) {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/30">
-          <ShieldAlert className="w-4 h-4" /> {level} ({score}/100)
-        </span>
-      );
-    } else if (score >= 50) {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30">
-          <AlertTriangle className="w-4 h-4" /> {level} ({score}/100)
-        </span>
-      );
-    } else if (score >= 25) {
-      return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-          <AlertTriangle className="w-4 h-4" /> {level} ({score}/100)
-        </span>
-      );
-    }
+    const { badge, Icon } = SCORE_STYLES[scoreTone(score)];
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-        <ShieldCheck className="w-4 h-4" /> {level} ({score}/100)
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold ${badge}`}>
+        <Icon className="h-4 w-4" aria-hidden="true" /> {level} ({score}/100)
       </span>
     );
   };
 
+  const risk = result?.risk_assessment;
+  const domain = result?.domain_intelligence;
+  const infra = result?.threat_infrastructure;
+  const ml = result?.ml_prediction;
+
   return (
-    <div className="min-h-screen w-full bg-slate-950 text-slate-100 px-4 py-6 sm:px-6 md:px-8 lg:px-10 xl:px-12 font-sans overflow-x-hidden">
-      <div className="w-full max-w-none space-y-8">
-        
+    <AppShell title="Threat Analysis">
+      <div className="flex w-full flex-col gap-8 px-4 py-8 md:px-8">
+
         {/* Header */}
-        <header className="border-b border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Layers className="w-8 h-8 text-cyan-400 shrink-0" />
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                Intelligent URL & Domain Analyzer
-              </h1>
-            </div>
-            <p className="text-slate-400 text-xs sm:text-sm">
-              Component C1 — Multi-Layer URL & Domain Intelligence Framework (Layers 1–4 Inference & Scoring Engine)
-            </p>
-          </div>
-          <Link
-            to="/"
-            className="self-start sm:self-center px-3.5 py-2 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition flex items-center gap-2 shrink-0 shadow-sm"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            ScamTrace Portal
-          </Link>
-        </header>
+        <div className="flex flex-col gap-1">
+          <span className="w-fit rounded-full bg-st-container px-2 py-0.5 text-[0.6875rem] font-bold uppercase tracking-widest text-st-blue-dark">
+            Component C1
+          </span>
+          <h1 className="font-manrope text-[1.75rem] font-bold tracking-tight text-st-navy lg:text-4xl">Intelligent URL & Domain Analyzer</h1>
+          <p className="max-w-3xl text-base text-st-muted">
+            Multi-layer URL and domain intelligence: lexical features, domain registration, threat infrastructure and machine learning, combined into one explainable risk score.
+          </p>
+        </div>
 
         {/* Input Form */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 shadow-xl backdrop-blur-sm">
-          <form onSubmit={handleAnalyze} className="flex flex-col md:flex-row gap-4">
+        <Card>
+          <form onSubmit={handleAnalyze} className="flex flex-col gap-3 md:flex-row">
             <div className="relative flex-1">
-              <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+              <Globe className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-st-outline" aria-hidden="true" />
               <input
                 type="text"
-                placeholder="Enter URL or domain (e.g. http://login.paypal.verify-account.com/auth)"
+                aria-label="URL or domain to analyze"
+                placeholder="Enter a URL or domain (e.g. http://login.paypal.verify-account.com/auth)"
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 focus:border-cyan-500 text-slate-100 placeholder-slate-500 text-sm rounded-lg pl-12 pr-4 py-3 outline-none transition"
+                className="w-full rounded-lg bg-st-low/60 py-3 pl-12 pr-4 text-sm text-st-navy outline-none ring-1 ring-st-container transition placeholder:text-st-outline focus:bg-white focus:ring-2 focus:ring-st-blue-dark"
               />
             </div>
             <button
               type="submit"
               disabled={loading || !urlInput.trim()}
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 text-white font-medium text-sm px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-cyan-500/20"
+              className="flex items-center justify-center gap-2 rounded-lg bg-st-navy px-6 py-3 text-sm font-semibold text-white shadow-md shadow-st-navy/20 transition hover:bg-st-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
-                <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"></span>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
               ) : (
-                <Search className="w-4 h-4" />
+                <Search className="h-4 w-4" aria-hidden="true" />
               )}
               {loading ? 'Extracting Features...' : 'Analyze URL'}
             </button>
           </form>
-        </div>
+        </Card>
 
         {/* Error Alert */}
         {error && (
-          <div className="bg-red-950/50 border border-red-800/80 rounded-lg p-4 text-red-300 text-sm flex items-center gap-3">
-            <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
+          <div role="alert" className="flex items-center gap-3 rounded-lg bg-st-error-bg p-4 text-sm text-st-error-ink">
+            <ShieldAlert className="h-5 w-5 shrink-0" aria-hidden="true" />
             <span>{error}</span>
+          </div>
+        )}
+
+        {/* Before the first analysis */}
+        {!result && !loading && !error && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {LAYERS.map(({ icon: Icon, title, text }, idx) => (
+              <div key={title} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-st-container/60">
+                <div className="flex items-center justify-between">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-st-fixed text-st-blue-dark">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-st-outline">Layer {idx + 1}</span>
+                </div>
+                <h3 className="mt-3 font-manrope text-base font-semibold text-st-navy">{title}</h3>
+                <p className="mt-1 text-sm text-st-muted">{text}</p>
+              </div>
+            ))}
           </div>
         )}
 
         {/* Results View */}
         {result && result.features && (
-          <div className="space-y-6 animate-fade-in">
-            
+          <div className="space-y-6">
+
             {/* Overview Card */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-100 flex items-center gap-2">
-                    Analysis Report for: <span className="font-mono text-cyan-300 text-base">{result.features.hostname || result.url}</span>
-                  </h2>
-                  <p className="text-xs text-slate-400 mt-1">Raw Input: <code className="text-slate-300">{result.url}</code></p>
+            <Card className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-st-container pb-4">
+                <div className="min-w-0">
+                  <p className="text-[0.6875rem] font-bold uppercase tracking-wider text-st-outline">Analysis Report</p>
+                  <h2 className="break-all font-manrope text-xl font-bold text-st-navy">{result.features.hostname || result.url}</h2>
+                  <p className="mt-1 break-all text-xs text-st-muted">Raw input: <code className="font-mono text-st-ink">{result.url}</code></p>
                 </div>
                 <div>{getRiskBadge(result.risk_level, result.score)}</div>
               </div>
 
-              <p className="text-sm text-slate-300 leading-relaxed">{result.explanation}</p>
+              <p className="text-sm leading-relaxed text-st-ink">{result.explanation}</p>
 
               {/* Risk Indicators */}
               {result.risk_indicators && result.risk_indicators.length > 0 && (
-                <div className="bg-slate-950/60 border border-amber-900/30 rounded-lg p-4 space-y-2">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                    <AlertTriangle className="w-4 h-4" /> Detected Risk Indicators ({result.risk_indicators.length})
+                <div className="space-y-2 rounded-lg bg-amber-50 p-4 ring-1 ring-amber-200">
+                  <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-800">
+                    <AlertTriangle className="h-4 w-4" aria-hidden="true" /> Detected Risk Indicators ({result.risk_indicators.length})
                   </h3>
-                  <ul className="list-disc list-inside text-xs text-slate-300 space-y-1">
-                    {result.risk_indicators.map((ind, idx) => (
-                      <li key={idx} className="text-amber-200/90">{ind}</li>
-                    ))}
-                  </ul>
+                  <BulletList items={result.risk_indicators} dotClass="bg-amber-500" textClass="text-amber-900" />
                 </div>
               )}
-            </div>
+            </Card>
 
             {/* Explainable Risk Scoring Engine & Factor Attribution Card */}
-            {result.risk_assessment && (
-              <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 space-y-6">
-                
-                {/* Header & Meta Badges */}
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-                  <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                      <Scale className="w-5 h-5 text-amber-400" /> Explainable Risk Intelligence & Attribution
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      Multi-channel evidence synthesis combining lexical features, domain intelligence, infrastructure, and ML with dynamic weight renormalization.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-mono border border-slate-700">
-                      Engine: {result.risk_assessment.engine_version}
-                    </span>
-                    <span className="px-2.5 py-1 rounded bg-indigo-950/60 text-indigo-300 font-mono border border-indigo-800/40">
-                      ML Model: {result.risk_assessment.model_version || 'None'}
-                    </span>
-                    <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-400 font-mono border border-slate-700">
-                      {new Date(result.risk_assessment.analysis_timestamp).toLocaleTimeString()} UTC
-                    </span>
-                  </div>
-                </div>
+            {risk && (
+              <Card className="space-y-6">
+                <SectionHeader
+                  icon={Scale}
+                  iconClass="text-amber-600"
+                  title="Explainable Risk Intelligence & Attribution"
+                  text="Combines lexical features, domain intelligence, infrastructure and machine learning, with weights renormalized over the channels that were available."
+                >
+                  <Chip>Engine: {risk.engine_version}</Chip>
+                  <Chip className="bg-st-fixed text-st-navy">ML Model: {risk.model_version || 'None'}</Chip>
+                  <Chip>{new Date(risk.analysis_timestamp).toLocaleTimeString()} UTC</Chip>
+                </SectionHeader>
 
                 {/* Score vs Model Probability Comparison Banner */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/70 border border-slate-800/80 rounded-xl p-4">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="flex items-center justify-between rounded-lg bg-st-low p-4">
                     <div>
-                      <div className="text-xs text-slate-400 font-medium">Consolidated Risk Score (R)</div>
-                      <div className="text-xs text-slate-500 mt-0.5">Multi-channel synthesized score</div>
+                      <div className="text-sm font-semibold text-st-navy">Consolidated Risk Score (R)</div>
+                      <div className="mt-0.5 text-xs text-st-muted">Multi-channel synthesized score</div>
                     </div>
                     <div className="text-right">
-                      <div className={`text-xl font-bold font-mono ${result.risk_assessment.risk_score >= 75 ? 'text-red-400' : result.risk_assessment.risk_score >= 50 ? 'text-orange-400' : result.risk_assessment.risk_score >= 25 ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                        {result.risk_assessment.risk_score} / 100
+                      <div className={`font-mono text-2xl font-bold ${SCORE_STYLES[scoreTone(risk.risk_score)].text}`}>
+                        {risk.risk_score} / 100
                       </div>
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider">{result.risk_assessment.classification}</span>
+                      <span className="text-[0.625rem] font-bold uppercase tracking-wider text-st-muted">{risk.classification}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                  <div className="flex items-center justify-between rounded-lg bg-st-low p-4">
                     <div>
-                      <div className="text-xs text-indigo-400 font-medium">Supervised Model Probability (P)</div>
-                      <div className="text-xs text-slate-500 mt-0.5">Independent ML feature inference</div>
+                      <div className="text-sm font-semibold text-st-navy">Supervised Model Probability (P)</div>
+                      <div className="mt-0.5 text-xs text-st-muted">Independent ML feature inference</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-bold font-mono text-indigo-300">
-                        {result.ml_prediction && result.ml_prediction.is_model_loaded 
-                          ? `${(result.ml_prediction.malicious_probability * 100).toFixed(1)}%` 
+                      <div className="font-mono text-2xl font-bold text-st-navy-2">
+                        {ml && ml.is_model_loaded
+                          ? `${(ml.malicious_probability * 100).toFixed(1)}%`
                           : 'N/A (Offline)'}
                       </div>
-                      <span className="text-[10px] text-indigo-400/80 uppercase tracking-wider">
-                        {result.ml_prediction && result.ml_prediction.is_model_loaded ? result.ml_prediction.predicted_label : 'Unloaded'}
+                      <span className="text-[0.625rem] font-bold uppercase tracking-wider text-st-muted">
+                        {ml && ml.is_model_loaded ? ml.predicted_label : 'Unloaded'}
                       </span>
                     </div>
                   </div>
@@ -224,14 +293,14 @@ export default function UrlAnalyzer() {
 
                 {/* Dynamic Channel Weights & Normalized Sub-scores */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                      <Sliders className="w-4 h-4" /> Active Channels & Dynamic Weights Distribution
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-st-blue-dark">
+                      <Sliders className="h-4 w-4" aria-hidden="true" /> Active Channels & Weights
                     </h4>
-                    <span className="text-[11px] text-slate-500 italic">Weights dynamically renormalized over available services</span>
+                    <span className="text-[0.6875rem] italic text-st-outline">Weights renormalized over available services</span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
                     {[
                       { key: 'lexical_structural', label: 'Lexical / Structural' },
                       { key: 'entropy_obfuscation', label: 'Entropy & Evasion' },
@@ -242,27 +311,26 @@ export default function UrlAnalyzer() {
                       { key: 'shortener_redirect', label: 'Redirects & SSRF' },
                       { key: 'machine_learning', label: 'Machine Learning' },
                     ].map(ch => {
-                      const weight = result.risk_assessment.active_weights[ch.key] || 0;
-                      const score = result.risk_assessment.channel_scores[ch.key] || 0;
+                      const weight = risk.active_weights[ch.key] || 0;
+                      const score = risk.channel_scores[ch.key] || 0;
                       const isActive = weight > 0;
 
                       return (
-                        <div key={ch.key} className={`p-3 rounded-lg border text-xs space-y-1.5 ${isActive ? 'bg-slate-950/70 border-slate-800' : 'bg-slate-950/30 border-slate-800/40 opacity-50'}`}>
-                          <div className="flex justify-between items-center text-[11px]">
-                            <span className="text-slate-300 font-medium truncate">{ch.label}</span>
-                            <span className="font-mono text-cyan-400 font-bold shrink-0">
-                              {isActive ? `${(weight * 100).toFixed(1)}%` : 'Excluded'}
-                            </span>
+                        <div key={ch.key} className={`space-y-1.5 rounded-lg p-3 text-xs ring-1 ring-st-container ${isActive ? 'bg-st-low' : 'bg-st-low/40 opacity-60'}`}>
+                          <div className="text-[0.6875rem] font-semibold text-st-navy">{ch.label}</div>
+                          <div className="flex justify-between text-[0.6875rem]">
+                            <span className="text-st-muted">Weight</span>
+                            <span className="font-mono font-bold text-st-blue-dark">{isActive ? `${(weight * 100).toFixed(1)}%` : 'Excluded'}</span>
                           </div>
-                          <div className="flex justify-between text-[11px] text-slate-400">
-                            <span>Sub-score</span>
-                            <span className={`font-mono font-semibold ${score >= 60 ? 'text-rose-400' : score >= 30 ? 'text-amber-400' : 'text-slate-300'}`}>
+                          <div className="flex justify-between text-[0.6875rem]">
+                            <span className="text-st-muted">Sub-score</span>
+                            <span className={`font-mono font-semibold ${score >= 60 ? 'text-st-error' : score >= 30 ? 'text-amber-600' : 'text-st-ink'}`}>
                               {score.toFixed(1)}
                             </span>
                           </div>
-                          <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full transition-all duration-500 ${score >= 60 ? 'bg-rose-500' : score >= 30 ? 'bg-amber-400' : 'bg-cyan-500'}`}
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-st-container">
+                            <div
+                              className={`h-full transition-all duration-500 ${score >= 60 ? 'bg-st-error' : score >= 30 ? 'bg-amber-500' : 'bg-st-blue'}`}
                               style={{ width: `${Math.min(score, 100)}%` }}
                             />
                           </div>
@@ -273,39 +341,39 @@ export default function UrlAnalyzer() {
                 </div>
 
                 {/* Top Contributing Risk Factors (Factor Attribution) */}
-                {result.risk_assessment.contributing_factors && result.risk_assessment.contributing_factors.length > 0 && (
+                {risk.contributing_factors && risk.contributing_factors.length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-                      <FileText className="w-4 h-4" /> Top Contributing Risk Factors & Evidence Attribution
+                    <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-st-navy-2">
+                      <FileText className="h-4 w-4" aria-hidden="true" /> Top Contributing Risk Factors
                     </h4>
-                    
+
                     <div className="space-y-2">
-                      {result.risk_assessment.contributing_factors.map((factor, idx) => {
+                      {risk.contributing_factors.map((factor, idx) => {
                         const isMitigating = factor.impact_score < 0;
                         return (
-                          <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 gap-2 text-xs">
-                            <div className="space-y-1 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className={`font-semibold ${isMitigating ? 'text-emerald-400' : 'text-slate-200'}`}>
+                          <div key={idx} className="flex flex-col justify-between gap-2 rounded-lg bg-st-low p-3 text-xs sm:flex-row sm:items-center">
+                            <div className="flex-1 space-y-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className={`font-semibold ${isMitigating ? 'text-emerald-700' : 'text-st-navy'}`}>
                                   {factor.title}
                                 </span>
-                                <span className={`text-[10px] px-2 py-0.5 rounded font-mono uppercase tracking-wider border ${factor.epistemic_type === 'fact' ? 'bg-cyan-950/40 text-cyan-400 border-cyan-800/40' : factor.epistemic_type === 'heuristic' ? 'bg-amber-950/40 text-amber-400 border-amber-800/40' : 'bg-purple-950/40 text-purple-400 border-purple-800/40'}`}>
+                                <span className={`rounded px-2 py-0.5 font-mono text-[0.625rem] uppercase tracking-wider ${factor.epistemic_type === 'fact' ? 'bg-st-fixed text-st-navy' : factor.epistemic_type === 'heuristic' ? 'bg-amber-100 text-amber-800' : 'bg-violet-100 text-violet-800'}`}>
                                   {factor.epistemic_type}
                                 </span>
-                                <span className="text-[10px] text-slate-500 font-mono">
+                                <span className="font-mono text-[0.625rem] text-st-outline">
                                   [{factor.category}]
                                 </span>
                               </div>
-                              <p className="text-slate-400 text-[11px] leading-relaxed">
+                              <p className="text-[0.6875rem] leading-relaxed text-st-muted">
                                 {factor.evidence}
                               </p>
                             </div>
 
-                            <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shrink-0">
-                              <span className={`font-mono font-bold text-sm ${isMitigating ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <div className="flex shrink-0 items-center justify-between sm:flex-col sm:items-end sm:justify-center">
+                              <span className={`font-mono text-sm font-bold ${isMitigating ? 'text-emerald-700' : 'text-st-error'}`}>
                                 {factor.impact_score > 0 ? `+${factor.impact_score.toFixed(1)}` : factor.impact_score.toFixed(1)} pts
                               </span>
-                              <span className="text-[10px] text-slate-500 uppercase">
+                              <span className="text-[0.625rem] uppercase text-st-outline">
                                 Confidence: {factor.confidence}
                               </span>
                             </div>
@@ -316,691 +384,325 @@ export default function UrlAnalyzer() {
                   </div>
                 )}
 
-                {/* Epistemological Tier Separation (Facts vs Heuristics vs Predictions) */}
-                {result.risk_assessment.epistemic_breakdown && (
+                {/* Evidence hierarchy: facts vs heuristics vs predictions */}
+                {risk.epistemic_breakdown && (
                   <div className="space-y-3">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <BrainCircuit className="w-4 h-4 text-cyan-400" /> Epistemological Evidence Hierarchy
+                    <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-st-navy">
+                      <BrainCircuit className="h-4 w-4 text-st-blue" aria-hidden="true" /> Evidence Hierarchy
                     </h4>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      
-                      {/* Observed Facts */}
-                      <div className="bg-slate-950/70 border border-cyan-900/30 rounded-xl p-4 space-y-2">
-                        <div className="flex items-center justify-between border-b border-cyan-900/30 pb-2">
-                          <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Observed Facts
-                          </span>
-                          <span className="text-[10px] text-cyan-300/70 font-mono">
-                            {result.risk_assessment.epistemic_breakdown.observed_facts.length}
-                          </span>
-                        </div>
-                        <ul className="space-y-1.5 text-[11px] text-slate-300">
-                          {result.risk_assessment.epistemic_breakdown.observed_facts.map((fact, idx) => (
-                            <li key={idx} className="flex items-start gap-1.5 text-cyan-200/90">
-                              <span className="text-cyan-400 font-bold shrink-0">•</span>
-                              <span>{fact}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <SubCard
+                        title="Observed Facts"
+                        icon={CheckCircle2}
+                        titleClass="text-st-blue-dark"
+                        badge={<span className="font-mono text-[0.6875rem] text-st-outline">{risk.epistemic_breakdown.observed_facts.length}</span>}
+                      >
+                        <BulletList items={risk.epistemic_breakdown.observed_facts} dotClass="bg-st-blue" />
+                      </SubCard>
 
-                      {/* Heuristic Indicators */}
-                      <div className="bg-slate-950/70 border border-amber-900/30 rounded-xl p-4 space-y-2">
-                        <div className="flex items-center justify-between border-b border-amber-900/30 pb-2">
-                          <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                            <AlertTriangle className="w-3.5 h-3.5" /> Heuristic Indicators
-                          </span>
-                          <span className="text-[10px] text-amber-300/70 font-mono">
-                            {result.risk_assessment.epistemic_breakdown.heuristic_indicators.length}
-                          </span>
-                        </div>
-                        {result.risk_assessment.epistemic_breakdown.heuristic_indicators.length > 0 ? (
-                          <ul className="space-y-1.5 text-[11px] text-slate-300">
-                            {result.risk_assessment.epistemic_breakdown.heuristic_indicators.map((heur, idx) => (
-                              <li key={idx} className="flex items-start gap-1.5 text-amber-200/90">
-                                <span className="text-amber-400 font-bold shrink-0">•</span>
-                                <span>{heur}</span>
-                              </li>
-                            ))}
-                          </ul>
+                      <SubCard
+                        title="Heuristic Indicators"
+                        icon={AlertTriangle}
+                        titleClass="text-amber-700"
+                        badge={<span className="font-mono text-[0.6875rem] text-st-outline">{risk.epistemic_breakdown.heuristic_indicators.length}</span>}
+                      >
+                        {risk.epistemic_breakdown.heuristic_indicators.length > 0 ? (
+                          <BulletList items={risk.epistemic_breakdown.heuristic_indicators} dotClass="bg-amber-500" />
                         ) : (
-                          <div className="text-[11px] text-slate-500 italic p-2 text-center">
-                            No heuristic anomaly thresholds breached.
-                          </div>
+                          <p className="p-2 text-center text-[0.6875rem] italic text-st-outline">No heuristic anomaly thresholds breached.</p>
                         )}
-                      </div>
+                      </SubCard>
 
-                      {/* Model Predictions */}
-                      <div className="bg-slate-950/70 border border-purple-900/30 rounded-xl p-4 space-y-2">
-                        <div className="flex items-center justify-between border-b border-purple-900/30 pb-2">
-                          <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider flex items-center gap-1">
-                            <Cpu className="w-3.5 h-3.5" /> Model Predictions
-                          </span>
-                          <span className="text-[10px] text-purple-300/70 font-mono">
-                            {result.risk_assessment.epistemic_breakdown.model_predictions.length}
-                          </span>
-                        </div>
-                        <ul className="space-y-1.5 text-[11px] text-slate-300">
-                          {result.risk_assessment.epistemic_breakdown.model_predictions.map((pred, idx) => (
-                            <li key={idx} className="flex items-start gap-1.5 text-purple-200/90">
-                              <span className="text-purple-400 font-bold shrink-0">•</span>
-                              <span>{pred}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      <SubCard
+                        title="Model Predictions"
+                        icon={Cpu}
+                        titleClass="text-violet-700"
+                        badge={<span className="font-mono text-[0.6875rem] text-st-outline">{risk.epistemic_breakdown.model_predictions.length}</span>}
+                      >
+                        <BulletList items={risk.epistemic_breakdown.model_predictions} dotClass="bg-violet-500" />
+                      </SubCard>
                     </div>
                   </div>
                 )}
 
                 {/* Analysis Limitations Banner */}
-                {result.risk_assessment.analysis_limitations && result.risk_assessment.analysis_limitations.length > 0 && (
-                  <div className="bg-blue-950/20 border border-blue-900/40 rounded-xl p-4 space-y-2">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-                      <Info className="w-4 h-4" /> Service Limitations & Telemetry Fallbacks ({result.risk_assessment.analysis_limitations.length})
+                {risk.analysis_limitations && risk.analysis_limitations.length > 0 && (
+                  <div className="space-y-2 rounded-lg bg-st-fixed/50 p-4">
+                    <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-st-navy-2">
+                      <Info className="h-4 w-4" aria-hidden="true" /> Service Limitations & Fallbacks ({risk.analysis_limitations.length})
                     </h4>
-                    <ul className="space-y-1 text-xs text-blue-200/80">
-                      {result.risk_assessment.analysis_limitations.map((lim, idx) => (
-                        <li key={idx} className="flex items-start gap-1.5">
-                          <span className="text-blue-400 shrink-0">ℹ</span>
-                          <span>{lim}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <BulletList items={risk.analysis_limitations} dotClass="bg-st-navy-2" />
                   </div>
                 )}
-
-              </div>
+              </Card>
             )}
 
             {/* Feature Extraction Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-              
-              {/* Structural & Length Features */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-3">
-                <h3 className="text-sm font-semibold text-cyan-400 flex items-center gap-2">
-                  <Globe className="w-4 h-4" /> Structure & Lengths
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <Card className="space-y-2">
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-st-navy">
+                  <Globe className="h-4 w-4 text-st-blue-dark" aria-hidden="true" /> Structure & Lengths
                 </h3>
-                <div className="text-xs space-y-2 text-slate-300">
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>URL Length</span> <span className="font-mono text-cyan-300">{result.features.url_length}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Hostname Length</span> <span className="font-mono text-cyan-300">{result.features.hostname_length}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Registered Domain</span> <span className="font-mono text-cyan-300">{result.features.registered_domain || 'N/A'}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Subdomain</span> <span className="font-mono text-cyan-300">{result.features.subdomain || 'None'}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>TLD</span> <span className="font-mono text-cyan-300">.{result.features.tld}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Path Depth</span> <span className="font-mono text-cyan-300">{result.features.path_depth}</span>
-                  </div>
-                </div>
-              </div>
+                <Row label="URL Length" value={result.features.url_length} tone="accent" />
+                <Row label="Hostname Length" value={result.features.hostname_length} tone="accent" />
+                <Row label="Registered Domain" value={result.features.registered_domain || 'N/A'} tone="accent" truncate />
+                <Row label="Subdomain" value={result.features.subdomain || 'None'} tone="accent" truncate />
+                <Row label="TLD" value={`.${result.features.tld}`} tone="accent" />
+                <Row label="Path Depth" value={result.features.path_depth} tone="accent" />
+              </Card>
 
-              {/* Entropy & Mathematical Metrics */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-3">
-                <h3 className="text-sm font-semibold text-blue-400 flex items-center gap-2">
-                  <Code className="w-4 h-4" /> Entropy & Math Metrics
+              <Card className="space-y-2">
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-st-navy">
+                  <Code className="h-4 w-4 text-st-blue-dark" aria-hidden="true" /> Entropy & Math Metrics
                 </h3>
-                <div className="text-xs space-y-2 text-slate-300">
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>URL Entropy</span> <span className="font-mono text-blue-300">{result.features.url_entropy} bits/char</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Hostname Entropy</span> <span className="font-mono text-blue-300">{result.features.hostname_entropy} bits/char</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Digit Ratio</span> <span className="font-mono text-blue-300">{(result.features.digit_ratio * 100).toFixed(1)}%</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Max Consecutive Digits</span> <span className="font-mono text-blue-300">{result.features.max_consecutive_digits}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Max Char Repetition</span> <span className="font-mono text-blue-300">{result.features.max_character_repetition}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Special Chars Count</span> <span className="font-mono text-blue-300">{result.features.num_special_chars}</span>
-                  </div>
-                </div>
-              </div>
+                <Row label="URL Entropy" value={`${result.features.url_entropy} bits/char`} tone="accent" />
+                <Row label="Hostname Entropy" value={`${result.features.hostname_entropy} bits/char`} tone="accent" />
+                <Row label="Digit Ratio" value={`${(result.features.digit_ratio * 100).toFixed(1)}%`} tone="accent" />
+                <Row label="Max Consecutive Digits" value={result.features.max_consecutive_digits} tone="accent" />
+                <Row label="Max Char Repetition" value={result.features.max_character_repetition} tone="accent" />
+                <Row label="Special Chars Count" value={result.features.num_special_chars} tone="accent" />
+              </Card>
 
-              {/* Security & Obfuscation Flags */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-3">
-                <h3 className="text-sm font-semibold text-purple-400 flex items-center gap-2">
-                  <Key className="w-4 h-4" /> Security & Obfuscation Flags
+              <Card className="space-y-2">
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-st-navy">
+                  <Key className="h-4 w-4 text-st-blue-dark" aria-hidden="true" /> Security & Obfuscation Flags
                 </h3>
-                <div className="text-xs space-y-2 text-slate-300">
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Is IP Address Host</span>
-                    <span className={`font-mono ${result.features.is_ip_address ? 'text-amber-400' : 'text-slate-400'}`}>
-                      {result.features.is_ip_address ? `YES (${result.features.ip_type})` : 'NO'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Homoglyph / Lookalike</span>
-                    <span className={`font-mono ${result.features.has_homoglyphs ? 'text-red-400 font-bold' : 'text-slate-400'}`}>
-                      {result.features.has_homoglyphs ? 'DETECTED' : 'Clean'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Punycode (xn--)</span>
-                    <span className={`font-mono ${result.features.is_punycode ? 'text-amber-400' : 'text-slate-400'}`}>
-                      {result.features.is_punycode ? 'YES' : 'NO'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Double Percent Encoded</span>
-                    <span className={`font-mono ${result.features.is_double_encoded ? 'text-amber-400' : 'text-slate-400'}`}>
-                      {result.features.is_double_encoded ? 'YES' : 'NO'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Contains '@' Delimiter</span>
-                    <span className={`font-mono ${result.features.has_at_symbol ? 'text-amber-400' : 'text-slate-400'}`}>
-                      {result.features.has_at_symbol ? 'YES' : 'NO'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-800/60">
-                    <span>Suspicious Keywords</span>
-                    <span className="font-mono text-purple-300">{result.features.suspicious_keyword_count} matched</span>
-                  </div>
-                </div>
-              </div>
-
+                <Row label="Is IP Address Host" value={result.features.is_ip_address ? `YES (${result.features.ip_type})` : 'NO'} tone={result.features.is_ip_address ? 'warn' : 'muted'} />
+                <Row label="Homoglyph / Lookalike" value={result.features.has_homoglyphs ? 'DETECTED' : 'Clean'} tone={result.features.has_homoglyphs ? 'danger' : 'muted'} />
+                <Row label="Punycode (xn--)" value={result.features.is_punycode ? 'YES' : 'NO'} tone={result.features.is_punycode ? 'warn' : 'muted'} />
+                <Row label="Double Percent Encoded" value={result.features.is_double_encoded ? 'YES' : 'NO'} tone={result.features.is_double_encoded ? 'warn' : 'muted'} />
+                <Row label="Contains '@' Delimiter" value={result.features.has_at_symbol ? 'YES' : 'NO'} tone={result.features.has_at_symbol ? 'warn' : 'muted'} />
+                <Row label="Suspicious Keywords" value={`${result.features.suspicious_keyword_count} matched`} tone="accent" />
+              </Card>
             </div>
 
             {/* Domain Intelligence Section (Layer 2) */}
-            {result.domain_intelligence && (
-              <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 space-y-6">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-5 h-5 text-emerald-400" />
-                    <h3 className="text-base font-semibold text-slate-100">
-                      Domain Intelligence & Infrastructure (RDAP, DNS & Reputation)
-                    </h3>
-                  </div>
-                  <span className="text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-mono">
-                    Sub-score: {result.domain_intelligence.domain_risk_score}/100
-                  </span>
-                </div>
+            {domain && (
+              <Card className="space-y-6">
+                <SectionHeader icon={Globe} iconClass="text-emerald-600" title="Domain Intelligence & Infrastructure" text="RDAP registration, DNS records and reputation.">
+                  <Chip>Sub-score: {domain.domain_risk_score}/100</Chip>
+                </SectionHeader>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Registration & WHOIS/RDAP */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                      Registration & Age
-                    </h4>
-                    <div className="text-xs space-y-2 text-slate-300">
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Registrar</span>
-                        <span className="font-mono text-slate-200 truncate max-w-[150px]">
-                          {result.domain_intelligence.registration.registrar || 'Protected / Unknown'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Domain Age</span>
-                        <span className={`font-mono font-bold ${result.domain_intelligence.registration.is_nrd ? 'text-red-400' : 'text-emerald-300'}`}>
-                          {result.domain_intelligence.registration.age_days !== null
-                            ? `${result.domain_intelligence.registration.age_days} days ${result.domain_intelligence.registration.is_nrd ? '(NRD <= 30d)' : ''}`
-                            : 'Unavailable'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Created Date</span>
-                        <span className="font-mono text-slate-400">
-                          {result.domain_intelligence.registration.creation_date
-                            ? result.domain_intelligence.registration.creation_date.split('T')[0]
-                            : 'N/A'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>DNSSEC Status</span>
-                        <span className={`font-mono ${result.domain_intelligence.registration.dnssec_enabled ? 'text-emerald-400' : 'text-slate-500'}`}>
-                          {result.domain_intelligence.registration.dnssec_enabled ? 'Signed' : 'Unsigned'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Data Source</span>
-                        <span className="font-mono text-slate-400 uppercase">
-                          {result.domain_intelligence.registration.data_source}
-                        </span>
-                      </div>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                  <SubCard title="Registration & Age" titleClass="text-emerald-700">
+                    <div>
+                      <Row label="Registrar" value={domain.registration.registrar || 'Protected / Unknown'} truncate />
+                      <Row
+                        label="Domain Age"
+                        value={domain.registration.age_days !== null
+                          ? `${domain.registration.age_days} days ${domain.registration.is_nrd ? '(NRD <= 30d)' : ''}`
+                          : 'Unavailable'}
+                        tone={domain.registration.is_nrd ? 'danger' : 'ok'}
+                      />
+                      <Row label="Created Date" value={domain.registration.creation_date ? domain.registration.creation_date.split('T')[0] : 'N/A'} tone="muted" />
+                      <Row label="DNSSEC Status" value={domain.registration.dnssec_enabled ? 'Signed' : 'Unsigned'} tone={domain.registration.dnssec_enabled ? 'ok' : 'muted'} />
+                      <Row label="Data Source" value={String(domain.registration.data_source).toUpperCase()} tone="muted" />
                     </div>
-                  </div>
+                  </SubCard>
 
-                  {/* DNS Infrastructure */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-                      DNS Infrastructure
-                    </h4>
-                    <div className="text-xs space-y-2 text-slate-300">
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>DNS Resolution</span>
-                        <span className={`font-mono ${result.domain_intelligence.dns.dns_resolved ? 'text-emerald-400' : 'text-amber-400'}`}>
-                          {result.domain_intelligence.dns.dns_resolved ? 'Resolved' : 'NXDOMAIN / Unresolved'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Resolved IPs (A)</span>
-                        <span className="font-mono text-blue-300">
-                          {result.domain_intelligence.dns.ip_count} IP(s)
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>MX (Mail Exchange)</span>
-                        <span className={`font-mono ${result.domain_intelligence.dns.has_mx_records ? 'text-emerald-400' : 'text-slate-500'}`}>
-                          {result.domain_intelligence.dns.has_mx_records ? 'Configured' : 'None'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Fast-Flux Pattern</span>
-                        <span className={`font-mono ${result.domain_intelligence.dns.is_fast_flux ? 'text-red-400 font-bold' : 'text-slate-400'}`}>
-                          {result.domain_intelligence.dns.is_fast_flux ? 'DETECTED' : 'Normal'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Dynamic DNS Host</span>
-                        <span className={`font-mono ${result.domain_intelligence.dns.is_dynamic_dns ? 'text-amber-400' : 'text-slate-400'}`}>
-                          {result.domain_intelligence.dns.is_dynamic_dns ? 'Yes (DDNS)' : 'No'}
-                        </span>
-                      </div>
+                  <SubCard title="DNS Infrastructure" titleClass="text-st-blue-dark">
+                    <div>
+                      <Row label="DNS Resolution" value={domain.dns.dns_resolved ? 'Resolved' : 'NXDOMAIN / Unresolved'} tone={domain.dns.dns_resolved ? 'ok' : 'warn'} />
+                      <Row label="Resolved IPs (A)" value={`${domain.dns.ip_count} IP(s)`} tone="accent" />
+                      <Row label="MX (Mail Exchange)" value={domain.dns.has_mx_records ? 'Configured' : 'None'} tone={domain.dns.has_mx_records ? 'ok' : 'muted'} />
+                      <Row label="Fast-Flux Pattern" value={domain.dns.is_fast_flux ? 'DETECTED' : 'Normal'} tone={domain.dns.is_fast_flux ? 'danger' : 'muted'} />
+                      <Row label="Dynamic DNS Host" value={domain.dns.is_dynamic_dns ? 'Yes (DDNS)' : 'No'} tone={domain.dns.is_dynamic_dns ? 'warn' : 'muted'} />
                     </div>
-                  </div>
+                  </SubCard>
 
-                  {/* Threat Reputation */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-                      Reputation & Indicators
-                    </h4>
-                    <div className="text-xs space-y-2 text-slate-300">
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Known Threat</span>
-                        <span className={`font-mono ${result.domain_intelligence.reputation.is_known_threat ? 'text-red-400 font-bold' : 'text-emerald-400'}`}>
-                          {result.domain_intelligence.reputation.is_known_threat ? 'MATCH FOUND' : 'Clean'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Threat Source</span>
-                        <span className="font-mono text-slate-400">
-                          {result.domain_intelligence.reputation.reputation_source || 'Local Heuristics'}
-                        </span>
-                      </div>
-                      {result.domain_intelligence.dns.a_records.length > 0 && (
-                        <div className="pt-1">
-                          <span className="text-slate-500 block mb-1">Resolved IP List:</span>
-                          <div className="font-mono text-[11px] text-cyan-400/90 bg-slate-900 p-1.5 rounded border border-slate-800">
-                            {result.domain_intelligence.dns.a_records.slice(0, 3).join(', ')}
-                            {result.domain_intelligence.dns.a_records.length > 3 ? '...' : ''}
-                          </div>
+                  <SubCard title="Reputation & Indicators" titleClass="text-violet-700">
+                    <div>
+                      <Row label="Known Threat" value={domain.reputation.is_known_threat ? 'MATCH FOUND' : 'Clean'} tone={domain.reputation.is_known_threat ? 'danger' : 'ok'} />
+                      <Row label="Threat Source" value={domain.reputation.reputation_source || 'Local Heuristics'} tone="muted" />
+                    </div>
+                    {domain.dns.a_records.length > 0 && (
+                      <div className="pt-1">
+                        <span className="mb-1 block text-xs text-st-muted">Resolved IP list:</span>
+                        <div className="rounded bg-white p-2 font-mono text-[0.6875rem] text-st-blue-dark ring-1 ring-st-container">
+                          {domain.dns.a_records.slice(0, 3).join(', ')}
+                          {domain.dns.a_records.length > 3 ? '...' : ''}
                         </div>
-                      )}
-                    </div>
-                  </div>
+                      </div>
+                    )}
+                  </SubCard>
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* Threat Infrastructure Section (Layer 3: DGA & Safe Redirect Chains) */}
-            {result.threat_infrastructure && (
-              <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-                  <div className="flex items-center gap-2">
-                    <GitFork className="w-5 h-5 text-purple-400" />
-                    <h3 className="text-base font-semibold text-slate-100">
-                      Threat Infrastructure Analysis (DGA, Shorteners & Safe Redirects)
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-mono">
-                      Sub-score: {result.threat_infrastructure.infrastructure_risk_score}/100
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <Shield className="w-3.5 h-3.5" /> SSRF & Rebinding Protected
-                    </span>
-                  </div>
-                </div>
+            {infra && (
+              <Card className="space-y-6">
+                <SectionHeader icon={GitFork} iconClass="text-violet-600" title="Threat Infrastructure Analysis" text="DGA detection, URL shorteners and safe redirect-chain tracing.">
+                  <Chip>Sub-score: {infra.infrastructure_risk_score}/100</Chip>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[0.6875rem] font-semibold text-emerald-800">
+                    <Shield className="h-3.5 w-3.5" aria-hidden="true" /> SSRF & Rebinding Protected
+                  </span>
+                </SectionHeader>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* DGA Statistical Analysis */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-                        <Cpu className="w-4 h-4" /> DGA Analysis
-                      </h4>
-                      <span className={`text-[11px] px-2 py-0.5 rounded font-mono font-semibold ${
-                        result.threat_infrastructure.dga.is_dga_suspected
-                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                          : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      }`}>
-                        {result.threat_infrastructure.dga.is_dga_suspected ? 'DGA SUSPECTED' : 'NATURAL / BENIGN'}
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  <SubCard
+                    title="DGA Analysis"
+                    icon={Cpu}
+                    titleClass="text-violet-700"
+                    badge={
+                      <span className={`rounded px-2 py-0.5 font-mono text-[0.6875rem] font-semibold ${infra.dga.is_dga_suspected ? 'bg-st-error-bg text-st-error-ink' : 'bg-emerald-100 text-emerald-800'}`}>
+                        {infra.dga.is_dga_suspected ? 'DGA SUSPECTED' : 'NATURAL / BENIGN'}
                       </span>
+                    }
+                  >
+                    <div>
+                      <Row label="Analyzed Label" value={infra.dga.label} tone="accent" truncate />
+                      <Row label="Label Entropy" value={`${infra.dga.label_entropy.toFixed(3)} bits/char`} tone={infra.dga.label_entropy >= 3.6 ? 'warn' : 'default'} />
+                      <Row label="Vowel / Consonant" value={`${(infra.dga.vowel_ratio * 100).toFixed(0)}% / ${(infra.dga.consonant_ratio * 100).toFixed(0)}%`} />
+                      <Row label="Max Consonant Run" value={infra.dga.max_consecutive_consonants} />
+                      <Row label="Bigram Perplexity" value={infra.dga.bigram_perplexity.toFixed(2)} />
+                      <Row label="Algorithmic Likelihood" value={`${(infra.dga.dga_score * 100).toFixed(0)}%`} tone="accent" />
+                      {infra.dga.dga_family_hint && <Row label="Pattern Hint" value={infra.dga.dga_family_hint} tone="warn" />}
                     </div>
+                  </SubCard>
 
-                    <div className="text-xs space-y-2 text-slate-300">
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Analyzed Label</span>
-                        <span className="font-mono text-purple-300 truncate max-w-[130px]">
-                          {result.threat_infrastructure.dga.label}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Label Entropy</span>
-                        <span className={`font-mono ${
-                          result.threat_infrastructure.dga.label_entropy >= 3.6 ? 'text-amber-400 font-bold' : 'text-slate-300'
-                        }`}>
-                          {result.threat_infrastructure.dga.label_entropy.toFixed(3)} bits/char
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Vowel / Consonant</span>
-                        <span className="font-mono text-slate-300">
-                          {(result.threat_infrastructure.dga.vowel_ratio * 100).toFixed(0)}% / {(result.threat_infrastructure.dga.consonant_ratio * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Max Consonant Run</span>
-                        <span className="font-mono text-slate-300">
-                          {result.threat_infrastructure.dga.max_consecutive_consonants}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Bigram Perplexity</span>
-                        <span className="font-mono text-slate-300">
-                          {result.threat_infrastructure.dga.bigram_perplexity.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Algorithmic Likelihood</span>
-                        <span className="font-mono text-purple-400 font-semibold">
-                          {(result.threat_infrastructure.dga.dga_score * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                      {result.threat_infrastructure.dga.dga_family_hint && (
-                        <div className="flex justify-between py-1 border-b border-slate-800/50">
-                          <span>Pattern Hint</span>
-                          <span className="font-mono text-amber-300 text-[11px]">
-                            {result.threat_infrastructure.dga.dga_family_hint}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* URL Shortener & Resolution */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                        <Link2 className="w-4 h-4" /> Shortener & Resolution
-                      </h4>
-                      <span className={`text-[11px] px-2 py-0.5 rounded font-mono font-semibold ${
-                        result.threat_infrastructure.redirect_chain.is_shortened
-                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                          : 'bg-slate-800 text-slate-400'
-                      }`}>
-                        {result.threat_infrastructure.redirect_chain.is_shortened
-                          ? (result.threat_infrastructure.redirect_chain.shortener_provider || 'Shortened')
-                          : 'Direct URL'}
+                  <SubCard
+                    title="Shortener & Resolution"
+                    icon={Link2}
+                    titleClass="text-st-blue-dark"
+                    badge={
+                      <span className={`rounded px-2 py-0.5 font-mono text-[0.6875rem] font-semibold ${infra.redirect_chain.is_shortened ? 'bg-amber-100 text-amber-800' : 'bg-st-container text-st-muted'}`}>
+                        {infra.redirect_chain.is_shortened ? (infra.redirect_chain.shortener_provider || 'Shortened') : 'Direct URL'}
                       </span>
+                    }
+                  >
+                    <div>
+                      <Row label="Redirect Hops" value={infra.redirect_chain.total_hops} tone="accent" />
+                      <Row label="Cross-Domain Pivot" value={infra.redirect_chain.destination_domain_changed ? 'YES (Changed)' : 'NO'} tone={infra.redirect_chain.destination_domain_changed ? 'warn' : 'muted'} />
+                      <Row label="Redirect Loop" value={infra.redirect_chain.has_redirect_loop ? 'DETECTED' : 'None'} tone={infra.redirect_chain.has_redirect_loop ? 'danger' : 'muted'} />
+                      <Row label="SSRF Boundary Check" value={infra.redirect_chain.ssrf_blocked ? 'BLOCKED' : 'Clean IP'} tone={infra.redirect_chain.ssrf_blocked ? 'danger' : 'ok'} />
                     </div>
-
-                    <div className="text-xs space-y-2 text-slate-300">
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Redirect Hops</span>
-                        <span className="font-mono text-cyan-300">
-                          {result.threat_infrastructure.redirect_chain.total_hops}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Cross-Domain Pivot</span>
-                        <span className={`font-mono ${
-                          result.threat_infrastructure.redirect_chain.destination_domain_changed ? 'text-amber-400 font-bold' : 'text-slate-400'
-                        }`}>
-                          {result.threat_infrastructure.redirect_chain.destination_domain_changed ? 'YES (Changed)' : 'NO'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Redirect Loop</span>
-                        <span className={`font-mono ${
-                          result.threat_infrastructure.redirect_chain.has_redirect_loop ? 'text-red-400 font-bold' : 'text-slate-400'
-                        }`}>
-                          {result.threat_infrastructure.redirect_chain.has_redirect_loop ? 'DETECTED' : 'None'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>SSRF Boundary Check</span>
-                        <span className={`font-mono ${
-                          result.threat_infrastructure.redirect_chain.ssrf_blocked ? 'text-red-400 font-bold' : 'text-emerald-400'
-                        }`}>
-                          {result.threat_infrastructure.redirect_chain.ssrf_blocked ? 'BLOCKED' : 'Clean IP'}
-                        </span>
-                      </div>
-                      <div className="pt-1">
-                        <span className="text-slate-500 block mb-1">Final Resolved Destination:</span>
-                        <div className="font-mono text-[11px] text-cyan-300 bg-slate-900 p-2 rounded border border-slate-800 break-all select-all">
-                          {result.threat_infrastructure.redirect_chain.final_url || result.url}
-                        </div>
+                    <div className="pt-1">
+                      <span className="mb-1 block text-xs text-st-muted">Final resolved destination:</span>
+                      <div className="select-all break-all rounded bg-white p-2 font-mono text-[0.6875rem] text-st-blue-dark ring-1 ring-st-container">
+                        {infra.redirect_chain.final_url || result.url}
                       </div>
                     </div>
-                  </div>
+                  </SubCard>
 
-                  {/* Redirect Hops Chain */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3 md:col-span-2 lg:col-span-1">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-                      <ExternalLink className="w-4 h-4" /> Observed Hop Trace
-                    </h4>
-                    {result.threat_infrastructure.redirect_chain.chain_hops && result.threat_infrastructure.redirect_chain.chain_hops.length > 0 ? (
-                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                        {result.threat_infrastructure.redirect_chain.chain_hops.map((hop, index) => (
-                          <div
-                            key={index}
-                            className="p-2.5 rounded bg-slate-900/90 border border-slate-800 text-xs space-y-1"
-                          >
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span className="font-mono text-cyan-400 font-bold">
-                                Hop #{hop.hop_number}
-                              </span>
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                  <SubCard title="Observed Hop Trace" icon={ExternalLink} titleClass="text-st-navy-2" className="md:col-span-2 lg:col-span-1">
+                    {infra.redirect_chain.chain_hops && infra.redirect_chain.chain_hops.length > 0 ? (
+                      <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                        {infra.redirect_chain.chain_hops.map((hop, index) => (
+                          <div key={index} className="space-y-1 rounded bg-white p-2.5 text-xs ring-1 ring-st-container">
+                            <div className="flex items-center justify-between text-[0.6875rem]">
+                              <span className="font-mono font-bold text-st-blue-dark">Hop #{hop.hop_number}</span>
+                              <span className={`rounded px-1.5 py-0.5 font-mono text-[0.625rem] ${
                                 hop.status_code >= 300 && hop.status_code < 400
-                                  ? 'bg-amber-500/20 text-amber-300'
+                                  ? 'bg-amber-100 text-amber-800'
                                   : hop.status_code >= 200 && hop.status_code < 300
-                                  ? 'bg-emerald-500/20 text-emerald-300'
-                                  : 'bg-slate-800 text-slate-300'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-st-container text-st-muted'
                               }`}>
                                 HTTP {hop.status_code}
                               </span>
                             </div>
-                            <div className="font-mono text-[11px] text-slate-300 truncate" title={hop.url}>
-                              {hop.domain}
-                            </div>
+                            <div className="truncate font-mono text-[0.6875rem] text-st-ink" title={hop.url}>{hop.domain}</div>
                             {hop.resolved_ip && (
-                              <div className="text-[10px] text-slate-500 font-mono">
-                                Verified IP: {hop.resolved_ip}
-                              </div>
+                              <div className="font-mono text-[0.625rem] text-st-outline">Verified IP: {hop.resolved_ip}</div>
                             )}
                             {hop.is_cross_domain && (
-                              <div className="text-[10px] text-amber-400 font-semibold flex items-center gap-1">
-                                <CornerDownRight className="w-3 h-3" /> Cross-domain redirect
+                              <div className="flex items-center gap-1 text-[0.625rem] font-semibold text-amber-700">
+                                <CornerDownRight className="h-3 w-3" aria-hidden="true" /> Cross-domain redirect
                               </div>
                             )}
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-xs text-slate-500 italic p-3 text-center">
-                        No redirection hops observed. Destination requested directly.
-                      </div>
+                      <p className="p-3 text-center text-xs italic text-st-outline">No redirection hops observed. Destination requested directly.</p>
                     )}
-                  </div>
+                  </SubCard>
                 </div>
 
                 {/* Threat Infrastructure Risk Indicators */}
-                {result.threat_infrastructure.infrastructure_indicators && result.threat_infrastructure.infrastructure_indicators.length > 0 && (
-                  <div className="bg-slate-950/60 border border-purple-900/30 rounded-lg p-4 space-y-2">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-                      <AlertTriangle className="w-4 h-4" /> Threat Infrastructure Observations ({result.threat_infrastructure.infrastructure_indicators.length})
+                {infra.infrastructure_indicators && infra.infrastructure_indicators.length > 0 && (
+                  <div className="space-y-2 rounded-lg bg-violet-50 p-4 ring-1 ring-violet-200">
+                    <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-violet-800">
+                      <AlertTriangle className="h-4 w-4" aria-hidden="true" /> Threat Infrastructure Observations ({infra.infrastructure_indicators.length})
                     </h4>
-                    <ul className="list-disc list-inside text-xs text-slate-300 space-y-1">
-                      {result.threat_infrastructure.infrastructure_indicators.map((ind, idx) => (
-                        <li key={idx} className="text-purple-200/90">{ind}</li>
-                      ))}
-                    </ul>
+                    <BulletList items={infra.infrastructure_indicators} dotClass="bg-violet-500" textClass="text-violet-900" />
                   </div>
                 )}
-              </div>
+              </Card>
             )}
 
             {/* Machine Learning Layer (Layer 4: Supervised Classifier Inference) */}
-            {result.ml_prediction && result.ml_prediction.is_model_loaded && (
-              <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-                  <div className="flex items-center gap-2">
-                    <BrainCircuit className="w-5 h-5 text-indigo-400" />
-                    <h3 className="text-base font-semibold text-slate-100">
-                      Layer 4: Machine Learning Classification Pipeline ({result.ml_prediction.model_name})
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-mono">
-                      Latency: {result.ml_prediction.inference_time_ms} ms
-                    </span>
-                    <span className={`inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full font-bold font-mono ${
-                      result.ml_prediction.predicted_label === 'malicious'
-                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    }`}>
-                      {result.ml_prediction.predicted_label === 'malicious' ? 'CLASSIFIED MALICIOUS' : 'CLASSIFIED LEGITIMATE'}
-                    </span>
-                  </div>
-                </div>
+            {ml && ml.is_model_loaded && (
+              <Card className="space-y-6">
+                <SectionHeader icon={BrainCircuit} iconClass="text-st-navy-2" title={`Layer 4: Machine Learning Classification (${ml.model_name})`}>
+                  <Chip>Latency: {ml.inference_time_ms} ms</Chip>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-[0.6875rem] font-bold ${
+                    ml.predicted_label === 'malicious' ? 'bg-st-error-bg text-st-error-ink' : 'bg-emerald-100 text-emerald-800'
+                  }`}>
+                    {ml.predicted_label === 'malicious' ? 'CLASSIFIED MALICIOUS' : 'CLASSIFIED LEGITIMATE'}
+                  </span>
+                </SectionHeader>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Probability & Calibration */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
-                      Prediction Probabilities
-                    </h4>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-slate-400">Malicious Probability</span>
-                          <span className="font-mono font-bold text-indigo-300">
-                            {(result.ml_prediction.malicious_probability * 100).toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all duration-500 ${
-                              result.ml_prediction.malicious_probability >= result.ml_prediction.decision_threshold
-                                ? 'bg-gradient-to-r from-orange-500 to-red-500'
-                                : 'bg-gradient-to-r from-emerald-500 to-cyan-500'
-                            }`}
-                            style={{ width: `${Math.min(result.ml_prediction.malicious_probability * 100, 100)}%` }}
-                          />
-                        </div>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                  <SubCard title="Prediction Probabilities" titleClass="text-st-navy-2">
+                    <div>
+                      <div className="mb-1 flex justify-between text-xs">
+                        <span className="text-st-muted">Malicious Probability</span>
+                        <span className="font-mono font-bold text-st-navy-2">{(ml.malicious_probability * 100).toFixed(1)}%</span>
                       </div>
-
-                      <div className="text-xs space-y-2 text-slate-300 pt-2 border-t border-slate-800/50">
-                        <div className="flex justify-between py-1 border-b border-slate-800/50">
-                          <span>Decision Threshold</span>
-                          <span className="font-mono text-slate-400">
-                            {result.ml_prediction.decision_threshold.toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between py-1 border-b border-slate-800/50">
-                          <span>Confidence Score</span>
-                          <span className="font-mono text-indigo-300 font-bold">
-                            {result.ml_prediction.confidence.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between py-1">
-                          <span>Feature Dimensions</span>
-                          <span className="font-mono text-slate-400">
-                            {result.ml_prediction.feature_count} features
-                          </span>
-                        </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-st-container">
+                        <div
+                          className={`h-full transition-all duration-500 ${ml.malicious_probability >= ml.decision_threshold ? 'bg-st-error' : 'bg-emerald-500'}`}
+                          style={{ width: `${Math.min(ml.malicious_probability * 100, 100)}%` }}
+                        />
                       </div>
                     </div>
-                  </div>
-
-                  {/* Operational ML Telemetry */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                      Model Operational Specs
-                    </h4>
-                    <div className="text-xs space-y-2 text-slate-300">
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Active Classifier</span>
-                        <span className="font-mono text-cyan-300">
-                          {result.ml_prediction.model_name}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Pre-trained Model Status</span>
-                        <span className="font-mono text-emerald-400">Loaded in RAM</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Inference Latency</span>
-                        <span className="font-mono text-cyan-300">
-                          {result.ml_prediction.inference_time_ms} ms
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-800/50">
-                        <span>Evaluation Strategy</span>
-                        <span className="font-mono text-slate-400">Domain-Grouped (Leak-free)</span>
-                      </div>
-                      <div className="flex justify-between py-1">
-                        <span>Re-training Trigger</span>
-                        <span className="font-mono text-slate-500">Scheduled batch</span>
-                      </div>
+                    <div className="pt-1">
+                      <Row label="Decision Threshold" value={ml.decision_threshold.toFixed(2)} tone="muted" />
+                      <Row label="Confidence Score" value={`${ml.confidence.toFixed(1)}%`} tone="accent" />
+                      <Row label="Feature Dimensions" value={`${ml.feature_count} features`} tone="muted" />
                     </div>
-                  </div>
+                  </SubCard>
 
-                  {/* Top Contributing Risk Features */}
-                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-4 space-y-3">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-                      Top Contributing Feature Signals
-                    </h4>
-                    {result.ml_prediction.top_risk_features && result.ml_prediction.top_risk_features.length > 0 ? (
-                      <ul className="space-y-1.5 text-xs text-slate-300">
-                        {result.ml_prediction.top_risk_features.map((signal, idx) => (
-                          <li key={idx} className="flex items-start gap-1.5 text-purple-300/90">
-                            <span className="text-purple-400 font-bold shrink-0">•</span>
-                            <span>{signal}</span>
-                          </li>
-                        ))}
-                      </ul>
+                  <SubCard title="Model Operational Specs" titleClass="text-st-blue-dark">
+                    <div>
+                      <Row label="Active Classifier" value={ml.model_name} tone="accent" />
+                      <Row label="Pre-trained Model Status" value="Loaded in RAM" tone="ok" />
+                      <Row label="Inference Latency" value={`${ml.inference_time_ms} ms`} tone="accent" />
+                      <Row label="Evaluation Strategy" value="Domain-Grouped (Leak-free)" tone="muted" />
+                      <Row label="Re-training Trigger" value="Scheduled batch" tone="muted" />
+                    </div>
+                  </SubCard>
+
+                  <SubCard title="Top Contributing Feature Signals" titleClass="text-violet-700">
+                    {ml.top_risk_features && ml.top_risk_features.length > 0 ? (
+                      <BulletList items={ml.top_risk_features} dotClass="bg-violet-500" />
                     ) : (
-                      <div className="text-xs text-slate-500 italic p-3 text-center">
-                        No elevated risk signals observed across extracted features.
-                      </div>
+                      <p className="p-3 text-center text-xs italic text-st-outline">No elevated risk signals observed across extracted features.</p>
                     )}
-                  </div>
+                  </SubCard>
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* Raw JSON Features View */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
-              <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2 mb-3">
-                <Terminal className="w-4 h-4 text-cyan-400" /> Extracted Multi-Layer JSON Payload
-              </h3>
-              <pre className="bg-slate-950 p-4 rounded-lg overflow-x-auto text-xs text-cyan-300 font-mono border border-slate-800 max-h-72">
-                {JSON.stringify(result, null, 2)}
-              </pre>
-            </div>
+            <Card>
+              <details>
+                <summary className="flex cursor-pointer items-center gap-2 text-sm font-bold text-st-navy">
+                  <Terminal className="h-4 w-4 text-st-blue-dark" aria-hidden="true" /> Extracted Multi-Layer JSON Payload
+                </summary>
+                <pre className="mt-3 max-h-72 overflow-x-auto rounded-lg bg-st-ink p-4 font-mono text-xs text-st-fixed">
+                  {JSON.stringify(result, null, 2)}
+                </pre>
+              </details>
+            </Card>
 
           </div>
         )}
 
       </div>
-    </div>
+    </AppShell>
   );
 }
