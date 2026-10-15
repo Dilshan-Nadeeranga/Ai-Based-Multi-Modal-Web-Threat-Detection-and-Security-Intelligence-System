@@ -1,12 +1,11 @@
-import { ShieldCheck } from 'lucide-react'
+import Logo from '../../../components/Logo.jsx'
 
 export function AuthLayout({ title, subtitle, children, footer }) {
   return (
     <main className="flex-1 flex items-center justify-center px-4 py-12 bg-slate-950 text-slate-100">
       <div className="w-full max-w-md">
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <ShieldCheck className="w-8 h-8 text-sky-400" />
-          <span className="text-2xl font-bold tracking-tight">ScamTrace</span>
+        <div className="flex items-center justify-center mb-6">
+          <Logo onDark className="h-10" />
         </div>
         <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-8 shadow-xl backdrop-blur-sm">
           <h1 className="text-xl font-semibold text-slate-100">{title}</h1>
