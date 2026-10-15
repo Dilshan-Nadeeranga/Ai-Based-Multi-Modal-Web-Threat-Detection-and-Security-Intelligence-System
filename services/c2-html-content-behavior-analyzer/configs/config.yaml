@@ -86,6 +86,13 @@ behavior_baseline:
   reports_dir: reports/behavior_baseline
   n_jobs: 4
 
+# Content extraction + language ID (Part 5 Batch A): scripts/build_text_corpus.py
+# Extraction rules: configs/content.yaml; language ID: configs/languages.yaml -> language_id.
+content:
+  output_dir: data/processed/text
+  reports_dir: reports/content
+  workers: 4
+
 # Sample collection (Part 1 Batch B): scripts/collect.py
 collection:
   candidates_csv: data/metadata/candidates.csv

@@ -1,5 +1,5 @@
-"""Public API routes: Part 2 preprocessing, Part 3 DOM features, Part 7 JS analysis,
-Part 8 behavioral intent, Part 9 (stub).
+"""Public API routes: Part 2 preprocessing, Part 3 DOM features, Part 5 content,
+Part 7 JS analysis, Part 8 behavioral intent, Part 9 (stub).
 
 Part 9: Preliminary tri-modal output (fusion + FastAPI).
 """
@@ -10,11 +10,13 @@ from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from c2_analyzer.behavior.pipeline import behavior_for_html
+from c2_analyzer.content.extractor import content_for_html
 from c2_analyzer.dom.pipeline import dom_features_for_html
 from c2_analyzer.js_analyzer.pipeline import js_analysis_for_html
 from c2_analyzer.preprocessing.pipeline import preprocess_html
 from c2_analyzer.schemas.analysis import AnalysisRequest, AnalysisResponse
 from c2_analyzer.schemas.behavior import BehaviorResult
+from c2_analyzer.schemas.content import PageText
 from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.schemas.js import JsAnalysisResult
 from c2_analyzer.schemas.parsed_page import ParsedPage
@@ -188,6 +190,45 @@ def behavior(request: BehaviorRequest) -> Response:
     is executed or downloaded. Same code as ``map_behavior.py``.
     """
     _, _, result = behavior_for_html(request.html, request.url)
+    return Response(result.model_dump_json(), media_type="application/json")
+
+
+class ContentRequest(PreprocessRequest):
+    """Input to ``POST /api/v1/content`` (same fields as /preprocess)."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"html": EXAMPLE_HTML, "url": "https://bank.example/login"},
+                {
+                    "html": '<html lang="si"><title>ගිණුම් අනතුරු ඇඟවීම</title><h1>හදිසි '
+                    "දැනුම්දීමයි!</h1><p>ඔබගේ බැංකු ගිණුම පැය 24ක් ඇතුළත අත්හිටුවනු ලැබේ.</p>"
+                    '<a class="btn" href="/v">දැන් තහවුරු කරන්න</a></html>',
+                    "url": None,
+                },
+            ]
+        }
+    )
+
+
+@router.post(
+    "/api/v1/content",
+    response_model=PageText,
+    tags=["Content (Part 5)"],
+    summary="HTML -> text segments, languages and model-ready page_text (Part 5, no verdict)",
+    responses={413: {"description": "request body larger than 5 MB"}},
+)
+def content(request: ContentRequest) -> Response:
+    """Run Part 2 then Part 5 on one HTML string.
+
+    Splits the page text into segments (title, headings, CTAs, form labels,
+    alert banners, paragraphs ...) with a language per segment and per page
+    (en / si / ta / si_latn / ta_latn / mixed / other / unknown, confidence and
+    method), masks emails / phones / NIC / card numbers, and builds the
+    ``page_text`` string Part 6 reads. Nothing is classified here. Same code as
+    ``build_text_corpus.py``.
+    """
+    _, result = content_for_html(request.html, request.url)
     return Response(result.model_dump_json(), media_type="application/json")
 
 

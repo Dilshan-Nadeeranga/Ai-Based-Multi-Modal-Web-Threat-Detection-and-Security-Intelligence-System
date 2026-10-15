@@ -277,10 +277,19 @@ def test_js_has_no_external_urls_and_a_tab_registry():
     js = read_static("inspector.js")
     assert "http://" not in js and "https://" not in js
     assert "SECURITY RULE" in js and "function registerTab" in js
-    for tab in ("Part 3", "Part 5–6", "JS Analysis (Part 7)", "Behavior (Part 8)", "Part 9"):
+    for tab in (
+        "Part 3",
+        "Content (Part 5)",
+        "Part 6",
+        "JS Analysis (Part 7)",
+        "Behavior (Part 8)",
+        "Part 9",
+    ):
         assert tab in js
     # Part 7 snippets are page CODE: they must reach the screen as text only
     assert "js-analysis" in js and 'codeText = (text) => el("span"' in js
     # Part 8 evidence chains are page code too: el() with text only (no HTML sinks, see above)
     assert "/behavior" in js and 'el("code", { cls: "step-code", text: show(item.code) })' in js
     assert "has_critical_behavior" in js
+    # Part 5 segment texts are page content: text only, from the dev / public content endpoints
+    assert "/content" in js and 'el("span", { cls: "multi", text: s.text })' in js

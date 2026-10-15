@@ -21,3 +21,45 @@ script_detect:
   min_letters: 20          # fewer letters than this -> "unknown"
   native_min_share: 0.30   # si/ta share needed to call a page si/ta (English menus are common)
   english_min_share: 0.80  # Latin share needed to call a page "en"; otherwise "mixed"
+
+# Real language identification (Part 5, Batch A): c2_analyzer.content.language.
+# Replaces the script_detect hint above as the AUTHORITATIVE page language.
+language_id:
+  # Labels Part 5 can return (per segment and per page). si_latn / ta_latn =
+  # Sinhala / Tamil written in Latin letters ("Singlish" / "Tanglish"); they are
+  # NOT dataset metadata values (metadata keeps en/si/ta/mixed/unknown).
+  labels: [en, si, ta, si_latn, ta_latn, mixed, other, unknown]
+  min_letters: 2              # fewer letters (any script) -> unknown
+  # Step 1 - Unicode script ratios. A segment whose second script has more than
+  # this share of its letters is "mixed"; the same share decides a mixed PAGE.
+  mixed_min_share: 0.25
+  # Step 2 - Latin-script text: English vs other Latin-script languages.
+  # Latin segments shorter than this (characters) are too short for a reliable
+  # guess ("OK", "Login") and inherit the page language instead.
+  short_segment_chars: 20
+  backend_order: [fasttext, langdetect]   # first one that loads is used
+  fasttext_model: models/langid/lid.176.ftz   # not in git; see README (download command)
+  langdetect_seed: 0
+  # A non-English top guess with at least this probability -> "other". A weaker
+  # non-English guess is still "en" (low confidence) when English is a close
+  # second - at least en_close_ratio x the top probability - because brand names,
+  # menus and short phrases confuse both models; otherwise "other" (low confidence).
+  other_min_confidence: 0.60
+  en_close_ratio: 0.50
+  # Singlish / Tanglish lexicon detector (runs before the model on Latin text).
+  # Frequent romanized words that are NOT English words. Known gap: XLM-R (Part 6)
+  # handles romanized Sinhala / Tamil poorly - such pages are flagged, not hidden.
+  romanized:
+    min_hits: 2               # at least this many lexicon words ...
+    min_ratio: 0.15           # ... and this share of the segment's words
+    si_latn: [oya, oyage, oyata, mama, mage, mata, nathi, natha, karanna, karala,
+              karanawa, puluwan, puluvan, denna, dennam, ganna, gannawa, kiyala,
+              kiyanna, mokakda, monawada, kohomada, neda, ekak, eka, thiyenawa,
+              thiyena, thiyanawa, venna, wenna, ona, oney, ithin, hariyata, salli,
+              ganan, labenawa, laba, apita, apey, onna, hondai, nemei, naha, nisa,
+              wenuwen, wela, giya, yanna]
+    ta_latn: [ungalukku, ungal, unga, enna, illai, illa, irukku, irukkum, panna,
+              pannunga, vaanga, vanga, naan, neenga, nenga, romba, sollunga, kaasu,
+              panam, vanakkam, seyyungal, kidaikkum, kidaikum, ethu, edhu, ippo,
+              ippodhu, inniku, indha, intha, anga, inga, enakku, unakku, pannalam,
+              mudiyum, vendum, venum, thaan, dhaan, kodunga, paarunga]

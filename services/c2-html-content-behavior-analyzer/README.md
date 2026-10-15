@@ -43,6 +43,8 @@ cp .env.example .env    # then edit values
 
 `torch` / `transformers` are only needed from Part 6 on; skip them for a faster install while working on Parts 1–5.
 
+Optional for Part 5: the fastText language-ID model (`models/langid/lid.176.ftz`, see [Content extraction & language ID](#content-extraction--language-id)). Without it, langdetect is used.
+
 ## Run
 
 ```bash
@@ -287,6 +289,63 @@ v0.1 pilot (42 test pages), from `reports/dom_baseline/v0.1/results.md`:
 | **Random Forest** (best by CV) | 0.797 ± 0.011 | 0.755 | 0.786 | 10.0 % |
 | XGBoost | 0.788 ± 0.024 | 0.753 | 0.786 | 10.0 % |
 
+## Content extraction & language ID
+
+Part 5 (Batch A) turns a page into **the text the NLP model (Part 6) will read**. It does not classify anything. It reuses Part 2's `ParsedPage` (title, headings, paragraphs, visible / hidden text, form labels and placeholders) and Part 2's normalization (NFC, ZWJ / ZWNJ kept, so ශ්‍රී stays intact). The raw HTML is re-parsed only for facts Part 2 does not store: link classes, `role=button` and `role=alert`. The same `content/extractor.py::extract_content(page, html)` serves dataset samples, the CLI and `POST /api/v1/content`.
+
+```bash
+python scripts/build_text_corpus.py extract --version v0.3 [--force] [--workers 4]   # runs Part 2 for missing samples
+python scripts/build_text_corpus.py one --sample-id c2_benign_000118                  # segments by field + languages + page_text
+python scripts/build_text_corpus.py one --file page.html [--url https://example.com/] [--json]
+```
+
+- **Segments** (`schemas/content.py::PageText`, `text_v1`). Each segment has `segment_id`, `field`, `text`, `order`, `count`, `language`, confidence, method and `script_mix`. The fields are:
+  - `title` and `meta_description`;
+  - `heading`, with its level;
+  - `cta`: buttons, `input[type=submit|button]`, `a.btn` / `.cta` / `role=button`, and short (≤ 6 words) links with an imperative verb in English, Sinhala or Tamil, such as "verify", "තහවුරු", "சரிபார்";
+  - `form_label`: the label, or the aria-label;
+  - `placeholder`;
+  - `alert_banner`: `role=alert`, or short text with an urgency marker;
+  - `paragraph`;
+  - `visible_other`: other visible lines, e.g. text in `<div>`s;
+  - `hidden`: kept for reference, never sent to the model.
+  The rules live in `configs/content.yaml`.
+- **Cleaning:**
+  - Fields are filled in priority order, so text taken by an earlier field is not repeated: "Sign in" stays a CTA.
+  - Repeated menus and footers are merged into one segment with `count`.
+  - Segments that are only a number, date, price, URL, email or encoded blob are dropped.
+  - Emails, phone numbers, NIC numbers and card numbers are masked (`[EMAIL]`, `[PHONE]` …) with Part 2's `mask_pii`. The rest of the wording is kept.
+  - Caps apply per field, per segment and per page.
+- **`page_text`** is the model input, e.g. `[TITLE] … [CTA] … [LABEL] … [HEADING] … [ALERT] … [DESC] … [TEXT] …`. It is assembled in field priority order and cut to 3000 characters at a word boundary, so title, CTAs, labels, headings and alerts survive truncation.
+- **Language ID** (`content/language.py`, `configs/languages.yaml → language_id`), per segment and per page. Labels: `en`, `si`, `ta`, `si_latn`, `ta_latn`, `mixed`, `other`, `unknown`.
+  1. Unicode script ratios (Sinhala U+0D80–0DFF, Tamil U+0B80–0BFF, Latin, other). A Sinhala or Tamil segment is certain even if it is one word. If the second script has more than 25 % of the letters, the segment is `mixed`.
+  2. Latin text first goes through the **Singlish / Tanglish lexicon** (frequent romanized words such as "oya", "karanna", "ungalukku") → `si_latn` / `ta_latn`. *Known gap:* XLM-R handles romanized Sinhala / Tamil poorly, so these pages are flagged, not hidden.
+  3. Then English vs other Latin-script languages, with an offline model: **fastText lid.176** if present, else **langdetect** (seed 0), else "en" with low confidence. Latin segments under 20 characters ("OK", "Login") inherit the page language.
+  4. The page language is weighted by characters over the visible segments. It is `mixed` if the second language has more than 25 %. Every result has a confidence and the method used.
+  This replaces Part 1's `utils/script_detect.py` hint, which still serves collection.
+- **fastText model** (optional, ~1 MB, not in git; the code works without it). `pip install fasttext-predict` is already in `requirements.txt`, then:
+  ```bash
+  curl -L -o models/langid/lid.176.ftz https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.ftz
+  ```
+  The backend name is part of the rules hash, so adding or removing the model redoes every stored result.
+- **Outputs:**
+  - `data/processed/text/<v>/<id>.json` and `text_index.csv` (sample_id, label, cluster_id, page_language, lang_confidence, n_segments, chars, has_cta, has_form_labels, si_ratio, ta_ratio);
+  - `reports/content/<v>_summary.{json,md}`: language per label, metadata-vs-detected confusion table, segments per field, text size, top 20 CTAs per label, empty pages;
+  - `reports/content/<v>_language_mismatch.csv`: a **review list only**. `metadata.csv` is never changed automatically.
+
+v0.3 (459 pages), from `reports/content/v0.3_summary.md`:
+- **Run:** 0 failures, 7 s wall time with 4 workers, median 21 ms per page, 4 pages with no visible text.
+- **Languages:** 7 benign pages `si`, 3 `ta`; 97 pages `other`, which are real foreign-language pages: German, Lithuanian, Chinese, Russian, Spanish, Portuguese, Indonesian …. No Singlish / Tanglish pages yet.
+- **Metadata vs detected:** 123 of 459 disagree. 90 metadata-`en` pages are really another Latin or other-script language, 15 are `mixed`, and 6 `unknown` pages are English.
+
+| page language | en | si | ta | mixed | other | unknown |
+|---|---|---|---|---|---|---|
+| benign (227) | 165 | 7 | 3 | 7 | 44 | 1 |
+| phishing (87) | 60 | 0 | 0 | 7 | 19 | 1 |
+| fake_ecommerce (57) | 38 | 0 | 0 | 1 | 18 | 0 |
+| crypto_scam (29) | 22 | 0 | 0 | 1 | 4 | 2 |
+| malware_delivery (59) | 45 | 0 | 0 | 2 | 12 | 0 |
+
 ## JavaScript analysis
 
 Part 7 analyses every piece of JavaScript Part 2 found: inline scripts, `on*=` handlers and `javascript:` URLs. It works **statically**. Code is parsed into a syntax tree with [tree-sitter](https://tree-sitter.github.io/) and never executed, and external `<script src>` files are never downloaded; only their address is analysed. Part 7 **reports** API usage. Deciding intent (for example, "credential read + external fetch = exfiltration") is Part 8's job.
@@ -417,6 +476,7 @@ v0.3 (459 pages, 5 classes), from `reports/behavior/v0.3_summary.md`:
 | POST | `/api/v1/dom-features` | ✅ Part 3: same body → `DomResult` (52-feature vector in dictionary order + evidence). No `url` → `base_url_known = 0` and external features 0 |
 | POST | `/api/v1/preprocess` | ✅ Part 2: body `{"html": "...", "url": "..." or null}` → `ParsedPage` JSON (same as the stored files). `url` is never fetched. Body > 5 MB → `413` |
 | POST | `/api/v1/js-analysis` | ✅ Part 7: same body → `JsAnalysisResult` (detections with line numbers / arguments / masked snippets, scripts with obfuscation stats, external scripts, js_v1 features). Nothing is executed or downloaded |
+| POST | `/api/v1/content` | ✅ Part 5: same body → `PageText` (segments per field with language, page language + confidence + method, model-ready `page_text`). Text is prepared, nothing is classified |
 | POST | `/api/v1/behavior` | ✅ Part 8: same body → `BehaviorResult` (sources, sinks, flows with evidence chains, findings with severity and message, beh_v1 intent vector, risk score). Runs Part 2 + 7 + 8; nothing is executed or downloaded |
 | POST | `/api/v1/analyze` | stub (501) – body `{"html": "...", "url": "..."}` |
 | POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}` |
@@ -436,7 +496,7 @@ Then open **http://127.0.0.1:8002/inspector** (Swagger: http://127.0.0.1:8002/do
 
 - **Left:** pick a frozen dataset version, filter by label, language, "has password input", "external form action", "misclassified (test)" (test pages the best Part 4 model got wrong) or "has critical behavior finding" (stored Part 8 results), search by id or title, and click a sample. Up/Down arrows move through the list.
 - **Top:** paste HTML (and optionally its URL) or choose a local `.html` file, then press **Analyze**. This calls `POST /api/v1/preprocess`. The file is read as text and never rendered.
-- **Tabs:** DOM Features (Part 3, plus the Part 4 "DOM baseline prediction" card with the predicted class, probability bars, the top 5 features pushing towards or away from it, and a PILOT badge; then evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only) · JS Analysis (Part 7: summary chips per API category, the detections table with snippets shown as monospace text only, external-URL / library / confidence badges, per-script obfuscation cards and the external scripts table) · Behavior (Part 8: risk-score gauge, finding cards coloured by severity with the message, factors and the **evidence chain as numbered steps** (line + code, monospace, text only), the flows table with expandable chains, the intent vector and the sinks with their triggers). Greyed-out tabs are placeholders for Parts 5–6 and 9.
+- **Tabs:** DOM Features (Part 3, plus the Part 4 "DOM baseline prediction" card with the predicted class, probability bars, the top 5 features pushing towards or away from it, and a PILOT badge; then evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only) · JS Analysis (Part 7: summary chips per API category, the detections table with snippets shown as monospace text only, external-URL / library / confidence badges, per-script obfuscation cards and the external scripts table) · Behavior (Part 8: risk-score gauge, finding cards coloured by severity with the message, factors and the **evidence chain as numbered steps** (line + code, monospace, text only), the flows table with expandable chains, the intent vector and the sinks with their triggers) · Content (Part 5: page language with confidence, method and a script-ratio bar, language shares, the highlighted CTA list, segments grouped by field with a language chip each, and `page_text` in monospace; text only). Greyed-out tabs are placeholders for Parts 6 and 9.
 - **Deep links:** the URL hash remembers the version, sample and tab (e.g. `/inspector#v=v0.1&sample=c2_phishing_000081&tab=forms`). This is handy for presentations.
 
 Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
@@ -449,6 +509,7 @@ Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
 | `GET /api/v1/dev/samples/{id}/dom-features?version=v0.1` | the stored Part 3 `DomResult`, or one computed on the fly (header `X-Features-Source`) |
 | `GET /api/v1/dev/samples/{id}/dom-prediction?version=v0.1` | Part 4: probabilities from every trained baseline, the best model's top 5 contributions, the split and whether it is misclassified on test (`404` if no model has been trained) |
 | `GET /api/v1/dev/samples/{id}/js-analysis?version=v0.2` | the stored Part 7 `JsAnalysisResult`, or one computed on the fly (header `X-Js-Source`) |
+| `GET /api/v1/dev/samples/{id}/content?version=v0.3` | the stored Part 5 `PageText`, or one computed on the fly (header `X-Content-Source`) |
 | `GET /api/v1/dev/samples/{id}/behavior?version=v0.3` | the stored Part 8 `BehaviorResult`, or one computed on the fly (header `X-Behavior-Source`) |
 | `GET /api/v1/dev/dom-dictionary?version=v0.1` | the feature dictionary plus per-label medians from the Part 3 report |
 | `GET /api/v1/dev/samples/{id}/safe-preview` | Part 1's sanitized copy, with `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'` and `nosniff` |

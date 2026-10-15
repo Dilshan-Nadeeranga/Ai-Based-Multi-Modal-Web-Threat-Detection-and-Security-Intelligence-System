@@ -1038,10 +1038,127 @@ registerTab({
   },
 });
 
+// ---- 10. Content (Part 5) ---------------------------------------------------
+// The page's TEXT as Part 6 will read it: segments per field with a language
+// chip each, the CTA list, and page_text. Segment texts are page content: shown
+// ONLY through el()/textContent (Sinhala/Tamil fonts come from --text-font).
+
+const contentCache = new WeakMap();
+const SCRIPT_NAMES = { si: "Sinhala", ta: "Tamil", latin: "Latin", other: "other" };
+const FIELD_TITLES = [
+  ["title", "Title"], ["meta_description", "Meta description"], ["heading", "Headings"],
+  ["cta", "Buttons / CTAs"], ["form_label", "Form labels"], ["placeholder", "Placeholders"],
+  ["alert_banner", "Alert banners"], ["paragraph", "Paragraphs"], ["visible_other", "Other visible text"],
+  ["hidden", "Hidden text (not seen by the visitor)"],
+];
+
+function contentResult(ctx) {
+  return cached(contentCache, ctx, () => {
+    if (ctx.kind === "sample") {
+      return api(`/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/content` + query({ version: ctx.version }))
+        .then((r) => ({ data: r.data, source: r.headers.get("X-Content-Source") || "stored" }));
+    }
+    return api("/api/v1/content", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html: ctx.html || "", url: ctx.url || null }),
+    }).then((r) => ({ data: r.data, source: "api" }));
+  });
+}
+
+const langChip = (lang, confidence, method) =>
+  el("span", { cls: "lang-chip " + (lang || "unknown"), text: show(lang), title: `confidence ${fmtValue(confidence)} · ${show(method)}` });
+
+function scriptBar(ratios) {
+  const bar = el("div", { cls: "script-bar" });
+  const legend = el("div", { cls: "script-legend" });
+  for (const code of Object.keys(SCRIPT_NAMES)) {
+    const share = Number((ratios || {})[code]) || 0;
+    if (share > 0) {
+      const part = el("div", { cls: "s-" + code, title: `${SCRIPT_NAMES[code]} ${(share * 100).toFixed(1)}%` });
+      part.style.width = (share * 100).toFixed(2) + "%"; // a number, not page data
+      bar.append(part);
+    }
+    legend.append(el("span", {}, el("span", { cls: "sw s-" + code }), `${SCRIPT_NAMES[code]} ${(share * 100).toFixed(1)}%`));
+  }
+  return el("div", {}, bar, legend);
+}
+
+function segmentLine(s) {
+  return el("div", { cls: "seg" },
+    el("span", { cls: "sid", text: s.segment_id }),
+    langChip(s.language, s.lang_confidence, s.lang_method),
+    s.level ? badge("h" + s.level) : null,
+    s.count > 1 ? badge(`×${s.count}`) : null,
+    el("span", { cls: "multi", text: s.text }));
+}
+
+registerTab({
+  id: "content",
+  title: "Content (Part 5)",
+  async render(ctx, box) {
+    fill(box, el("p", { cls: "muted", text: "Extracting text segments and identifying languages…" }));
+    const result = await contentResult(ctx);
+    if (state.ctx !== ctx || !box.isConnected) return; // the user moved on meanwhile
+    const r = result.data;
+    const meta = r.meta || {};
+    const lang = r.language || {};
+    const segments = r.segments || [];
+    clear(box);
+
+    fill(box,
+      el("div", { cls: "toolbar" },
+        badge(meta.schema_version || "text_v1", "info"),
+        badge(result.source === "on-the-fly" ? "computed on the fly" : result.source, result.source === "on-the-fly" ? "warn" : null),
+        badge(`CTAs from ${show(meta.cta_source)}`, meta.cta_source === "html" ? null : "warn"),
+        meta.truncated ? badge("capped: " + (meta.truncation_reasons || []).join(", "), "warn") : null,
+        el("span", { cls: "muted", text: `${fmtValue(meta.processing_ms)} ms · rules ${(meta.rules_hash || "").slice(0, 12)} · language backend ${show(lang.backend)}` })),
+      (meta.errors || []).length ? el("div", { cls: "error-box" }, el("ul", {}, meta.errors.map((e) => el("li", { text: e })))) : null,
+      (meta.warnings || []).length ? el("p", { cls: "note", text: "Note: " + meta.warnings.join(" · ") }) : null);
+
+    fill(box, section("Page language",
+      el("div", { cls: "toolbar" },
+        el("span", { cls: "lang-chip " + (lang.language || "unknown"), text: show(lang.language) }),
+        el("strong", { text: `confidence ${fmtValue(lang.confidence)}` }),
+        badge(`method: ${show(lang.method)}`),
+        lang.lang_attr ? el("span", { cls: "muted", text: `<html lang> says ${lang.lang_attr} (hint only)` }) : null,
+        ctx.language ? el("span", { cls: "muted", text: `metadata says ${ctx.language}` }) : null),
+      el("h3", { cls: "heading", text: "Script ratio (letters)" }),
+      scriptBar(lang.script_ratios),
+      el("h3", { cls: "heading", text: "Language share (characters of visible segments)" }),
+      bars(Object.entries(lang.shares || {}).sort((a, b) => b[1] - a[1]), (v) => (v * 100).toFixed(1) + "%"),
+      ["si_latn", "ta_latn"].includes(lang.language)
+        ? el("p", { cls: "note", text: "Romanized Sinhala / Tamil (Singlish / Tanglish): known gap - XLM-R handles it poorly." })
+        : null));
+
+    const ctas = segments.filter((s) => s.field === "cta");
+    fill(box, section(`CTAs (${ctas.length}) - buttons and action links`,
+      ctas.length
+        ? el("ul", { cls: "cta-list" }, ctas.map((s) => el("li", {}, langChip(s.language, s.lang_confidence, s.lang_method), " ", el("span", { cls: "multi", text: s.text }))))
+        : el("p", { cls: "muted", text: "No CTA found." })));
+
+    const counts = r.counts || {};
+    fill(box, section(`Segments (${segments.length}) by field`,
+      el("div", { cls: "cards" },
+        countCard("visible chars", r.chars),
+        countCard("segments", segments.length),
+        countCard("dropped", Object.values(meta.dropped || {}).reduce((a, b) => a + b, 0),
+          Object.entries(meta.dropped || {}).map(([k, v]) => `${k} ${v}`).join(" · "))),
+      FIELD_TITLES.filter(([field]) => counts[field]).map(([field, title]) =>
+        el("details", { attrs: { open: field !== "hidden" && field !== "visible_other" } },
+          el("summary", { text: `${title} (${counts[field]})` }),
+          segments.filter((s) => s.field === field).map(segmentLine))),
+      r.empty ? el("p", { cls: "muted", text: "This page has no visible text." }) : null));
+
+    fill(box, section(`page_text - model input for Part 6 (${fmtInt(r.page_text_chars)} chars${r.page_text_truncated ? ", truncated" : ""})`,
+      el("pre", { text: r.page_text || "(empty)" })));
+  },
+});
+
 // ---- Future parts (disabled placeholders) -------------------------------------------------
 
 for (const [id, title] of [
-  ["content-nlp", "Content / NLP (Part 5–6)"],
+  ["nlp", "XLM-R / NLP (Part 6)"],
   ["unified", "Unified Result (Part 9)"],
 ]) {
   registerTab({ id, title, enabled: false, render() {} });

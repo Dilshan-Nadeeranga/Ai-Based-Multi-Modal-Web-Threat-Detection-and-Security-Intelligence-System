@@ -1,0 +1,105 @@
+# Structured text extraction (Part 5, Batch A): c2_analyzer.content.extractor
+#
+# Part 5 prepares TEXT for the NLP model (Part 6); nothing here classifies a
+# page. Every rule list below is matched case-insensitively. Changing this file
+# changes the rules hash, so `build_text_corpus.py extract` redoes every page.
+text_set_version: text_v1
+
+# ---- CTA / buttons (task 5) ---------------------------------------------------
+cta:
+  # <a> / <div> / <span> whose class contains one of these words (as a part of a
+  # class name: "btn-primary", "cta_main", "login-button") look like buttons.
+  class_words: [btn, button, cta, call-to-action, submit]
+  # role / aria attributes that make any element a button
+  roles: [button]
+  # A plain link counts as a CTA only when its text is short AND contains an
+  # imperative verb. English verbs match whole words; Sinhala / Tamil verbs are
+  # matched as substrings (inflected forms such as "තහවුරු කරන්න" still match),
+  # and Sinhala puts the verb at the END, so the verb may be anywhere in the text.
+  link_max_words: 6
+  imperative_verbs:
+    en: [verify, confirm, claim, login, log in, sign in, signin, sign up, register,
+         update, unlock, restore, continue, submit, download, install, get, buy,
+         order, shop, pay, checkout, check out, deposit, withdraw, invest, join,
+         start, apply, redeem, activate, validate, reactivate, connect, access,
+         open, click, call, contact, chat, subscribe, upgrade, reset, recover,
+         secure, review, accept, proceed, buy now, try, win, spin, play]
+    si: [තහවුරු, ලබාගන්න, ලබා ගන්න, ඇතුළු, පිවිසෙන්න, ලියාපදිංචි, යාවත්කාලීන, ගෙවන්න,
+         මිලදී, ඇණවුම්, බාගන්න, බාගත, ක්ලික්, අමතන්න, එක්වන්න, සම්බන්ධ, ඉදිරියට,
+         යවන්න, ආරම්භ, ඉල්ලුම්, කරන්න]
+    ta: [சரிபார், உறுதிப்படுத், பெறுங்கள், பெற, உள்நுழை, பதிவு, புதுப்பி, செலுத்து,
+         வாங்க, ஆர்டர், பதிவிறக்க, கிளிக், அழைக்க, இணைய, தொடர, சமர்ப்பி, தொடங்க,
+         விண்ணப்பி]
+  max_chars: 120          # longer "buttons" are layout blocks, not CTAs
+
+# ---- Alert banners ----------------------------------------------------------------
+alert:
+  roles: [alert, alertdialog]
+  aria_live: [assertive]
+  max_chars: 220          # only SHORT text with an urgency marker is a banner
+  # Urgency / threat markers (substring match, case-insensitive)
+  markers:
+    en: [urgent, immediately, suspended, suspension, locked, blocked, expire,
+         expired, expires, within 24, within 48, last chance, final notice, warning,
+         alert, unusual activity, unauthorized, security alert, limited time,
+         act now, deadline, verify now, action required, will be closed,
+         will be deleted, infected, virus detected, congratulations, you have won,
+         only today, hurry, offer ends]
+    si: [හදිසි, වහාම, අත්හිටුව, අවහිර, කල් ඉකුත්, අනතුරු, අවවාද, පැය 24, අවසන්,
+         සුබ පැතුම්, ජයග්‍රහණය, දිනා]
+    ta: [அவசர, உடனடியாக, இடைநிறுத்த, முடக்க, காலாவதி, எச்சரிக்கை, கடைசி,
+         24 மணி, வாழ்த்துக்கள், வென்றுள்ளீர்கள்]
+
+# ---- Cleaning -------------------------------------------------------------------
+cleaning:
+  min_letters: 2           # a segment needs at least this many letters (any script)
+  max_segment_chars: 500   # longer segments are cut (word boundary) - one block of text
+  # A segment that is ONLY one of these (after trimming punctuation) is dropped:
+  # numbers, dates, times, prices, URLs, emails, phone numbers.
+  junk_patterns:
+    - '^[\d\s.,:/\-+()%#*$€£¥₹]+$'                     # numbers, dates, times, prices
+    - '^(https?://|www\.)\S+$'                         # a bare URL
+    - '^[\w.%+-]+@[\w.-]+\.[a-z]{2,}$'                 # a bare email address
+    - '^(©|\(c\)|copyright)?\s*\d{4}([-–]\d{2,4})?$'   # "© 2024"
+    - '^[A-Za-z0-9+/=_-]{40,}$'                         # an encoded blob (base64 / hex / token)
+
+# ---- Caps (per page) -------------------------------------------------------------
+caps:
+  per_field:               # max segments kept per field, in document order
+    title: 1
+    meta_description: 1
+    heading: 40
+    cta: 30
+    form_label: 30
+    placeholder: 30
+    alert_banner: 10
+    paragraph: 80
+    visible_other: 200
+    hidden: 30
+  total_chars: 30000       # all segments together (fields filled in priority order)
+
+# Fields in PRIORITY order. Used when caps cut text and for page_text. Title,
+# CTAs, form labels, headings and alerts come first because they carry the
+# scam intent ("Verify your account" / "Enter OTP"); long body text comes last.
+field_priority: [title, cta, form_label, placeholder, heading, alert_banner,
+                 meta_description, paragraph, visible_other, hidden]
+
+# ---- Model-ready string (input to Part 6) -----------------------------------------
+page_text:
+  max_chars: 3000
+  # Fields included, in this order (= priority). hidden text is never included:
+  # the visitor does not see it, and cloaked keyword stuffing would mislead the model.
+  fields: [title, cta, form_label, placeholder, heading, alert_banner,
+           meta_description, paragraph, visible_other]
+  markers:
+    title: "[TITLE]"
+    cta: "[CTA]"
+    form_label: "[LABEL]"
+    placeholder: "[LABEL]"
+    heading: "[HEADING]"
+    alert_banner: "[ALERT]"
+    meta_description: "[DESC]"
+    paragraph: "[TEXT]"
+    visible_other: "[TEXT]"
+  joiner: " | "            # between segments of the same field
+  min_tail_chars: 20       # a cut segment must keep at least this many chars

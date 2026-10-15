@@ -191,6 +191,20 @@
   .gauge-fill { height: 100%; background: var(--ok); }
   .gauge-fill.info { background: var(--accent); } .gauge-fill.warn { background: var(--warn); } .gauge-fill.danger { background: var(--danger); }
   .gauge-num { font-weight: 700; font-family: var(--mono); }
+  .script-bar { display: flex; width: 320px; max-width: 100%; height: 14px; border-radius: 7px; overflow: hidden; background: var(--panel-2); border: 1px solid var(--border); }
+  .s-si { background: #8e24aa; } .s-ta { background: #00897b; }
+  .s-latin { background: var(--accent); } .s-other { background: var(--muted); }
+  .script-legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .script-legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+  .lang-chip { font-family: var(--mono); font-size: 11px; padding: 0 5px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+  .lang-chip.si, .lang-chip.si_latn { color: #8e24aa; border-color: #8e24aa; }
+  .lang-chip.ta, .lang-chip.ta_latn { color: #00897b; border-color: #00897b; }
+  .lang-chip.en { color: var(--accent); border-color: var(--accent); }
+  .lang-chip.mixed { color: var(--warn); border-color: var(--warn); }
+  .seg { display: flex; gap: 8px; align-items: baseline; margin: 3px 0; }
+  .seg .sid { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  ul.cta-list { margin: 0; padding: 0; }
+  ul.cta-list li { list-style: none; background: var(--warn-soft); border-left: 3px solid var(--warn); border-radius: 4px; padding: 3px 8px; margin: 3px 0; }
   .finding { border-left: 5px solid var(--border); }
   .finding.sev-critical, .finding.sev-high { border-left-color: var(--danger); }
   .finding.sev-medium { border-left-color: var(--warn); } .finding.sev-low { border-left-color: var(--accent); }

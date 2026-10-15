@@ -26,8 +26,11 @@ sentencepiece>=0.2
 # JS static analysis (Part 7): error-tolerant parser, offline wheels, never executes code
 tree-sitter>=0.25,<0.26
 tree-sitter-javascript>=0.25,<0.26
-# Text / dedup
+# Text / dedup / language ID (Part 5). fasttext-predict = inference-only fastText wheel
+# (the full `fasttext` package does not build on Windows / Python 3.13); it needs the
+# lid.176.ftz model file (README). Without either, langdetect (seed 0) is used.
 langdetect>=1.0.9
+fasttext-predict>=0.9.2.4
 rapidfuzz>=3.6
 datasketch>=1.6
 # Utilities

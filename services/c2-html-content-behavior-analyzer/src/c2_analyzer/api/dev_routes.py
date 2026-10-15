@@ -29,6 +29,7 @@ from c2_analyzer.api.dependencies import get_dev_dataset
 from c2_analyzer.api.dev_data import DevDataset, NotFoundError
 from c2_analyzer.classifiers.dom_baseline.predict import PredictionError
 from c2_analyzer.schemas.behavior import BehaviorResult
+from c2_analyzer.schemas.content import PageText
 from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.schemas.dom_baseline import DomPrediction
 from c2_analyzer.schemas.inspector import DomDictionaryInfo, SampleSummary, VersionInfo
@@ -182,6 +183,27 @@ def behavior(
     except NotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from None
     return Response(text, media_type="application/json", headers={"X-Behavior-Source": source})
+
+
+@router.get(
+    "/samples/{sample_id}/content",
+    response_model=PageText,
+    summary="Part 5 text segments + language ID of a sample",
+)
+def content(
+    dataset: DatasetDep,
+    sample_id: str,
+    version: str | None = Query(None, examples=["v0.3"], description="default: newest"),
+) -> Response:
+    """The stored PageText; computed on the fly (not saved) if missing or outdated.
+
+    Header ``X-Content-Source`` says which: ``stored`` or ``on-the-fly``.
+    """
+    try:
+        text, source = dataset.content(_version(dataset, version), sample_id)
+    except NotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from None
+    return Response(text, media_type="application/json", headers={"X-Content-Source": source})
 
 
 @router.get(

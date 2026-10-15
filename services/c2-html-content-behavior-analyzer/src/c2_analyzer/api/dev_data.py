@@ -44,6 +44,9 @@ from c2_analyzer.behavior.batch import stored_result as stored_behavior_result
 from c2_analyzer.behavior.pipeline import map_behavior
 from c2_analyzer.classifiers.dom_baseline.common import MODEL_NAMES, BaselineConfig
 from c2_analyzer.classifiers.dom_baseline.predict import predict_features
+from c2_analyzer.content.batch import output_dir as content_output_dir
+from c2_analyzer.content.batch import stored_result as stored_content_result
+from c2_analyzer.content.extractor import extract_content
 from c2_analyzer.dataset.manifest import list_versions, manifest_paths, manifests_dir
 from c2_analyzer.dataset.metadata import MetadataStore
 from c2_analyzer.dataset.page_view import read_html
@@ -117,6 +120,7 @@ class DevDataset:
         splits: Path | None = None,
         js_root: Path | None = None,
         behavior_root: Path | None = None,
+        content_root: Path | None = None,
     ) -> None:
         self.manifests = manifests
         self.parsed_root = parsed_root  # data/processed/parsed_html (one folder per version)
@@ -129,6 +133,7 @@ class DevDataset:
         self.splits = splits  # data/splits (None = split unknown)
         self.js_root = js_root  # data/processed/js (None = never stored)
         self.behavior_root = behavior_root  # data/processed/behavior (None = never stored)
+        self.content_root = content_root  # data/processed/text (None = never stored)
         self._bundles: dict[str, tuple[tuple, dict]] = {}
         self._files: dict[Path, tuple[int, object]] = {}
         self._facts: dict[Path, tuple[int, int, _Facts | None]] = {}
@@ -151,6 +156,7 @@ class DevDataset:
             splits=splits_root(),
             js_root=js_output_dir(None).parent,
             behavior_root=behavior_output_dir(None).parent,
+            content_root=content_output_dir(None).parent,
         )
 
     # ---- versions ---------------------------------------------------------------
@@ -392,6 +398,28 @@ class DevDataset:
         page = ParsedPage.model_validate_json(self.parsed(version, sample_id)[0])
         js_result = JsAnalysisResult.model_validate_json(self.js_analysis(version, sample_id)[0])
         return map_behavior(page, js_result).model_dump_json(), "on-the-fly"
+
+    def content(self, version: str, sample_id: str) -> tuple[str, str]:
+        """(PageText JSON text, "stored" | "on-the-fly") - Part 5 for one sample.
+
+        The stored result is used when it was made from the same file with the
+        current rules (and language backend); otherwise the text is extracted now
+        from the (stored or fresh) ParsedPage and the raw HTML - not saved.
+        """
+        row = self._row(version, sample_id)
+        if self.content_root is not None:
+            path = self.content_root / version / f"{sample_id}.json"
+            if stored_content_result(path, row["sha256"]) is not None:
+                return path.read_text(encoding="utf-8"), "stored"
+        raw = from_bytes(
+            self._raw_file(row).read_bytes(),
+            page_url=self._page_url(sample_id),
+            sample_id=sample_id,
+            dataset_version=version,
+            label=row["label"],
+        )
+        page = ParsedPage.model_validate_json(self.parsed(version, sample_id)[0])
+        return extract_content(page, raw.html).model_dump_json(), "on-the-fly"
 
     def dom_dictionary(self, version: str | None) -> DomDictionaryInfo:
         """The Part 3 feature dictionary + per-label medians of a version (if reported)."""

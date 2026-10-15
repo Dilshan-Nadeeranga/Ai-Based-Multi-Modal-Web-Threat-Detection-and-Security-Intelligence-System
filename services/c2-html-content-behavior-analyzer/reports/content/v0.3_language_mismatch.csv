@@ -1,0 +1,124 @@
+sample_id,label,metadata_language,detected_language,confidence,method,si_ratio,ta_ratio,lang_attr,title
+c2_benign_000003,benign,en,other,0.9516,script,0.0,0.0,zh-CN,腾讯网
+c2_benign_000012,benign,unknown,en,0.8254,fasttext,0.0,0.0,,Twitch
+c2_benign_000021,benign,unknown,en,0.5276,fasttext,0.0,0.0,en-US,Dailymotion
+c2_benign_000025,benign,en,other,0.9097,script,0.0,0.0,ja,【楽天市場】Shopping is Entertainment! ： インターネット最大級の通信販売、通販オンラインショッピングコミュニティ
+c2_benign_000027,benign,en,mixed,1.0,weighted,0.0,0.0,en,Nintendo Region Selector - Official Site
+c2_benign_000028,benign,en,mixed,1.0,weighted,0.0,0.0,,UPS Global Shipping & Logistics Solutions | Worldwide Delivery | UPS - United St
+c2_benign_000029,benign,en,other,0.8886,fasttext,0.0,0.0,pt-BR,"Hospedagem de Sites: Rápida, Segura e Confiável | HostGator"
+c2_benign_000035,benign,en,other,0.9553,fasttext,0.0,0.0,fr,Bravo ! Votre domaine lwsdns.com a bien été créé avec Hebergeur-Discount !
+c2_benign_000037,benign,en,other,0.978,script,0.0,0.0,ru,Горячее – самые интересные и обсуждаемые посты | Пикабу
+c2_benign_000044,benign,en,other,0.9008,script,0.0,0.0,,"IT-инфраструктура для бизнеса от облачного провайдера Selectel, аренда IaaS и Pa"
+c2_benign_000051,benign,en,other,0.7743,script,0.0,0.0,zh-CN,vivo智能手机官方网站 - X500系列 直出电影感
+c2_benign_000052,benign,en,other,0.8304,fasttext,0.0,0.0,es-MX,Mercado Libre México - Envíos Gratis en el día
+c2_benign_000054,benign,en,other,0.9112,script,0.0,0.0,ja,livedoor
+c2_benign_000058,benign,en,other,0.5184,fasttext,0.0,0.0,nb-no,Nyheter i dag: Dagbladet med dagens nyheter 24 timer i døgnet
+c2_benign_000059,benign,en,other,0.657,fasttext,0.0,0.0,pt-br,Maior Rede Social de Sexo e Swing do Brasil | Sexlog
+c2_benign_000063,benign,en,other,0.9197,script,0.0,0.0,ja,サロン管理システム「サロンボード(SALON BOARD)」
+c2_benign_000076,benign,unknown,other,0.9654,script,0.0,0.0,,微博
+c2_benign_000077,benign,en,other,0.9035,fasttext,0.0,0.0,de,tagesschau.de - die erste Adresse für Nachrichten und Information | tagesschau.d
+c2_benign_000078,benign,en,other,0.7361,fasttext,0.0,0.0,de-DE,idealo – Die Nr. 1 im Preisvergleich
+c2_benign_000084,benign,unknown,other,0.9573,script,0.0,0.0,,软件商店
+c2_benign_000089,benign,en,other,0.8325,fasttext,0.0,0.0,pt-BR,Assine Abril - Assinar Revista Digital e Impressa
+c2_benign_000090,benign,en,other,0.9443,fasttext,0.0,0.0,pl,Gazeta.pl - Polska i świat - wiadomości | informacje | wydarzenia
+c2_benign_000098,benign,en,other,0.7735,fasttext,0.0,0.0,de-DE,"Vinted | Eine App, alles Secondhand"
+c2_benign_000104,benign,si,en,0.2265,fasttext,0.0,0.0,en,Daily Mirror E-Paper
+c2_benign_000105,benign,si,mixed,1.0,weighted,0.6954,0.0,en,Lankadeepa Online : Sri Lanka Latest Sinhala Breaking News and Live updates
+c2_benign_000149,benign,en,other,0.9406,script,0.0,0.0,th,เว็บแทงบอล UFABET เว็บไซต์แทงบอลออนไลน์ เชื่อถือได้ 2026
+c2_benign_000152,benign,si,en,0.4443,fasttext,0.0,0.0,en,TV Derana
+c2_benign_000153,benign,ta,mixed,0.7748,weighted,0.2857,0.3968,,Ministry of Health & Mass Media
+c2_benign_000163,benign,en,other,0.5403,fasttext,0.0,0.0,nl,Officiële Petrol Industries Webshop
+c2_benign_000164,benign,en,other,0.8936,fasttext,0.0,0.0,lt,Maudymosi kubilas | Lauko kubilai| Pirtys | Stiklo audinio | Hot Tub Team
+c2_benign_000166,benign,en,other,0.6956,fasttext,0.0,0.0,de,"Steve Madden® Deutschland – Schuhe, Sneaker, Sandalen, Taschen & Mehr"
+c2_benign_000167,benign,en,other,0.6602,fasttext,0.0,0.0,lt,Hero.lt
+c2_benign_000168,benign,en,other,0.8551,fasttext,0.0,0.0,en-US,Home
+c2_benign_000171,benign,en,mixed,1.0,weighted,0.0,0.0,it,Comunello Home
+c2_benign_000174,benign,en,other,0.9732,fasttext,0.0,0.0,de,Textiletiketten seit 1931
+c2_benign_000175,benign,en,other,0.6939,fasttext,0.0,0.0,pt,Ikonisch — Coming Soon
+c2_benign_000179,benign,en,other,0.854,fasttext,0.0,0.0,lt-LT,"Hobbyshop.lt - tai geriausi stalo žaidimai, galvosūkiai, radijo bangomis valdomi"
+c2_benign_000182,benign,en,other,0.9554,fasttext,0.0,0.0,pl,Allegro Lokalnie - Wystaw ogłoszenia za darmo i kupuj od osób z Twojej okolicy
+c2_benign_000183,benign,en,other,0.8906,fasttext,0.0,0.0,sv,"DORTEX - Designa själv dina namnband, vävda etiketter och tygetiketter"
+c2_benign_000185,benign,en,other,0.987,script,0.0,0.0,fa-IR,شرکت رهجویان صنعت کوشا – اب،برق،انرژی
+c2_benign_000194,benign,en,other,0.8241,fasttext,0.0,0.0,lt,"UAB Motorbike – profesionalus servisas, dalys, aksesuarai."
+c2_benign_000195,benign,en,other,0.907,fasttext,0.0,0.0,de,"Sterilamo - Armbanduhren, Gesundheit, Smart Produkte, Toys und mehr !"
+c2_benign_000197,benign,en,other,0.9123,fasttext,0.0,0.0,lt,"Kanceliarinės, ofiso, mokyklinės prekės internetu | ERIPO"
+c2_benign_000202,benign,en,other,0.8305,fasttext,0.0,0.0,hu,A jóízű gyógynövénytea gyártója a Herbatea Manufaktúra
+c2_benign_000206,benign,en,other,0.3565,fasttext,0.0,0.0,sr-RS,ANTIDEKUBITNI DUŠECI PRODAJA - ORTOPEDIJA
+c2_benign_000207,benign,en,mixed,1.0,weighted,0.0,0.0,en,"Official online-store Conte, Diwari and Conte Kids"
+c2_benign_000208,benign,en,other,0.9264,fasttext,0.0,0.0,de,Designer Taschen und Accessoires ‒ handgefertigt und ausgezeichnet
+c2_benign_000212,benign,en,other,0.9073,fasttext,0.0,0.0,lt-lt,"Trinkelės internetu, Grindinio Trinkelės — Nuolaidos ir Akcijos - TRINKELĖS.LT"
+c2_benign_000215,benign,en,other,0.5672,fasttext,0.0,0.0,lt-lt,Lovatiesės - lovatieses.lt
+c2_benign_000217,benign,en,other,0.6758,fasttext,0.0,0.0,lt-LT,CUTRIN Lietuva
+c2_benign_000219,benign,en,mixed,1.0,weighted,0.0,0.0,en,SHIELD | Your Best EMF Protection
+c2_benign_000220,benign,en,other,0.7432,fasttext,0.0,0.0,nl-NL,Partytenten en feestbenodigdheden huren | Partyverhuur Zuidplas
+c2_benign_000227,benign,en,other,0.7245,fasttext,0.0,0.0,lt-LT,"Dviračių laikikliai Thule, Atera, MFT - Dviraciu-laikikliai.lt"
+c2_benign_000228,benign,en,other,0.7946,fasttext,0.0,0.0,it,PLAY S.r.l.
+c2_benign_000231,benign,en,other,0.7851,fasttext,0.0,0.0,lt-LT,Žaidimų Įrangos Nuoma Kaune - Pramoga.lt
+c2_crypto_scam_000003,crypto_scam,en,other,0.8489,script,0.0,0.0,zh-CN,Webull股票-美股港股A股在线交易平台_零佣金股票投资指南
+c2_crypto_scam_000004,crypto_scam,unknown,mixed,1.0,weighted,0.0,0.0,en,OKX
+c2_crypto_scam_000005,crypto_scam,en,other,0.8519,fasttext,0.0,0.0,fr,Xybero Renda - Smart Order Routing SOR | Prix Exacts pour Nomades Digitaux
+c2_crypto_scam_000010,crypto_scam,unknown,en,0.8588,fasttext,0.0,0.0,en,Funtasy
+c2_crypto_scam_000016,crypto_scam,unknown,other,0.8293,script,0.0,0.0,en,BridgeX
+c2_crypto_scam_000018,crypto_scam,unknown,en,0.4919,fasttext,0.0,0.0,en-US,web3.0
+c2_crypto_scam_000035,crypto_scam,unknown,other,0.8088,script,0.0,0.0,ru,Лучшие аирдропы | Гайды по аирдропам
+c2_fake_ecommerce_000001,fake_ecommerce,en,mixed,1.0,weighted,0.0,0.0,ro-RO,Nichiduta: Articole bebe și copii - livrare rapidă.
+c2_fake_ecommerce_000002,fake_ecommerce,en,other,0.9554,fasttext,0.0,0.0,pl,Allegro Lokalnie - Wystaw ogłoszenia za darmo i kupuj od osób z Twojej okolicy
+c2_fake_ecommerce_000008,fake_ecommerce,en,other,0.8414,fasttext,0.0,0.0,it,Alberta Ferretti: Eleganza e Stile Contemporaneo | Alberta Ferretti
+c2_fake_ecommerce_000009,fake_ecommerce,en,other,0.8599,fasttext,0.0,0.0,it,Abbigliamento Esclusivo Donna e Uomo | Shop Online | Antonia Milano
+c2_fake_ecommerce_000011,fake_ecommerce,en,other,0.9219,script,0.0,0.0,he,רשת - דף הבית | GONG
+c2_fake_ecommerce_000018,fake_ecommerce,en,other,0.8238,fasttext,0.0,0.0,de,Die wunderbaren Hausschuhe | Nanga Schuhe
+c2_fake_ecommerce_000019,fake_ecommerce,en,other,0.8951,fasttext,0.0,0.0,fr,Literie Naturelle de Luxe | Alba Collections
+c2_fake_ecommerce_000025,fake_ecommerce,en,other,0.8521,fasttext,0.0,0.0,it,Prodotti per capelli professionali | Alfaparf Milano
+c2_fake_ecommerce_000034,fake_ecommerce,en,other,0.8259,fasttext,0.0,0.0,pt,"Qualidade, Confiança e Preço Justo | Bela Vital"
+c2_fake_ecommerce_000035,fake_ecommerce,en,other,0.8607,fasttext,0.0,0.0,it,Acquisto Stampanti 3D e Filamenti Online | AnycubicItalia
+c2_fake_ecommerce_000042,fake_ecommerce,en,other,0.9589,fasttext,0.0,0.0,de,Ihr Supermarkt mit Versand | AIMA ONLINE
+c2_fake_ecommerce_000045,fake_ecommerce,en,other,0.9618,fasttext,0.0,0.0,fr,Première pharmacie en ligne moins cher et livraison rapide
+c2_fake_ecommerce_000047,fake_ecommerce,en,other,0.7134,fasttext,0.0,0.0,de,Angebote Garten Store - Schuppen und Lager im Freien
+c2_fake_ecommerce_000048,fake_ecommerce,en,other,0.9647,fasttext,0.0,0.0,en,Kamagra Shop 24 | Apotheke für Männer
+c2_fake_ecommerce_000050,fake_ecommerce,en,other,0.9564,fasttext,0.0,0.0,de,Viagra rezeptfrei kaufen - Online Apotheke MaxPotenz.de
+c2_fake_ecommerce_000051,fake_ecommerce,en,other,0.7437,fasttext,0.0,0.0,de,"Waschmaschinen, Reinigungen, Wäschepflege, Bestpreise garantiert"
+c2_fake_ecommerce_000056,fake_ecommerce,en,other,0.6913,fasttext,0.0,0.0,de,Pavillons & Partyzelte - ManoMano
+c2_fake_ecommerce_000057,fake_ecommerce,en,other,0.9293,script,0.0,0.0,zh-CN,九游·官方J9站网站入口-Jiuyouj9(中国)
+c2_fake_ecommerce_000058,fake_ecommerce,en,other,0.8131,fasttext,0.0,0.0,da-DK,"PotensPiller - Viagra, Cialis, Levitra i Danmark | DanmarkPotensPiller"
+c2_malware_delivery_000004,malware_delivery,en,other,0.5535,fasttext,0.0,0.0,,
+c2_malware_delivery_000005,malware_delivery,en,other,0.753,fasttext,0.0,0.0,id,Prediksi Togel Pulsa Hari Ini – Pulsa Online
+c2_malware_delivery_000010,malware_delivery,en,other,0.8605,fasttext,0.0,0.0,vi,Bảo vệ Ngày và Đêm - 0904 204 628
+c2_malware_delivery_000015,malware_delivery,en,mixed,1.0,weighted,0.0,0.0,ja,SUN株式会社 | 共栄・革新・挑戦
+c2_malware_delivery_000018,malware_delivery,en,other,0.8955,fasttext,0.0,0.0,es,Inicio - La Comunidad de Conocimiento en Recuperación de Activos (CCERA)
+c2_malware_delivery_000021,malware_delivery,en,other,0.1019,fasttext,0.0,0.0,,
+c2_malware_delivery_000028,malware_delivery,en,other,0.9568,fasttext,0.0,0.0,,Neue Domain bei der webgo GmbH
+c2_malware_delivery_000031,malware_delivery,en,other,0.9061,script,0.0,0.0,ru,Авторизация
+c2_malware_delivery_000034,malware_delivery,en,other,0.3209,fasttext,0.0,0.0,ro,The page you requested cannot be found!
+c2_malware_delivery_000040,malware_delivery,en,other,0.9961,script,0.0,0.0,zh-CN,911吃瓜网 - 全网热门吃瓜事件实时汇总，最新社会热点八卦资讯一站速览
+c2_malware_delivery_000045,malware_delivery,en,other,0.9442,fasttext,0.0,0.0,pt-BR,Hospedagem de Site com Domínio Grátis - HostGator
+c2_malware_delivery_000050,malware_delivery,unknown,other,1.0,script,0.0,0.0,ru,Вход в админ панель
+c2_malware_delivery_000052,malware_delivery,en,mixed,1.0,weighted,0.0,0.0,,The website is currently not available
+c2_malware_delivery_000065,malware_delivery,en,other,0.6931,fasttext,0.0,0.0,es,Allen Dostmen || Servicios integrales business to business
+c2_malware_delivery_000066,malware_delivery,unknown,en,0.1245,fasttext,0.0,0.0,en-US,Soon
+c2_phishing_000001,phishing,en,other,0.876,fasttext,0.0,0.0,es,Create Next App
+c2_phishing_000003,phishing,en,mixed,1.0,weighted,0.0,0.0,,im钱包|imToken钱包官网|imToken钱包下载网移动版
+c2_phishing_000005,phishing,en,other,0.9297,fasttext,0.0,0.0,cs,Facebook – Bezpečnostní kontrola
+c2_phishing_000006,phishing,en,mixed,1.0,weighted,0.0,0.0,en-au,SLOT QRIS X Agen Resmi Slot Gacor Bet 200 & RTP live Pasti Maxwin Hari Ini
+c2_phishing_000008,phishing,en,other,0.7495,fasttext,0.0,0.0,es,Banca Virtual | Banco de Bogotá
+c2_phishing_000014,phishing,unknown,other,1.0,script,0.0,0.0,en,계정 인증
+c2_phishing_000015,phishing,en,other,0.9698,fasttext,0.0,0.0,en,Connectez-vous à votre compte
+c2_phishing_000016,phishing,en,other,0.8596,fasttext,0.0,0.0,,SEUR: Envío y transporte de paquetería y mensajería | SEUR
+c2_phishing_000024,phishing,en,mixed,1.0,weighted,0.0,0.0,pt-br,Instagram
+c2_phishing_000036,phishing,en,other,0.9818,script,0.0,0.0,zh-CN,中国·36365线路检测中心(股份有限公司)-Official Website
+c2_phishing_000041,phishing,en,other,0.3787,fasttext,0.0,0.0,,Ivana Alawi Espesyal sa Facebook
+c2_phishing_000047,phishing,en,other,0.9105,script,0.0,0.0,ru,WhatsApp виджет и кнопка для сайта - Leadball Whatsapper
+c2_phishing_000051,phishing,en,mixed,1.0,weighted,0.0,0.0,en,LosSuecosDeLali12004 - Roblox
+c2_phishing_000056,phishing,en,other,0.9348,fasttext,0.0,0.0,es,Registro de datos
+c2_phishing_000060,phishing,en,other,0.7264,fasttext,0.0,0.0,,SHOPEE
+c2_phishing_000062,phishing,en,other,0.8886,script,0.0,0.0,,ManBetX(万博体育)官网|英超狼队和水晶宫全球赞助伙伴
+c2_phishing_000068,phishing,en,other,0.8504,fasttext,0.0,0.0,en,Produto — Magalu
+c2_phishing_000080,phishing,en,other,0.913,fasttext,0.0,0.0,,[ ÔN THI GIỮA HỌC KỲ 1 ] Hệ thống đầy đủ và Mở rộng Từ vựng - Cấu trúc SGK Tiếng
+c2_phishing_000096,phishing,unknown,en,0.0884,fasttext,0.0,0.0,zh-Hans,ws
+c2_phishing_000100,phishing,en,mixed,1.0,weighted,0.0,0.0,id,CUMA ASSET KECIL BANG
+c2_phishing_000101,phishing,en,other,0.8824,fasttext,0.0,0.0,,E-Finance Login | PostFinance
+c2_phishing_000105,phishing,unknown,other,0.9743,fasttext,0.0,0.0,pt-BR,Magalu
+c2_phishing_000110,phishing,en,mixed,1.0,weighted,0.0,0.0,zh-CN,WhatsApp
+c2_phishing_000111,phishing,en,mixed,1.0,weighted,0.0,0.0,zh-CN,imToken | Ethereum & Bitcoin Wallet
+c2_phishing_000114,phishing,en,other,0.7959,script,0.0,0.0,,imtoken下载_imtoken官网_imtoken钱包安卓下载
+c2_phishing_000117,phishing,en,other,0.7235,fasttext,0.0,0.0,,SHOPEE
+c2_phishing_000127,phishing,en,other,0.9248,fasttext,0.0,0.0,es,Iniciar sesión en tu cuenta Microsoft
