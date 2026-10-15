@@ -1,6 +1,6 @@
 # Behavior-only baseline (JS + behavioral intent) - v0.3
 
-Created 2026-10-15T01:25:39+05:30 · feature set `js_v1+beh_v1` · model selection: mean macro-F1 over grouped stratified CV folds on train+val (test never used).
+Created 2026-10-15T06:55:34+05:30 · feature set `js_v1+beh_v1` · model selection: mean macro-F1 over grouped stratified CV folds on train+val (test never used).
 
 ## Behavior-only classification (Part 7 JS features + Part 8 intent vector)
 

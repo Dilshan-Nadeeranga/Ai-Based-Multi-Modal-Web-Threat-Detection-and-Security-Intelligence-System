@@ -1,6 +1,6 @@
 {
   "name": "C2 behavior-only baseline (Part 7 js_features + Part 8 behavior_features)",
-  "created_at": "2026-10-15T01:25:39+05:30",
+  "created_at": "2026-10-15T06:55:34+05:30",
   "dataset_version": "v0.3",
   "manifest_fingerprint": "7a620c3b7ea05f42747d1a418a0663befa62a7c6ade6335f4557b52fda77cc26",
   "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
@@ -220,7 +220,7 @@
       },
       "trained_on": "train+val",
       "n_train": 391,
-      "trained_at": "2026-10-15T01:25:08+05:30",
+      "trained_at": "2026-10-15T06:55:03+05:30",
       "cv_mean": {
         "macro_f1": 0.5003693073933504,
         "weighted_f1": 0.5731077126006415,
@@ -258,7 +258,7 @@
       },
       "trained_on": "train+val",
       "n_train": 391,
-      "trained_at": "2026-10-15T01:25:26+05:30",
+      "trained_at": "2026-10-15T06:55:21+05:30",
       "cv_mean": {
         "macro_f1": 0.6198821254374565,
         "weighted_f1": 0.7074975027993703,
@@ -298,7 +298,7 @@
       },
       "trained_on": "train+val",
       "n_train": 391,
-      "trained_at": "2026-10-15T01:25:39+05:30",
+      "trained_at": "2026-10-15T06:55:33+05:30",
       "cv_mean": {
         "macro_f1": 0.5820111571454868,
         "weighted_f1": 0.6873109424802253,
@@ -334,7 +334,7 @@
     "joblib": "1.6.0",
     "shap": "0.53.0"
   },
-  "git_commit": "f03564908efdae01360e4a058e9e439faf8a6a23-dirty",
+  "git_commit": "8d17d82c9cee1360c3f4ab1661a2cbb3c6f73745-dirty",
   "intended_use": "Behavior-only arm of the ablation study (DOM-only vs NLP-only vs behavior-only vs fused). Research use on the C2 dataset; not a production detector.",
   "limitations": "Small dataset - test metrics have wide uncertainty."
 }
