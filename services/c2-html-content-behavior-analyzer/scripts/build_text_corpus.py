@@ -1,4 +1,4 @@
-"""Page text + language ID (Part 5, Batch A): a whole dataset version or one page.
+"""Page text + language ID (Part 5 Batch A) and the scam-text corpus (Part 5 Batch B).
 
 Part 5: Multilingual scam content analyzer.
 
@@ -8,7 +8,15 @@ Why: a thin command-line wrapper; all logic is in c2_analyzer.content.
                text_index.csv, the summary report and the language-mismatch
                review list (metadata.csv is never changed).
 - ``one``      one page: segments grouped by field with language tags, then page_text.
-Part 5 prepares text for Part 6; it does not classify pages.
+- ``build``    the intent corpus corpus_v1 (page segments + real messages + synthetic
+               templates + machine translations; see content/corpus_builder.py),
+               then the stats report. Review decisions are re-applied.
+- ``stats``    reports/content/corpus_v1_stats.{json,md} + the key tables.
+- ``export-mt-input``  English TRAIN rows for the NLLB Colab notebook (05_corpus_mt_colab).
+- ``freeze``   data/corpus/manifests/<name>.{csv,json} (ids + hashes, no text; never
+               overwritten).
+Research integrity: synthetic / machine-translated rows are TRAIN ONLY; val / test
+contain only real text. Part 5 prepares text for Part 6; it does not classify pages.
 """
 
 from __future__ import annotations
@@ -19,9 +27,14 @@ from pathlib import Path
 
 from c2_analyzer.config import get_labels
 from c2_analyzer.content.batch import export_json, output_dir, run_version
+from c2_analyzer.content.corpus import CorpusPaths, freeze_corpus
+from c2_analyzer.content.corpus_builder import build_corpus, export_mt_input
+from c2_analyzer.content.corpus_stats import compute_stats, write_stats
 from c2_analyzer.content.extractor import extract_content
 from c2_analyzer.content.report import describe_result, summarize, write_report
+from c2_analyzer.dataset.manifest import manifests_dir
 from c2_analyzer.dataset.metadata import MetadataStore
+from c2_analyzer.dataset.splits import SplitError
 from c2_analyzer.preprocessing.loader import from_file, from_sample
 from c2_analyzer.preprocessing.pipeline import preprocess
 from c2_analyzer.utils.hashing import sha256_file
@@ -32,6 +45,10 @@ EXAMPLES = """examples:
   python scripts/build_text_corpus.py extract --version v0.3 --force --workers 4
   python scripts/build_text_corpus.py one --sample-id c2_benign_000123
   python scripts/build_text_corpus.py one --file page.html --url https://example.com/ [--json]
+  python scripts/build_text_corpus.py build --version v0.3
+  python scripts/build_text_corpus.py stats
+  python scripts/build_text_corpus.py export-mt-input
+  python scripts/build_text_corpus.py freeze --name corpus_v1 --notes "first verified corpus"
 """
 
 
@@ -63,6 +80,20 @@ def build_parser() -> argparse.ArgumentParser:
     one.add_argument("--version", help="dataset version to record in the output")
     one.add_argument("--json", action="store_true", help="print the full PageText JSON")
     one.add_argument("--save", action="store_true", help="also save the JSON (adhoc folder)")
+
+    build = commands.add_parser("build", help="build the intent corpus corpus_v1 + stats")
+    build.add_argument("--version", required=True, help="dataset version (text + shared split)")
+    build.add_argument("--text-dir", type=Path, help="default data/processed/text/<version>")
+    commands.add_parser("stats", help="corpus statistics + integrity checks")
+    mt = commands.add_parser("export-mt-input", help="English train rows for the MT notebook")
+    mt.add_argument(
+        "--source-type", action="append",
+        choices=["page_segment", "real_message", "synthetic_template"],
+        help="only these sources (repeatable; default all except machine_translation)",
+    )  # fmt: skip
+    freeze = commands.add_parser("freeze", help="freeze the corpus into a manifest")
+    freeze.add_argument("--name", required=True, help="e.g. corpus_v1")
+    freeze.add_argument("--notes", help="free text stored in the manifest")
     return parser
 
 
@@ -136,6 +167,98 @@ def cmd_one(args: argparse.Namespace, store: MetadataStore) -> int:
     return 0
 
 
+def print_stats(stats: dict) -> None:
+    """The tables shown after every build: language x intent per source, synthetic
+    share per split and the real Sinhala / Tamil gap."""
+    intents = stats["intents"]
+    short = [name[:11] for name in intents]
+    widths = [4, 9] + [12] * len(intents) + [7]
+    for source, block in stats["by_source"].items():
+        if not block["rows"]:
+            continue
+        print(f"\n{source} ({block['rows']} rows; split {block['split']}) - language x intent:")
+        print(_row(["", "language"] + short + ["total"], widths))
+        for language, row in block["language_x_intent"].items():
+            if sum(row.values()):
+                print(_row(["", language] + list(row.values()) + [sum(row.values())], widths))
+
+    print("\nSynthetic share per split (val / test must be 0 %):")
+    for split, row in stats["synthetic_share_per_split"].items():
+        print(
+            f"  {split:<6} {row['rows']:>6} rows  {row['synthetic']:>5} synthetic  "
+            f"{row['share_percent']:>6} %"
+        )
+
+    print("\nReal Sinhala / Tamil text in val + test per intent (count / target):")
+    for language, block in stats["real_text_gap"].items():
+        cells = [
+            f"{name}={row['count']}/{row['target']}" for name, row in block["per_intent"].items()
+        ]
+        print(f"  {language}: " + "  ".join(cells))
+        print(
+            f"      {block['intents_meeting_target']} of {block['scam_intents']} scam intents "
+            f"meet the target; total gap {block['total_gap']} rows"
+        )
+
+    check = stats["integrity"]
+    verification = stats["verification"]
+    print(
+        f"\nIntegrity: {'PASSED' if check['passed'] else 'FAILED'} (synthetic in val/test "
+        f"{check['synthetic_rows_in_val_test']}, texts in several splits "
+        f"{check['texts_in_several_splits']}, groups in several splits "
+        f"{check['groups_in_several_splits']})"
+    )
+    print(
+        f"Rows {stats['rows']} (active {stats['active_rows']}); verified "
+        f"{verification['verified_percent']} %; needs review {verification['needs_review']}"
+    )
+
+
+def cmd_build(args: argparse.Namespace, store: MetadataStore) -> int:
+    paths = CorpusPaths.from_config()
+    # the shared split must still match the frozen dataset manifest (as in Part 4)
+    _, info = build_corpus(
+        args.version, paths, text_dir=args.text_dir, manifests=manifests_dir(store)
+    )
+    print(f"Built {paths.corpus_csv} ({info['rows']} rows) from dataset {args.version}")
+    for source, counts in info["sources"].items():
+        print(f"  {source}: " + ", ".join(f"{k} {v}" for k, v in counts.items()))
+    print(
+        f"  cross-split duplicates resolved: {info['leakage_resolved']}; reviews applied: "
+        f"{info['reviews_applied']} (orphaned {len(info['reviews_orphaned'])})"
+    )
+    for warning in info["warnings"]:
+        print(f"  WARNING: {warning}")
+    return cmd_stats(args, store)
+
+
+def cmd_stats(args: argparse.Namespace, store: MetadataStore) -> int:
+    paths = CorpusPaths.from_config()
+    stats = compute_stats(paths)
+    print_stats(stats)
+    json_path, md_path = write_stats(stats, paths)
+    print(f"\nReport:  {json_path}\n         {md_path}")
+    return 0 if stats["integrity"]["passed"] else 1
+
+
+def cmd_export_mt(args: argparse.Namespace, store: MetadataStore) -> int:
+    path, count = export_mt_input(CorpusPaths.from_config(), args.source_type)
+    print(f"Wrote {count} English train row(s) to {path}")
+    print("Upload it to notebooks/05_corpus_mt_colab.ipynb, put the returned mt_si.csv /")
+    print("mt_ta.csv into the same folder, then run build again.")
+    return 0
+
+
+def cmd_freeze(args: argparse.Namespace, store: MetadataStore) -> int:
+    path, info = freeze_corpus(CorpusPaths.from_config(), args.name, args.notes)
+    print(
+        f"Froze {info['rows']} rows ({info['active_rows']} active, {info['verified_rows']} "
+        f"verified) -> {path}"
+    )
+    print(f"fingerprint {info['fingerprint'][:16]}...  dataset {info['dataset_version']}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     # Page text can be in any script; never crash on a console that cannot show it.
     for stream in (sys.stdout, sys.stderr):
@@ -143,10 +266,24 @@ def main(argv: list[str] | None = None) -> int:
             stream.reconfigure(errors="replace")
     args = build_parser().parse_args(argv)
     store = MetadataStore(args.metadata, args.raw_dir)
-    commands = {"extract": cmd_extract, "one": cmd_one}
+    commands = {
+        "extract": cmd_extract,
+        "one": cmd_one,
+        "build": cmd_build,
+        "stats": cmd_stats,
+        "export-mt-input": cmd_export_mt,
+        "freeze": cmd_freeze,
+    }
     try:
         return commands[args.command](args, store)
-    except (ValueError, KeyError, FileNotFoundError, FileSaveError) as error:
+    except (
+        ValueError,
+        KeyError,
+        FileNotFoundError,
+        FileExistsError,
+        FileSaveError,
+        SplitError,
+    ) as error:
         print(f"Error: {error}", file=sys.stderr)
         return 1
 

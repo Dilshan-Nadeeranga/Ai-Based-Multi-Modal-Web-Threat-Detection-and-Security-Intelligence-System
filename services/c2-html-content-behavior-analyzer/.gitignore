@@ -44,6 +44,14 @@ data/feeds/**
 # pages being saved by the collector (deleted after registering)
 data/tmp/**
 !data/tmp/**/
+# Scam-text corpus (Part 5B): real messages may hold personal data even after masking,
+# so corpus files, review decisions, peer sheets and MT files stay local. Tracked: the
+# synthetic templates and the frozen manifests (ids + hashes, no text). raw_texts.csv
+# was committed before this rule and stays tracked (synthetic only).
+data/corpus/**
+!data/corpus/**/
+!data/corpus/raw_texts_clean.csv
+!data/corpus/manifests/**
 !data/**/.gitkeep
 
 # Model artifacts: everything under models/ is ignored (large, rebuildable with one

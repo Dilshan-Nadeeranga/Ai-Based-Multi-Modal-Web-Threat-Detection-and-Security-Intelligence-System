@@ -116,6 +116,47 @@ class PageText(BaseModel):
         return [segment for segment in self.segments if segment.field == field]
 
 
+CORPUS_SCHEMA_VERSION = "corpus_v1"
+SourceType = Literal["page_segment", "real_message", "synthetic_template", "machine_translation"]
+SplitName = Literal["train", "val", "test"]
+
+
+class CorpusRow(BaseModel):
+    """One row of the scam-text corpus (corpus_v1, Part 5 Batch B).
+
+    Research integrity: every row says where it came from (``source_type``,
+    ``source_ref``) and whether it is synthetic. Synthetic templates and machine
+    translations are TRAIN-ONLY augmentation; val / test hold only real text.
+    ``group_id`` keeps related rows (one page cluster, one template, a message and
+    its near-copies) in the same split. Review decisions (verified / excluded /
+    changed intents) are stored separately and re-applied on every build.
+    """
+
+    text_id: str  # pg_ / rm_ / sy_ / mt_ + 12 hex chars; stable across rebuilds
+    text: str  # NFC, PII-masked
+    language: LanguageLabel  # detected (Part 5A language.py) or set by the reviewer
+    language_given: str = ""  # as the source said (page metadata / CSV column)
+    intents: list[str]  # taxonomy ids, priority order; first = primary_intent
+    primary_intent: str
+    cue_intents: list[str] = Field(default_factory=list)  # what the cue words alone suggest
+    intent_source: Literal["weak_cue", "given", "reviewer"] = "weak_cue"
+    source_type: SourceType
+    source_ref: str  # sample_id:segment_id, or file:row
+    field: str = ""  # page segments: title / cta / form_label / ...
+    page_label: str = ""  # page segments: the page's threat class
+    is_synthetic: bool
+    group_id: str
+    split: SplitName
+    dup_count: int = 1  # near-identical copies merged into this row
+    needs_review: bool = False
+    verified: bool = False
+    verified_by: str = ""
+    verified_at: str = ""
+    excluded: bool = False
+    exclusion_reason: str = ""
+    notes: str = ""
+
+
 class ContentResult(BaseModel):
     """Language + social-engineering intent prediction for a page's text (Part 6 stub)."""
 

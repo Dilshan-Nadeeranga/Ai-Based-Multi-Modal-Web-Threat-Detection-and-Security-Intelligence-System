@@ -22,7 +22,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 | 2 | HTML preprocessing pipeline | `preprocessing/` | `preprocess_html.py` |
 | 3 | DOM structural analysis | `dom/` | `extract_dom_features.py` |
 | 4 | DOM baseline classifier (LogReg / RF / XGBoost) | `classifiers/dom_baseline/` | `train_dom_baseline.py` |
-| 5 | Multilingual scam content analyzer | `content/` | `build_text_corpus.py` |
+| 5 | Multilingual scam content analyzer | `content/` | `build_text_corpus.py`, `review_corpus.py` |
 | 6 | XLM-R content classification | `nlp/` | `train_xlmr.py`, `evaluate_xlmr.py` |
 | 7 | Static JavaScript intent analyzer | `js_analyzer/` | `analyze_js.py` |
 | 8 | Behavioral intent mapping (sources → sinks) | `behavior/` | `map_behavior.py` |
@@ -345,6 +345,85 @@ v0.3 (459 pages), from `reports/content/v0.3_summary.md`:
 | fake_ecommerce (57) | 38 | 0 | 0 | 1 | 18 | 0 |
 | crypto_scam (29) | 22 | 0 | 0 | 1 | 4 | 2 |
 | malware_delivery (59) | 45 | 0 | 0 | 2 | 12 | 0 |
+
+## Scam-text corpus
+
+Part 5 Batch B builds `corpus_v1`: short texts in English, Sinhala and Tamil, each labelled
+with a **social-engineering intent**. Part 6 trains on it.
+
+**Research integrity.** The corpus mixes four sources with different trust levels. Every row
+records `source_type` and `is_synthetic`. **Synthetic templates and machine translations are
+train-only augmentation. Validation and test contain only real text.** Otherwise the scores
+would be inflated: a model tested on its own template sentences looks better than it is. The
+stats report shows the synthetic share of every split and fails if val / test is not 0 %.
+
+- **Intents** (`configs/intent_taxonomy.yaml`, `intent_v1`): `credential_request`,
+  `payment_request`, `investment_lure`, `fake_security_warning`, `fake_reward`,
+  `urgency_threat`, `impersonation`, `benign`. Each has a definition, inclusion / exclusion
+  rules, 2 English examples and cue words in en / si / ta. A text may have several intents;
+  `primary_intent` = the first in the priority order (the most specific ask wins). The human
+  version for me and the peer reviewer is [`docs/annotation_guide.md`](docs/annotation_guide.md).
+  The si / ta cue words are a seed list that still needs a native-speaker check.
+- **Sources** (`content/corpus_builder.py`, rules in `configs/corpus.yaml`):
+
+  | source_type | from | label | split | group_id |
+  |---|---|---|---|---|
+  | `page_segment` | title / CTA / form label / alert / heading / short paragraph of the v0.3 pages (Part 5A) | weak, from cue words. On a benign page it stays `benign` unless ≥ 2 cue phrases match (then `needs_review`) | the page's split in the **shared** split (never re-split) | page cluster |
+  | `real_message` | `data/corpus/real_texts.csv` (`text,language,intent,source,notes`; my SMS / WhatsApp / CERT / news texts; may be missing) | given | grouped stratified 70/15/15 by language × intent, seed 42 | normalized-text hash |
+  | `synthetic_template` | `data/corpus/raw_texts_clean.csv` | given | **always train** | template_group |
+  | `machine_translation` | `data/corpus/mt/*.csv` (`text,language,intent,source_text_id`) | source's | **always train**; dropped if the source row is not train | source row's group |
+
+  - **PII:** real messages go through Part 2's `mask_pii` + `mask_url`. `[NAME]` placeholders are kept.
+  - **Language:** detected with Part 5A `language.py`. The source's value is kept in
+    `language_given`, and a mismatch gets `needs_review`.
+  - **Near-duplicates:** `corpus.dedup_key` = NFC, case-folded, numbers → 0, URLs → `url`, no
+    punctuation. They are merged within a group (`dup_count`).
+  - **Cross-split duplicates:** a text found in train AND val / test is kept only in the
+    held-out split.
+  - **Small cells:** a real-message cell with fewer than 3 groups cannot be split. It goes
+    to train and is reported.
+- **Commands:**
+  ```bash
+  python scripts/build_text_corpus.py build --version v0.3     # corpus + stats (reviews re-applied)
+  python scripts/build_text_corpus.py stats                    # reports/content/corpus_v1_stats.{json,md}
+  python scripts/build_text_corpus.py export-mt-input          # data/corpus/mt/mt_input_en.csv
+  python scripts/build_text_corpus.py freeze --name corpus_v1  # data/corpus/manifests/ (never overwritten)
+  python scripts/review_corpus.py review --reviewer <name> [--language si] [--split test] [--source-type ...] [--intent ...] [--needs-review] [--random --seed 1 --limit 50]
+  python scripts/review_corpus.py export-peer --fraction 0.1 --seed 42
+  python scripts/review_corpus.py import-peer --file <peer sheet>   # agreement % + Cohen's kappa per language
+  ```
+- **Review tool keys:** `c` confirm, `i` change intents (numbers, first = primary), `l`
+  language, `x` exclude with a reason, `s` skip, `b` back, `q` quit.
+  - Every decision is saved at once to `data/corpus/review/corpus_reviews.csv`.
+  - `text_id` is a hash of the source and the normalized text, so a rebuild keeps all
+    decisions.
+  - Confirming pins the shown intents and language.
+- **Machine translation (optional):** `notebooks/05_corpus_mt_colab.ipynb` (Colab GPU, NLLB-200
+  distilled 600M, `eng_Latn` → `sin_Sinh` / `tam_Taml`, placeholders protected). Upload
+  `mt_input_en.csv`, then download `mt_si.csv` / `mt_ta.csv` into `data/corpus/mt/` and rebuild.
+- **Outputs:**
+  - `data/corpus/corpus_v1.{csv,jsonl}` (all rows, including excluded ones with their reason);
+  - `data/corpus/{en,si,ta}/corpus_v1_<lang>.csv` (active rows);
+  - `data/corpus/corpus_v1_build.json` (what was read, dropped and moved);
+  - `reports/content/corpus_v1_stats.{json,md}` (counts only, no text).
+- **Git:** corpus files can hold personal data even after masking, so `data/corpus/**` is
+  ignored. The exceptions are `raw_texts_clean.csv` and `manifests/`; the stats report and the
+  annotation guide are tracked. **Part 6 must use rows with `excluded = false`.**
+
+First build on v0.3 (no real messages or translations yet), from `reports/content/corpus_v1_stats.md`:
+
+- **Size:** 7,330 rows: 7,210 page segments and 120 synthetic rows (168 templates; 48 merged
+  because they differ only in an amount).
+- **Splits:** train 4,832 / val 1,215 / test 1,283. Synthetic share 2.5 % / 0 % / 0 %.
+  Integrity checks passed.
+- **Cross-split duplicates:** 1,623 train page segments were dropped because the same text is
+  on a val / test page (mostly short CTAs such as "Sign in").
+- **Weak labels:** only 32 page segments get a scam intent. Most text on any page is neutral,
+  even on scam pages: menus and product names. So the page segments are mainly real benign /
+  hard-negative text in en / si / ta / other.
+- **Real Sinhala / Tamil text:** none with a scam intent in val + test yet. The gap to the
+  target is 210 rows for si (30 per intent) and 105 for ta (15 per intent). Collecting real
+  Sinhala / Tamil scam messages into `real_texts.csv` is the next step.
 
 ## JavaScript analysis
 

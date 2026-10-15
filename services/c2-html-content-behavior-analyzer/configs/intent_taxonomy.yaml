@@ -1,21 +1,233 @@
-# Social-engineering intents (Part 5). Cue phrases are seed examples only.
-# TODO (Part 5): add Sinhala (si) and Tamil (ta) cue phrases.
+# Social-engineering intent taxonomy (Part 5 Batch B, Task 10) - taxonomy_version intent_v1.
+#
+# What an intent is: what a piece of TEXT tries to make the reader do or believe.
+# It is a property of the text, not of the page: the same "Sign in" button exists on
+# a bank and on its phishing copy. The page label (benign / phishing / ...) is a
+# separate field of the corpus row.
+#
+# Used by:
+#   - content/taxonomy.py        loads + validates this file (ids, priority, cues)
+#   - content/corpus_builder.py  WEAK labelling of page segments with the cue words
+#   - scripts/review_corpus.py   the reviewer picks intents from this list
+#   - docs/annotation_guide.md   the human-readable version (keep both in sync;
+#                                tests/test_corpus.py checks every id is in the guide)
+#
+# Cue words (weak labelling only - a person confirms every label in review_corpus.py):
+#   - matched case-insensitively on NFC text with ZWJ / ZWNJ removed on both sides;
+#   - a cue made only of Latin letters / digits / spaces must match WHOLE words
+#     ("otp" does not fire inside "hotpot"); any other cue (Sinhala / Tamil) is a
+#     substring match, because Sinhala and Tamil words are inflected
+#     ("අත්හිටුවා" also matches "අත්හිටුවා ඇත");
+#   - ALL cue lists are applied to every text (Sinhala SMS often contain "OTP" or "PIN").
+#   - si / ta cues are a SEED list written for this project and still NEED A
+#     NATIVE-SPEAKER CHECK (status below). They only suggest; they never decide.
+#
+# Rename / remove an intent or change the priority -> bump taxonomy_version.
+taxonomy_version: intent_v1
+cue_review_status:
+  en: "seed list, checked against the v0.3 page segments"
+  si: "seed list, NEEDS a native-speaker check"
+  ta: "seed list, NEEDS a native-speaker check"
+
+# A segment may carry several intents (multi-label). primary_intent = the first of
+# its intents in this order. Rationale: the most specific ASK (what the victim is
+# asked to hand over: credentials > money > an investment) wins over the framing
+# tactics (fake warning, reward, pressure, pretending to be someone) that accompany
+# almost every scam. benign is only ever alone.
+priority:
+  - credential_request
+  - payment_request
+  - investment_lure
+  - fake_security_warning
+  - fake_reward
+  - urgency_threat
+  - impersonation
+  - benign
+
+weak_labelling:
+  # A segment from a BENIGN page stays "benign" unless this many DISTINCT cue
+  # phrases match (a "strong" cue). Then it gets the cue intents AND needs_review,
+  # because a real bank's "verify your account" text is usually legitimate.
+  strong_min_hits: 2
+
 intents:
-  - id: urgency_threat
-    description: Pressure through deadlines, suspension or legal/financial threats.
-    cues: {en: ["account suspended", "within 24 hours", "act now"], si: [], ta: []}
-  - id: fake_reward
-    description: Prizes, lotteries, free gifts or unrealistic discounts.
-    cues: {en: ["you have won", "claim your prize", "90% off"], si: [], ta: []}
   - id: credential_request
-    description: Requests for passwords, OTPs, card or bank details.
-    cues: {en: ["verify your password", "enter OTP", "confirm card details"], si: [], ta: []}
+    definition: >-
+      Asks the reader to type, confirm or send a secret: password, PIN, OTP / one-time
+      code, card number / CVV / expiry, online-banking or account login, NIC together
+      with a pretext.
+    include:
+      - "a request to enter / verify / update / confirm a secret, usually with a pretext"
+      - "form text that names a secret together with a pretext (\"Enter the OTP we sent to unlock your account\")"
+      - "a field asking for card number / CVV / expiry / OTP / PIN outside a genuine checkout, even without a pretext"
+    exclude:
+      - "a plain login form label (\"Email\", \"Password\", \"Sign in\") with no pretext -> benign (the DOM / behavior analyzers judge forms)"
+      - "a warning NOT to share an OTP (\"Never share your PIN\") -> benign"
+      - "a request for money, a fee or a payment -> payment_request"
+    examples:
+      - "Your account has been limited. Verify your password and card details to restore access."
+      - "Enter the 6-digit OTP sent to your phone to confirm your identity."
+    cues:
+      en: ["verify your password", "confirm your password", "enter your password", "update your password",
+           "enter the otp", "enter otp", "share the otp", "one-time password", "verification code",
+           "confirm your card", "card details", "card number", "cvv", "security code", "expiry date", "expiration date", "expiry month",
+           "expiration month", "pin number",
+           "verify your account", "confirm your identity", "verify your identity",
+           "login details", "banking details", "account details", "update your details",
+           "restore access", "unlock your account"]
+      si: ["මුරපදය", "රහස් අංකය", "කාඩ්පත් අංකය", "කාඩ්පත් විස්තර", "ගිණුම් අංකය",
+           "ඔබගේ තොරතුරු තහවුරු", "තොරතුරු යාවත්කාලීන", "ගිණුම තහවුරු", "එක් වරක් භාවිත"]
+      ta: ["கடவுச்சொல்", "அட்டை எண்", "அட்டை விவரங்கள்", "கணக்கு எண்", "ரகசிய எண்",
+           "விவரங்களை உறுதிப்படுத்த", "விவரங்களைப் உறுதிப்படுத்த", "விவரங்களை புதுப்பிக்க", "விவரங்களைப் புதுப்பி", "கணக்கை உறுதிப்படுத்த", "ஒருமுறை கடவுச்சொல்"]
+
+  - id: payment_request
+    definition: >-
+      Asks the reader to pay a (usually small) amount to receive something: advance fee,
+      delivery / redelivery fee, customs or clearance fee, "processing" or tax fee,
+      release fee for a prize or loan.
+    include:
+      - "advance-fee, delivery, customs, clearance, processing or release fees"
+      - "\"pay now to receive your parcel / prize / loan\""
+    exclude:
+      - "ordinary shop prices, carts and checkout text on a benign shop -> benign"
+      - "investing money for a promised return -> investment_lure"
+      - "asking for card details to 'verify' (not to pay) -> credential_request"
+    examples:
+      - "Your parcel is held at customs. Pay the clearance fee of Rs. 450 to release it."
+      - "Delivery failed. A redelivery fee of $1.99 is required before 23:59 today."
+    cues:
+      en: ["delivery fee", "redelivery fee", "customs fee", "clearance fee", "processing fee",
+           "handling fee", "release fee", "pay the fee", "small fee", "shipping fee",
+           "parcel is held", "package is on hold", "unpaid duty", "advance payment",
+           "pay a small", "outstanding payment"]
+      si: ["ගාස්තුව ගෙවන්න", "බෙදාහැරීමේ ගාස්තු", "රේගු ගාස්තු", "සැකසුම් ගාස්තු",
+           "පාර්සලය රඳවා", "ගෙවීම් කරන්න", "මුදල් ගෙවන්න"]
+      ta: ["கட்டணம் செலுத்த", "விநியோக கட்டணம்", "சுங்க கட்டணம்", "செயலாக்க கட்டணம்",
+           "பார்சல் நிறுத்தி", "பணம் செலுத்தவும்"]
+
   - id: investment_lure
-    description: Guaranteed returns, crypto doubling, get-rich-quick schemes.
-    cues: {en: ["guaranteed profit", "double your bitcoin", "daily returns"], si: [], ta: []}
+    definition: >-
+      Promises unrealistic or guaranteed returns to make the reader invest or deposit:
+      crypto doubling, daily profit plans, "trading bots", pyramid / referral income.
+    include:
+      - "guaranteed / fixed / daily returns, doubling money or crypto"
+      - "\"invest LKR 10,000 and earn LKR 3,000 every day\""
+    exclude:
+      - "neutral information about investing, prices or exchange rates on a benign site -> benign"
+      - "winning something without investing -> fake_reward"
+    examples:
+      - "Invest $100 today and earn 5% guaranteed profit every single day."
+      - "Send any amount of BTC and we will double it instantly. Limited event!"
+    cues:
+      en: ["guaranteed profit", "guaranteed return", "guaranteed returns", "daily profit", "daily returns",
+           "double your", "doubled instantly", "earn daily", "passive income", "risk-free",
+           "risk free", "profit every day", "investment plan", "trading bot", "minimum deposit",
+           "withdraw your profit", "high returns", "small investment", "start earning", "earn up to", "roi"]
+      si: ["සහතික ලාභ", "ඉහළ ලාභ", "අඩු මුදලකින්", "ආයෝජනය ආරම්භ", "දෛනික ලාභ", "දෛනික ආදායම", "දෙගුණ කර", "ආයෝජනය කරන්න",
+           "ක්‍රිප්ටෝ", "බිට්කොයින්"]
+      ta: ["உத்தரவாத லாபம்", "அதிக லாபம்", "சிறிய முதலீட்டில்", "தினசரி லாபம்", "தினசரி வருமானம்", "இரட்டிப்பா", "முதலீடு செய்யுங்கள்",
+           "கிரிப்டோ", "பிட்காயின்"]
+
   - id: fake_security_warning
-    description: Fake virus alerts, tech-support scams, forced "updates".
-    cues: {en: ["your device is infected", "call support now", "update required"], si: [], ta: []}
+    definition: >-
+      A false alarm about the reader's device or account security meant to scare them
+      into calling, clicking or installing: virus / infection pop-ups, "your PC is
+      locked", fake tech support, forced "security updates".
+    include:
+      - "virus / malware / infection / hacked claims and fake scan results"
+      - "\"call support now\", \"install this update to stay protected\""
+    exclude:
+      - "a real site's ordinary security advice (\"Never share your password\") -> benign"
+      - "\"your account will be suspended\" without a device / security alarm -> urgency_threat"
+    examples:
+      - "WARNING! Your computer is infected with 3 viruses. Call Microsoft Support now."
+      - "Security alert: your phone has been hacked. Install the update to remove the threat."
+    cues:
+      en: ["is infected", "virus detected", "viruses detected", "malware detected", "trojan",
+           "has been hacked", "been compromised", "security alert", "call support", "tech support",
+           "computer is locked", "device is locked", "install the update", "update required",
+           "remove the virus", "system warning", "unusual activity", "suspicious activity",
+           "unauthorized access", "unauthorised access", "restore protection"]
+      si: ["වෛරස්", "ආසාදනය වී", "සැක සහිත ක්‍රියාකාරකම", "හැක් කර", "ආරක්ෂක අනතුරු ඇඟවීම", "ආරක්ෂක අවදානම"]
+      ta: ["வைரஸ்", "பாதிக்கப்பட்டுள்ளது", "சந்தேகமான செயல்", "சந்தேகத்திற்கிடமான", "ஹேக் செய்யப்பட்ட", "பாதுகாப்பு எச்சரிக்கை", "தீம்பொருள்"]
+
+  - id: fake_reward
+    definition: >-
+      Claims the reader has won or is entitled to something valuable for free: prize,
+      lottery, gift, cash-back, unrealistic discount, free data / recharge.
+    include:
+      - "\"you have won\", \"claim your prize\", \"free gift\", lottery / lucky draw"
+      - "unrealistic discounts (\"90% off iPhone\") used as bait"
+    exclude:
+      - "a real shop's ordinary sale banner (\"20% off this weekend\") -> benign"
+      - "rewards that require investing money first -> investment_lure"
+    examples:
+      - "Congratulations! You have won Rs. 1,000,000 in the national lucky draw."
+      - "Claim your free 50GB data gift now - only for selected customers."
+    cues:
+      en: ["you have won", "you've won", "winner", "congratulations", "claim your",
+           "free gift", "lucky draw", "lottery", "prize", "reward", "cash back", "cashback",
+           "90% off", "free data", "selected customer", "gift card"]
+      si: ["ජයග්‍රාහකයා", "ත්‍යාග", "තෑගි", "ලොතරැයි", "නොමිලේ", "සුබ පැතුම්", "දිනා ඇත"]
+      ta: ["வென்றுள்ளீர்கள்", "வெற்றியாளர்", "பரிசு", "லாட்டரி", "இலவச", "வாழ்த்துக்கள்", "வெகுமதி"]
+
+  - id: urgency_threat
+    definition: >-
+      Pressure through a deadline, a loss or a threat: account suspension / blocking,
+      "within 24 hours", legal action, fines, arrest.
+    include:
+      - "deadlines and countdowns tied to a loss (\"expires today\", \"within 24 hours\")"
+      - "threats: suspension, blocking, closure, legal action, fines, arrest"
+    exclude:
+      - "a benign shop's ordinary \"offer ends Sunday\" -> benign (unless a loss / threat is attached)"
+      - "a device / virus alarm -> fake_security_warning"
+    examples:
+      - "Your account will be suspended within 24 hours unless you act now."
+      - "Final notice: legal action will be taken if this is not resolved today."
+    cues:
+      en: ["suspended", "suspension", "will be blocked", "has been blocked", "will be closed",
+           "deactivated", "within 24 hours", "within 48 hours", "act now", "immediately",
+           "urgent", "final notice", "final warning", "last chance", "expires today",
+           "legal action", "will be terminated", "avoid suspension", "act quickly", "act today",
+           "deadline is today", "will be stopped", "may be stopped"]
+      si: ["අත්හිටුව", "අවහිර කර", "වහාම", "අදම", "නවත්වනු ඇත", "ඉක්මනින්", "පැය 24", "අවසන් දිනය",
+           "නීතිමය ක්‍රියාමාර්ග", "අවසාන අවවාදය"]
+      ta: ["இடைநிறுத்த", "முடக்கப்ப", "உடனடியாக", "உடனே", "இன்றே", "விரைவாக", "நிறுத்தப்படும்", "அவசரம்", "24 மணி நேர", "கடைசி நாள்",
+           "சட்ட நடவடிக்கை", "இறுதி எச்சரிக்கை"]
+
+  - id: impersonation
+    definition: >-
+      Claims to come from a trusted organisation (bank, government office, courier,
+      telecom, well-known brand) in order to borrow its authority.
+    include:
+      - "\"Sri Lanka Customs notice\", \"Dear BOC customer\", \"from the DHL team\""
+      - "official-sounding sender claims (\"Security Department\", \"Central Bank of Sri Lanka\")"
+    exclude:
+      - "the organisation's own genuine pages (they are benign pages; keep benign unless another cue fires)"
+      - "a brand merely mentioned in a product name or review -> benign"
+    examples:
+      - "Sri Lanka Post: your parcel could not be delivered. Confirm your address."
+      - "Dear valued customer, this is the security team of your bank."
+    cues:
+      en: ["dear customer", "dear valued customer", "dear user", "security team", "security department",
+           "customer care team", "sri lanka post", "sri lanka customs", "central bank",
+           "inland revenue", "sri lanka police", "bank of ceylon", "people's bank", "dhl", "fedex",
+           "official notice"]
+      si: ["ශ්‍රී ලංකා තැපැල්", "ශ්‍රී ලංකා රේගුව", "මහ බැංකුව", "ලංකා බැංකුව", "මහජන බැංකුව",
+           "දේශීය ආදායම් දෙපාර්තමේන්තුව", "පොලිසිය", "හිතවත් පාරිභෝගික"]
+      ta: ["இலங்கை தபால்", "இலங்கை சுங்க", "மத்திய வங்கி", "இலங்கை வங்கி", "மக்கள் வங்கி",
+           "உள்நாட்டு இறைவரி", "பொலிஸ்", "அன்புள்ள வாடிக்கையாளர்"]
+
   - id: benign
-    description: No social-engineering intent.
+    definition: >-
+      No social-engineering intent: navigation, product text, news, ordinary login or
+      checkout text, genuine security advice.
+    include:
+      - "menus, headings, product descriptions, ordinary login / checkout labels"
+      - "genuine safety advice (\"We will never ask for your PIN\")"
+    exclude:
+      - "any text that fits one of the intents above"
+    examples:
+      - "Sign in to your account"
+      - "Free delivery on orders over Rs. 5,000. Returns accepted within 14 days."
     cues: {en: [], si: [], ta: []}

@@ -93,6 +93,18 @@ content:
   reports_dir: reports/content
   workers: 4
 
+# Scam-text corpus (Part 5 Batch B): scripts/build_text_corpus.py build | stats | export-mt-input | freeze
+# Rules: configs/corpus.yaml; intents: configs/intent_taxonomy.yaml. Corpus files with real
+# messages are git-ignored (personal data may survive masking); manifests + stats are tracked.
+corpus:
+  corpus_dir: data/corpus
+  real_texts: data/corpus/real_texts.csv
+  synthetic_texts: data/corpus/raw_texts_clean.csv
+  mt_dir: data/corpus/mt
+  review_dir: data/corpus/review        # review decisions + peer sheets (contain text)
+  manifests_dir: data/corpus/manifests  # frozen corpus versions (ids + hashes, no text)
+  reports_dir: reports/content
+
 # Sample collection (Part 1 Batch B): scripts/collect.py
 collection:
   candidates_csv: data/metadata/candidates.csv

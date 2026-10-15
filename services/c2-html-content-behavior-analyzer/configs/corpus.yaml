@@ -1,0 +1,51 @@
+# Scam-text corpus (Part 5 Batch B): scripts/build_text_corpus.py build | stats | export-mt-input | freeze
+# Paths: configs/config.yaml -> corpus. Intents: configs/intent_taxonomy.yaml.
+#
+# RESEARCH INTEGRITY: four sources with different trust levels. Synthetic templates
+# and machine translations are TRAIN-ONLY augmentation; validation / test contain
+# only real text (page segments + real messages). The stats report checks it.
+corpus_version: corpus_v1
+
+# a) page_segment - from Part 5A's PageText JSONs (data/processed/text/<version>/)
+page_segments:
+  # Which segment fields become corpus rows, with length limits in characters.
+  # Short paragraphs only: long paragraphs mix several messages (Part 6 reads whole pages).
+  fields:
+    alert_banner: {min_chars: 10, max_chars: 300}
+    cta:          {min_chars: 3,  max_chars: 80}
+    form_label:   {min_chars: 3,  max_chars: 120}
+    title:        {min_chars: 4,  max_chars: 200}
+    heading:      {min_chars: 8,  max_chars: 200}
+    paragraph:    {min_chars: 30, max_chars: 300}
+  min_letters: 3            # fewer letters (any script) -> not a sentence, skipped
+  # Long benign pages (menus, footers, news lists) would otherwise flood the corpus.
+  # Fields are taken in the order listed above (alerts and CTAs first), then document order.
+  max_segments_per_page: 30
+
+# b) real_message - data/corpus/real_texts.csv (my manually collected SMS / WhatsApp / CERT / news)
+# c) synthetic_template - data/corpus/raw_texts_clean.csv (train only, group = template_group)
+# d) machine_translation - data/corpus/mt/*.csv (train only)
+real_messages:
+  # Grouped, stratified (language x intent) split of the real messages, seed = project.random_seed.
+  ratios: {train: 0.70, val: 0.15, test: 0.15}
+  # A language x intent cell with fewer groups than this goes to train completely
+  # (it cannot be split) and is reported. Cells below 7 groups are reported as small:
+  # 15 % of fewer than 7 rounds to one row or less.
+  min_groups_per_cell: 3
+  small_cell_groups: 7
+
+# Language values allowed in source files (language_given) - Part 5A labels.
+given_languages: [en, si, ta, si_latn, ta_latn, mixed, other]
+
+# Review tool (scripts/review_corpus.py): reasons offered by [x] exclude.
+exclusion_reasons:
+  - junk_or_boilerplate      # navigation, cookie text, garbled extraction
+  - not_a_message            # a name, a number, a product title ...
+  - wrong_or_garbled_language
+  - personal_data_left       # PII the masking missed - exclude, then fix the source
+  - duplicate
+  - unclear                  # even a careful reader cannot decide
+
+# Goal for the real (non-synthetic) Sinhala / Tamil text per intent in val + test combined.
+targets:
+  val_test_per_intent: {si: 30, ta: 15}
