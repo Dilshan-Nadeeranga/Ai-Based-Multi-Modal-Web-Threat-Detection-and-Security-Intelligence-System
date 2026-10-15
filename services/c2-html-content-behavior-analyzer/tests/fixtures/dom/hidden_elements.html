@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head><title>Hidden elements</title><style>.x{display:none}</style><script>var a=1;</script></head>
+<body>
+<!-- Part 3 test page: each hiding method once; children of hidden elements are not counted again. -->
+<div hidden><p>attr</p><span style="display:none">nested - not counted again</span></div>
+<span aria-hidden="true">icon</span>
+<p style="display: none">display</p>
+<p style="visibility:hidden">visibility</p>
+<p style="opacity:0">opacity</p>
+<p style="font-size:0px">font size</p>
+<img width="0" height="0" alt="pixel">
+<div style="position:absolute; left:-9999px">off-screen</div>
+<h1 style="text-indent:-9999px">indent</h1>
+<div style="position:relative; left:-9999px">relative - not hidden</div>
+<div style="position:absolute; left:-20px">slightly left - not hidden</div>
+<p class="x">CSS rule - not evaluated</p>
+<input type="hidden" name="h">
+<p>visible</p>
+</body>
+</html>

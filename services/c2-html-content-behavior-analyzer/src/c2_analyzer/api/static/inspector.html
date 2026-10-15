@@ -1,0 +1,259 @@
+<!doctype html>
+<!--
+  C2 DEVELOPER INSPECTOR  (dev-only: served at /inspector when APP_ENV=development)
+
+  SECURITY RULE - read before editing (this is also a viva answer):
+  Every page in the dataset is UNTRUSTED - phishing kits, malware droppers.
+  This inspector shows FACTS about a page (the Part 2 ParsedPage JSON); it never
+  renders the page itself.
+    * Every value from the API is put on screen with textContent / createElement
+      only. HTML-parsing sinks are banned in inspector.html and inspector.js:
+      the inner/outer-HTML properties, insertAdjacent-HTML, document "write",
+      "eval" and the Function constructor. tests/test_inspector.py greps for
+      them, so this rule cannot quietly regress.
+    * No href/src is ever set from page data. URLs found in pages are shown as
+      plain text, never as clickable links.
+    * The only page HTML ever displayed is Part 1's SANITIZED copy, inside an
+      <iframe sandbox=""> (no scripts, no same-origin), from an endpoint that
+      sends a CSP allowing no scripts and no outside loads.
+    * The CSP below (also sent as an HTTP header) allows scripts only from this
+      server (inspector.js) - no inline script, no CDN, works offline.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-src 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>C2 Inspector</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --panel-2: #f0f2f5; --text: #1d2330; --muted: #5d6676;
+    --border: #d9dde4; --accent: #2457c5; --accent-soft: #e5edfb;
+    --danger: #c62828; --danger-soft: #fdecec; --warn: #9a6100; --warn-soft: #fff4dc;
+    --ok: #1e7b3c; --ok-soft: #e4f4e9; --code: #f3f4f7;
+    --benign: #2e7d32; --phishing: #d32f2f; --fake_ecommerce: #ef6c00;
+    --crypto_scam: #7b1fa2; --malware_delivery: #6d3a1f; --unknown: #78808c;
+    --text-font: system-ui, -apple-system, "Segoe UI", "Noto Sans", "Noto Sans Sinhala",
+      "Iskoola Pota", "Noto Sans Tamil", "Latha", "Nirmala UI", sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --panel: #1a1f27; --panel-2: #222833; --text: #e3e7ee; --muted: #9aa3b2;
+      --border: #313948; --accent: #7aa2f7; --accent-soft: #233150;
+      --danger: #ff6b6b; --danger-soft: #3a1e22; --warn: #f0b44c; --warn-soft: #3a2f1a;
+      --ok: #5fd38a; --ok-soft: #1b3326; --code: #151a21;
+      --benign: #4caf50; --phishing: #ef5350; --fake_ecommerce: #ff9800;
+      --crypto_scam: #ba68c8; --malware_delivery: #b07a5a; --unknown: #8d96a3;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text); font: 14px/1.45 var(--text-font);
+    display: grid; grid-template-rows: auto 1fr; grid-template-columns: 300px 1fr;
+    grid-template-areas: "top top" "side main";
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 10px; cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  input[type=text], input[type=search], input[type=url], select, textarea {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px;
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* ---- top bar: analyze pasted HTML ---- */
+  #topbar {
+    grid-area: top; display: flex; gap: 12px; align-items: flex-start; padding: 10px 14px;
+    background: var(--panel); border-bottom: 1px solid var(--border);
+  }
+  #brand { min-width: 270px; }
+  #brand h1 { font-size: 16px; margin: 0; }
+  #brand p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+  #analyze-form { flex: 1; display: grid; grid-template-columns: 1fr 260px auto; gap: 8px; }
+  #html-input { height: 54px; resize: vertical; font-family: var(--mono); font-size: 12px; min-width: 0; }
+  #analyze-side { display: flex; flex-direction: column; gap: 6px; }
+  #analyze-buttons { display: flex; flex-direction: column; gap: 6px; }
+  #file-label { font-size: 12px; color: var(--muted); }
+  #status { grid-column: 1 / -1; font-size: 12px; color: var(--muted); min-height: 16px; }
+  #status.error { color: var(--danger); }
+
+  /* ---- sidebar: dataset samples ---- */
+  #sidebar {
+    grid-area: side; display: flex; flex-direction: column; min-height: 0;
+    background: var(--panel); border-right: 1px solid var(--border);
+  }
+  #filters { padding: 10px 12px; display: grid; gap: 6px; border-bottom: 1px solid var(--border); }
+  #filters label.row { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  #filters .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  #filters select, #filters input[type=search] { width: 100%; }
+  #version-info, #sample-count { font-size: 12px; color: var(--muted); }
+  #sample-list { list-style: none; margin: 0; padding: 4px; overflow-y: auto; flex: 1; }
+  #sample-list button {
+    width: 100%; text-align: left; border: 1px solid transparent; background: transparent;
+    display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; padding: 6px 8px;
+  }
+  #sample-list button:hover { background: var(--panel-2); }
+  #sample-list button[aria-current=true] { background: var(--accent-soft); border-color: var(--accent); }
+  #sample-list .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #sample-list .sub { grid-column: 2; font-size: 11px; color: var(--muted); display: flex; gap: 6px; }
+
+  /* ---- main ---- */
+  #main { grid-area: main; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  #page-header {
+    padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  #page-header .title { font-weight: 600; font-size: 15px; overflow-wrap: anywhere; }
+  #tabs {
+    display: flex; gap: 2px; padding: 6px 12px 0; background: var(--panel); flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  #tabs button {
+    border-radius: 6px 6px 0 0; border-bottom: none; background: transparent; padding: 5px 10px; font-size: 13px;
+  }
+  #tabs button[aria-selected=true] { background: var(--bg); border-color: var(--border); font-weight: 600; }
+  #tabs button.future { font-style: italic; }
+  #panel { padding: 14px 16px 40px; overflow: auto; flex: 1; }
+  .empty { color: var(--muted); padding: 40px; text-align: center; }
+
+  /* ---- building blocks used by inspector.js ---- */
+  .chip {
+    display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
+    color: #fff; background: var(--unknown); white-space: nowrap; align-self: center;
+  }
+  .chip.benign { background: var(--benign); } .chip.phishing { background: var(--phishing); }
+  .chip.fake_ecommerce { background: var(--fake_ecommerce); } .chip.crypto_scam { background: var(--crypto_scam); }
+  .chip.malware_delivery { background: var(--malware_delivery); }
+  .badge {
+    display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 11px; font-weight: 600;
+    border: 1px solid var(--border); color: var(--muted); white-space: nowrap;
+  }
+  .badge.danger { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
+  .badge.warn { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
+  .badge.ok { color: var(--ok); border-color: var(--ok); background: var(--ok-soft); }
+  .badge.info { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .section { margin: 0 0 18px; }
+  .section > h2 { font-size: 14px; margin: 0 0 8px; display: flex; gap: 8px; align-items: center; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+  .card h3 { font-size: 13px; margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .count { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+  .count .n { font-size: 20px; font-weight: 700; }
+  .count .l { font-size: 12px; color: var(--muted); }
+  .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 12px; }
+  .kv dt { color: var(--muted); } .kv dd { margin: 0; overflow-wrap: anywhere; }
+  .url { font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+  .muted { color: var(--muted); }
+  .multi { font-family: var(--text-font); }
+  pre {
+    background: var(--code); border: 1px solid var(--border); border-radius: 6px; padding: 10px;
+    font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0;
+  }
+  pre.multi { font-family: var(--text-font); font-size: 13px; }
+  .scroll { max-height: 420px; overflow: auto; }
+  .hidden-box { background: var(--warn-soft); border-color: var(--warn); }
+  .error-box { background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger); border-radius: 6px; padding: 8px 10px; }
+  .note { background: var(--accent-soft); border-radius: 6px; padding: 8px 10px; font-size: 13px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; background: var(--panel-2); position: sticky; top: 0; }
+  td { overflow-wrap: anywhere; }
+  .table-wrap { max-height: 480px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
+  details { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 6px; background: var(--panel); }
+  details > summary { cursor: pointer; padding: 6px 10px; }
+  details > pre { border: none; border-top: 1px solid var(--border); border-radius: 0 0 6px 6px; }
+  .heading { margin: 2px 0; }
+  .heading .lvl { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-right: 6px; }
+  .ratio { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--panel-2); margin: 6px 0; }
+  .ratio .int { background: var(--ok); } .ratio .ext { background: var(--danger); }
+  .bars { display: grid; grid-template-columns: 110px 1fr 50px; gap: 3px 8px; align-items: center; font-size: 12px; }
+  .bars .bar { height: 12px; background: var(--accent); border-radius: 3px; min-width: 2px; }
+  .bars .num { text-align: right; color: var(--muted); }
+  .bars.wide { grid-template-columns: 170px 1fr 60px; }
+  .tree { font-family: var(--mono); font-size: 12px; }
+  .tree ul { list-style: none; margin: 0; padding-left: 18px; border-left: 1px dotted var(--border); }
+  .tree > ul { padding-left: 0; border-left: none; }
+  .tree button.tog { border: none; background: none; padding: 0 4px; width: 20px; font-family: var(--mono); }
+  .tree .leaf { display: inline-block; width: 20px; }
+  .tree .tag { color: var(--accent); font-weight: 600; }
+  .tree .attr { color: var(--muted); }
+  .preview-frame { width: 100%; height: 70vh; border: 2px solid var(--warn); border-radius: 6px; background: #fff; }
+  .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .gauge-wrap { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0 12px; }
+  .gauge { width: 260px; height: 14px; border-radius: 7px; overflow: hidden; background: var(--panel-2); border: 1px solid var(--border); }
+  .gauge-fill { height: 100%; background: var(--ok); }
+  .gauge-fill.info { background: var(--accent); } .gauge-fill.warn { background: var(--warn); } .gauge-fill.danger { background: var(--danger); }
+  .gauge-num { font-weight: 700; font-family: var(--mono); }
+  .finding { border-left: 5px solid var(--border); }
+  .finding.sev-critical, .finding.sev-high { border-left-color: var(--danger); }
+  .finding.sev-medium { border-left-color: var(--warn); } .finding.sev-low { border-left-color: var(--accent); }
+  .finding-msg { margin: 4px 0 6px; font-weight: 600; }
+  .factors { margin: 0 0 6px; padding-left: 18px; font-size: 13px; }
+  ol.chain { margin: 4px 0 0; padding-left: 26px; }
+  ol.chain li { margin: 3px 0; }
+  ol.chain .where { color: var(--muted); font-size: 12px; margin-right: 8px; }
+  ol.chain .step-note { font-size: 12px; margin-right: 8px; }
+  ol.chain .step-code { display: block; font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--panel-2); border-radius: 4px; padding: 2px 6px; }
+
+  @media (max-width: 1100px) {
+    body { grid-template-columns: 250px 1fr; }
+    #brand { min-width: 180px; }
+    #analyze-form { grid-template-columns: 1fr 200px auto; }
+    .kv { grid-template-columns: 130px 1fr; }
+  }
+</style>
+</head>
+<body>
+  <header id="topbar">
+    <div id="brand">
+      <h1>C2 Inspector</h1>
+      <p>Developer view of the C2 engine &middot; page content is untrusted and shown as text only</p>
+    </div>
+    <form id="analyze-form" autocomplete="off">
+      <textarea id="html-input" placeholder="Paste HTML here (or choose a local .html file) and press Analyze - it is parsed, never rendered" spellcheck="false" aria-label="HTML to analyze"></textarea>
+      <div id="analyze-side">
+        <input id="url-input" type="url" placeholder="Page URL (optional, never fetched)" aria-label="Page URL">
+        <span id="file-label">Local file: <input id="file-input" type="file" accept=".html,.htm,text/html"></span>
+      </div>
+      <div id="analyze-buttons">
+        <button id="analyze-btn" class="primary" type="submit">Analyze</button>
+        <button id="clear-btn" type="button">Clear</button>
+      </div>
+      <div id="status" role="status" aria-live="polite"></div>
+    </form>
+  </header>
+
+  <aside id="sidebar" aria-label="Dataset samples">
+    <div id="filters">
+      <label class="row">Version <select id="version-select" aria-label="Dataset version"></select></label>
+      <div id="version-info"></div>
+      <div class="pair">
+        <select id="label-filter" aria-label="Label filter"><option value="">All labels</option></select>
+        <select id="language-filter" aria-label="Language filter"><option value="">All languages</option></select>
+      </div>
+      <label class="row"><input id="password-filter" type="checkbox"> has password input</label>
+      <label class="row"><input id="external-filter" type="checkbox"> external form action</label>
+      <label class="row" title="test pages the best Part 4 DOM baseline got wrong"><input id="misclassified-filter" type="checkbox"> misclassified (test)</label>
+      <label class="row" title="stored Part 8 result has a critical finding (run map_behavior.py run)"><input id="critical-filter" type="checkbox"> has critical behavior finding</label>
+      <input id="search-input" type="search" placeholder="Search id or title" aria-label="Search samples">
+      <div id="sample-count"></div>
+    </div>
+    <ul id="sample-list" aria-label="Samples"></ul>
+  </aside>
+
+  <main id="main">
+    <div id="page-header"><span class="muted">Pick a sample on the left, or paste HTML above.</span></div>
+    <nav id="tabs" role="tablist" aria-label="Views"></nav>
+    <section id="panel" role="tabpanel"></section>
+  </main>
+
+  <script src="/inspector/inspector.js" defer></script>
+</body>
+</html>

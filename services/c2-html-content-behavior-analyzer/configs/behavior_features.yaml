@@ -1,0 +1,229 @@
+# Behavioral intent vector (Part 8, task 11) - the fixed numeric input for the
+# behavior-only baseline and Part 9's fusion.
+#
+# Single source of truth, same style as configs/dom_features.yaml and
+# configs/js_features.yaml: the ORDER here is the vector / CSV column order.
+# Rename, reorder or add a feature -> bump feature_set_version (stored results with
+# another rules hash are redone by the batch).
+#
+# A feature is either
+#   pattern: {id: <pattern id>, stat: present | count | max_severity}
+#            present      1 if the pattern has at least one finding, else 0
+#            count        number of occurrences behind its findings (flows / reads / downloads ...)
+#            max_severity highest severity score of its findings (0 none, 1 low ... 4 critical)
+#   compute: <name>  -> a function in behavior/intent_vector.py
+# Library code never contributes (Part 7 in_library scripts are skipped).
+# Descriptive only - Part 9 decides the verdict.
+feature_set_version: beh_v1
+
+groups: [credential_access, external_data_transmission, credential_exfiltration, keylogging, forced_redirect, clipboard_manipulation, suspicious_download, obfuscated_execution, anti_analysis,
+         flows, signals, score]
+
+features:
+  # ---- credential_access -----------------------------------------------------
+  - name: credential_access_present
+    group: credential_access
+    type: binary
+    description: "1 if the page has a credential_access finding: credential fields read in page-own code (context only, low)."
+    pattern: {id: credential_access, stat: present}
+  - name: credential_access_count
+    group: credential_access
+    type: int
+    description: "Occurrences behind the credential_access findings (flows, reads or techniques)."
+    pattern: {id: credential_access, stat: count}
+  - name: credential_access_max_severity
+    group: credential_access
+    type: int
+    description: "Highest credential_access severity: 0 none, 1 low, 2 medium, 3 high, 4 critical."
+    pattern: {id: credential_access, stat: max_severity}
+  # ---- external_data_transmission --------------------------------------------
+  - name: external_data_transmission_present
+    group: external_data_transmission
+    type: binary
+    description: "1 if the page has a external_data_transmission finding: page data (cookies, storage, form fields, page URL ...) sent to another site."
+    pattern: {id: external_data_transmission, stat: present}
+  - name: external_data_transmission_count
+    group: external_data_transmission
+    type: int
+    description: "Occurrences behind the external_data_transmission findings (flows, reads or techniques)."
+    pattern: {id: external_data_transmission, stat: count}
+  - name: external_data_transmission_max_severity
+    group: external_data_transmission
+    type: int
+    description: "Highest external_data_transmission severity: 0 none, 1 low, 2 medium, 3 high, 4 critical."
+    pattern: {id: external_data_transmission, stat: max_severity}
+  # ---- credential_exfiltration -----------------------------------------------
+  - name: credential_exfiltration_present
+    group: credential_exfiltration
+    type: binary
+    description: "1 if the page has a credential_exfiltration finding: credentials / form data sent to another site, a data-collection service, a redirect URL or a changed form action."
+    pattern: {id: credential_exfiltration, stat: present}
+  - name: credential_exfiltration_count
+    group: credential_exfiltration
+    type: int
+    description: "Occurrences behind the credential_exfiltration findings (flows, reads or techniques)."
+    pattern: {id: credential_exfiltration, stat: count}
+  - name: credential_exfiltration_max_severity
+    group: credential_exfiltration
+    type: int
+    description: "Highest credential_exfiltration severity: 0 none, 1 low, 2 medium, 3 high, 4 critical."
+    pattern: {id: credential_exfiltration, stat: max_severity}
+  # ---- keylogging ------------------------------------------------------------
+  - name: keylogging_present
+    group: keylogging
+    type: binary
+    description: "1 if the page has a keylogging finding: keystrokes captured and sent or stored."
+    pattern: {id: keylogging, stat: present}
+  - name: keylogging_count
+    group: keylogging
+    type: int
+    description: "Occurrences behind the keylogging findings (flows, reads or techniques)."
+    pattern: {id: keylogging, stat: count}
+  - name: keylogging_max_severity
+    group: keylogging
+    type: int
+    description: "Highest keylogging severity: 0 none, 1 low, 2 medium, 3 high, 4 critical."
+    pattern: {id: keylogging, stat: max_severity}
+  # ---- forced_redirect -------------------------------------------------------
+  - name: forced_redirect_present
+    group: forced_redirect
+    type: binary
+    description: "1 if the page has a forced_redirect finding: redirect to another site without a user action, after credential capture, after history manipulation, by meta refresh or gated on browser checks."
+    pattern: {id: forced_redirect, stat: present}
+  - name: forced_redirect_count
+    group: forced_redirect
+    type: int
+    description: "Occurrences behind the forced_redirect findings (flows, reads or techniques)."
+    pattern: {id: forced_redirect, stat: count}
+  - name: forced_redirect_max_severity
+    group: forced_redirect
+    type: int
+    description: "Highest forced_redirect severity: 0 none, 1 low, 2 medium, 3 high, 4 critical."
+    pattern: {id: forced_redirect, stat: max_severity}
+  # ---- clipboard_manipulation ------------------------------------------------
+  - name: clipboard_manipulation_present
+    group: clipboard_manipulation
+    type: binary
+    description: "1 if the page has a clipboard_manipulation finding: crypto address / shell command put in the clipboard, copy events rewritten, clipboard read and sent."
+    pattern: {id: clipboard_manipulation, stat: present}
+  - name: clipboard_manipulation_count
+    group: clipboard_manipulation
+    type: int
+    description: "Occurrences behind the clipboard_manipulation findings (flows, reads or techniques)."
+    pattern: {id: clipboard_manipulation, stat: count}
+  - name: clipboard_manipulation_max_severity
+    group: clipboard_manipulation
+    type: int
+    description: "Highest clipboard_manipulation severity: 0 none, 1 low, 2 medium, 3 high, 4 critical."
+    pattern: {id: clipboard_manipulation, stat: max_severity}
+  # ---- suspicious_download ---------------------------------------------------
+  - name: suspicious_download_present
+    group: suspicious_download
+    type: binary
+    description: "1 if the page has a suspicious_download finding: programmatic download of a risky file type (auto-triggered / decoded content raise the level)."
+    pattern: {id: suspicious_download, stat: present}
+  - name: suspicious_download_count
+    group: suspicious_download
+    type: int
+    description: "Occurrences behind the suspicious_download findings (flows, reads or techniques)."
+    pattern: {id: suspicious_download, stat: count}
+  - name: suspicious_download_max_severity
+    group: suspicious_download
+    type: int
+    description: "Highest suspicious_download severity: 0 none, 1 low, 2 medium, 3 high, 4 critical."
+    pattern: {id: suspicious_download, stat: max_severity}
+  # ---- obfuscated_execution --------------------------------------------------
+  - name: obfuscated_execution_present
+    group: obfuscated_execution
+    type: binary
+    description: "1 if the page has a obfuscated_execution finding: decoded strings executed or written as HTML; packed / obfuscated code calling eval."
+    pattern: {id: obfuscated_execution, stat: present}
+  - name: obfuscated_execution_count
+    group: obfuscated_execution
+    type: int
+    description: "Occurrences behind the obfuscated_execution findings (flows, reads or techniques)."
+    pattern: {id: obfuscated_execution, stat: count}
+  - name: obfuscated_execution_max_severity
+    group: obfuscated_execution
+    type: int
+    description: "Highest obfuscated_execution severity: 0 none, 1 low, 2 medium, 3 high, 4 critical."
+    pattern: {id: obfuscated_execution, stat: max_severity}
+  # ---- anti_analysis ---------------------------------------------------------
+  - name: anti_analysis_present
+    group: anti_analysis
+    type: binary
+    description: "1 if the page has a anti_analysis finding: right-click / DevTools / view-source blocking, debugger traps, DevTools detection."
+    pattern: {id: anti_analysis, stat: present}
+  - name: anti_analysis_count
+    group: anti_analysis
+    type: int
+    description: "Distinct anti-analysis techniques (right-click block, DevTools keys, debugger trap, DevTools size check, selection block)."
+    pattern: {id: anti_analysis, stat: count}
+  - name: anti_analysis_max_severity
+    group: anti_analysis
+    type: int
+    description: "Highest anti_analysis severity: 0 none, 1 low, 2 medium, 3 high, 4 critical."
+    pattern: {id: anti_analysis, stat: max_severity}
+  # ---- flows -----------------------------------------------------------------
+  - name: tainted_flow_count
+    group: flows
+    type: int
+    description: "Source-to-sink flows found (page-own code, decoded-string flows excluded)."
+    compute: tainted_flow_count
+  - name: external_tainted_flow_count
+    group: flows
+    type: int
+    description: "Flows whose sink sends data to another site (network_external, external form action or redirect URL)."
+    compute: external_tainted_flow_count
+  - name: credential_flow_to_external
+    group: flows
+    type: binary
+    description: "1 if credential / form data reaches another site (or a run-time-built address)."
+    compute: credential_flow_to_external
+  - name: flow_to_known_exfil_endpoint
+    group: flows
+    type: binary
+    description: "1 if any flow reaches a known data-collection service (Telegram bot API, Discord webhook, Formspree ...)."
+    compute: flow_to_known_exfil_endpoint
+  - name: encoded_flow_count
+    group: flows
+    type: int
+    description: "Flows whose data is encoded on the way (btoa, encodeURIComponent, escape)."
+    compute: encoded_flow_count
+  - name: max_flow_confidence
+    group: flows
+    type: int
+    description: "Best flow confidence: 0 no flow, 1 low (regex-only script), 2 medium (through a function / object), 3 high (direct)."
+    compute: max_flow_confidence
+  # ---- signals ---------------------------------------------------------------
+  - name: auto_redirect_external
+    group: signals
+    type: binary
+    description: "1 if the page redirects to another site without a user action (load, timer, top-level code or meta refresh)."
+    compute: auto_redirect_external
+  - name: clipboard_crypto_address
+    group: signals
+    type: binary
+    description: "1 if code writes a crypto wallet address to the clipboard."
+    compute: clipboard_crypto_address
+  - name: clickfix_command
+    group: signals
+    type: binary
+    description: "1 if code writes a shell / PowerShell command to the clipboard (ClickFix lure)."
+    compute: clickfix_command
+  - name: risky_auto_download
+    group: signals
+    type: binary
+    description: "1 if a risky file type (.exe, .apk, .hta, .zip ...) is downloaded without a click."
+    compute: risky_auto_download
+  - name: decode_to_exec
+    group: signals
+    type: binary
+    description: "1 if a decoded string reaches eval / Function / document.write / innerHTML."
+    compute: decode_to_exec
+  # ---- score -----------------------------------------------------------------
+  - name: behavior_risk_score
+    group: score
+    type: float
+    description: "0-100: sum of each pattern's highest-severity weight (critical 50, high 25, medium 10, low 3), capped at 100. Descriptive, not the verdict."
+    compute: behavior_risk_score

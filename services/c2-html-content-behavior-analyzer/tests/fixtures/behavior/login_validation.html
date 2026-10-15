@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+</head>
+<body>
+<form id="login" action="/login" method="post">
+  <input type="email" id="email" name="email">
+  <input type="password" id="password" name="password">
+  <button type="submit">Sign in</button>
+</form>
+<p id="error"></p>
+<script>
+  document.getElementById("login").addEventListener("submit", function (event) {
+    var pwd = document.getElementById("password").value;
+    var mail = document.getElementById("email").value;
+    if (pwd.length < 8 || mail.indexOf("@") < 0) {
+      event.preventDefault();
+      document.getElementById("error").textContent = "Please check your details";
+    }
+  });
+</script>
+</body>
+</html>

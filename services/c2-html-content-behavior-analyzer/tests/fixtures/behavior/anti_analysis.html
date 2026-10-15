@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Protected</title>
+</head>
+<body>
+<p>No inspecting</p>
+<script>
+  document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  document.onkeydown = function (e) {
+    if (e.keyCode == 123) { return false; }
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 73) { return false; }
+    if (e.ctrlKey && e.keyCode == 85) { return false; }
+  };
+  setInterval(function () { debugger; }, 100);
+</script>
+</body>
+</html>

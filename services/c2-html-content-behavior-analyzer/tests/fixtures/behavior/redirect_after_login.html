@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+</head>
+<body>
+<form id="login" action="/login" method="post">
+  <input type="email" id="email" name="email">
+  <input type="password" id="password" name="password">
+  <button type="submit">Sign in</button>
+</form>
+<script>
+  document.getElementById("login").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var pass = document.getElementById("password").value;
+    localStorage.setItem("p", pass);
+    window.location.href = "https://www.microsoft.com/";
+  });
+</script>
+</body>
+</html>

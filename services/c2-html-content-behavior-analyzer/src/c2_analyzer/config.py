@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_env: str = "development"
-    api_host: str = "0.0.0.0"
+    api_host: str = "127.0.0.1"  # run_api.py binds 127.0.0.1 unless --host is given
     api_port: int = 8002
     log_level: str = "INFO"
     model_dir: Path = Path("models")

