@@ -26,15 +26,15 @@ import RepositoryAudit from './features/code-audit/pages/RepositoryAudit.jsx'
 import VulnerabilityReport from './features/code-audit/pages/VulnerabilityReport.jsx'
 
 const protect = (element) => <ProtectedRoute>{element}</ProtectedRoute>
-const STANDALONE_PAGES = new Set(['/', '/login', '/register'])
+const STANDALONE_PAGES = new Set(['/', '/login', '/register', '/dashboard', '/profile', '/history', '/url-analyzer', '/social-visual-analysis'])
 
 function App() {
   const { pathname } = useLocation()
 
   return (
     <>
-      {/* The home and login pages render their own light header. */}
-      {!STANDALONE_PAGES.has(pathname) && <NavBar />}
+      {/* These pages render their own light header or sidebar. */}
+      {!STANDALONE_PAGES.has(pathname) && !pathname.startsWith('/code-audit') && <NavBar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />

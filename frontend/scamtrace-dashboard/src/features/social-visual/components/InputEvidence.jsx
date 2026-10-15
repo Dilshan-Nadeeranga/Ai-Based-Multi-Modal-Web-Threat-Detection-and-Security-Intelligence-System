@@ -6,8 +6,8 @@ export default function InputEvidence({ input, postImage }) {
     <Card title="Input evidence" icon={FileImage}>
       <div className="grid md:grid-cols-[minmax(0,280px)_1fr] gap-6">
         {postImage
-          ? <img src={postImage} alt="Submitted post" className="w-full rounded-lg border border-slate-800 bg-slate-950 object-contain max-h-80" />
-          : <div className="rounded-lg border border-dashed border-slate-700 p-6"><NotAvailable>No post image submitted.</NotAvailable></div>}
+          ? <img src={postImage} alt="Submitted post" className="w-full rounded-lg border border-st-container bg-st-low object-contain max-h-80" />
+          : <div className="rounded-lg border border-dashed border-st-container p-6"><NotAvailable>No post image submitted.</NotAvailable></div>}
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Platform">{input.platform}</Field>
@@ -15,9 +15,9 @@ export default function InputEvidence({ input, postImage }) {
           </div>
           <Field label="Embedded URL" mono>{input.embedded_url}</Field>
           <div>
-            <p className="text-[11px] uppercase tracking-wide text-slate-500">Post text</p>
-            <p className="mt-1 whitespace-pre-wrap text-sm text-slate-200 rounded-lg bg-slate-950/60 border border-slate-800 p-3 max-h-48 overflow-auto">
-              {input.post_text || <span className="italic text-slate-500">No post text submitted.</span>}
+            <p className="text-[11px] uppercase tracking-wide text-st-muted">Post text</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-st-ink rounded-lg bg-st-low border border-st-container p-3 max-h-48 overflow-auto">
+              {input.post_text || <span className="italic text-st-muted">No post text submitted.</span>}
             </p>
           </div>
         </div>
