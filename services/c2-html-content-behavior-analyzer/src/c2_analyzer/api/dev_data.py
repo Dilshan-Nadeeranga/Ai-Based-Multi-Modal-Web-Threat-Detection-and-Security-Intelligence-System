@@ -282,6 +282,10 @@ class DevDataset:
             raise NotFoundError(f"{sample_id} is not in dataset {version}")
         return match.iloc[0].to_dict()
 
+    def label_of(self, version: str, sample_id: str) -> str:
+        """The manifest label of a sample (NotFoundError for an unknown id)."""
+        return str(self._row(version, sample_id)["label"])
+
     def _raw_file(self, row: dict) -> Path:
         """The original HTML file of a manifest row (must stay inside data/raw)."""
         raw_root = self.raw_dir.resolve()

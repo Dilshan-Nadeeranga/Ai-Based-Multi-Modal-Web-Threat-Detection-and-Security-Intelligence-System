@@ -25,15 +25,17 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import FileResponse, HTMLResponse
 
-from c2_analyzer.api.dependencies import get_dev_dataset
+from c2_analyzer.api.dependencies import get_dev_dataset, get_text_models
 from c2_analyzer.api.dev_data import DevDataset, NotFoundError
 from c2_analyzer.classifiers.dom_baseline.predict import PredictionError
+from c2_analyzer.nlp.inference import TextModelRegistry
 from c2_analyzer.schemas.behavior import BehaviorResult
 from c2_analyzer.schemas.content import PageText
 from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.schemas.dom_baseline import DomPrediction
 from c2_analyzer.schemas.inspector import DomDictionaryInfo, SampleSummary, VersionInfo
 from c2_analyzer.schemas.js import JsAnalysisResult
+from c2_analyzer.schemas.nlp import TextPrediction
 from c2_analyzer.schemas.parsed_page import ParsedPage
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -51,6 +53,7 @@ INSPECTOR_CSP = (
 )
 NO_STORE = {"Cache-Control": "no-store"}
 DatasetDep = Annotated[DevDataset, Depends(get_dev_dataset)]  # tests override get_dev_dataset
+TextModelsDep = Annotated[TextModelRegistry, Depends(get_text_models)]  # tests override it
 
 router = APIRouter(prefix="/api/v1/dev", tags=["developer inspector (APP_ENV=development)"])
 inspector_router = APIRouter()
@@ -204,6 +207,36 @@ def content(
     except NotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from None
     return Response(text, media_type="application/json", headers={"X-Content-Source": source})
+
+
+@router.get(
+    "/samples/{sample_id}/text-prediction",
+    response_model=TextPrediction,
+    summary="Part 6A text models (XLM-R + TF-IDF) on a sample's page_text",
+)
+def text_prediction(
+    dataset: DatasetDep,
+    models: TextModelsDep,
+    sample_id: str,
+    version: str | None = Query(None, examples=["v0.3"], description="default: newest"),
+) -> TextPrediction:
+    """Predictions of the models trained on ``version`` for the sample's Part 5A page_text.
+
+    A model that is missing answers ``available: false`` ("model not available") -
+    still 200. 404 only for an unknown sample / version.
+    """
+    chosen = _version(dataset, version)
+    try:
+        text, _ = dataset.content(chosen, sample_id)
+    except NotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from None
+    page = PageText.model_validate_json(text)
+    prediction = models.get(chosen).predict(
+        page.page_text, page_language=page.language.language, sample_id=sample_id
+    )
+    prediction.true_label = dataset.label_of(chosen, sample_id)
+    prediction.split = dataset.split_of(chosen, sample_id)
+    return prediction
 
 
 @router.get(

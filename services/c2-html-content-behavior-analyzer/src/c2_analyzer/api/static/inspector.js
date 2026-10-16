@@ -1039,8 +1039,8 @@ registerTab({
 });
 
 // ---- 10. Content (Part 5) ---------------------------------------------------
-// The page's TEXT as Part 6 will read it: segments per field with a language
-// chip each, the CTA list, and page_text. Segment texts are page content: shown
+// The page's TEXT as Part 6 reads it: segments per field with a language
+// chip each, the CTA list, page_text, and the Part 6A text-model card. Segment texts are page content: shown
 // ONLY through el()/textContent (Sinhala/Tamil fonts come from --text-font).
 
 const contentCache = new WeakMap();
@@ -1093,6 +1093,64 @@ function segmentLine(s) {
     el("span", { cls: "multi", text: s.text }));
 }
 
+// Part 6A: the text models' answer for this page_text (XLM-R + TF-IDF baseline).
+// Fetched separately, so a missing model only shows "model not available" and never
+// breaks the Content tab. Class names and probabilities are rendered as text only.
+const textPredictionCache = new WeakMap();
+
+function textPrediction(ctx) {
+  return cached(textPredictionCache, ctx, () => {
+    if (ctx.kind === "sample") {
+      return api(`/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/text-prediction` + query({ version: ctx.version }))
+        .then((r) => r.data);
+    }
+    return api("/api/v1/text-prediction", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html: ctx.html || "", url: ctx.url || null }),
+    }).then((r) => r.data);
+  });
+}
+
+function textModelCard(m, trueLabel) {
+  if (!m.available) {
+    return el("div", { cls: "card" },
+      el("h3", {}, m.display_name, badge("model not available", "warn")),
+      el("p", { cls: "muted", text: show(m.reason) }));
+  }
+  const probabilities = Object.entries(m.probabilities || {}).sort((a, b) => b[1] - a[1]);
+  const matches = trueLabel ? trueLabel === m.predicted : null;
+  const b = bars(probabilities, fmtPct);
+  b.classList.add("wide");
+  return el("div", { cls: "card" },
+    el("h3", {},
+      m.display_name, " → ", labelChip(m.predicted), el("strong", { text: fmtPct(m.probabilities[m.predicted]) }),
+      m.seed !== null && m.seed !== undefined ? badge(`seed ${m.seed}`, "info") : null,
+      m.dataset_version ? badge(`trained on ${m.dataset_version}`) : null,
+      matches === null ? null : badge(matches ? "matches the label" : `label is ${trueLabel}`, matches ? "ok" : "danger"),
+      m.truncated ? badge(`${fmtInt(m.input_tokens)} tokens - truncated`, "warn")
+        : m.input_tokens ? badge(`${fmtInt(m.input_tokens)} tokens`) : null),
+    b);
+}
+
+async function renderTextModel(ctx, box) {
+  const title = "Text model (Part 6)";
+  fill(box, section(title, el("p", { cls: "muted", text: "Classifying page_text…" })));
+  let p;
+  try {
+    p = await textPrediction(ctx);
+  } catch (error) {
+    if (state.ctx !== ctx || !box.isConnected) return;
+    fill(clear(box), section(title, el("p", { cls: "note", text: "Text prediction failed: " + error.message })));
+    return;
+  }
+  if (state.ctx !== ctx || !box.isConnected) return;
+  fill(clear(box), section(title,
+    el("p", { cls: "muted", text: "Page-level threat class from the text alone (NLP-only arm of the ablation): Part 5A page_text → fine-tuned XLM-R and the TF-IDF baseline." }),
+    (p.models || []).map((m) => textModelCard(m, p.true_label)),
+    p.split ? el("p", { cls: "muted", text: `split: ${p.split}` + (p.split === "test" ? "" : " - the models have seen this page (train / val), so a match here proves little") }) : null));
+}
+
 registerTab({
   id: "content",
   title: "Content (Part 5)",
@@ -1131,6 +1189,10 @@ registerTab({
         ? el("p", { cls: "note", text: "Romanized Sinhala / Tamil (Singlish / Tanglish): known gap - XLM-R handles it poorly." })
         : null));
 
+    const textBox = el("div");
+    fill(box, textBox);
+    renderTextModel(ctx, textBox); // async: the rest of the tab does not wait for the model
+
     const ctas = segments.filter((s) => s.field === "cta");
     fill(box, section(`CTAs (${ctas.length}) - buttons and action links`,
       ctas.length
@@ -1157,8 +1219,9 @@ registerTab({
 
 // ---- Future parts (disabled placeholders) -------------------------------------------------
 
+// Part 6A lives in the Content tab ("Text model (Part 6)" card); Part 6B (intent level)
+// is postponed until the scam-text corpus has enough real texts.
 for (const [id, title] of [
-  ["nlp", "XLM-R / NLP (Part 6)"],
   ["unified", "Unified Result (Part 9)"],
 ]) {
   registerTab({ id, title, enabled: false, render() {} });

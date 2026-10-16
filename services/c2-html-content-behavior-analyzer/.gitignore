@@ -62,6 +62,10 @@ models/**
 !models/**/model_card.json
 !models/**/label_mapping.json
 !models/**/features.json
+# Part 6A: per-seed / final metrics + selection (small JSON) are tracked; weights,
+# tokenizers, predictions and training args stay local.
+!models/xlmr/**/metrics.json
+!models/xlmr/**/selection.json
 models/**/*.bin
 *.safetensors
 *.pt

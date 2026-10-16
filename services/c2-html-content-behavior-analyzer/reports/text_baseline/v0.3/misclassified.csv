@@ -1,0 +1,14 @@
+model,split,sample_id,language,true,predicted,top_probability,true_probability
+tfidf_logreg,test,c2_benign_000003,other,benign,phishing,0.3343,0.2256
+tfidf_logreg,test,c2_benign_000076,other,benign,phishing,0.3303,0.2082
+tfidf_logreg,test,c2_crypto_scam_000010,en,crypto_scam,benign,0.3266,0.2699
+tfidf_logreg,test,c2_fake_ecommerce_000032,en,fake_ecommerce,crypto_scam,0.4951,0.2077
+tfidf_logreg,test,c2_malware_delivery_000018,other,malware_delivery,benign,0.4946,0.0818
+tfidf_logreg,test,c2_malware_delivery_000023,en,malware_delivery,phishing,0.3829,0.0692
+tfidf_logreg,test,c2_malware_delivery_000036,en,malware_delivery,benign,0.6708,0.0737
+tfidf_logreg,test,c2_malware_delivery_000042,en,malware_delivery,benign,0.6583,0.0959
+tfidf_logreg,test,c2_malware_delivery_000045,other,malware_delivery,benign,0.3537,0.1372
+tfidf_logreg,test,c2_malware_delivery_000050,other,malware_delivery,crypto_scam,0.2729,0.2449
+tfidf_logreg,test,c2_malware_delivery_000052,mixed,malware_delivery,benign,0.3635,0.1842
+tfidf_logreg,test,c2_phishing_000071,en,phishing,crypto_scam,0.4498,0.3931
+tfidf_logreg,test,c2_phishing_000106,en,phishing,benign,0.3973,0.315

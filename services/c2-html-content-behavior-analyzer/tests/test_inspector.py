@@ -293,3 +293,6 @@ def test_js_has_no_external_urls_and_a_tab_registry():
     assert "has_critical_behavior" in js
     # Part 5 segment texts are page content: text only, from the dev / public content endpoints
     assert "/content" in js and 'el("span", { cls: "multi", text: s.text })' in js
+    # Part 6A card in the Content tab: dev + public text-prediction, graceful "not available"
+    assert "Text model (Part 6)" in js and "/text-prediction" in js
+    assert '"model not available"' in js and "renderTextModel(ctx, textBox)" in js

@@ -53,14 +53,10 @@ dom_baseline:
   reports_dir: reports/dom_baseline
   n_jobs: 4                   # threads per model (RandomForest / XGBoost); 1 = single core
 
-xlmr:
-  model_name: xlm-roberta-base
-  max_length: 512
-  batch_size: 16
-  learning_rate: 2.0e-5
-  epochs: 4
-  weight_decay: 0.01
-  warmup_ratio: 0.1
+# XLM-R page-level text classifier + TF-IDF baseline (Part 6A): every setting and path
+# lives in configs/xlmr.yaml; the base model name comes from .env XLMR_MODEL_NAME.
+# scripts/train_xlmr.py export-bundle | import-model | train --smoke | baseline | token-stats
+# scripts/evaluate_xlmr.py --version v0.3
 
 # Static JavaScript analysis (Part 7): scripts/analyze_js.py
 # Rules, API catalogue, library signatures and safety limits (500 KB per script,

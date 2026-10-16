@@ -1,24 +1,29 @@
 """Public API routes: Part 2 preprocessing, Part 3 DOM features, Part 5 content,
-Part 7 JS analysis, Part 8 behavioral intent, Part 9 (stub).
+Part 6A text prediction, Part 7 JS analysis, Part 8 behavioral intent, Part 9 (stub).
 
 Part 9: Preliminary tri-modal output (fusion + FastAPI).
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Response
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 
+from c2_analyzer.api.dependencies import get_text_models
 from c2_analyzer.behavior.pipeline import behavior_for_html
 from c2_analyzer.content.extractor import content_for_html
 from c2_analyzer.dom.pipeline import dom_features_for_html
 from c2_analyzer.js_analyzer.pipeline import js_analysis_for_html
+from c2_analyzer.nlp.inference import TextModelRegistry
 from c2_analyzer.preprocessing.pipeline import preprocess_html
 from c2_analyzer.schemas.analysis import AnalysisRequest, AnalysisResponse
 from c2_analyzer.schemas.behavior import BehaviorResult
 from c2_analyzer.schemas.content import PageText
 from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.schemas.js import JsAnalysisResult
+from c2_analyzer.schemas.nlp import TextPrediction
 from c2_analyzer.schemas.parsed_page import ParsedPage
 
 router = APIRouter()
@@ -230,6 +235,28 @@ def content(request: ContentRequest) -> Response:
     """
     _, result = content_for_html(request.html, request.url)
     return Response(result.model_dump_json(), media_type="application/json")
+
+
+TextModelsDep = Annotated[TextModelRegistry, Depends(get_text_models)]  # tests override it
+
+
+@router.post(
+    "/api/v1/text-prediction",
+    response_model=TextPrediction,
+    tags=["Text model (Part 6)"],
+    summary="HTML -> Part 5A page_text -> XLM-R + TF-IDF class probabilities (Part 6A)",
+    responses={413: {"description": "request body larger than 5 MB"}},
+)
+def text_prediction(request: ContentRequest, models: TextModelsDep) -> TextPrediction:
+    """Run Part 2 -> Part 5A -> Part 6A on one HTML string.
+
+    Returns, per text model (fine-tuned XLM-R, TF-IDF baseline), the predicted
+    threat class and the probability of every class. A model that is not trained /
+    imported yet answers ``available: false`` with "model not available: ..." - the
+    request still succeeds. The text-only arm of the ablation: no DOM or JS signal.
+    """
+    _, text = content_for_html(request.html, request.url)
+    return models.get().predict(text.page_text, page_language=text.language.language)
 
 
 @router.post("/api/v1/analyze", response_model=AnalysisResponse, tags=["analysis (Part 9)"])

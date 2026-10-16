@@ -23,7 +23,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 | 3 | DOM structural analysis | `dom/` | `extract_dom_features.py` |
 | 4 | DOM baseline classifier (LogReg / RF / XGBoost) | `classifiers/dom_baseline/` | `train_dom_baseline.py` |
 | 5 | Multilingual scam content analyzer | `content/` | `build_text_corpus.py`, `review_corpus.py` |
-| 6 | XLM-R content classification | `nlp/` | `train_xlmr.py`, `evaluate_xlmr.py` |
+| 6 | XLM-R content classification (6A: page level) | `nlp/` | `train_xlmr.py`, `evaluate_xlmr.py` |
 | 7 | Static JavaScript intent analyzer | `js_analyzer/` | `analyze_js.py` |
 | 8 | Behavioral intent mapping (sources → sinks) | `behavior/` | `map_behavior.py` |
 | 9 | Preliminary tri-modal output + API | `fusion/`, `api/` | `run_api.py` |
@@ -41,7 +41,7 @@ pip install --no-deps -e .
 cp .env.example .env    # then edit values
 ```
 
-`torch` / `transformers` are only needed from Part 6 on; skip them for a faster install while working on Parts 1–5.
+`torch` / `transformers` are only needed from Part 6 on; skip them for a faster install while working on Parts 1–5. On Windows install the CPU build first (no CUDA, ~200 MB): `pip install torch --index-url https://download.pytorch.org/whl/cpu`, then `pip install -r requirements.txt`.
 
 Optional for Part 5: the fastText language-ID model (`models/langid/lid.176.ftz`, see [Content extraction & language ID](#content-extraction--language-id)). Without it, langdetect is used.
 
@@ -425,6 +425,44 @@ First build on v0.3 (no real messages or translations yet), from `reports/conten
   target is 210 rows for si (30 per intent) and 105 for ta (15 per intent). Collecting real
   Sinhala / Tamil scam messages into `real_texts.csv` is the next step.
 
+## XLM-R text model
+
+Part 6A: **page-level threat classification from page text** - the *NLP-only* arm of the ablation study. Input = Part 5A `page_text` (`[TITLE] … [CTA] … [LABEL] …`), labels = the 5 threat classes (Part 4's label mapping), split = the **shared** `data/splits/v0.3` (never re-split: the same 68 test pages as DOM-only and Behavior-only; its fingerprint travels with every bundle and model). Part 6B (intent level, on the scam-text corpus) is postponed until the corpus has enough real scam texts.
+
+Why XLM-R: one multilingual encoder (100 languages incl. Sinhala and Tamil) reads English, si, ta and the ~21 % "other" pages without a per-language pipeline. Why a **TF-IDF baseline**: character 2–5-grams work for any script and cost nothing - XLM-R is only worth it if it beats them on the same pages. Why **3 seeds**: with ~322 training pages one fine-tuning run is partly luck, so XLM-R is reported as mean ± std. Why **test once**: seeds, epochs and C are chosen on val / CV only.
+
+```bash
+# laptop
+python scripts/train_xlmr.py token-stats  --version v0.3            # truncation at 512 per language
+python scripts/train_xlmr.py baseline     --version v0.3            # TF-IDF char_wb 2-5 + LogReg
+python scripts/train_xlmr.py train        --version v0.3 --smoke    # CPU pipeline check (tiny model, 1 step)
+python scripts/train_xlmr.py export-bundle --version v0.3           # -> data/tmp/xlmr_bundle_v0.3.zip
+# Colab: notebooks/04_xlmr_finetune_colab.ipynb (T4 GPU, 3 seeds) -> download xlmr_v0.3.zip
+python scripts/train_xlmr.py import-model --zip xlmr_v0.3.zip --version v0.3
+python scripts/evaluate_xlmr.py --version v0.3                      # reports/xlmr/v0.3 + ablation table
+```
+
+- **Training** (`nlp/train.py`, Hugging Face Trainer): class-weighted cross-entropy (n / (k · n_c)), lr 2e-5, ≤ 10 epochs, batch 16, warmup 0.1, weight decay 0.01, fp16 on GPU, early stopping on **val macro-F1** (patience 3, best epoch restored); seeds 42 / 43 / 44 → `models/xlmr/<v>/seed_<n>/` (safetensors, tokenizer, config, training_args, label_mapping, metrics, val + test predictions); final = seed with the best val macro-F1 → `final/` + `model_card.json`. All settings: `configs/xlmr.yaml`; base model: `.env XLMR_MODEL_NAME`.
+- **Colab bundle** (~0.4 MB): examples jsonl (masked page_text only - no HTML, no URLs), label mapping, split fingerprint, the config and a self-contained copy of the training code (`tokenizer.py`, `model.py`, `train.py` never import the repo; a test checks it), `requirements-colab.txt` pinned to the laptop's transformers versions. By default only `final/` weights are downloaded (~1.1 GB); the other seeds come back as metrics + predictions.
+- **import-model** refuses a zip whose split fingerprint, dataset version or label mapping differs from the laptop's, and any zip path outside the target.
+- **Evaluation** (`nlp/evaluate.py`): final model re-run on the local CPU and compared with its Colab predictions (≤ 0.001); final + each seed on val and test: per-class P/R/F1, **macro P/R/F1** (primary: macro-F1), weighted-F1, accuracy, benign FPR, ROC-AUC OvR, **per language** (en / si / ta / mixed / other from Part 5A, n + small-n warning), confusion matrices (counts + normalized PNG), `misclassified.csv`, mean ± std over seeds; test metrics are added to the model card.
+- **TF-IDF baseline** (`nlp/text_baseline.py`): Part 4's protocol - C ∈ {0.1, 1, 10, 100} by mean macro-F1 over the shared grouped CV folds (train+val, vectorizer fit inside each fold), refit on train+val, test once → `models/text_baseline/v0.3/`, `reports/text_baseline/v0.3/` (same format + strongest n-grams per class).
+- **Serving** (`nlp/inference.py`): models load lazily on the first request (the API starts without importing torch); CPU, `no_grad`, batched; a missing model → `available: false`, "model not available".
+- **Git:** weights, tokenizers, predictions and joblib files are ignored; `model_card.json`, `label_mapping.json`, `metrics.json`, `selection.json` are tracked.
+
+v0.3 so far (test = 68 pages, same split for every arm):
+
+| arm | model | CV / seed mean ± std | test macro-F1 | benign FPR |
+|---|---|---|---|---|
+| DOM-only (Part 4) | Random Forest | CV 0.701 ± 0.077 | 0.786 | 17.6 % |
+| Behavior-only (Part 8) | Random Forest | CV 0.620 ± 0.078 | 0.682 | 20.6 % |
+| Text TF-IDF (Part 6A) | char_wb 2–5 + LogReg (C = 10) | CV 0.706 ± 0.065 | 0.718 | **5.9 %** |
+| Text XLM-R (Part 6A) | xlm-roberta-base | pending (Colab) | – | – |
+
+Token lengths (xlm-roberta-base tokenizer): median 740 tokens, **65 % of pages are longer than 512** (si / ta: all of them). Part 5A orders page_text by priority, so truncation cuts the trailing `[TEXT]` paragraphs and keeps title, CTAs, form labels and headings.
+
+If the Hugging Face download fails with `CERTIFICATE_VERIFY_FAILED` on Windows (antivirus HTTPS scanning: `requests` trusts certifi, not the Windows store), download the four tokenizer files of `FacebookAI/xlm-roberta-base` by hand and pass the folder: `token-stats --tokenizer models/xlmr/base_tokenizer/xlm-roberta-base`. Colab is not affected.
+
 ## JavaScript analysis
 
 Part 7 analyses every piece of JavaScript Part 2 found: inline scripts, `on*=` handlers and `javascript:` URLs. It works **statically**. Code is parsed into a syntax tree with [tree-sitter](https://tree-sitter.github.io/) and never executed, and external `<script src>` files are never downloaded; only their address is analysed. Part 7 **reports** API usage. Deciding intent (for example, "credential read + external fetch = exfiltration") is Part 8's job.
@@ -556,6 +594,7 @@ v0.3 (459 pages, 5 classes), from `reports/behavior/v0.3_summary.md`:
 | POST | `/api/v1/preprocess` | ✅ Part 2: body `{"html": "...", "url": "..." or null}` → `ParsedPage` JSON (same as the stored files). `url` is never fetched. Body > 5 MB → `413` |
 | POST | `/api/v1/js-analysis` | ✅ Part 7: same body → `JsAnalysisResult` (detections with line numbers / arguments / masked snippets, scripts with obfuscation stats, external scripts, js_v1 features). Nothing is executed or downloaded |
 | POST | `/api/v1/content` | ✅ Part 5: same body → `PageText` (segments per field with language, page language + confidence + method, model-ready `page_text`). Text is prepared, nothing is classified |
+| POST | `/api/v1/text-prediction` | ✅ Part 6A: same body → `TextPrediction` (Part 2 → 5A page_text → fine-tuned XLM-R + TF-IDF baseline: predicted class + probability per class, XLM-R token count / truncation). A model not trained yet answers `available: false` + "model not available" (still 200) |
 | POST | `/api/v1/behavior` | ✅ Part 8: same body → `BehaviorResult` (sources, sinks, flows with evidence chains, findings with severity and message, beh_v1 intent vector, risk score). Runs Part 2 + 7 + 8; nothing is executed or downloaded |
 | POST | `/api/v1/analyze` | stub (501) – body `{"html": "...", "url": "..."}` |
 | POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}` |
@@ -575,7 +614,7 @@ Then open **http://127.0.0.1:8002/inspector** (Swagger: http://127.0.0.1:8002/do
 
 - **Left:** pick a frozen dataset version, filter by label, language, "has password input", "external form action", "misclassified (test)" (test pages the best Part 4 model got wrong) or "has critical behavior finding" (stored Part 8 results), search by id or title, and click a sample. Up/Down arrows move through the list.
 - **Top:** paste HTML (and optionally its URL) or choose a local `.html` file, then press **Analyze**. This calls `POST /api/v1/preprocess`. The file is read as text and never rendered.
-- **Tabs:** DOM Features (Part 3, plus the Part 4 "DOM baseline prediction" card with the predicted class, probability bars, the top 5 features pushing towards or away from it, and a PILOT badge; then evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only) · JS Analysis (Part 7: summary chips per API category, the detections table with snippets shown as monospace text only, external-URL / library / confidence badges, per-script obfuscation cards and the external scripts table) · Behavior (Part 8: risk-score gauge, finding cards coloured by severity with the message, factors and the **evidence chain as numbered steps** (line + code, monospace, text only), the flows table with expandable chains, the intent vector and the sinks with their triggers) · Content (Part 5: page language with confidence, method and a script-ratio bar, language shares, the highlighted CTA list, segments grouped by field with a language chip each, and `page_text` in monospace; text only). Greyed-out tabs are placeholders for Parts 6 and 9.
+- **Tabs:** DOM Features (Part 3, plus the Part 4 "DOM baseline prediction" card with the predicted class, probability bars, the top 5 features pushing towards or away from it, and a PILOT badge; then evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only) · JS Analysis (Part 7: summary chips per API category, the detections table with snippets shown as monospace text only, external-URL / library / confidence badges, per-script obfuscation cards and the external scripts table) · Behavior (Part 8: risk-score gauge, finding cards coloured by severity with the message, factors and the **evidence chain as numbered steps** (line + code, monospace, text only), the flows table with expandable chains, the intent vector and the sinks with their triggers) · Content (Part 5: page language with confidence, method and a script-ratio bar, language shares, the highlighted CTA list, segments grouped by field with a language chip each, and `page_text` in monospace; text only; plus the Part 6A **"Text model (Part 6)"** card: XLM-R and TF-IDF predicted class with probability bars, token count / truncated badge, "model not available" when a model is missing). The greyed-out tab is the placeholder for Part 9.
 - **Deep links:** the URL hash remembers the version, sample and tab (e.g. `/inspector#v=v0.1&sample=c2_phishing_000081&tab=forms`). This is handy for presentations.
 
 Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
@@ -589,6 +628,7 @@ Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
 | `GET /api/v1/dev/samples/{id}/dom-prediction?version=v0.1` | Part 4: probabilities from every trained baseline, the best model's top 5 contributions, the split and whether it is misclassified on test (`404` if no model has been trained) |
 | `GET /api/v1/dev/samples/{id}/js-analysis?version=v0.2` | the stored Part 7 `JsAnalysisResult`, or one computed on the fly (header `X-Js-Source`) |
 | `GET /api/v1/dev/samples/{id}/content?version=v0.3` | the stored Part 5 `PageText`, or one computed on the fly (header `X-Content-Source`) |
+| `GET /api/v1/dev/samples/{id}/text-prediction?version=v0.3` | Part 6A `TextPrediction` of the models trained on that version (+ true label and split) |
 | `GET /api/v1/dev/samples/{id}/behavior?version=v0.3` | the stored Part 8 `BehaviorResult`, or one computed on the fly (header `X-Behavior-Source`) |
 | `GET /api/v1/dev/dom-dictionary?version=v0.1` | the feature dictionary plus per-label medians from the Part 3 report |
 | `GET /api/v1/dev/samples/{id}/safe-preview` | Part 1's sanitized copy, with `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'` and `nosniff` |
