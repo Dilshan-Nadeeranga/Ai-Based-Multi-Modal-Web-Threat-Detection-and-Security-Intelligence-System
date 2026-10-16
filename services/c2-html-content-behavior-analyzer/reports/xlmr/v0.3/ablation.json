@@ -63,8 +63,23 @@
     },
     {
       "arm": "Text XLM-R",
-      "available": false,
-      "path": "D:\\4Y Project\\J26-SE-316\\services\\c2-html-content-behavior-analyzer\\reports\\xlmr\\v0.3\\results.json"
+      "available": true,
+      "model": "XLM-R (fine-tuned) - final (seed 43)",
+      "score_label": "3-seed test",
+      "score_mean": 0.6102029575362908,
+      "score_std": 0.06196353814896751,
+      "test_macro_f1": 0.6567445887445887,
+      "benign_fpr": 0.23529411764705882,
+      "per_class_f1": {
+        "benign": 0.7878787878787878,
+        "phishing": 0.64,
+        "fake_ecommerce": 0.7,
+        "crypto_scam": 0.7272727272727273,
+        "malware_delivery": 0.42857142857142855
+      },
+      "n_test": 68,
+      "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+      "same_split": true
     }
   ]
 }

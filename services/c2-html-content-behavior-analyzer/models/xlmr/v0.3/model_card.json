@@ -1,0 +1,174 @@
+{
+  "name": "XLM-R page_text classifier (Part 6A, NLP-only arm)",
+  "created_at": "2026-10-16T15:16:31+00:00",
+  "dataset_version": "v0.3",
+  "manifest_fingerprint": "7a620c3b7ea05f42747d1a418a0663befa62a7c6ade6335f4557b52fda77cc26",
+  "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+  "text_schema_version": "text_v1",
+  "text_rules_hash": "2df7c7ad4a849bcf9de5f848e538f2c65667dd1651c8d8801dc1b530dec3c910",
+  "base_model": "xlm-roberta-base",
+  "smoke": false,
+  "label_mapping": {
+    "classes": [
+      "benign",
+      "phishing",
+      "fake_ecommerce",
+      "crypto_scam",
+      "malware_delivery"
+    ],
+    "index": {
+      "benign": 0,
+      "phishing": 1,
+      "fake_ecommerce": 2,
+      "crypto_scam": 3,
+      "malware_delivery": 4
+    },
+    "labels_yaml_id": {
+      "benign": 0,
+      "phishing": 1,
+      "fake_ecommerce": 2,
+      "crypto_scam": 3,
+      "malware_delivery": 4
+    },
+    "excluded_classes": {}
+  },
+  "hyperparameters": {
+    "max_length": 512,
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "learning_rate": 2e-05,
+    "epochs": 10,
+    "batch_size": 16,
+    "eval_batch_size": 32,
+    "gradient_accumulation": 1,
+    "warmup_ratio": 0.1,
+    "weight_decay": 0.01,
+    "max_grad_norm": 1.0,
+    "fp16": true,
+    "patience": 3,
+    "class_weights": "balanced"
+  },
+  "selection": {
+    "final_seed": 43,
+    "rule": "seed with the highest VAL macro-F1 (ties: lower seed); test never used",
+    "val_macro_f1": {
+      "42": 0.6743589743589743,
+      "43": 0.7355757575757575,
+      "44": 0.7313845060412224
+    }
+  },
+  "seeds": {
+    "42": {
+      "val_macro_f1": 0.6743589743589743,
+      "best_epoch": 5.0,
+      "epochs_run": 8.0,
+      "training_seconds": 291.9,
+      "test": {
+        "macro_precision": 0.5132142857142857,
+        "macro_recall": 0.6174082453494218,
+        "macro_f1": 0.5226310726310726,
+        "weighted_f1": 0.5506889624536683,
+        "accuracy": 0.5588235294117647,
+        "balanced_accuracy": 0.6174082453494218,
+        "roc_auc_ovr_macro": 0.8851739972604126,
+        "benign_fpr": 0.5294117647058824
+      }
+    },
+    "43": {
+      "val_macro_f1": 0.7355757575757575,
+      "best_epoch": 8.0,
+      "epochs_run": 10.0,
+      "training_seconds": 316.9,
+      "test": {
+        "macro_precision": 0.6467857142857143,
+        "macro_recall": 0.717684766214178,
+        "macro_f1": 0.6567445887445887,
+        "weighted_f1": 0.6981487140310669,
+        "accuracy": 0.7058823529411765,
+        "balanced_accuracy": 0.717684766214178,
+        "roc_auc_ovr_macro": 0.922188070284553,
+        "benign_fpr": 0.23529411764705882
+      }
+    },
+    "44": {
+      "val_macro_f1": 0.7313845060412224,
+      "best_epoch": 9.0,
+      "epochs_run": 10.0,
+      "training_seconds": 348.8,
+      "test": {
+        "macro_precision": 0.64752688172043,
+        "macro_recall": 0.6765585721468075,
+        "macro_f1": 0.6512332112332112,
+        "weighted_f1": 0.7375601522660347,
+        "accuracy": 0.7352941176470589,
+        "balanced_accuracy": 0.6765585721468075,
+        "roc_auc_ovr_macro": 0.9342580233270661,
+        "benign_fpr": 0.20588235294117646
+      }
+    }
+  },
+  "device": "cuda",
+  "gpu_name": "Tesla T4",
+  "library_versions": {
+    "python": "3.13.15",
+    "torch": "2.11.0+cu130",
+    "transformers": "4.57.6",
+    "tokenizers": "0.22.2",
+    "numpy": "2.1.3",
+    "scikit-learn": "1.6.1",
+    "cuda": "13.0",
+    "accelerate": "1.15.0",
+    "safetensors": "0.8.0",
+    "sentencepiece": "0.2.2"
+  },
+  "git_commit": "1dc19c1d2d365793a1b85c6eb4b08ea54d80aca4-dirty",
+  "intended_use": "Research: the NLP-only arm of C2's ablation study (page text -> threat class). Not a stand-alone production detector.",
+  "limitations": "Small dataset (~322 train pages, mostly English, very few si / ta); page_text over 512 tokens is truncated; labels are mostly unverified.",
+  "final_test": {
+    "macro_precision": 0.6467857142857143,
+    "macro_recall": 0.717684766214178,
+    "macro_f1": 0.6567445887445887,
+    "weighted_f1": 0.6981487140310669,
+    "accuracy": 0.7058823529411765,
+    "balanced_accuracy": 0.717684766214178,
+    "roc_auc_ovr_macro": 0.922188070284553,
+    "benign_fpr": 0.23529411764705882
+  },
+  "test_seed_summary": {
+    "mean": {
+      "macro_precision": 0.6025089605734767,
+      "macro_recall": 0.6705505279034693,
+      "macro_f1": 0.6102029575362908,
+      "weighted_f1": 0.66213260958359,
+      "accuracy": 0.6666666666666666,
+      "balanced_accuracy": 0.6705505279034693,
+      "roc_auc_ovr_macro": 0.9138733636240106,
+      "benign_fpr": 0.32352941176470584,
+      "f1_benign": 0.7370802037468703,
+      "f1_phishing": 0.6534487734487735,
+      "f1_fake_ecommerce": 0.687037037037037,
+      "f1_crypto_scam": 0.5575757575757576,
+      "f1_malware_delivery": 0.4158730158730159
+    },
+    "std": {
+      "macro_precision": 0.06314159511736588,
+      "macro_recall": 0.04115756395372465,
+      "macro_f1": 0.06196353814896751,
+      "weighted_f1": 0.08042835416340452,
+      "accuracy": 0.07719615562756679,
+      "balanced_accuracy": 0.04115756395372465,
+      "roc_auc_ovr_macro": 0.020883185642459372,
+      "benign_fpr": 0.1460751414289347,
+      "f1_benign": 0.10365776978640477,
+      "f1_phishing": 0.04519454718614789,
+      "f1_fake_ecommerce": 0.07990907040885709,
+      "f1_crypto_scam": 0.13388316384469406,
+      "f1_malware_delivery": 0.10148804675013194
+    },
+    "n_seeds": 3
+  },
+  "evaluated_at": "2026-10-16T21:23:01+05:30"
+}

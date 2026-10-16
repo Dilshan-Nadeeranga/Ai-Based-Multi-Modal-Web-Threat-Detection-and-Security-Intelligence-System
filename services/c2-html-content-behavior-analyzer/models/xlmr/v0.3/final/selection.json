@@ -1,0 +1,9 @@
+{
+  "final_seed": 43,
+  "rule": "seed with the highest VAL macro-F1 (ties: lower seed); test never used",
+  "val_macro_f1": {
+    "42": 0.6743589743589743,
+    "43": 0.7355757575757575,
+    "44": 0.7313845060412224
+  }
+}
