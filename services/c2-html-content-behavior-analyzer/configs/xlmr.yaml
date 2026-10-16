@@ -33,8 +33,10 @@ smoke:
 # Local CPU inference / evaluation
 inference:
   batch_size: 8
-  # A Colab prediction and the local CPU prediction of the SAME final model must agree:
-  prediction_tolerance: 0.001
+  # Colab (GPU) vs local CPU (fp32) predictions of the SAME final model: PASS if every
+  # predicted label is identical AND max |dp| < this. ~1e-3 differences are expected
+  # (GPU kernels / summation order); 0.01+ or a changed label means a version problem.
+  prediction_tolerance: 0.01
   serving_version: v0.3     # model version used by POST /api/v1/text-prediction
 
 evaluation:

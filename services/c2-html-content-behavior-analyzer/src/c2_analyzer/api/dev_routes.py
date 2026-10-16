@@ -28,11 +28,13 @@ from fastapi.responses import FileResponse, HTMLResponse
 from c2_analyzer.api.dependencies import get_dev_dataset, get_text_models
 from c2_analyzer.api.dev_data import DevDataset, NotFoundError
 from c2_analyzer.classifiers.dom_baseline.predict import PredictionError
+from c2_analyzer.fusion.predictor import FusionStale
 from c2_analyzer.nlp.inference import TextModelRegistry
 from c2_analyzer.schemas.behavior import BehaviorResult
 from c2_analyzer.schemas.content import PageText
 from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.schemas.dom_baseline import DomPrediction
+from c2_analyzer.schemas.fusion import FusionExplanation
 from c2_analyzer.schemas.inspector import DomDictionaryInfo, SampleSummary, VersionInfo
 from c2_analyzer.schemas.js import JsAnalysisResult
 from c2_analyzer.schemas.nlp import TextPrediction
@@ -237,6 +239,31 @@ def text_prediction(
     prediction.true_label = dataset.label_of(chosen, sample_id)
     prediction.split = dataset.split_of(chosen, sample_id)
     return prediction
+
+
+@router.get(
+    "/samples/{sample_id}/fusion",
+    response_model=FusionExplanation,
+    summary="Part 9A fusion model: per-arm probabilities, fused verdict, drivers",
+)
+def fusion(
+    dataset: DatasetDep,
+    sample_id: str,
+    version: str | None = Query(None, examples=["v0.3"], description="default: newest"),
+) -> FusionExplanation:
+    """The saved fusion model's answer for a dataset sample, from the STORED arm
+    probabilities (out-of-fold for train / val pages, final arm models for test pages):
+    per-arm probabilities, fused probabilities, argmax verdict, the verdict at the benign
+    threshold (OOF benign FPR <= 2 %) and which arm / feature drove it.
+
+    404 unknown sample / no fusion model; 409 the model or its OOF tables are stale.
+    """
+    try:
+        return dataset.fusion(_version(dataset, version), sample_id)
+    except NotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from None
+    except FusionStale as error:
+        raise HTTPException(status_code=409, detail=str(error)) from None
 
 
 @router.get(

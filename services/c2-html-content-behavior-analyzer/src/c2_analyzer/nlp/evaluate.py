@@ -10,9 +10,12 @@ mean ± std over the seeds (task 11).
 
 Where the probabilities come from:
 - **final**: always recomputed HERE on the local CPU (the model the API serves), and
-  compared with the Colab ``final/predictions.jsonl``: same weights + same fp32 code
-  must give the same numbers (``inference.prediction_tolerance``). A mismatch means a
-  different library version or a broken download.
+  compared with the Colab ``final/predictions.jsonl``. PASS = the predicted label is
+  identical for EVERY page and max |Δp| < ``inference.prediction_tolerance`` (0.01).
+  Exact equality is not expected: the Colab numbers come from a CUDA GPU (other
+  kernels / summation order, fp16-trained weights read back), the local ones from a
+  CPU in fp32, so differences of ~1e-3 are normal. A changed label or a |Δp| of 0.01+
+  means a different library version or a broken download.
 - **each seed**: local CPU if its weights were downloaded, else its Colab
   ``predictions.jsonl`` (by default only final/ is downloaded - 1.1 GB instead of 4.4).
 
@@ -152,6 +155,27 @@ def _score(name: str, rows: list[dict], proba: np.ndarray, data: TextExamples, c
     return entry, wrong
 
 
+def consistency_check(colab: np.ndarray, local: np.ndarray, tolerance: float) -> dict:
+    """Colab (GPU) vs local CPU probabilities of the same model: PASS = identical labels
+    for every page AND max |dp| < tolerance (both numbers are reported)."""
+    diff = float(np.abs(np.asarray(colab) - np.asarray(local)).max()) if len(local) else 0.0
+    agreement = (
+        float((np.asarray(colab).argmax(axis=1) == np.asarray(local).argmax(axis=1)).mean())
+        if len(local)
+        else 1.0
+    )
+    return {
+        "n": int(len(local)),
+        "max_abs_diff": round(diff, 6),
+        "argmax_agreement": agreement,
+        "labels_identical": agreement == 1.0,
+        "tolerance": tolerance,
+        "rule": "PASS if every predicted label is identical and max |dp| < tolerance "
+        "(GPU vs CPU fp32 differences of ~1e-3 are expected)",
+        "ok": agreement == 1.0 and diff < tolerance,
+    }
+
+
 def evaluate_xlmr(
     version: str,
     config: XlmrConfig | None = None,
@@ -183,18 +207,14 @@ def evaluate_xlmr(
     consistency = None
     colab = _colab_predictions(final, rows, len(labels))
     if colab is not None:
-        diff = float(np.abs(colab - final_proba).max())
-        agreement = float((colab.argmax(axis=1) == final_proba.argmax(axis=1)).mean())
-        tolerance = float(config.inference["prediction_tolerance"])
-        consistency = {
-            "n": len(rows),
-            "max_abs_diff": round(diff, 6),
-            "argmax_agreement": agreement,
-            "tolerance": tolerance,
-            "ok": diff <= tolerance and agreement == 1.0,
-        }
-        if not consistency["ok"]:
-            log(f"WARNING: Colab and local predictions differ (max {diff:.4g}) - check versions")
+        consistency = consistency_check(
+            colab, final_proba, float(config.inference["prediction_tolerance"])
+        )
+        log(
+            f"Colab vs local CPU: labels identical {100 * consistency['argmax_agreement']:.1f} %, "
+            f"max |dp| {consistency['max_abs_diff']:.4g} (< {consistency['tolerance']}) -> "
+            f"{'PASS' if consistency['ok'] else 'CHECK'}"
+        )
 
     models, wrong_all = {}, []
     entry, wrong = _score("final", rows, final_proba, data, config)

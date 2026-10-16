@@ -57,6 +57,9 @@ from c2_analyzer.dom.exporter import output_dir as dom_output_dir
 from c2_analyzer.dom.exporter import reports_dir as dom_reports_dir
 from c2_analyzer.dom.pipeline import extract_dom_features
 from c2_analyzer.dom.report import label_medians
+from c2_analyzer.fusion.common import FusionConfig
+from c2_analyzer.fusion.model import BUNDLE_NAME
+from c2_analyzer.fusion.predictor import FusionPredictor, FusionUnavailable
 from c2_analyzer.js_analyzer.batch import output_dir as js_output_dir
 from c2_analyzer.js_analyzer.batch import stored_result as stored_js_result
 from c2_analyzer.js_analyzer.pipeline import analyze_js
@@ -65,6 +68,7 @@ from c2_analyzer.preprocessing.loader import from_bytes
 from c2_analyzer.preprocessing.pipeline import preprocess
 from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.schemas.dom_baseline import DomPrediction
+from c2_analyzer.schemas.fusion import FusionExplanation
 from c2_analyzer.schemas.inspector import (
     DomDictionaryInfo,
     DomFeatureInfo,
@@ -121,6 +125,8 @@ class DevDataset:
         js_root: Path | None = None,
         behavior_root: Path | None = None,
         content_root: Path | None = None,
+        fusion_models: Path | None = None,
+        fusion_oof: Path | None = None,
     ) -> None:
         self.manifests = manifests
         self.parsed_root = parsed_root  # data/processed/parsed_html (one folder per version)
@@ -134,6 +140,9 @@ class DevDataset:
         self.js_root = js_root  # data/processed/js (None = never stored)
         self.behavior_root = behavior_root  # data/processed/behavior (None = never stored)
         self.content_root = content_root  # data/processed/text (None = never stored)
+        self.fusion_models = fusion_models  # models/fusion (None = no fusion model)
+        self.fusion_oof = fusion_oof  # data/processed/fusion (OOF / test probabilities per arm)
+        self._fusion: dict[str, tuple[tuple, object]] = {}
         self._bundles: dict[str, tuple[tuple, dict]] = {}
         self._files: dict[Path, tuple[int, object]] = {}
         self._facts: dict[Path, tuple[int, int, _Facts | None]] = {}
@@ -144,6 +153,7 @@ class DevDataset:
         """The real project folders (same defaults as the Part 1/2 scripts)."""
         store = MetadataStore()  # only used for its paths; metadata.csv is not loaded here
         baseline = BaselineConfig.load()
+        fusion = FusionConfig.load()
         return cls(
             manifests=manifests_dir(store),
             parsed_root=output_dir(None).parent,
@@ -157,6 +167,8 @@ class DevDataset:
             js_root=js_output_dir(None).parent,
             behavior_root=behavior_output_dir(None).parent,
             content_root=content_output_dir(None).parent,
+            fusion_models=fusion.models_root,
+            fusion_oof=fusion.oof_root,
         )
 
     # ---- versions ---------------------------------------------------------------
@@ -533,6 +545,38 @@ class DevDataset:
         )
         prediction.features_source = source
         return prediction
+
+    # ---- Part 9A: fusion -------------------------------------------------------------
+
+    def fusion(self, version: str, sample_id: str) -> FusionExplanation:
+        """The saved fusion model's decision for a sample, from the stored arm probabilities.
+
+        NotFoundError: unknown sample / no fusion model; FusionStale: model or OOF tables
+        no longer match the split (re-run run_ablation.py)."""
+        self._row(version, sample_id)  # validates the id against the pattern + manifest
+        if self.fusion_models is None or self.fusion_oof is None:
+            raise NotFoundError("no fusion model configured")
+        paths = [self.fusion_models / version / BUNDLE_NAME] + sorted(
+            (self.fusion_oof / version).glob("oof_*.*")
+        )
+        stamp = tuple(p.stat().st_mtime_ns if p.is_file() else 0 for p in paths)
+        cached = self._fusion.get(version)
+        if cached is None or cached[0] != stamp:
+            try:
+                predictor = FusionPredictor(
+                    version,
+                    models_root=self.fusion_models,
+                    oof_root=self.fusion_oof,
+                    splits_root=self.splits,
+                )
+            except FusionUnavailable as error:
+                raise NotFoundError(str(error)) from None
+            cached = (stamp, predictor)
+            self._fusion[version] = cached
+        try:
+            return cached[1].explain(sample_id)
+        except KeyError as error:
+            raise NotFoundError(str(error.args[0])) from None
 
     def safe_preview(self, sample_id: str, version: str | None = None) -> str:
         """Part 1's sanitized copy of a sample (scripts, URLs and forms removed).

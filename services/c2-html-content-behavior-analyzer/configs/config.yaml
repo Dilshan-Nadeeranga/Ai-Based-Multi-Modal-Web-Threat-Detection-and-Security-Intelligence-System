@@ -58,6 +58,9 @@ dom_baseline:
 # scripts/train_xlmr.py export-bundle | import-model | train --smoke | baseline | token-stats
 # scripts/evaluate_xlmr.py --version v0.3
 
+# Tri-modal fusion + ablation study (Part 9A): arms, strategies, FPR target, bootstrap and
+# paths live in configs/fusion.yaml. scripts/run_ablation.py --version v0.3
+
 # Static JavaScript analysis (Part 7): scripts/analyze_js.py
 # Rules, API catalogue, library signatures and safety limits (500 KB per script,
 # 3 s parse timeout, ...) live in configs/js_rules.yaml; the vector in js_features.yaml.

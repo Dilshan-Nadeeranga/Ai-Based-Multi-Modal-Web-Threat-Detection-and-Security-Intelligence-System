@@ -8,8 +8,11 @@ Thin CLI wrapper - all logic lives in ``c2_analyzer.nlp``.
     python scripts/train_xlmr.py train --version v0.3 --smoke   # CPU pipeline check (tiny model)
     python scripts/train_xlmr.py baseline --version v0.3        # TF-IDF + LogReg baseline
     python scripts/train_xlmr.py token-stats --version v0.3     # truncation at 512 per language
+    python scripts/train_xlmr.py export-bundle --version v0.3 --cv   # Part 9A: XLM-R OOF bundle
+    python scripts/train_xlmr.py import-oof --zip xlmr_oof_v0.3.zip --version v0.3
 
-Real fine-tuning runs on Colab (notebooks/04_xlmr_finetune_colab.ipynb).
+Real fine-tuning runs on Colab (notebooks/04_xlmr_finetune_colab.ipynb; CV / OOF mode in
+notebooks/06_xlmr_oof_colab.ipynb).
 """
 
 from __future__ import annotations
@@ -27,6 +30,8 @@ def _mb(n: int) -> str:
 
 
 def cmd_export(args, config: XlmrConfig) -> int:
+    if args.cv:
+        return cmd_export_cv(args, config)
     from c2_analyzer.nlp.bundle import export_bundle
 
     path, members = export_bundle(args.version, config)
@@ -34,6 +39,35 @@ def cmd_export(args, config: XlmrConfig) -> int:
         print(f"  {_mb(size):>10}  {name}")
     print(f"bundle: {path} ({_mb(path.stat().st_size)} zipped, {len(members)} files)")
     print(f"base model: {config.model_name} (from .env XLMR_MODEL_NAME)")
+    return 0
+
+
+def cmd_export_cv(args, config: XlmrConfig) -> int:
+    from c2_analyzer.nlp.oof_bundle import export_cv_bundle
+
+    path, members, plan = export_cv_bundle(args.version, config)
+    for name, size in members:
+        print(f"  {_mb(size):>10}  {name}")
+    print(f"CV bundle: {path} ({_mb(path.stat().st_size)} zipped, {len(members)} files)")
+    print(f"seed {plan['seed']} (Part 6A final seed); per fold train / inner val:")
+    for fold, entry in plan["folds"].items():
+        print(f"  fold {fold}: train {entry['n_train']}, inner val {len(entry['inner_val'])}")
+    print("next: Colab notebooks/06_xlmr_oof_colab.ipynb, then import-oof")
+    return 0
+
+
+def cmd_import_oof(args, config: XlmrConfig) -> int:
+    from c2_analyzer.nlp.bundle import ImportRefused
+    from c2_analyzer.nlp.oof_bundle import import_oof
+
+    try:
+        result = import_oof(Path(args.zip), args.version, config, allow_smoke=args.allow_smoke)
+    except ImportRefused as error:
+        print(f"IMPORT REFUSED: {error}", file=sys.stderr)
+        return 1
+    print(f"OOF written: {result['path']} ({result['n_oof']} OOF + {result['n_test']} test pages)")
+    print(f"test probabilities: {result['test_source']}")
+    print(f"next: python scripts/run_ablation.py --version {args.version} --reuse-oof")
     return 0
 
 
@@ -144,6 +178,11 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     export = sub.add_parser("export-bundle", help="zip examples + config + training code for Colab")
     export.add_argument("--version", required=True)
+    export.add_argument(
+        "--cv",
+        action="store_true",
+        help="Part 9A: CV / OOF bundle (5 fold models, predictions only)",
+    )
     imp = sub.add_parser("import-model", help="verify + unpack the zip downloaded from Colab")
     imp.add_argument("--zip", required=True)
     imp.add_argument("--version", required=True)
@@ -153,6 +192,10 @@ def main(argv: list[str] | None = None) -> int:
     train.add_argument("--smoke", action="store_true", help="tiny subset, 1 step, tiny model")
     train.add_argument("--seeds", type=int, nargs="+", default=None)
     train.add_argument("--model-name", default=None, help="hub name or local folder")
+    imp_oof = sub.add_parser("import-oof", help="Part 9A: verify the Colab OOF zip -> fusion OOF")
+    imp_oof.add_argument("--zip", required=True)
+    imp_oof.add_argument("--version", required=True)
+    imp_oof.add_argument("--allow-smoke", action="store_true", help="accept a --smoke run (tests)")
     baseline = sub.add_parser("baseline", help="TF-IDF char 2-5 + LogReg text baseline")
     baseline.add_argument("--version", required=True)
     baseline.add_argument("--no-figures", action="store_true")
@@ -164,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
     handlers = {
         "export-bundle": cmd_export,
         "import-model": cmd_import,
+        "import-oof": cmd_import_oof,
         "train": cmd_train,
         "baseline": cmd_baseline,
         "token-stats": cmd_token_stats,

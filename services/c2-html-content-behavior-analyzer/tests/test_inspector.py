@@ -296,3 +296,85 @@ def test_js_has_no_external_urls_and_a_tab_registry():
     # Part 6A card in the Content tab: dev + public text-prediction, graceful "not available"
     assert "Text model (Part 6)" in js and "/text-prediction" in js
     assert '"model not available"' in js and "renderTextModel(ctx, textBox)" in js
+
+
+# ---- Part 9A: fusion endpoint + tab ----------------------------------------------------------
+
+
+def _fusion_setup(dataset: DevDataset, tmp_path: Path, split_fingerprint: str | None = None):
+    """Split + stored arm probabilities + a saved mean-fusion model for the 4 fixture pages."""
+    from c2_analyzer.fusion.common import FusionConfig
+    from c2_analyzer.fusion.data import FusionData
+    from c2_analyzer.fusion.model import save_bundle, to_bundle
+    from c2_analyzer.fusion.oof import load_reference, write_oof
+    from c2_analyzer.fusion.strategies import MeanFusion
+    from tests.fusion_helpers import toy_oof, write_split
+
+    labels = ["benign", "phishing"]
+    roles = [("train", 0), ("val", 1), ("train", 2), ("test", -1)]
+    rows = [
+        {
+            "sample_id": sample_id,
+            "label": label,
+            "language": language,
+            "cluster_id": f"cl_{i:06d}",
+            "split": split,
+            "fold": fold,
+        }
+        for i, ((sample_id, label, language, _, _), (split, fold)) in enumerate(
+            zip(ROWS, roles, strict=True)
+        )
+    ]
+    write_split(tmp_path / "splits", VERSION, rows, labels)
+    ref = load_reference(VERSION, tmp_path / "splits")
+    arms = ["dom", "behavior", "text_tfidf"]
+    oofs = {arm: toy_oof(ref, arm, 0.5, i) for i, arm in enumerate(arms)}
+    for oof in oofs.values():
+        write_oof(oof, tmp_path / "fusion_oof" / VERSION)
+    data = FusionData(ref, oofs, ["text_xlmr"], FusionConfig.load(), {})
+    pool = data.ids("pool")
+    model = MeanFusion().fit(data.inputs(arms, pool), data.y("pool"), data.folds())
+    bundle = to_bundle(
+        model,
+        labels,
+        ["text_tfidf"],
+        split_fingerprint=split_fingerprint or ref.split_fingerprint,
+        threshold={"threshold": 0.3, "target": 0.02},
+    )
+    save_bundle(bundle, tmp_path / "fusion_models" / VERSION)
+    dataset.splits = tmp_path / "splits"
+    dataset.fusion_models = tmp_path / "fusion_models"
+    dataset.fusion_oof = tmp_path / "fusion_oof"
+
+
+def test_fusion_endpoint_reads_stored_arm_probabilities(client, dataset, tmp_path):
+    _fusion_setup(dataset, tmp_path)
+    test_page = client.get("/api/v1/dev/samples/c2_phishing_000003/fusion")
+    assert test_page.status_code == 200, test_page.text
+    body = test_page.json()
+    assert body["split"] == "test" and body["true_label"] == "phishing"
+    assert body["strategy"] == "mean" and body["missing_arms"] == ["text_xlmr"]
+    arms = {a["arm"]: a for a in body["arms"]}
+    assert arms["text_xlmr"]["available"] is False
+    assert arms["dom"]["source"].startswith("final model")  # test page: final arm model
+    assert abs(sum(body["probabilities"].values()) - 1) < 1e-6
+    assert body["driving_arm"] in {"dom", "behavior", "text_tfidf"}
+    assert body["predicted_at_threshold"] in {"benign", "phishing"}
+    train_page = client.get("/api/v1/dev/samples/c2_benign_000001/fusion").json()
+    assert train_page["arms"][0]["source"].startswith("out-of-fold")
+    assert client.get("/api/v1/dev/samples/c2_phishing_000099/fusion").status_code == 404
+
+
+def test_fusion_endpoint_404_without_model_and_409_when_stale(client, dataset, tmp_path):
+    _fusion_setup(dataset, tmp_path, split_fingerprint="0" * 64)
+    stale = client.get("/api/v1/dev/samples/c2_phishing_000003/fusion")
+    assert stale.status_code == 409 and "another split" in stale.json()["detail"]
+    (tmp_path / "fusion_models" / VERSION / "fusion.joblib").unlink()
+    missing = client.get("/api/v1/dev/samples/c2_phishing_000003/fusion")
+    assert missing.status_code == 404 and "run_ablation.py" in missing.json()["detail"]
+
+
+def test_js_has_the_fusion_tab():
+    js = read_static("inspector.js")
+    assert "Fusion (Part 9)" in js and "/fusion" in js
+    assert "fusionArmCard" in js and "predicted_at_threshold" in js

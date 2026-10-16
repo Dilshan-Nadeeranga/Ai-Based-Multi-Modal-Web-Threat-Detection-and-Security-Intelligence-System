@@ -592,3 +592,61 @@ def test_ablation_flags_another_split(tmp_path):
     assert [r["available"] for r in rows] == [True, True, False]
     assert rows[0]["same_split"] and not rows[1]["same_split"]
     assert rows[0]["score_label"] == "CV" and rows[0]["test_macro_f1"] == 0.7
+
+
+# ---- Part 9A: CV / OOF bundle (export-bundle --cv -> run_train.py --cv -> import-oof) --------
+
+
+@needs_torch
+def test_cv_bundle_smoke_oof_round_trip(trained, tmp_path):
+    """The Colab CV path end to end on CPU: bundle without test pages, 5 fold models that
+    predict only their held-out fold, and import-oof accepting the result."""
+    from c2_analyzer.fusion.oof import load_oof, load_reference
+    from c2_analyzer.nlp.oof_bundle import export_cv_bundle, import_oof
+    from c2_analyzer.nlp.train import train_cv
+
+    paths, config, data = trained["paths"], trained["config"], trained["data"]
+    zip_path, members, plan = export_cv_bundle(
+        VERSION, config, data, tmp_path / "cv.zip", splits_root=paths["splits"]
+    )
+    names = {name for name, _ in members}
+    assert {"data/cv_examples.jsonl", "data/cv_plan.json", "c2_nlp/train.py"} <= names
+    assert "data/test.jsonl" not in names
+    with zipfile.ZipFile(zip_path) as archive:
+        archive.extractall(tmp_path / "bundle")
+        rows = [json.loads(line) for line in archive.read("data/cv_examples.jsonl").splitlines()]
+    assert {row["split"] for row in rows} <= {"train", "val"}  # never a test page
+
+    tiny = trained["root"] / "tiny"
+    out = tmp_path / "oof_out" / VERSION
+    meta = train_cv(
+        tmp_path / "bundle" / "data",
+        out,
+        config.training_config(),
+        str(tiny),
+        smoke=True,
+        log=lambda *_: None,
+    )
+    assert meta["complete"] and not list(out.glob("_work"))  # no fold weights kept
+    assert not list(out.rglob("*.safetensors"))
+    with zipfile.ZipFile(tmp_path / "oof.zip", "w") as archive:
+        for path in out.rglob("*"):
+            if path.is_file():
+                archive.write(path, path.relative_to(out.parent).as_posix())
+
+    ref = load_reference(VERSION, paths["splits"])
+    test_ids = ref.test["sample_id"].tolist()
+    k = len(ref.labels)
+    with pytest.raises(ImportRefused, match="smoke"):
+        import_oof(tmp_path / "oof.zip", VERSION, config, ref=ref, out_dir=tmp_path / "fusion")
+    import_oof(
+        tmp_path / "oof.zip",
+        VERSION,
+        config,
+        ref=ref,
+        test_probabilities=lambda _ref: (test_ids, np.full((len(test_ids), k), 1 / k), {}),
+        out_dir=tmp_path / "fusion",
+        allow_smoke=True,
+    )
+    oof = load_oof("text_xlmr", ref, tmp_path / "fusion")
+    assert len(oof.frame) == len(ref.frame) and oof.manifest["seed"] == plan["seed"]

@@ -32,6 +32,10 @@ data/interim/**
 !data/interim/**/
 data/processed/**
 !data/processed/**/
+# Part 9A out-of-fold probabilities per arm (sample ids + class probabilities only, no URLs or
+# text): tracked, because the text_xlmr table needs a Colab GPU run to rebuild.
+!data/processed/fusion/**/oof_*.csv
+!data/processed/fusion/**/oof_*.json
 # Live scam/malware URLs - never commit (data/metadata/ keeps the schema + templates tracked)
 data/metadata/candidates.csv
 data/metadata/metadata.csv

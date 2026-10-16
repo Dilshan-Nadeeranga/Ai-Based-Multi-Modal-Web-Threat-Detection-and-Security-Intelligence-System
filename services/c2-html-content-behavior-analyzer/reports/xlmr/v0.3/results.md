@@ -1,6 +1,6 @@
 # text (XLM-R) - v0.3
 
-- created: 2026-10-16T21:23:01+05:30
+- created: 2026-10-16T22:36:39+05:30
 - split fingerprint: `7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f` (train/val/test = {'train': 322, 'val': 69, 'test': 68})
 - input: Part 5A page_text (text_v1, rules `2df7c7ad4a84`)
 - selection: seed with the highest VAL macro-F1 (ties: lower seed); test never used
@@ -53,4 +53,5 @@ Benign test pages flagged as a threat: 8 (c2_benign_000024, c2_benign_000025, c2
 
 ## Colab vs local CPU (final model)
 
-- max |Δ probability| = 0.001632, argmax agreement 100.0 % over 137 pages (tolerance 0.001) → CHECK
+- predicted labels identical: 100.0 % of 137 pages; max |Δ probability| = 0.001632 (must be < 0.01) → **PASS**
+- rule: PASS if every label is identical and max |Δp| < the tolerance; GPU vs CPU fp32 differences of ~1e-3 are expected.

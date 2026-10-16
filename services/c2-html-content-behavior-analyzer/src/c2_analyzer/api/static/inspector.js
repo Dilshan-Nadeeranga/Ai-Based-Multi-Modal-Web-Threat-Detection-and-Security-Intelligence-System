@@ -1217,12 +1217,114 @@ registerTab({
   },
 });
 
+// ---- Part 9A: Fusion ----------------------------------------------------------------------
+// The saved fusion model's decision for a dataset sample, from the STORED per-arm
+// probabilities (out-of-fold for train / val pages, final arm models for test pages).
+// Everything is rendered as text (class names, sample ids, feature names).
+
+const fusionCache = new WeakMap();
+
+function fusionResult(ctx) {
+  return cached(fusionCache, ctx, () =>
+    api(`/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/fusion` + query({ version: ctx.version }))
+      .then((r) => r.data));
+}
+
+function signed(value) {
+  return (value > 0 ? "+" : "") + fmtValue(value);
+}
+
+function fusionArmCard(a, trueLabel) {
+  if (!a.available) {
+    return el("div", { cls: "card" },
+      el("h3", {}, a.display, badge("not available", "warn"), a.used_by_model ? badge("used by the model", "info") : null),
+      el("p", { cls: "muted", text: show(a.reason) }));
+  }
+  const probabilities = Object.entries(a.probabilities || {}).sort((x, y) => y[1] - x[1]);
+  const matches = trueLabel ? trueLabel === a.predicted : null;
+  const b = bars(probabilities, fmtPct);
+  b.classList.add("wide");
+  return el("div", { cls: "card" },
+    el("h3", {},
+      a.display, " → ", labelChip(a.predicted), el("strong", { text: fmtPct(a.probabilities[a.predicted]) }),
+      a.used_by_model ? null : badge("not used by the model"),
+      matches === null ? null : badge(matches ? "right" : "wrong", matches ? "ok" : "danger")),
+    b,
+    el("p", { cls: "muted", text: show(a.source) }));
+}
+
+registerTab({
+  id: "fusion",
+  title: "Fusion (Part 9)",
+  available: (ctx) => ctx.kind === "sample",
+  async render(ctx, box) {
+    const title = "Fusion (Part 9A)";
+    if (ctx.kind !== "sample") {
+      fill(box, section(title, el("p", { cls: "muted", text: "Shown for dataset samples (stored per-arm probabilities). A fused verdict for pasted HTML comes with /api/v1/analyze (Part 9 Batch B)." })));
+      return;
+    }
+    fill(box, el("p", { cls: "muted", text: "Loading the fusion model's decision…" }));
+    let f;
+    try {
+      f = await fusionResult(ctx);
+    } catch (error) {
+      if (state.ctx !== ctx || !box.isConnected) return;
+      const known = error.status === 404 || error.status === 409;
+      fill(clear(box), section(title, el("p", { cls: "note", text: known ? error.message : "Fusion failed: " + error.message })));
+      return;
+    }
+    if (state.ctx !== ctx || !box.isConnected) return;
+    clear(box);
+
+    const matches = f.true_label === f.predicted;
+    const fused = Object.entries(f.probabilities || {}).sort((a, b) => b[1] - a[1]);
+    const fusedBars = bars(fused, fmtPct);
+    fusedBars.classList.add("wide");
+    fill(box, section("Final verdict",
+      el("div", { cls: "card" },
+        el("h3", {},
+          "Fused (argmax) →", labelChip(f.predicted), el("strong", { text: fmtPct(f.probabilities[f.predicted]) }),
+          badge(f.strategy_display, "info"),
+          badge(matches ? "matches the label" : `label is ${f.true_label}`, matches ? "ok" : "danger"),
+          badge(`split: ${f.split}`, f.split === "test" ? "info" : null)),
+        el("h3", {},
+          `At the benign threshold (benign if P(benign) ≥ ${fmtValue(f.benign_threshold)}; OOF benign FPR ≤ ${fmtPct(f.benign_fpr_target)}) →`,
+          labelChip(f.predicted_at_threshold),
+          f.predicted_at_threshold !== f.predicted ? badge("changed by the threshold", "warn") : null),
+        fusedBars,
+        el("p", { cls: "muted", text: f.note }))));
+
+    fill(box, section("Per-arm probabilities",
+      (f.missing_arms || []).length
+        ? el("p", { cls: "note", text: `Not available yet: ${f.missing_arms.join(", ")} - the model runs without it.` })
+        : null,
+      el("div", { cls: "cards" }, (f.arms || []).map((a) => fusionArmCard(a, f.true_label)))));
+
+    const contributions = Object.entries(f.arm_contributions || {}).sort((a, b) => b[1] - a[1]);
+    const names = Object.fromEntries((f.arms || []).map((a) => [a.arm, a.display]));
+    fill(box, section(`Which arm drove it (towards "${f.predicted}")`,
+      el("p", { cls: "muted", text: `Method: ${f.driver_method}. Driving arm: ${names[f.driving_arm] || f.driving_arm}.` }),
+      table(["arm", "contribution"], contributions, ([arm, value]) => [
+        el("span", { text: names[arm] || arm }),
+        signed(value),
+      ]),
+      (f.top_drivers || []).length
+        ? table(["top input", "value", "contribution"], f.top_drivers, (d) => [
+          el("span", { text: d.name }),
+          fmtValue(d.value),
+          signed(d.contribution),
+        ])
+        : null));
+  },
+});
+
 // ---- Future parts (disabled placeholders) -------------------------------------------------
 
 // Part 6A lives in the Content tab ("Text model (Part 6)" card); Part 6B (intent level)
-// is postponed until the scam-text corpus has enough real texts.
+// is postponed until the scam-text corpus has enough real texts. The unified /analyze
+// result is Part 9 Batch B.
 for (const [id, title] of [
-  ["unified", "Unified Result (Part 9)"],
+  ["unified", "Unified Result (Part 9B)"],
 ]) {
   registerTab({ id, title, enabled: false, render() {} });
 }

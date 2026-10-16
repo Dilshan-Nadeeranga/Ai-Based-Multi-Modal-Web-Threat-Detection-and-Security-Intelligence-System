@@ -1,0 +1,6285 @@
+{
+  "version": "v0.3",
+  "created_at": "2026-10-16T22:38:39+05:30",
+  "classes": [
+    "benign",
+    "phishing",
+    "fake_ecommerce",
+    "crypto_scam",
+    "malware_delivery"
+  ],
+  "split": {
+    "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+    "cv_folds_fingerprint": "b86537d5071c8ac2eaca6f0000129e5b5ea3528c1e74b71a20365c840cd620a5",
+    "counts": {
+      "train+val": 391,
+      "test": 68
+    }
+  },
+  "arms_available": [
+    "dom",
+    "behavior",
+    "text_tfidf"
+  ],
+  "arms_missing": [
+    "text_xlmr"
+  ],
+  "arm_models": {
+    "dom": {
+      "arm": "dom",
+      "display": "DOM-only",
+      "dataset_version": "v0.3",
+      "classes": [
+        "benign",
+        "phishing",
+        "fake_ecommerce",
+        "crypto_scam",
+        "malware_delivery"
+      ],
+      "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+      "cv_folds_fingerprint": "b86537d5071c8ac2eaca6f0000129e5b5ea3528c1e74b71a20365c840cd620a5",
+      "n_oof": 391,
+      "n_test": 68,
+      "oof_rule": "train+val: model trained on the OTHER grouped CV folds; test: the arm's final model (trained on train+val)",
+      "created_at": "2026-10-16T22:37:49+05:30",
+      "part": "Part 4",
+      "model": "random_forest",
+      "model_display": "Random Forest",
+      "params": {
+        "n_estimators": 300,
+        "class_weight": "balanced_subsample",
+        "max_depth": 8,
+        "max_features": 0.5,
+        "min_samples_leaf": 3
+      },
+      "selection": "best mean CV macro-F1 of the Part's models (never test)",
+      "features_used": 48,
+      "feature_set_version": "dom_v1",
+      "dictionary_hash": "8605201ec979e8ef1602ced8c43964fcb872580223c3503676d242164dead472",
+      "model_trained_at": "2026-10-14T23:47:12+05:30",
+      "part_cv_macro_f1": 0.7006009011107482,
+      "max_abs_diff_vs_part_oof": 4.998337046896451e-07,
+      "reproduces_part_oof": true,
+      "library_versions": {
+        "python": "3.13.3",
+        "numpy": "2.5.4",
+        "pandas": "3.0.6",
+        "scikit-learn": "1.9.1",
+        "xgboost": "3.4.1",
+        "joblib": "1.6.0",
+        "shap": "0.53.0"
+      }
+    },
+    "behavior": {
+      "arm": "behavior",
+      "display": "Behavior-only",
+      "dataset_version": "v0.3",
+      "classes": [
+        "benign",
+        "phishing",
+        "fake_ecommerce",
+        "crypto_scam",
+        "malware_delivery"
+      ],
+      "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+      "cv_folds_fingerprint": "b86537d5071c8ac2eaca6f0000129e5b5ea3528c1e74b71a20365c840cd620a5",
+      "n_oof": 391,
+      "n_test": 68,
+      "oof_rule": "train+val: model trained on the OTHER grouped CV folds; test: the arm's final model (trained on train+val)",
+      "created_at": "2026-10-16T22:37:51+05:30",
+      "part": "Part 8",
+      "model": "random_forest",
+      "model_display": "Random Forest",
+      "params": {
+        "n_estimators": 300,
+        "class_weight": "balanced_subsample",
+        "max_depth": 8,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1
+      },
+      "selection": "best mean CV macro-F1 of the Part's models (never test)",
+      "features_used": 70,
+      "feature_set_version": "js_v1+beh_v1",
+      "dictionary_hash": "0a8054dc9209c6f0489d2b49cd00ddff28f3dcee873bb159b471be7b346e27f1",
+      "model_trained_at": "2026-10-15T06:55:21+05:30",
+      "part_cv_macro_f1": 0.6198821254374565,
+      "max_abs_diff_vs_part_oof": 4.99801696571267e-07,
+      "reproduces_part_oof": true,
+      "library_versions": {
+        "python": "3.13.3",
+        "numpy": "2.5.4",
+        "pandas": "3.0.6",
+        "scikit-learn": "1.9.1",
+        "xgboost": "3.4.1",
+        "joblib": "1.6.0",
+        "shap": "0.53.0"
+      }
+    },
+    "text_tfidf": {
+      "arm": "text_tfidf",
+      "display": "Text TF-IDF",
+      "dataset_version": "v0.3",
+      "classes": [
+        "benign",
+        "phishing",
+        "fake_ecommerce",
+        "crypto_scam",
+        "malware_delivery"
+      ],
+      "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+      "cv_folds_fingerprint": "b86537d5071c8ac2eaca6f0000129e5b5ea3528c1e74b71a20365c840cd620a5",
+      "n_oof": 391,
+      "n_test": 68,
+      "oof_rule": "train+val: model trained on the OTHER grouped CV folds; test: the arm's final model (trained on train+val)",
+      "created_at": "2026-10-16T22:38:01+05:30",
+      "part_cv_macro_f1": 0.7061932778174577,
+      "recomputed_cv_macro_f1": 0.7061932778174577,
+      "reproduces_part_oof": true,
+      "part": "Part 6A",
+      "model": "tfidf_logreg",
+      "model_display": "TF-IDF char 2-5 + LogReg",
+      "params": {
+        "C": 10.0,
+        "analyzer": "char_wb",
+        "ngram_range": [
+          2,
+          5
+        ],
+        "min_df": 2,
+        "max_features": 200000,
+        "sublinear_tf": true,
+        "max_iter": 5000
+      },
+      "selection": "C by mean CV macro-F1 over the shared folds (never test)",
+      "text_rules_hash": "2df7c7ad4a849bcf9de5f848e538f2c65667dd1651c8d8801dc1b530dec3c910",
+      "model_trained_at": "2026-10-16T20:04:02+05:30",
+      "library_versions": {
+        "python": "3.13.3",
+        "numpy": "2.5.4",
+        "pandas": "3.0.6",
+        "scikit-learn": "1.9.1",
+        "xgboost": "3.4.1",
+        "joblib": "1.6.0",
+        "shap": "0.53.0"
+      }
+    }
+  },
+  "benign_fpr_target": 0.02,
+  "bootstrap_settings": {
+    "n_resamples": 1000,
+    "seed": 42,
+    "confidence": 0.95
+  },
+  "entries": [
+    {
+      "key": "dom",
+      "row": "dom",
+      "title": "DOM-only",
+      "group": "single",
+      "arms": [
+        "dom"
+      ],
+      "strategy": "single",
+      "strategy_display": "single arm",
+      "params": {
+        "arm": "dom"
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7006009011107482,
+          "weighted_f1": 0.7770466263733632,
+          "accuracy": 0.7721194417396948,
+          "balanced_accuracy": 0.7088701240280187,
+          "roc_auc_ovr_macro": 0.9017026185660122,
+          "benign_fpr": 0.16072874493927122,
+          "f1_benign": 0.8648660921836637,
+          "f1_phishing": 0.7249861700165958,
+          "f1_fake_ecommerce": 0.7898412698412698,
+          "f1_crypto_scam": 0.475,
+          "f1_malware_delivery": 0.6483109735122119
+        },
+        "std": {
+          "macro_f1": 0.07717277879953352,
+          "weighted_f1": 0.056887270741427465,
+          "accuracy": 0.06301317969558377,
+          "balanced_accuracy": 0.0788432697390584,
+          "roc_auc_ovr_macro": 0.030811757424456424,
+          "benign_fpr": 0.07525283791030266,
+          "f1_benign": 0.041478779973555084,
+          "f1_phishing": 0.08590634355763961,
+          "f1_fake_ecommerce": 0.12018546178925972,
+          "f1_crypto_scam": 0.22570876022973602,
+          "f1_malware_delivery": 0.08668662287257539
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.8412881323051554,
+        0.6157846128535319,
+        0.7031963470319635,
+        0.648177261335156,
+        0.6945581520279345
+      ],
+      "test": {
+        "macro_precision": 0.7822763806066891,
+        "macro_recall": 0.8104323780794369,
+        "n": 68,
+        "macro_f1": 0.7861111111111111,
+        "weighted_f1": 0.8274101307189542,
+        "accuracy": 0.8235294117647058,
+        "balanced_accuracy": 0.8104323780794369,
+        "roc_auc_ovr_macro": 0.9679060562297066,
+        "benign_fpr": 0.17647058823529413,
+        "per_class": {
+          "benign": {
+            "precision": 0.9655172413793104,
+            "recall": 0.8235294117647058,
+            "f1": 0.8888888888888888,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.631578947368421,
+            "recall": 0.9230769230769231,
+            "f1": 0.75,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.6,
+            "recall": 0.75,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.7142857142857143,
+            "recall": 0.5555555555555556,
+            "f1": 0.625,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            28,
+            3,
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            12,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            8,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            3,
+            0
+          ],
+          [
+            1,
+            3,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8235294117647058,
+          "macro_precision": 0.7979761904761905,
+          "macro_recall": 0.8133333333333332,
+          "macro_f1": 0.7977225672877847,
+          "benign_fpr": 0.2,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.7083333333333333,
+          "macro_recall": 0.7976190476190477,
+          "macro_f1": 0.7057692307692308,
+          "benign_fpr": 0.14285714285714285,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.095085,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.5707070707070707,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.17647058823529413,
+            "macro_f1": 0.7861111111111111,
+            "threat_recall": 0.9705882352941176,
+            "per_class_recall": {
+              "benign": 0.8235294117647058,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 1.0,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.5555555555555556
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.0,
+            "macro_f1": 0.6174891774891775,
+            "threat_recall": 0.5,
+            "per_class_recall": {
+              "benign": 1.0,
+              "phishing": 0.5384615384615384,
+              "fake_ecommerce": 0.75,
+              "crypto_scam": 0.25,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                34,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                6,
+                7,
+                0,
+                0,
+                0
+              ],
+              [
+                2,
+                0,
+                6,
+                0,
+                0
+              ],
+              [
+                3,
+                0,
+                0,
+                1,
+                0
+              ],
+              [
+                6,
+                1,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": true,
+      "bootstrap": {
+        "point": 0.7861111111111111,
+        "ci_low": 0.651710525852065,
+        "ci_high": 0.8910793877930074,
+        "bootstrap_mean": 0.7770891115212372,
+        "bootstrap_std": 0.06343713431875272
+      }
+    },
+    {
+      "key": "behavior",
+      "row": "behavior",
+      "title": "Behavior-only",
+      "group": "single",
+      "arms": [
+        "behavior"
+      ],
+      "strategy": "single",
+      "strategy_display": "single arm",
+      "params": {
+        "arm": "behavior"
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.6198821254374565,
+          "weighted_f1": 0.7074975027993703,
+          "accuracy": 0.7005842259006816,
+          "balanced_accuracy": 0.6154262579525737,
+          "roc_auc_ovr_macro": 0.8606791539282621,
+          "benign_fpr": 0.18191632928475032,
+          "f1_benign": 0.8053498308919996,
+          "f1_phishing": 0.5862805991962001,
+          "f1_fake_ecommerce": 0.7438556799237913,
+          "f1_crypto_scam": 0.2864527629233512,
+          "f1_malware_delivery": 0.67747175425194
+        },
+        "std": {
+          "macro_f1": 0.07778488901007173,
+          "weighted_f1": 0.04495505065527781,
+          "accuracy": 0.04355288460457087,
+          "balanced_accuracy": 0.08669674315105894,
+          "roc_auc_ovr_macro": 0.035585583787041124,
+          "benign_fpr": 0.06287930065723464,
+          "f1_benign": 0.028702472592353548,
+          "f1_phishing": 0.046606031734873536,
+          "f1_fake_ecommerce": 0.14518583210688074,
+          "f1_crypto_scam": 0.16639105200520168,
+          "f1_malware_delivery": 0.06448546077357334
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7038847117794487,
+        0.6044242202809978,
+        0.6353969559851913,
+        0.47991526545743407,
+        0.6757894736842106
+      ],
+      "test": {
+        "macro_precision": 0.7203030303030304,
+        "macro_recall": 0.6833961789844143,
+        "n": 68,
+        "macro_f1": 0.6823368869936034,
+        "weighted_f1": 0.7554780718257453,
+        "accuracy": 0.7352941176470589,
+        "balanced_accuracy": 0.6833961789844143,
+        "roc_auc_ovr_macro": 0.8607863239902874,
+        "benign_fpr": 0.20588235294117646,
+        "per_class": {
+          "benign": {
+            "precision": 0.8181818181818182,
+            "recall": 0.7941176470588235,
+            "f1": 0.8059701492537313,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.75,
+            "recall": 0.6923076923076923,
+            "f1": 0.72,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.2,
+            "recall": 0.5,
+            "f1": 0.2857142857142857,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.8333333333333334,
+            "recall": 0.5555555555555556,
+            "f1": 0.6666666666666666,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            27,
+            2,
+            0,
+            4,
+            1
+          ],
+          [
+            1,
+            9,
+            0,
+            3,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            3,
+            1,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.7058823529411765,
+          "macro_precision": 0.6977777777777778,
+          "macro_recall": 0.6333333333333333,
+          "macro_f1": 0.6447707847707849,
+          "benign_fpr": 0.2,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.8333333333333334,
+          "macro_recall": 0.8452380952380952,
+          "macro_f1": 0.808974358974359,
+          "benign_fpr": 0.2857142857142857,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.101512,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.3383838383838384,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.20588235294117646,
+            "macro_f1": 0.6823368869936034,
+            "threat_recall": 0.8235294117647058,
+            "per_class_recall": {
+              "benign": 0.7941176470588235,
+              "phishing": 0.6923076923076923,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.5,
+              "malware_delivery": 0.5555555555555556
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.0,
+            "macro_f1": 0.4357898878614991,
+            "threat_recall": 0.29411764705882354,
+            "per_class_recall": {
+              "benign": 1.0,
+              "phishing": 0.3076923076923077,
+              "fake_ecommerce": 0.625,
+              "crypto_scam": 0.0,
+              "malware_delivery": 0.1111111111111111
+            },
+            "confusion_matrix": [
+              [
+                34,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                9,
+                4,
+                0,
+                0,
+                0
+              ],
+              [
+                3,
+                0,
+                5,
+                0,
+                0
+              ],
+              [
+                4,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                8,
+                0,
+                0,
+                0,
+                1
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": true,
+      "bootstrap": {
+        "point": 0.6823368869936034,
+        "ci_low": 0.5512338358813222,
+        "ci_high": 0.8048543662430759,
+        "bootstrap_mean": 0.6771725464024302,
+        "bootstrap_std": 0.06312326065688174
+      }
+    },
+    {
+      "key": "text_tfidf",
+      "row": "text_tfidf",
+      "title": "Text TF-IDF",
+      "group": "single",
+      "arms": [
+        "text_tfidf"
+      ],
+      "strategy": "single",
+      "strategy_display": "single arm",
+      "params": {
+        "arm": "text_tfidf"
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7061932778174577,
+          "weighted_f1": 0.7745869881339386,
+          "accuracy": 0.779974034404414,
+          "balanced_accuracy": 0.6845608894029946,
+          "roc_auc_ovr_macro": 0.9268581907002471,
+          "benign_fpr": 0.08798920377867744,
+          "f1_benign": 0.8491443660810549,
+          "f1_phishing": 0.7557234432234432,
+          "f1_fake_ecommerce": 0.7551461988304093,
+          "f1_crypto_scam": 0.5111111111111111,
+          "f1_malware_delivery": 0.6598412698412698
+        },
+        "std": {
+          "macro_f1": 0.06518235573950669,
+          "weighted_f1": 0.04314008879439342,
+          "accuracy": 0.040405686228691305,
+          "balanced_accuracy": 0.06624681976346909,
+          "roc_auc_ovr_macro": 0.02930021215126437,
+          "benign_fpr": 0.025848299246792782,
+          "f1_benign": 0.03311742825701446,
+          "f1_phishing": 0.0906861617187354,
+          "f1_fake_ecommerce": 0.14445126294960897,
+          "f1_crypto_scam": 0.1744125944030985,
+          "f1_malware_delivery": 0.09581781234199382
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7752431476569407,
+        0.589952400380797,
+        0.6843889845094664,
+        0.7333333333333333,
+        0.748048523206751
+      ],
+      "test": {
+        "macro_precision": 0.8212454212454212,
+        "macro_recall": 0.7269105077928607,
+        "n": 68,
+        "macro_f1": 0.7176993681103271,
+        "weighted_f1": 0.78735596632454,
+        "accuracy": 0.8088235294117647,
+        "balanced_accuracy": 0.7269105077928607,
+        "roc_auc_ovr_macro": 0.9622718423398278,
+        "benign_fpr": 0.058823529411764705,
+        "per_class": {
+          "benign": {
+            "precision": 0.8205128205128205,
+            "recall": 0.9411764705882353,
+            "f1": 0.8767123287671232,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.7857142857142857,
+            "recall": 0.8461538461538461,
+            "f1": 0.8148148148148148,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.5,
+            "recall": 0.75,
+            "f1": 0.6,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 1.0,
+            "recall": 0.2222222222222222,
+            "f1": 0.36363636363636365,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            32,
+            2,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            11,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            5,
+            1,
+            0,
+            1,
+            2
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8627450980392157,
+          "macro_precision": 0.87423197492163,
+          "macro_recall": 0.7566666666666667,
+          "macro_f1": 0.7844950540602713,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 0.0,
+          "macro_precision": 0.0,
+          "macro_recall": 0.0,
+          "macro_f1": 0.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.6428571428571429,
+          "macro_precision": 0.5119047619047619,
+          "macro_recall": 0.6785714285714286,
+          "macro_f1": 0.5535714285714286,
+          "benign_fpr": 0.2857142857142857,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.16697,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.46464646464646464,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.058823529411764705,
+            "macro_f1": 0.7176993681103271,
+            "threat_recall": 0.7941176470588235,
+            "per_class_recall": {
+              "benign": 0.9411764705882353,
+              "phishing": 0.8461538461538461,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.2222222222222222
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.0,
+            "macro_f1": 0.6551448551448552,
+            "threat_recall": 0.5294117647058824,
+            "per_class_recall": {
+              "benign": 1.0,
+              "phishing": 0.6153846153846154,
+              "fake_ecommerce": 0.625,
+              "crypto_scam": 0.5,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                34,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                4,
+                8,
+                0,
+                1,
+                0
+              ],
+              [
+                3,
+                0,
+                5,
+                0,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                2,
+                0
+              ],
+              [
+                7,
+                0,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": true,
+      "bootstrap": {
+        "point": 0.7176993681103271,
+        "ci_low": 0.5690819173369915,
+        "ci_high": 0.8409773647598275,
+        "bootstrap_mean": 0.7094208675658709,
+        "bootstrap_std": 0.07056997256662695
+      }
+    },
+    {
+      "key": "dom+behavior:mean",
+      "row": "dom+behavior",
+      "title": "DOM+Behavior",
+      "group": "pair",
+      "arms": [
+        "dom",
+        "behavior"
+      ],
+      "strategy": "mean",
+      "strategy_display": "Late fusion - mean",
+      "params": {
+        "weights": {
+          "dom": 0.5,
+          "behavior": 0.5
+        }
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.6849635039367461,
+          "weighted_f1": 0.7692287821247477,
+          "accuracy": 0.7696527101590392,
+          "balanced_accuracy": 0.6716252168883747,
+          "roc_auc_ovr_macro": 0.901109938791549,
+          "benign_fpr": 0.10377867746288798,
+          "f1_benign": 0.8688626138289444,
+          "f1_phishing": 0.7102555896910736,
+          "f1_fake_ecommerce": 0.7414304993252362,
+          "f1_crypto_scam": 0.4558241758241758,
+          "f1_malware_delivery": 0.6484446410143005
+        },
+        "std": {
+          "macro_f1": 0.06391782078633575,
+          "weighted_f1": 0.03997824897379162,
+          "accuracy": 0.04200248607872346,
+          "balanced_accuracy": 0.06438221692982134,
+          "roc_auc_ovr_macro": 0.0279554887178537,
+          "benign_fpr": 0.04902780331296967,
+          "f1_benign": 0.019555891506870694,
+          "f1_phishing": 0.08289817872477587,
+          "f1_fake_ecommerce": 0.14937276562538185,
+          "f1_crypto_scam": 0.13991592309992845,
+          "f1_malware_delivery": 0.08351102898471274
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7900116144018583,
+        0.6142543859649123,
+        0.7101218235462075,
+        0.6236740166151931,
+        0.6867556791555594
+      ],
+      "test": {
+        "macro_precision": 0.7590909090909091,
+        "macro_recall": 0.7413147310206133,
+        "n": 68,
+        "macro_f1": 0.7386515697375192,
+        "weighted_f1": 0.8126194584884906,
+        "accuracy": 0.8088235294117647,
+        "balanced_accuracy": 0.7413147310206133,
+        "roc_auc_ovr_macro": 0.9529711454884741,
+        "benign_fpr": 0.14705882352941177,
+        "per_class": {
+          "benign": {
+            "precision": 0.8787878787878788,
+            "recall": 0.8529411764705882,
+            "f1": 0.8656716417910447,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.75,
+            "recall": 0.9230769230769231,
+            "f1": 0.8275862068965517,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.3333333333333333,
+            "recall": 0.5,
+            "f1": 0.4,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.8333333333333334,
+            "recall": 0.5555555555555556,
+            "f1": 0.6666666666666666,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            29,
+            2,
+            0,
+            2,
+            1
+          ],
+          [
+            0,
+            12,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            1,
+            1,
+            0,
+            2,
+            0
+          ],
+          [
+            3,
+            1,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.803921568627451,
+          "macro_precision": 0.760897435897436,
+          "macro_recall": 0.7313333333333334,
+          "macro_f1": 0.7385396825396825,
+          "benign_fpr": 0.16,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.7976190476190477,
+          "macro_recall": 0.7976190476190477,
+          "macro_f1": 0.7142857142857143,
+          "benign_fpr": 0.14285714285714285,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.119127,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.5,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.14705882352941177,
+            "macro_f1": 0.7386515697375192,
+            "threat_recall": 0.8823529411764706,
+            "per_class_recall": {
+              "benign": 0.8529411764705882,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.5,
+              "malware_delivery": 0.5555555555555556
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.0,
+            "macro_f1": 0.520477683236304,
+            "threat_recall": 0.4411764705882353,
+            "per_class_recall": {
+              "benign": 1.0,
+              "phishing": 0.46153846153846156,
+              "fake_ecommerce": 0.75,
+              "crypto_scam": 0.0,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                34,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                7,
+                6,
+                0,
+                0,
+                0
+              ],
+              [
+                2,
+                0,
+                6,
+                0,
+                0
+              ],
+              [
+                4,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                6,
+                1,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.7386515697375192,
+        "ci_low": 0.6036570547660353,
+        "ci_high": 0.8642329435565854,
+        "bootstrap_mean": 0.7331068918901151,
+        "bootstrap_std": 0.06612719197243422
+      }
+    },
+    {
+      "key": "dom+behavior:weighted",
+      "row": "dom+behavior",
+      "title": "DOM+Behavior",
+      "group": "pair",
+      "arms": [
+        "dom",
+        "behavior"
+      ],
+      "strategy": "weighted",
+      "strategy_display": "Late fusion - weighted",
+      "params": {
+        "weights": {
+          "dom": 0.9,
+          "behavior": 0.1
+        },
+        "grid_step": 0.1
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7005150296079969,
+          "weighted_f1": 0.7758163618950168,
+          "accuracy": 0.7721194417396948,
+          "balanced_accuracy": 0.7088701240280187,
+          "roc_auc_ovr_macro": 0.9035455169567708,
+          "benign_fpr": 0.16072874493927122,
+          "f1_benign": 0.8625472516039535,
+          "f1_phishing": 0.7238453500522466,
+          "f1_fake_ecommerce": 0.7898412698412698,
+          "f1_crypto_scam": 0.478030303030303,
+          "f1_malware_delivery": 0.6483109735122119
+        },
+        "std": {
+          "macro_f1": 0.07693031014883295,
+          "weighted_f1": 0.05727412004112348,
+          "accuracy": 0.06301317969558377,
+          "balanced_accuracy": 0.0788432697390584,
+          "roc_auc_ovr_macro": 0.029038727837945883,
+          "benign_fpr": 0.07525283791030266,
+          "f1_benign": 0.04459882635109727,
+          "f1_phishing": 0.07516885507167699,
+          "f1_fake_ecommerce": 0.12018546178925972,
+          "f1_crypto_scam": 0.22161337622440447,
+          "f1_malware_delivery": 0.08668662287257539
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.8412881323051554,
+        0.6170308346624136,
+        0.7031963470319635,
+        0.648177261335156,
+        0.6928825727052963
+      ],
+      "test": {
+        "macro_precision": 0.7822763806066891,
+        "macro_recall": 0.8104323780794369,
+        "n": 68,
+        "macro_f1": 0.7861111111111111,
+        "weighted_f1": 0.8274101307189542,
+        "accuracy": 0.8235294117647058,
+        "balanced_accuracy": 0.8104323780794369,
+        "roc_auc_ovr_macro": 0.9670891328212103,
+        "benign_fpr": 0.17647058823529413,
+        "per_class": {
+          "benign": {
+            "precision": 0.9655172413793104,
+            "recall": 0.8235294117647058,
+            "f1": 0.8888888888888888,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.631578947368421,
+            "recall": 0.9230769230769231,
+            "f1": 0.75,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.6,
+            "recall": 0.75,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.7142857142857143,
+            "recall": 0.5555555555555556,
+            "f1": 0.625,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            28,
+            3,
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            12,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            8,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            3,
+            0
+          ],
+          [
+            1,
+            3,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8235294117647058,
+          "macro_precision": 0.7979761904761905,
+          "macro_recall": 0.8133333333333332,
+          "macro_f1": 0.7977225672877847,
+          "benign_fpr": 0.2,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.7083333333333333,
+          "macro_recall": 0.7976190476190477,
+          "macro_f1": 0.7057692307692308,
+          "benign_fpr": 0.14285714285714285,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.108301,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.5858585858585859,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.17647058823529413,
+            "macro_f1": 0.7861111111111111,
+            "threat_recall": 0.9705882352941176,
+            "per_class_recall": {
+              "benign": 0.8235294117647058,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 1.0,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.5555555555555556
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.0,
+            "macro_f1": 0.5496103896103897,
+            "threat_recall": 0.5,
+            "per_class_recall": {
+              "benign": 1.0,
+              "phishing": 0.6153846153846154,
+              "fake_ecommerce": 0.75,
+              "crypto_scam": 0.0,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                34,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                5,
+                8,
+                0,
+                0,
+                0
+              ],
+              [
+                2,
+                0,
+                6,
+                0,
+                0
+              ],
+              [
+                4,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                6,
+                1,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": true,
+      "bootstrap": {
+        "point": 0.7861111111111111,
+        "ci_low": 0.651710525852065,
+        "ci_high": 0.8910793877930074,
+        "bootstrap_mean": 0.7770891115212372,
+        "bootstrap_std": 0.06343713431875272
+      }
+    },
+    {
+      "key": "dom+behavior:stacking",
+      "row": "dom+behavior",
+      "title": "DOM+Behavior",
+      "group": "pair",
+      "arms": [
+        "dom",
+        "behavior"
+      ],
+      "strategy": "stacking",
+      "strategy_display": "Stacking - LogReg",
+      "params": {
+        "C": 1.0,
+        "class_weight": "balanced",
+        "inputs": [
+          "dom.p_benign",
+          "dom.p_phishing",
+          "dom.p_fake_ecommerce",
+          "dom.p_crypto_scam",
+          "dom.p_malware_delivery",
+          "behavior.p_benign",
+          "behavior.p_phishing",
+          "behavior.p_fake_ecommerce",
+          "behavior.p_crypto_scam",
+          "behavior.p_malware_delivery"
+        ]
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.6677256299124592,
+          "weighted_f1": 0.7522440003715583,
+          "accuracy": 0.7311911716975008,
+          "balanced_accuracy": 0.6951504402030719,
+          "roc_auc_ovr_macro": 0.9049447520622496,
+          "benign_fpr": 0.20742240215924426,
+          "f1_benign": 0.8456134909866254,
+          "f1_phishing": 0.6836982302499544,
+          "f1_fake_ecommerce": 0.7894736842105263,
+          "f1_crypto_scam": 0.383561845790948,
+          "f1_malware_delivery": 0.6362808983242421
+        },
+        "std": {
+          "macro_f1": 0.07329582345007477,
+          "weighted_f1": 0.05698098271915272,
+          "accuracy": 0.06297849694795829,
+          "balanced_accuracy": 0.08150182088842968,
+          "roc_auc_ovr_macro": 0.025599665471075714,
+          "benign_fpr": 0.07822326147248394,
+          "f1_benign": 0.04339376760698638,
+          "f1_phishing": 0.06415576090264094,
+          "f1_fake_ecommerce": 0.12903847624345127,
+          "f1_crypto_scam": 0.13963338234469927,
+          "f1_malware_delivery": 0.09217394689541461
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7926426285559411,
+        0.5969949749996883,
+        0.6760262725779967,
+        0.5904761904761904,
+        0.6824880829524792
+      ],
+      "test": {
+        "macro_precision": 0.7490685784803433,
+        "macro_recall": 0.8177853192559075,
+        "n": 68,
+        "macro_f1": 0.7449999999999999,
+        "weighted_f1": 0.7935049019607844,
+        "accuracy": 0.7794117647058824,
+        "balanced_accuracy": 0.8177853192559075,
+        "roc_auc_ovr_macro": 0.964595280436571,
+        "benign_fpr": 0.2647058823529412,
+        "per_class": {
+          "benign": {
+            "precision": 0.9615384615384616,
+            "recall": 0.7352941176470589,
+            "f1": 0.8333333333333334,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.7058823529411765,
+            "recall": 0.9230769230769231,
+            "f1": 0.8,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.36363636363636365,
+            "recall": 1.0,
+            "f1": 0.5333333333333333,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.7142857142857143,
+            "recall": 0.5555555555555556,
+            "f1": 0.625,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            25,
+            2,
+            0,
+            5,
+            2
+          ],
+          [
+            0,
+            12,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            1,
+            3,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.7843137254901961,
+          "macro_precision": 0.7766165413533834,
+          "macro_recall": 0.8073333333333332,
+          "macro_f1": 0.7582639582639582,
+          "benign_fpr": 0.28,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7142857142857143,
+          "macro_precision": 0.7083333333333333,
+          "macro_recall": 0.761904761904762,
+          "macro_f1": 0.6833333333333333,
+          "benign_fpr": 0.2857142857142857,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.059777867000042624,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.6060606060606061,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.2647058823529412,
+            "macro_f1": 0.7449999999999999,
+            "threat_recall": 0.9705882352941176,
+            "per_class_recall": {
+              "benign": 0.7352941176470589,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 1.0,
+              "malware_delivery": 0.5555555555555556
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.0,
+            "macro_f1": 0.6961612227435012,
+            "threat_recall": 0.6764705882352942,
+            "per_class_recall": {
+              "benign": 1.0,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.25,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                34,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                1,
+                12,
+                0,
+                0,
+                0
+              ],
+              [
+                1,
+                0,
+                7,
+                0,
+                0
+              ],
+              [
+                3,
+                0,
+                0,
+                1,
+                0
+              ],
+              [
+                6,
+                1,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.7449999999999999,
+        "ci_low": 0.6226345292448091,
+        "ci_high": 0.8599823460160048,
+        "bootstrap_mean": 0.7399607903549085,
+        "bootstrap_std": 0.060894402043182805
+      }
+    },
+    {
+      "key": "dom+behavior:hybrid",
+      "row": "dom+behavior",
+      "title": "DOM+Behavior",
+      "group": "pair",
+      "arms": [
+        "dom",
+        "behavior"
+      ],
+      "strategy": "hybrid",
+      "strategy_display": "Hybrid - XGBoost",
+      "params": {
+        "n_estimators": 300,
+        "tree_method": "hist",
+        "objective": "multi:softprob",
+        "eval_metric": "mlogloss",
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "subsample": 0.8,
+        "features_in": 142,
+        "features_used": 114,
+        "dropped": 28
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.6641173279170491,
+          "weighted_f1": 0.7527723750484846,
+          "accuracy": 0.7542031807854592,
+          "balanced_accuracy": 0.6587777135145555,
+          "roc_auc_ovr_macro": 0.906077469621325,
+          "benign_fpr": 0.13468286099865048,
+          "f1_benign": 0.8612780936080038,
+          "f1_phishing": 0.6753046434470239,
+          "f1_fake_ecommerce": 0.7404781183728553,
+          "f1_crypto_scam": 0.4262626262626263,
+          "f1_malware_delivery": 0.617263157894737
+        },
+        "std": {
+          "macro_f1": 0.11685296619562612,
+          "weighted_f1": 0.0733238262850448,
+          "accuracy": 0.07800500975134664,
+          "balanced_accuracy": 0.11669205002743306,
+          "roc_auc_ovr_macro": 0.02257898089584304,
+          "benign_fpr": 0.08003575176261521,
+          "f1_benign": 0.047711973509032946,
+          "f1_phishing": 0.08582009462473852,
+          "f1_fake_ecommerce": 0.15103308318000447,
+          "f1_crypto_scam": 0.30572205164153965,
+          "f1_malware_delivery": 0.07246999570172684
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.8343317934334268,
+        0.5110442773600667,
+        0.6920607971541758,
+        0.557695226183031,
+        0.7254545454545454
+      ],
+      "test": {
+        "macro_precision": 0.8033333333333333,
+        "macro_recall": 0.7530794369029664,
+        "n": 68,
+        "macro_f1": 0.7711797672592274,
+        "weighted_f1": 0.8336283276429013,
+        "accuracy": 0.8382352941176471,
+        "balanced_accuracy": 0.7530794369029664,
+        "roc_auc_ovr_macro": 0.9712543689774863,
+        "benign_fpr": 0.08823529411764706,
+        "per_class": {
+          "benign": {
+            "precision": 0.8857142857142857,
+            "recall": 0.9117647058823529,
+            "f1": 0.8985507246376812,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.75,
+            "recall": 0.9230769230769231,
+            "f1": 0.8275862068965517,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.6666666666666666,
+            "recall": 0.5,
+            "f1": 0.5714285714285714,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.7142857142857143,
+            "recall": 0.5555555555555556,
+            "f1": 0.625,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            31,
+            2,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            12,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            2,
+            1
+          ],
+          [
+            3,
+            1,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.803921568627451,
+          "macro_precision": 0.756,
+          "macro_recall": 0.6993333333333334,
+          "macro_f1": 0.719915343915344,
+          "benign_fpr": 0.12,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.9285714285714286,
+          "macro_precision": 0.96875,
+          "macro_recall": 0.9166666666666666,
+          "macro_f1": 0.9333333333333333,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.041644465178251266,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.6313131313131313,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.08823529411764706,
+            "macro_f1": 0.7711797672592274,
+            "threat_recall": 0.8823529411764706,
+            "per_class_recall": {
+              "benign": 0.9117647058823529,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.5,
+              "malware_delivery": 0.5555555555555556
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.029411764705882353,
+            "macro_f1": 0.6568912882804717,
+            "threat_recall": 0.5588235294117647,
+            "per_class_recall": {
+              "benign": 0.9705882352941176,
+              "phishing": 0.6923076923076923,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.25,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                33,
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                4,
+                9,
+                0,
+                0,
+                0
+              ],
+              [
+                1,
+                0,
+                7,
+                0,
+                0
+              ],
+              [
+                3,
+                0,
+                0,
+                1,
+                0
+              ],
+              [
+                7,
+                0,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.7711797672592274,
+        "ci_low": 0.6155216367276743,
+        "ci_high": 0.8993490276166083,
+        "bootstrap_mean": 0.7579223168340492,
+        "bootstrap_std": 0.073772515977584
+      }
+    },
+    {
+      "key": "dom+text:mean",
+      "row": "dom+text",
+      "title": "DOM+Text (TF-IDF)",
+      "group": "pair",
+      "arms": [
+        "dom",
+        "text_tfidf"
+      ],
+      "strategy": "mean",
+      "strategy_display": "Late fusion - mean",
+      "params": {
+        "weights": {
+          "dom": 0.5,
+          "text_tfidf": 0.5
+        }
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7297562995671478,
+          "weighted_f1": 0.789233948339225,
+          "accuracy": 0.79269717624148,
+          "balanced_accuracy": 0.7072907910802646,
+          "roc_auc_ovr_macro": 0.9334518491404324,
+          "benign_fpr": 0.09338731443994602,
+          "f1_benign": 0.8701616177380302,
+          "f1_phishing": 0.7115535271180432,
+          "f1_fake_ecommerce": 0.8036617183985605,
+          "f1_crypto_scam": 0.5957575757575757,
+          "f1_malware_delivery": 0.6676470588235294
+        },
+        "std": {
+          "macro_f1": 0.047695615029102426,
+          "weighted_f1": 0.03958086987313812,
+          "accuracy": 0.042169318370303924,
+          "balanced_accuracy": 0.041152893236974034,
+          "roc_auc_ovr_macro": 0.01884119549422133,
+          "benign_fpr": 0.04194752278957514,
+          "f1_benign": 0.022609000132460342,
+          "f1_phishing": 0.10611222973552543,
+          "f1_fake_ecommerce": 0.11551701621239006,
+          "f1_crypto_scam": 0.06599106709729066,
+          "f1_malware_delivery": 0.06399688597701644
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7955002891844998,
+        0.6526079375165437,
+        0.7421952867741697,
+        0.7075024686481683,
+        0.7509755157123579
+      ],
+      "test": {
+        "macro_precision": 0.8471428571428572,
+        "macro_recall": 0.830857214680744,
+        "n": 68,
+        "macro_f1": 0.8239575450370052,
+        "weighted_f1": 0.8452121278296426,
+        "accuracy": 0.8529411764705882,
+        "balanced_accuracy": 0.830857214680744,
+        "roc_auc_ovr_macro": 0.980651796609805,
+        "benign_fpr": 0.08823529411764706,
+        "per_class": {
+          "benign": {
+            "precision": 0.8857142857142857,
+            "recall": 0.9117647058823529,
+            "f1": 0.8985507246376812,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.75,
+            "recall": 0.9230769230769231,
+            "f1": 0.8275862068965517,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.8,
+            "recall": 1.0,
+            "f1": 0.8888888888888888,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.8,
+            "recall": 0.4444444444444444,
+            "f1": 0.5714285714285714,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            31,
+            2,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            12,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            3,
+            2,
+            0,
+            0,
+            4
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8627450980392157,
+          "macro_precision": 0.8394871794871795,
+          "macro_recall": 0.8073333333333335,
+          "macro_f1": 0.8119477124183007,
+          "benign_fpr": 0.08,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.7976190476190477,
+          "macro_recall": 0.7976190476190477,
+          "macro_f1": 0.7142857142857143,
+          "benign_fpr": 0.14285714285714285,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.146941,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.5808080808080808,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.08823529411764706,
+            "macro_f1": 0.8239575450370052,
+            "threat_recall": 0.8823529411764706,
+            "per_class_recall": {
+              "benign": 0.9117647058823529,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 1.0,
+              "malware_delivery": 0.4444444444444444
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.0,
+            "macro_f1": 0.7120570787237454,
+            "threat_recall": 0.6176470588235294,
+            "per_class_recall": {
+              "benign": 1.0,
+              "phishing": 0.7692307692307693,
+              "fake_ecommerce": 0.75,
+              "crypto_scam": 0.5,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                34,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                3,
+                10,
+                0,
+                0,
+                0
+              ],
+              [
+                2,
+                0,
+                6,
+                0,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                2,
+                0
+              ],
+              [
+                6,
+                1,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": true,
+      "bootstrap": {
+        "point": 0.8239575450370052,
+        "ci_low": 0.6946594235487874,
+        "ci_high": 0.9233392857142858,
+        "bootstrap_mean": 0.8179153270332702,
+        "bootstrap_std": 0.05832841246278965
+      }
+    },
+    {
+      "key": "dom+text:weighted",
+      "row": "dom+text",
+      "title": "DOM+Text (TF-IDF)",
+      "group": "pair",
+      "arms": [
+        "dom",
+        "text_tfidf"
+      ],
+      "strategy": "weighted",
+      "strategy_display": "Late fusion - weighted",
+      "params": {
+        "weights": {
+          "dom": 0.5,
+          "text_tfidf": 0.5
+        },
+        "grid_step": 0.1
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7056587818868078,
+          "weighted_f1": 0.7847693243678291,
+          "accuracy": 0.7901330736773774,
+          "balanced_accuracy": 0.6888146006040743,
+          "roc_auc_ovr_macro": 0.930009522686843,
+          "benign_fpr": 0.09338731443994602,
+          "f1_benign": 0.8771359767123892,
+          "f1_phishing": 0.7317583402260822,
+          "f1_fake_ecommerce": 0.7860008996851102,
+          "f1_crypto_scam": 0.4811111111111111,
+          "f1_malware_delivery": 0.6522875816993464
+        },
+        "std": {
+          "macro_f1": 0.06894916031246355,
+          "weighted_f1": 0.04587119437385983,
+          "accuracy": 0.04677472957479679,
+          "balanced_accuracy": 0.0625308172127448,
+          "roc_auc_ovr_macro": 0.01940709884096596,
+          "benign_fpr": 0.04194752278957514,
+          "f1_benign": 0.02699102479677198,
+          "f1_phishing": 0.0808087567592541,
+          "f1_fake_ecommerce": 0.10731795098364347,
+          "f1_crypto_scam": 0.2017087498178659,
+          "f1_malware_delivery": 0.06361862449496097
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7955002891844998,
+        0.5861416164611883,
+        0.7421952867741697,
+        0.7075024686481683,
+        0.6969542483660132
+      ],
+      "test": {
+        "macro_precision": 0.8471428571428572,
+        "macro_recall": 0.830857214680744,
+        "n": 68,
+        "macro_f1": 0.8239575450370052,
+        "weighted_f1": 0.8452121278296426,
+        "accuracy": 0.8529411764705882,
+        "balanced_accuracy": 0.830857214680744,
+        "roc_auc_ovr_macro": 0.980651796609805,
+        "benign_fpr": 0.08823529411764706,
+        "per_class": {
+          "benign": {
+            "precision": 0.8857142857142857,
+            "recall": 0.9117647058823529,
+            "f1": 0.8985507246376812,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.75,
+            "recall": 0.9230769230769231,
+            "f1": 0.8275862068965517,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.8,
+            "recall": 1.0,
+            "f1": 0.8888888888888888,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.8,
+            "recall": 0.4444444444444444,
+            "f1": 0.5714285714285714,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            31,
+            2,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            12,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            3,
+            2,
+            0,
+            0,
+            4
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8627450980392157,
+          "macro_precision": 0.8394871794871795,
+          "macro_recall": 0.8073333333333335,
+          "macro_f1": 0.8119477124183007,
+          "benign_fpr": 0.08,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.7976190476190477,
+          "macro_recall": 0.7976190476190477,
+          "macro_f1": 0.7142857142857143,
+          "benign_fpr": 0.14285714285714285,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.1509468,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.5757575757575758,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.08823529411764706,
+            "macro_f1": 0.8239575450370052,
+            "threat_recall": 0.8823529411764706,
+            "per_class_recall": {
+              "benign": 0.9117647058823529,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 1.0,
+              "malware_delivery": 0.4444444444444444
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.0,
+            "macro_f1": 0.7120570787237454,
+            "threat_recall": 0.6176470588235294,
+            "per_class_recall": {
+              "benign": 1.0,
+              "phishing": 0.7692307692307693,
+              "fake_ecommerce": 0.75,
+              "crypto_scam": 0.5,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                34,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                3,
+                10,
+                0,
+                0,
+                0
+              ],
+              [
+                2,
+                0,
+                6,
+                0,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                2,
+                0
+              ],
+              [
+                6,
+                1,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.8239575450370052,
+        "ci_low": 0.6946594235487874,
+        "ci_high": 0.9233392857142858,
+        "bootstrap_mean": 0.8179153270332702,
+        "bootstrap_std": 0.05832841246278965
+      }
+    },
+    {
+      "key": "dom+text:stacking",
+      "row": "dom+text",
+      "title": "DOM+Text (TF-IDF)",
+      "group": "pair",
+      "arms": [
+        "dom",
+        "text_tfidf"
+      ],
+      "strategy": "stacking",
+      "strategy_display": "Stacking - LogReg",
+      "params": {
+        "C": 1.0,
+        "class_weight": "balanced",
+        "inputs": [
+          "dom.p_benign",
+          "dom.p_phishing",
+          "dom.p_fake_ecommerce",
+          "dom.p_crypto_scam",
+          "dom.p_malware_delivery",
+          "text_tfidf.p_benign",
+          "text_tfidf.p_phishing",
+          "text_tfidf.p_fake_ecommerce",
+          "text_tfidf.p_crypto_scam",
+          "text_tfidf.p_malware_delivery"
+        ]
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.6955256341708541,
+          "weighted_f1": 0.7730477519156547,
+          "accuracy": 0.7645569620253164,
+          "balanced_accuracy": 0.7169606066448172,
+          "roc_auc_ovr_macro": 0.9274604272050327,
+          "benign_fpr": 0.16059379217273953,
+          "f1_benign": 0.873943833943834,
+          "f1_phishing": 0.6886005026160755,
+          "f1_fake_ecommerce": 0.7962573099415204,
+          "f1_crypto_scam": 0.5003257269046743,
+          "f1_malware_delivery": 0.6185007974481658
+        },
+        "std": {
+          "macro_f1": 0.05938015588683248,
+          "weighted_f1": 0.05475122392049915,
+          "accuracy": 0.06353197796272464,
+          "balanced_accuracy": 0.05688254570713969,
+          "roc_auc_ovr_macro": 0.023264168873056407,
+          "benign_fpr": 0.08002596645324712,
+          "f1_benign": 0.05276746322890618,
+          "f1_phishing": 0.0770781975711908,
+          "f1_fake_ecommerce": 0.09185911599998385,
+          "f1_crypto_scam": 0.12242361919612817,
+          "f1_malware_delivery": 0.04791489054067087
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.749127169127169,
+        0.5804200155561318,
+        0.7265846066779853,
+        0.7170519350485394,
+        0.7044444444444443
+      ],
+      "test": {
+        "macro_precision": 0.7726190476190475,
+        "macro_recall": 0.8095902463549522,
+        "n": 68,
+        "macro_f1": 0.7723301985370951,
+        "weighted_f1": 0.82274878603479,
+        "accuracy": 0.8235294117647058,
+        "balanced_accuracy": 0.8095902463549522,
+        "roc_auc_ovr_macro": 0.9813869202914475,
+        "benign_fpr": 0.11764705882352941,
+        "per_class": {
+          "benign": {
+            "precision": 0.9375,
+            "recall": 0.8823529411764706,
+            "f1": 0.9090909090909091,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.6875,
+            "recall": 0.8461538461538461,
+            "f1": 0.7586206896551724,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.5714285714285714,
+            "recall": 1.0,
+            "f1": 0.7272727272727273,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.6666666666666666,
+            "recall": 0.4444444444444444,
+            "f1": 0.5333333333333333,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            30,
+            2,
+            0,
+            0,
+            2
+          ],
+          [
+            0,
+            11,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            2,
+            3,
+            0,
+            0,
+            4
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8235294117647058,
+          "macro_precision": 0.7847985347985348,
+          "macro_recall": 0.7826666666666667,
+          "macro_f1": 0.762824159967017,
+          "benign_fpr": 0.12,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.7083333333333333,
+          "macro_recall": 0.7976190476190477,
+          "macro_f1": 0.7057692307692308,
+          "benign_fpr": 0.14285714285714285,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.04199611779345225,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.5959595959595959,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.11764705882352941,
+            "macro_f1": 0.7723301985370951,
+            "threat_recall": 0.9411764705882353,
+            "per_class_recall": {
+              "benign": 0.8823529411764706,
+              "phishing": 0.8461538461538461,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 1.0,
+              "malware_delivery": 0.4444444444444444
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.0,
+            "macro_f1": 0.736017316017316,
+            "threat_recall": 0.7352941176470589,
+            "per_class_recall": {
+              "benign": 1.0,
+              "phishing": 0.7692307692307693,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                34,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                2,
+                10,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                7,
+                1,
+                0
+              ],
+              [
+                1,
+                0,
+                0,
+                3,
+                0
+              ],
+              [
+                6,
+                1,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.7723301985370951,
+        "ci_low": 0.6409460852945554,
+        "ci_high": 0.8835649273387497,
+        "bootstrap_mean": 0.7670583489362721,
+        "bootstrap_std": 0.06245472890487413
+      }
+    },
+    {
+      "key": "dom+text:hybrid",
+      "row": "dom+text",
+      "title": "DOM+Text (TF-IDF)",
+      "group": "pair",
+      "arms": [
+        "dom",
+        "text_tfidf"
+      ],
+      "strategy": "hybrid",
+      "strategy_display": "Hybrid - XGBoost",
+      "params": {
+        "n_estimators": 300,
+        "tree_method": "hist",
+        "objective": "multi:softprob",
+        "eval_metric": "mlogloss",
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "subsample": 0.8,
+        "features_in": 57,
+        "features_used": 53,
+        "dropped": 4
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7294131810639422,
+          "weighted_f1": 0.7987045313034921,
+          "accuracy": 0.7978902953586496,
+          "balanced_accuracy": 0.7237619690251269,
+          "roc_auc_ovr_macro": 0.9343129382861122,
+          "benign_fpr": 0.09865047233468285,
+          "f1_benign": 0.8897752753575539,
+          "f1_phishing": 0.7148387096774194,
+          "f1_fake_ecommerce": 0.7737270778756847,
+          "f1_crypto_scam": 0.5551948051948051,
+          "f1_malware_delivery": 0.7135300372142477
+        },
+        "std": {
+          "macro_f1": 0.04051690827657948,
+          "weighted_f1": 0.024950148601533762,
+          "accuracy": 0.025294516913284923,
+          "balanced_accuracy": 0.03553880508440247,
+          "roc_auc_ovr_macro": 0.023315566217259578,
+          "benign_fpr": 0.030715913746381628,
+          "f1_benign": 0.02157374331257786,
+          "f1_phishing": 0.03750768344044489,
+          "f1_fake_ecommerce": 0.12744182285526967,
+          "f1_crypto_scam": 0.12255364616455666,
+          "f1_malware_delivery": 0.05320171386176758
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7801298701298701,
+        0.6655809258474148,
+        0.706890756302521,
+        0.7327569025956123,
+        0.7617074504442926
+      ],
+      "test": {
+        "macro_precision": 0.7918181818181818,
+        "macro_recall": 0.7971970839617898,
+        "n": 68,
+        "macro_f1": 0.7931801078640411,
+        "weighted_f1": 0.8365402350580267,
+        "accuracy": 0.8382352941176471,
+        "balanced_accuracy": 0.7971970839617898,
+        "roc_auc_ovr_macro": 0.9705688579301288,
+        "benign_fpr": 0.11764705882352941,
+        "per_class": {
+          "benign": {
+            "precision": 0.9090909090909091,
+            "recall": 0.8823529411764706,
+            "f1": 0.8955223880597015,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.8,
+            "recall": 0.9230769230769231,
+            "f1": 0.8571428571428571,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 0.875,
+            "recall": 0.875,
+            "f1": 0.875,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.75,
+            "recall": 0.75,
+            "f1": 0.75,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.625,
+            "recall": 0.5555555555555556,
+            "f1": 0.5882352941176471,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            30,
+            1,
+            1,
+            0,
+            2
+          ],
+          [
+            1,
+            12,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            3,
+            1
+          ],
+          [
+            2,
+            2,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8431372549019608,
+          "macro_precision": 0.7961538461538462,
+          "macro_recall": 0.7573333333333333,
+          "macro_f1": 0.7730588235294118,
+          "benign_fpr": 0.08,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.7291666666666666,
+          "macro_recall": 0.8452380952380952,
+          "macro_f1": 0.7559523809523809,
+          "benign_fpr": 0.2857142857142857,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.056096795946359634,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.6767676767676768,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.11764705882352941,
+            "macro_f1": 0.7931801078640411,
+            "threat_recall": 0.9117647058823529,
+            "per_class_recall": {
+              "benign": 0.8823529411764706,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.5555555555555556
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.029411764705882353,
+            "macro_f1": 0.7859919028340082,
+            "threat_recall": 0.7352941176470589,
+            "per_class_recall": {
+              "benign": 0.9705882352941176,
+              "phishing": 0.8461538461538461,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.3333333333333333
+            },
+            "confusion_matrix": [
+              [
+                33,
+                0,
+                0,
+                0,
+                1
+              ],
+              [
+                2,
+                11,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                7,
+                1,
+                0
+              ],
+              [
+                1,
+                0,
+                0,
+                3,
+                0
+              ],
+              [
+                6,
+                0,
+                0,
+                0,
+                3
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.7931801078640411,
+        "ci_low": 0.6367916406897927,
+        "ci_high": 0.9029089987785744,
+        "bootstrap_mean": 0.7838516374681002,
+        "bootstrap_std": 0.0673651712175129
+      }
+    },
+    {
+      "key": "behavior+text:mean",
+      "row": "behavior+text",
+      "title": "Behavior+Text (TF-IDF)",
+      "group": "pair",
+      "arms": [
+        "behavior",
+        "text_tfidf"
+      ],
+      "strategy": "mean",
+      "strategy_display": "Late fusion - mean",
+      "params": {
+        "weights": {
+          "behavior": 0.5,
+          "text_tfidf": 0.5
+        }
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7322450345710912,
+          "weighted_f1": 0.7940784870957398,
+          "accuracy": 0.8004543979227524,
+          "balanced_accuracy": 0.6976890945311999,
+          "roc_auc_ovr_macro": 0.9256528545152645,
+          "benign_fpr": 0.06234817813765181,
+          "f1_benign": 0.8680620355645294,
+          "f1_phishing": 0.7339080459770115,
+          "f1_fake_ecommerce": 0.7864102564102564,
+          "f1_crypto_scam": 0.553073593073593,
+          "f1_malware_delivery": 0.7197712418300654
+        },
+        "std": {
+          "macro_f1": 0.06725386080909783,
+          "weighted_f1": 0.04546270246568213,
+          "accuracy": 0.04650585591795743,
+          "balanced_accuracy": 0.06474654833678248,
+          "roc_auc_ovr_macro": 0.029915309956940382,
+          "benign_fpr": 0.044995365249799024,
+          "f1_benign": 0.030432628358060092,
+          "f1_phishing": 0.09654214511869641,
+          "f1_fake_ecommerce": 0.10397547433015783,
+          "f1_crypto_scam": 0.18463405955964954,
+          "f1_malware_delivery": 0.0722843018320087
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7622942681483178,
+        0.6064092140921409,
+        0.7421212121212121,
+        0.7428740833203309,
+        0.8075263951734539
+      ],
+      "test": {
+        "macro_precision": 0.7896396396396397,
+        "macro_recall": 0.749132730015083,
+        "n": 68,
+        "macro_f1": 0.7497322395913945,
+        "weighted_f1": 0.8110198900795421,
+        "accuracy": 0.8235294117647058,
+        "balanced_accuracy": 0.749132730015083,
+        "roc_auc_ovr_macro": 0.9580096273209031,
+        "benign_fpr": 0.058823529411764705,
+        "per_class": {
+          "benign": {
+            "precision": 0.8648648648648649,
+            "recall": 0.9411764705882353,
+            "f1": 0.9014084507042254,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.7333333333333333,
+            "recall": 0.8461538461538461,
+            "f1": 0.7857142857142857,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.6,
+            "recall": 0.75,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.75,
+            "recall": 0.3333333333333333,
+            "f1": 0.46153846153846156,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            32,
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            11,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            3,
+            3,
+            0,
+            0,
+            3
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8431372549019608,
+          "macro_precision": 0.8065800865800865,
+          "macro_recall": 0.7486666666666667,
+          "macro_f1": 0.76615623006107,
+          "benign_fpr": 0.04,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 0.0,
+          "macro_precision": 0.0,
+          "macro_recall": 0.0,
+          "macro_f1": 0.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.7976190476190477,
+          "macro_recall": 0.7976190476190477,
+          "macro_f1": 0.7142857142857143,
+          "benign_fpr": 0.14285714285714285,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.21355549999999998,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.5757575757575758,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.058823529411764705,
+            "macro_f1": 0.7497322395913945,
+            "threat_recall": 0.8529411764705882,
+            "per_class_recall": {
+              "benign": 0.9411764705882353,
+              "phishing": 0.8461538461538461,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.3333333333333333
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.029411764705882353,
+            "macro_f1": 0.7323809523809522,
+            "threat_recall": 0.7058823529411765,
+            "per_class_recall": {
+              "benign": 0.9705882352941176,
+              "phishing": 0.7692307692307693,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.5,
+              "malware_delivery": 0.3333333333333333
+            },
+            "confusion_matrix": [
+              [
+                33,
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                2,
+                10,
+                0,
+                1,
+                0
+              ],
+              [
+                1,
+                0,
+                7,
+                0,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                2,
+                0
+              ],
+              [
+                5,
+                1,
+                0,
+                0,
+                3
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": true,
+      "bootstrap": {
+        "point": 0.7497322395913945,
+        "ci_low": 0.592230341880342,
+        "ci_high": 0.8699693744164333,
+        "bootstrap_mean": 0.7419902641057515,
+        "bootstrap_std": 0.07072481458463942
+      }
+    },
+    {
+      "key": "behavior+text:weighted",
+      "row": "behavior+text",
+      "title": "Behavior+Text (TF-IDF)",
+      "group": "pair",
+      "arms": [
+        "behavior",
+        "text_tfidf"
+      ],
+      "strategy": "weighted",
+      "strategy_display": "Late fusion - weighted",
+      "params": {
+        "weights": {
+          "behavior": 0.6,
+          "text_tfidf": 0.4
+        },
+        "grid_step": 0.1
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7151160439173011,
+          "weighted_f1": 0.7825681378093997,
+          "accuracy": 0.7876338851022395,
+          "balanced_accuracy": 0.6852248570143307,
+          "roc_auc_ovr_macro": 0.9227107738950788,
+          "benign_fpr": 0.07800269905533064,
+          "f1_benign": 0.8601132783690575,
+          "f1_phishing": 0.7127451858486342,
+          "f1_fake_ecommerce": 0.7776190476190477,
+          "f1_crypto_scam": 0.49650793650793645,
+          "f1_malware_delivery": 0.72859477124183
+        },
+        "std": {
+          "macro_f1": 0.06476416916097619,
+          "weighted_f1": 0.041460934875777344,
+          "accuracy": 0.04140316807085811,
+          "balanced_accuracy": 0.06667451348592045,
+          "roc_auc_ovr_macro": 0.028449459024749754,
+          "benign_fpr": 0.04356613090533294,
+          "f1_benign": 0.030186153103222972,
+          "f1_phishing": 0.08347396157833716,
+          "f1_fake_ecommerce": 0.11885741419043783,
+          "f1_crypto_scam": 0.16486677397828084,
+          "f1_malware_delivery": 0.07274160389520125
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7622942681483178,
+        0.6064092140921409,
+        0.735119789502839,
+        0.6826491516146688,
+        0.7891077962285392
+      ],
+      "test": {
+        "macro_precision": 0.7893650793650794,
+        "macro_recall": 0.7654725992961288,
+        "n": 68,
+        "macro_f1": 0.7610582010582011,
+        "weighted_f1": 0.8193588546529724,
+        "accuracy": 0.8235294117647058,
+        "balanced_accuracy": 0.7654725992961288,
+        "roc_auc_ovr_macro": 0.9524525701384923,
+        "benign_fpr": 0.08823529411764706,
+        "per_class": {
+          "benign": {
+            "precision": 0.8611111111111112,
+            "recall": 0.9117647058823529,
+            "f1": 0.8857142857142857,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.7857142857142857,
+            "recall": 0.8461538461538461,
+            "f1": 0.8148148148148148,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.5,
+            "recall": 0.75,
+            "f1": 0.6,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.8,
+            "recall": 0.4444444444444444,
+            "f1": 0.5714285714285714,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            31,
+            1,
+            0,
+            1,
+            1
+          ],
+          [
+            1,
+            11,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            3,
+            2,
+            0,
+            0,
+            4
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8431372549019608,
+          "macro_precision": 0.8065800865800865,
+          "macro_recall": 0.7486666666666667,
+          "macro_f1": 0.76615623006107,
+          "benign_fpr": 0.04,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 0.0,
+          "macro_precision": 0.0,
+          "macro_recall": 0.0,
+          "macro_f1": 0.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.8333333333333334,
+          "macro_recall": 0.8452380952380952,
+          "macro_f1": 0.808974358974359,
+          "benign_fpr": 0.2857142857142857,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.21355549999999998,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.5909090909090909,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.08823529411764706,
+            "macro_f1": 0.7610582010582011,
+            "threat_recall": 0.8529411764705882,
+            "per_class_recall": {
+              "benign": 0.9117647058823529,
+              "phishing": 0.8461538461538461,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.4444444444444444
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.029411764705882353,
+            "macro_f1": 0.6175824175824176,
+            "threat_recall": 0.6764705882352942,
+            "per_class_recall": {
+              "benign": 0.9705882352941176,
+              "phishing": 0.7692307692307693,
+              "fake_ecommerce": 0.75,
+              "crypto_scam": 0.0,
+              "malware_delivery": 0.4444444444444444
+            },
+            "confusion_matrix": [
+              [
+                33,
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                2,
+                10,
+                0,
+                1,
+                0
+              ],
+              [
+                2,
+                0,
+                6,
+                0,
+                0
+              ],
+              [
+                4,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                3,
+                2,
+                0,
+                0,
+                4
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.7610582010582011,
+        "ci_low": 0.608831206804891,
+        "ci_high": 0.8793630887153585,
+        "bootstrap_mean": 0.7529442678316229,
+        "bootstrap_std": 0.06802038152834262
+      }
+    },
+    {
+      "key": "behavior+text:stacking",
+      "row": "behavior+text",
+      "title": "Behavior+Text (TF-IDF)",
+      "group": "pair",
+      "arms": [
+        "behavior",
+        "text_tfidf"
+      ],
+      "strategy": "stacking",
+      "strategy_display": "Stacking - LogReg",
+      "params": {
+        "C": 1.0,
+        "class_weight": "balanced",
+        "inputs": [
+          "behavior.p_benign",
+          "behavior.p_phishing",
+          "behavior.p_fake_ecommerce",
+          "behavior.p_crypto_scam",
+          "behavior.p_malware_delivery",
+          "text_tfidf.p_benign",
+          "text_tfidf.p_phishing",
+          "text_tfidf.p_fake_ecommerce",
+          "text_tfidf.p_crypto_scam",
+          "text_tfidf.p_malware_delivery"
+        ]
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7156490151555092,
+          "weighted_f1": 0.7823564361594592,
+          "accuracy": 0.7773774748458292,
+          "balanced_accuracy": 0.7287822119401068,
+          "roc_auc_ovr_macro": 0.932255168827357,
+          "benign_fpr": 0.14021592442645076,
+          "f1_benign": 0.8635428153003104,
+          "f1_phishing": 0.7103387876927105,
+          "f1_fake_ecommerce": 0.789919028340081,
+          "f1_crypto_scam": 0.5177777777777778,
+          "f1_malware_delivery": 0.6966666666666665
+        },
+        "std": {
+          "macro_f1": 0.045286197910184955,
+          "weighted_f1": 0.03946281083272153,
+          "accuracy": 0.04602195809490053,
+          "balanced_accuracy": 0.04392194376463239,
+          "roc_auc_ovr_macro": 0.02710829460657309,
+          "benign_fpr": 0.06687777662420924,
+          "f1_benign": 0.052019671005995215,
+          "f1_phishing": 0.03249010482232449,
+          "f1_fake_ecommerce": 0.11981742901580024,
+          "f1_crypto_scam": 0.13691486045110543,
+          "f1_malware_delivery": 0.03055050463303895
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.767404718693285,
+        0.6370580296896087,
+        0.6977088122605364,
+        0.7319240715729077,
+        0.7441494435612083
+      ],
+      "test": {
+        "macro_precision": 0.8227705627705626,
+        "macro_recall": 0.8471970839617897,
+        "n": 68,
+        "macro_f1": 0.8159875944950572,
+        "weighted_f1": 0.8524467045977142,
+        "accuracy": 0.8529411764705882,
+        "balanced_accuracy": 0.8471970839617897,
+        "roc_auc_ovr_macro": 0.9510635317968006,
+        "benign_fpr": 0.11764705882352941,
+        "per_class": {
+          "benign": {
+            "precision": 0.9090909090909091,
+            "recall": 0.8823529411764706,
+            "f1": 0.8955223880597015,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.8,
+            "recall": 0.9230769230769231,
+            "f1": 0.8571428571428571,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.5714285714285714,
+            "recall": 1.0,
+            "f1": 0.7272727272727273,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.8333333333333334,
+            "recall": 0.5555555555555556,
+            "f1": 0.6666666666666666,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            30,
+            2,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            12,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            3,
+            1,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8823529411764706,
+          "macro_precision": 0.8346153846153846,
+          "macro_recall": 0.8153333333333335,
+          "macro_f1": 0.8093464052287581,
+          "benign_fpr": 0.04,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7142857142857143,
+          "macro_precision": 0.7833333333333333,
+          "macro_recall": 0.8095238095238094,
+          "macro_f1": 0.7416666666666667,
+          "benign_fpr": 0.42857142857142855,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.0734360160618397,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.6515151515151515,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.11764705882352941,
+            "macro_f1": 0.8159875944950572,
+            "threat_recall": 0.9117647058823529,
+            "per_class_recall": {
+              "benign": 0.8823529411764706,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 1.0,
+              "malware_delivery": 0.5555555555555556
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.029411764705882353,
+            "macro_f1": 0.7203508771929824,
+            "threat_recall": 0.7352941176470589,
+            "per_class_recall": {
+              "benign": 0.9705882352941176,
+              "phishing": 0.7692307692307693,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.5,
+              "malware_delivery": 0.3333333333333333
+            },
+            "confusion_matrix": [
+              [
+                33,
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                2,
+                10,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                7,
+                1,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                2,
+                0
+              ],
+              [
+                5,
+                1,
+                0,
+                0,
+                3
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.8159875944950572,
+        "ci_low": 0.6812671552700058,
+        "ci_high": 0.9203406242879927,
+        "bootstrap_mean": 0.8084754584467405,
+        "bootstrap_std": 0.060221222915688426
+      }
+    },
+    {
+      "key": "behavior+text:hybrid",
+      "row": "behavior+text",
+      "title": "Behavior+Text (TF-IDF)",
+      "group": "pair",
+      "arms": [
+        "behavior",
+        "text_tfidf"
+      ],
+      "strategy": "hybrid",
+      "strategy_display": "Hybrid - XGBoost",
+      "params": {
+        "n_estimators": 300,
+        "tree_method": "hist",
+        "objective": "multi:softprob",
+        "eval_metric": "mlogloss",
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "subsample": 0.8,
+        "features_in": 95,
+        "features_used": 75,
+        "dropped": 20
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7242466544303515,
+          "weighted_f1": 0.7807496359441607,
+          "accuracy": 0.7825381369685167,
+          "balanced_accuracy": 0.7164945697577277,
+          "roc_auc_ovr_macro": 0.9271596678166741,
+          "benign_fpr": 0.11403508771929824,
+          "f1_benign": 0.8619452473111011,
+          "f1_phishing": 0.6724930069930071,
+          "f1_fake_ecommerce": 0.7893149540517961,
+          "f1_crypto_scam": 0.5860606060606062,
+          "f1_malware_delivery": 0.7114194577352472
+        },
+        "std": {
+          "macro_f1": 0.07140691664085308,
+          "weighted_f1": 0.04402046027654403,
+          "accuracy": 0.04320658720913681,
+          "balanced_accuracy": 0.07613159633517827,
+          "roc_auc_ovr_macro": 0.03128191736559928,
+          "benign_fpr": 0.035351443248203204,
+          "f1_benign": 0.03261718858883361,
+          "f1_phishing": 0.03983920993870574,
+          "f1_fake_ecommerce": 0.13144225013947916,
+          "f1_crypto_scam": 0.1478787878787879,
+          "f1_malware_delivery": 0.12060384603779382
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7619181286549707,
+        0.6175985190105858,
+        0.724647791233157,
+        0.6865958602800709,
+        0.8304729729729731
+      ],
+      "test": {
+        "macro_precision": 0.7163364055299539,
+        "macro_recall": 0.7641654097536451,
+        "n": 68,
+        "macro_f1": 0.7356527568292275,
+        "weighted_f1": 0.7797316613925611,
+        "accuracy": 0.7794117647058824,
+        "balanced_accuracy": 0.7641654097536451,
+        "roc_auc_ovr_macro": 0.9552559771280906,
+        "benign_fpr": 0.20588235294117646,
+        "per_class": {
+          "benign": {
+            "precision": 0.8709677419354839,
+            "recall": 0.7941176470588235,
+            "f1": 0.8307692307692308,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.7857142857142857,
+            "recall": 0.8461538461538461,
+            "f1": 0.8148148148148148,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 0.7,
+            "recall": 0.875,
+            "f1": 0.7777777777777778,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.6,
+            "recall": 0.75,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.625,
+            "recall": 0.5555555555555556,
+            "f1": 0.5882352941176471,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            27,
+            2,
+            3,
+            0,
+            2
+          ],
+          [
+            1,
+            11,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            3,
+            1
+          ],
+          [
+            3,
+            1,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8235294117647058,
+          "macro_precision": 0.7387412587412588,
+          "macro_recall": 0.7406666666666667,
+          "macro_f1": 0.7365274225632282,
+          "benign_fpr": 0.08,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.5714285714285714,
+          "macro_precision": 0.5666666666666667,
+          "macro_recall": 0.738095238095238,
+          "macro_f1": 0.5791666666666666,
+          "benign_fpr": 0.7142857142857143,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.03309879079461098,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.5808080808080808,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.20588235294117646,
+            "macro_f1": 0.7356527568292275,
+            "threat_recall": 0.8823529411764706,
+            "per_class_recall": {
+              "benign": 0.7941176470588235,
+              "phishing": 0.8461538461538461,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.5555555555555556
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.029411764705882353,
+            "macro_f1": 0.7061362266425558,
+            "threat_recall": 0.6470588235294118,
+            "per_class_recall": {
+              "benign": 0.9705882352941176,
+              "phishing": 0.6153846153846154,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                33,
+                0,
+                0,
+                0,
+                1
+              ],
+              [
+                4,
+                8,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                7,
+                1,
+                0
+              ],
+              [
+                1,
+                0,
+                0,
+                3,
+                0
+              ],
+              [
+                7,
+                0,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.7356527568292275,
+        "ci_low": 0.5804246964355662,
+        "ci_high": 0.8532803027577098,
+        "bootstrap_mean": 0.7258483671614079,
+        "bootstrap_std": 0.06883359935783048
+      }
+    },
+    {
+      "key": "tri:mean",
+      "row": "tri",
+      "title": "DOM+Behavior+Text (TF-IDF)",
+      "group": "tri",
+      "arms": [
+        "dom",
+        "behavior",
+        "text_tfidf"
+      ],
+      "strategy": "mean",
+      "strategy_display": "Late fusion - mean",
+      "params": {
+        "weights": {
+          "dom": 0.3333333333333333,
+          "behavior": 0.3333333333333333,
+          "text_tfidf": 0.3333333333333333
+        }
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.72553143000795,
+          "weighted_f1": 0.793016601575442,
+          "accuracy": 0.7952612788055825,
+          "balanced_accuracy": 0.7053690636848532,
+          "roc_auc_ovr_macro": 0.929305751110544,
+          "benign_fpr": 0.08299595141700404,
+          "f1_benign": 0.8803081724373081,
+          "f1_phishing": 0.7268285589086478,
+          "f1_fake_ecommerce": 0.7841377954690647,
+          "f1_crypto_scam": 0.5682539682539682,
+          "f1_malware_delivery": 0.6681286549707602
+        },
+        "std": {
+          "macro_f1": 0.08085634591854393,
+          "weighted_f1": 0.042446200705919576,
+          "accuracy": 0.048390820894089595,
+          "balanced_accuracy": 0.07361920869793014,
+          "roc_auc_ovr_macro": 0.021482904466983414,
+          "benign_fpr": 0.04433357568567269,
+          "f1_benign": 0.01827946463232159,
+          "f1_phishing": 0.10258383604868052,
+          "f1_fake_ecommerce": 0.12118633400657182,
+          "f1_crypto_scam": 0.24761904761904763,
+          "f1_malware_delivery": 0.07132345565877465
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.8463165946996003,
+        0.5996514274191226,
+        0.749193714837378,
+        0.6886647992530345,
+        0.7438306138306139
+      ],
+      "test": {
+        "macro_precision": 0.8577777777777778,
+        "macro_recall": 0.8367395676219205,
+        "n": 68,
+        "macro_f1": 0.8330158730158731,
+        "weighted_f1": 0.8587301587301587,
+        "accuracy": 0.8676470588235294,
+        "balanced_accuracy": 0.8367395676219205,
+        "roc_auc_ovr_macro": 0.9735784952548998,
+        "benign_fpr": 0.058823529411764705,
+        "per_class": {
+          "benign": {
+            "precision": 0.8888888888888888,
+            "recall": 0.9411764705882353,
+            "f1": 0.9142857142857143,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.8,
+            "recall": 0.9230769230769231,
+            "f1": 0.8571428571428571,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.8,
+            "recall": 1.0,
+            "f1": 0.8888888888888888,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.8,
+            "recall": 0.4444444444444444,
+            "f1": 0.5714285714285714,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            32,
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            12,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            3,
+            2,
+            0,
+            0,
+            4
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8823529411764706,
+          "macro_precision": 0.8544444444444445,
+          "macro_recall": 0.8153333333333335,
+          "macro_f1": 0.8235042735042736,
+          "benign_fpr": 0.04,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.7976190476190477,
+          "macro_recall": 0.7976190476190477,
+          "macro_f1": 0.7142857142857143,
+          "benign_fpr": 0.14285714285714285,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.189868,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.5959595959595959,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.058823529411764705,
+            "macro_f1": 0.8330158730158731,
+            "threat_recall": 0.8823529411764706,
+            "per_class_recall": {
+              "benign": 0.9411764705882353,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 1.0,
+              "malware_delivery": 0.4444444444444444
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.0,
+            "macro_f1": 0.74087917146145,
+            "threat_recall": 0.6764705882352942,
+            "per_class_recall": {
+              "benign": 1.0,
+              "phishing": 0.8461538461538461,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.5,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                34,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                2,
+                11,
+                0,
+                0,
+                0
+              ],
+              [
+                1,
+                0,
+                7,
+                0,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                2,
+                0
+              ],
+              [
+                6,
+                1,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": true,
+      "bootstrap": {
+        "point": 0.8330158730158731,
+        "ci_low": 0.7006969909175791,
+        "ci_high": 0.9275413154097365,
+        "bootstrap_mean": 0.8269223592584031,
+        "bootstrap_std": 0.05809940517772188
+      }
+    },
+    {
+      "key": "tri:weighted",
+      "row": "tri",
+      "title": "DOM+Behavior+Text (TF-IDF)",
+      "group": "tri",
+      "arms": [
+        "dom",
+        "behavior",
+        "text_tfidf"
+      ],
+      "strategy": "weighted",
+      "strategy_display": "Late fusion - weighted",
+      "params": {
+        "weights": {
+          "dom": 0.2,
+          "behavior": 0.3,
+          "text_tfidf": 0.5
+        },
+        "grid_step": 0.1
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7065154286091841,
+          "weighted_f1": 0.775712944858922,
+          "accuracy": 0.7825056799740343,
+          "balanced_accuracy": 0.6711465844097424,
+          "roc_auc_ovr_macro": 0.9277300191459078,
+          "benign_fpr": 0.0883940620782726,
+          "f1_benign": 0.8477670235958421,
+          "f1_phishing": 0.7330360764995654,
+          "f1_fake_ecommerce": 0.7776190476190477,
+          "f1_crypto_scam": 0.46761904761904755,
+          "f1_malware_delivery": 0.7065359477124182
+        },
+        "std": {
+          "macro_f1": 0.060349552525498305,
+          "weighted_f1": 0.040371091696390984,
+          "accuracy": 0.040980911240035986,
+          "balanced_accuracy": 0.05368079436388055,
+          "roc_auc_ovr_macro": 0.026054259791390907,
+          "benign_fpr": 0.05349647500942164,
+          "f1_benign": 0.03525448305915475,
+          "f1_phishing": 0.09168951230376093,
+          "f1_fake_ecommerce": 0.11885741419043783,
+          "f1_crypto_scam": 0.13424330449678742,
+          "f1_malware_delivery": 0.06991173041147247
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7622942681483178,
+        0.598622668579627,
+        0.7434756097560975,
+        0.6826491516146688,
+        0.7455354449472097
+      ],
+      "test": {
+        "macro_precision": 0.8577777777777778,
+        "macro_recall": 0.8367395676219205,
+        "n": 68,
+        "macro_f1": 0.8330158730158731,
+        "weighted_f1": 0.8587301587301587,
+        "accuracy": 0.8676470588235294,
+        "balanced_accuracy": 0.8367395676219205,
+        "roc_auc_ovr_macro": 0.9740791355209589,
+        "benign_fpr": 0.058823529411764705,
+        "per_class": {
+          "benign": {
+            "precision": 0.8888888888888888,
+            "recall": 0.9411764705882353,
+            "f1": 0.9142857142857143,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.8,
+            "recall": 0.9230769230769231,
+            "f1": 0.8571428571428571,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.8,
+            "recall": 1.0,
+            "f1": 0.8888888888888888,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.8,
+            "recall": 0.4444444444444444,
+            "f1": 0.5714285714285714,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            32,
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            12,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            3,
+            2,
+            0,
+            0,
+            4
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8823529411764706,
+          "macro_precision": 0.8544444444444445,
+          "macro_recall": 0.8153333333333335,
+          "macro_f1": 0.8235042735042736,
+          "benign_fpr": 0.04,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.7976190476190477,
+          "macro_recall": 0.7976190476190477,
+          "macro_f1": 0.7142857142857143,
+          "benign_fpr": 0.14285714285714285,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.2165241,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.6161616161616161,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.058823529411764705,
+            "macro_f1": 0.8330158730158731,
+            "threat_recall": 0.8823529411764706,
+            "per_class_recall": {
+              "benign": 0.9411764705882353,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 1.0,
+              "malware_delivery": 0.4444444444444444
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.029411764705882353,
+            "macro_f1": 0.7103268271689325,
+            "threat_recall": 0.7352941176470589,
+            "per_class_recall": {
+              "benign": 0.9705882352941176,
+              "phishing": 0.8461538461538461,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.5,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                33,
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                2,
+                11,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                7,
+                1,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                2,
+                0
+              ],
+              [
+                5,
+                2,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.8330158730158731,
+        "ci_low": 0.7006969909175791,
+        "ci_high": 0.9275413154097365,
+        "bootstrap_mean": 0.8269223592584031,
+        "bootstrap_std": 0.05809940517772188
+      }
+    },
+    {
+      "key": "tri:stacking",
+      "row": "tri",
+      "title": "DOM+Behavior+Text (TF-IDF)",
+      "group": "tri",
+      "arms": [
+        "dom",
+        "behavior",
+        "text_tfidf"
+      ],
+      "strategy": "stacking",
+      "strategy_display": "Stacking - LogReg",
+      "params": {
+        "C": 1.0,
+        "class_weight": "balanced",
+        "inputs": [
+          "dom.p_benign",
+          "dom.p_phishing",
+          "dom.p_fake_ecommerce",
+          "dom.p_crypto_scam",
+          "dom.p_malware_delivery",
+          "behavior.p_benign",
+          "behavior.p_phishing",
+          "behavior.p_fake_ecommerce",
+          "behavior.p_crypto_scam",
+          "behavior.p_malware_delivery",
+          "text_tfidf.p_benign",
+          "text_tfidf.p_phishing",
+          "text_tfidf.p_fake_ecommerce",
+          "text_tfidf.p_crypto_scam",
+          "text_tfidf.p_malware_delivery"
+        ]
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7176833318795339,
+          "weighted_f1": 0.7896486243697538,
+          "accuracy": 0.7798766634209672,
+          "balanced_accuracy": 0.7403452220294324,
+          "roc_auc_ovr_macro": 0.9281998979744817,
+          "benign_fpr": 0.15033738191632925,
+          "f1_benign": 0.8806649210758799,
+          "f1_phishing": 0.7024486616255249,
+          "f1_fake_ecommerce": 0.832592264976166,
+          "f1_crypto_scam": 0.5134056861611042,
+          "f1_malware_delivery": 0.6593051255589956
+        },
+        "std": {
+          "macro_f1": 0.0652051173031179,
+          "weighted_f1": 0.051879292497821694,
+          "accuracy": 0.06078551264510238,
+          "balanced_accuracy": 0.07051383760783342,
+          "roc_auc_ovr_macro": 0.02446179253087277,
+          "benign_fpr": 0.06170515104602027,
+          "f1_benign": 0.04082030898898588,
+          "f1_phishing": 0.07990709664920354,
+          "f1_fake_ecommerce": 0.08342730008355748,
+          "f1_crypto_scam": 0.159893825783543,
+          "f1_malware_delivery": 0.06287818040097722
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.8029890966733072,
+        0.6012805001008268,
+        0.7329642241341963,
+        0.7316437948016896,
+        0.7195390436876505
+      ],
+      "test": {
+        "macro_precision": 0.7722943722943723,
+        "macro_recall": 0.8095902463549522,
+        "n": 68,
+        "macro_f1": 0.7687341072415699,
+        "weighted_f1": 0.8231424576464085,
+        "accuracy": 0.8235294117647058,
+        "balanced_accuracy": 0.8095902463549522,
+        "roc_auc_ovr_macro": 0.9734420308906226,
+        "benign_fpr": 0.11764705882352941,
+        "per_class": {
+          "benign": {
+            "precision": 0.9090909090909091,
+            "recall": 0.8823529411764706,
+            "f1": 0.8955223880597015,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.7857142857142857,
+            "recall": 0.8461538461538461,
+            "f1": 0.8148148148148148,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1": 0.9333333333333333,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.6666666666666666,
+            "recall": 0.4444444444444444,
+            "f1": 0.5333333333333333,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            30,
+            1,
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            11,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            3,
+            2,
+            0,
+            0,
+            4
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8235294117647058,
+          "macro_precision": 0.7833333333333333,
+          "macro_recall": 0.7826666666666667,
+          "macro_f1": 0.7573696145124716,
+          "benign_fpr": 0.12,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.7857142857142857,
+          "macro_precision": 0.7142857142857143,
+          "macro_recall": 0.7976190476190477,
+          "macro_f1": 0.7309523809523809,
+          "benign_fpr": 0.14285714285714285,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.055897375412865886,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.6515151515151515,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.11764705882352941,
+            "macro_f1": 0.7687341072415699,
+            "threat_recall": 0.9117647058823529,
+            "per_class_recall": {
+              "benign": 0.8823529411764706,
+              "phishing": 0.8461538461538461,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 1.0,
+              "malware_delivery": 0.4444444444444444
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.0,
+            "macro_f1": 0.7476746411483253,
+            "threat_recall": 0.7647058823529411,
+            "per_class_recall": {
+              "benign": 1.0,
+              "phishing": 0.8461538461538461,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.2222222222222222
+            },
+            "confusion_matrix": [
+              [
+                34,
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                1,
+                11,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                7,
+                1,
+                0
+              ],
+              [
+                1,
+                0,
+                0,
+                3,
+                0
+              ],
+              [
+                6,
+                1,
+                0,
+                0,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.7687341072415699,
+        "ci_low": 0.6384351114812542,
+        "ci_high": 0.8767345911915584,
+        "bootstrap_mean": 0.764275544558982,
+        "bootstrap_std": 0.06194722387993836
+      }
+    },
+    {
+      "key": "tri:hybrid",
+      "row": "tri",
+      "title": "DOM+Behavior+Text (TF-IDF)",
+      "group": "tri",
+      "arms": [
+        "dom",
+        "behavior",
+        "text_tfidf"
+      ],
+      "strategy": "hybrid",
+      "strategy_display": "Hybrid - XGBoost",
+      "params": {
+        "n_estimators": 300,
+        "tree_method": "hist",
+        "objective": "multi:softprob",
+        "eval_metric": "mlogloss",
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "subsample": 0.8,
+        "features_in": 147,
+        "features_used": 119,
+        "dropped": 28
+      },
+      "cv": {
+        "mean": {
+          "macro_f1": 0.7113436279375357,
+          "weighted_f1": 0.7884229582389259,
+          "accuracy": 0.7876663420967217,
+          "balanced_accuracy": 0.7075714928346508,
+          "roc_auc_ovr_macro": 0.9316255801498363,
+          "benign_fpr": 0.09865047233468285,
+          "f1_benign": 0.8919485736152403,
+          "f1_phishing": 0.6853855135924102,
+          "f1_fake_ecommerce": 0.7642533936651584,
+          "f1_crypto_scam": 0.521095571095571,
+          "f1_malware_delivery": 0.6940350877192982
+        },
+        "std": {
+          "macro_f1": 0.05715478135141858,
+          "weighted_f1": 0.035450751013365485,
+          "accuracy": 0.037084953411197275,
+          "balanced_accuracy": 0.05432148462854943,
+          "roc_auc_ovr_macro": 0.024553921286301326,
+          "benign_fpr": 0.041622373699533734,
+          "f1_benign": 0.0273330756004267,
+          "f1_phishing": 0.06357499821391072,
+          "f1_fake_ecommerce": 0.11537059625596546,
+          "f1_crypto_scam": 0.19638622010891274,
+          "f1_malware_delivery": 0.058805698599286055
+        }
+      },
+      "cv_folds_macro_f1": [
+        0.7573827160493828,
+        0.604112924112924,
+        0.7018316774503388,
+        0.7387786774628881,
+        0.7546121446121445
+      ],
+      "test": {
+        "macro_precision": 0.8164285714285715,
+        "macro_recall": 0.8030794369029663,
+        "n": 68,
+        "macro_f1": 0.807487922705314,
+        "weighted_f1": 0.8489894146064223,
+        "accuracy": 0.8529411764705882,
+        "balanced_accuracy": 0.8030794369029663,
+        "roc_auc_ovr_macro": 0.9706813953350538,
+        "benign_fpr": 0.08823529411764706,
+        "per_class": {
+          "benign": {
+            "precision": 0.8857142857142857,
+            "recall": 0.9117647058823529,
+            "f1": 0.8985507246376812,
+            "support": 34
+          },
+          "phishing": {
+            "precision": 0.8571428571428571,
+            "recall": 0.9230769230769231,
+            "f1": 0.8888888888888888,
+            "support": 13
+          },
+          "fake_ecommerce": {
+            "precision": 0.875,
+            "recall": 0.875,
+            "f1": 0.875,
+            "support": 8
+          },
+          "crypto_scam": {
+            "precision": 0.75,
+            "recall": 0.75,
+            "f1": 0.75,
+            "support": 4
+          },
+          "malware_delivery": {
+            "precision": 0.7142857142857143,
+            "recall": 0.5555555555555556,
+            "f1": 0.625,
+            "support": 9
+          }
+        },
+        "confusion_matrix": [
+          [
+            31,
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            12,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            3,
+            1
+          ],
+          [
+            3,
+            1,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "per_language": {
+        "en": {
+          "n": 51,
+          "accuracy": 0.8431372549019608,
+          "macro_precision": 0.7961538461538462,
+          "macro_recall": 0.7573333333333333,
+          "macro_f1": 0.7730588235294118,
+          "benign_fpr": 0.08,
+          "labels": {
+            "benign": 25,
+            "phishing": 12,
+            "fake_ecommerce": 5,
+            "crypto_scam": 4,
+            "malware_delivery": 5
+          },
+          "small_n": false
+        },
+        "si": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "ta": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": 0.0,
+          "labels": {
+            "benign": 1
+          },
+          "small_n": true
+        },
+        "mixed": {
+          "n": 1,
+          "accuracy": 1.0,
+          "macro_precision": 1.0,
+          "macro_recall": 1.0,
+          "macro_f1": 1.0,
+          "benign_fpr": null,
+          "labels": {
+            "malware_delivery": 1
+          },
+          "small_n": true
+        },
+        "other": {
+          "n": 14,
+          "accuracy": 0.8571428571428571,
+          "macro_precision": 0.9017857142857143,
+          "macro_recall": 0.8809523809523809,
+          "macro_f1": 0.8785714285714286,
+          "benign_fpr": 0.14285714285714285,
+          "labels": {
+            "benign": 7,
+            "phishing": 1,
+            "fake_ecommerce": 3,
+            "malware_delivery": 3
+          },
+          "small_n": false
+        }
+      },
+      "operating_point": {
+        "threshold": 0.040328022092580795,
+        "target": 0.02,
+        "n_benign": 193,
+        "allowed_false_positives": 3,
+        "oof_benign_fpr": 0.015544041450777202,
+        "oof_threat_recall": 0.6515151515151515,
+        "test": {
+          "argmax": {
+            "benign_fpr": 0.08823529411764706,
+            "macro_f1": 0.807487922705314,
+            "threat_recall": 0.8823529411764706,
+            "per_class_recall": {
+              "benign": 0.9117647058823529,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.75,
+              "malware_delivery": 0.5555555555555556
+            }
+          },
+          "fpr_constrained": {
+            "benign_fpr": 0.029411764705882353,
+            "macro_f1": 0.758944283786389,
+            "threat_recall": 0.7352941176470589,
+            "per_class_recall": {
+              "benign": 0.9705882352941176,
+              "phishing": 0.9230769230769231,
+              "fake_ecommerce": 0.875,
+              "crypto_scam": 0.5,
+              "malware_delivery": 0.3333333333333333
+            },
+            "confusion_matrix": [
+              [
+                33,
+                0,
+                0,
+                0,
+                1
+              ],
+              [
+                1,
+                12,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                7,
+                1,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                2,
+                0
+              ],
+              [
+                6,
+                0,
+                0,
+                0,
+                3
+              ]
+            ]
+          }
+        }
+      },
+      "selected_for_row": false,
+      "bootstrap": {
+        "point": 0.807487922705314,
+        "ci_low": 0.6474876449137993,
+        "ci_high": 0.9140908623178422,
+        "bootstrap_mean": 0.7978992620199218,
+        "bootstrap_std": 0.06662193847952128
+      }
+    }
+  ],
+  "final": {
+    "key": "tri:mean",
+    "row": "tri",
+    "title": "DOM+Behavior+Text (TF-IDF)",
+    "group": "tri",
+    "arms": [
+      "dom",
+      "behavior",
+      "text_tfidf"
+    ],
+    "strategy": "mean",
+    "strategy_display": "Late fusion - mean",
+    "params": {
+      "weights": {
+        "dom": 0.3333333333333333,
+        "behavior": 0.3333333333333333,
+        "text_tfidf": 0.3333333333333333
+      }
+    },
+    "cv": {
+      "mean": {
+        "macro_f1": 0.72553143000795,
+        "weighted_f1": 0.793016601575442,
+        "accuracy": 0.7952612788055825,
+        "balanced_accuracy": 0.7053690636848532,
+        "roc_auc_ovr_macro": 0.929305751110544,
+        "benign_fpr": 0.08299595141700404,
+        "f1_benign": 0.8803081724373081,
+        "f1_phishing": 0.7268285589086478,
+        "f1_fake_ecommerce": 0.7841377954690647,
+        "f1_crypto_scam": 0.5682539682539682,
+        "f1_malware_delivery": 0.6681286549707602
+      },
+      "std": {
+        "macro_f1": 0.08085634591854393,
+        "weighted_f1": 0.042446200705919576,
+        "accuracy": 0.048390820894089595,
+        "balanced_accuracy": 0.07361920869793014,
+        "roc_auc_ovr_macro": 0.021482904466983414,
+        "benign_fpr": 0.04433357568567269,
+        "f1_benign": 0.01827946463232159,
+        "f1_phishing": 0.10258383604868052,
+        "f1_fake_ecommerce": 0.12118633400657182,
+        "f1_crypto_scam": 0.24761904761904763,
+        "f1_malware_delivery": 0.07132345565877465
+      }
+    },
+    "cv_folds_macro_f1": [
+      0.8463165946996003,
+      0.5996514274191226,
+      0.749193714837378,
+      0.6886647992530345,
+      0.7438306138306139
+    ],
+    "test": {
+      "macro_precision": 0.8577777777777778,
+      "macro_recall": 0.8367395676219205,
+      "n": 68,
+      "macro_f1": 0.8330158730158731,
+      "weighted_f1": 0.8587301587301587,
+      "accuracy": 0.8676470588235294,
+      "balanced_accuracy": 0.8367395676219205,
+      "roc_auc_ovr_macro": 0.9735784952548998,
+      "benign_fpr": 0.058823529411764705,
+      "per_class": {
+        "benign": {
+          "precision": 0.8888888888888888,
+          "recall": 0.9411764705882353,
+          "f1": 0.9142857142857143,
+          "support": 34
+        },
+        "phishing": {
+          "precision": 0.8,
+          "recall": 0.9230769230769231,
+          "f1": 0.8571428571428571,
+          "support": 13
+        },
+        "fake_ecommerce": {
+          "precision": 1.0,
+          "recall": 0.875,
+          "f1": 0.9333333333333333,
+          "support": 8
+        },
+        "crypto_scam": {
+          "precision": 0.8,
+          "recall": 1.0,
+          "f1": 0.8888888888888888,
+          "support": 4
+        },
+        "malware_delivery": {
+          "precision": 0.8,
+          "recall": 0.4444444444444444,
+          "f1": 0.5714285714285714,
+          "support": 9
+        }
+      },
+      "confusion_matrix": [
+        [
+          32,
+          1,
+          0,
+          0,
+          1
+        ],
+        [
+          1,
+          12,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          7,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          4,
+          0
+        ],
+        [
+          3,
+          2,
+          0,
+          0,
+          4
+        ]
+      ]
+    },
+    "per_language": {
+      "en": {
+        "n": 51,
+        "accuracy": 0.8823529411764706,
+        "macro_precision": 0.8544444444444445,
+        "macro_recall": 0.8153333333333335,
+        "macro_f1": 0.8235042735042736,
+        "benign_fpr": 0.04,
+        "labels": {
+          "benign": 25,
+          "phishing": 12,
+          "fake_ecommerce": 5,
+          "crypto_scam": 4,
+          "malware_delivery": 5
+        },
+        "small_n": false
+      },
+      "si": {
+        "n": 1,
+        "accuracy": 1.0,
+        "macro_precision": 1.0,
+        "macro_recall": 1.0,
+        "macro_f1": 1.0,
+        "benign_fpr": 0.0,
+        "labels": {
+          "benign": 1
+        },
+        "small_n": true
+      },
+      "ta": {
+        "n": 1,
+        "accuracy": 1.0,
+        "macro_precision": 1.0,
+        "macro_recall": 1.0,
+        "macro_f1": 1.0,
+        "benign_fpr": 0.0,
+        "labels": {
+          "benign": 1
+        },
+        "small_n": true
+      },
+      "mixed": {
+        "n": 1,
+        "accuracy": 1.0,
+        "macro_precision": 1.0,
+        "macro_recall": 1.0,
+        "macro_f1": 1.0,
+        "benign_fpr": null,
+        "labels": {
+          "malware_delivery": 1
+        },
+        "small_n": true
+      },
+      "other": {
+        "n": 14,
+        "accuracy": 0.7857142857142857,
+        "macro_precision": 0.7976190476190477,
+        "macro_recall": 0.7976190476190477,
+        "macro_f1": 0.7142857142857143,
+        "benign_fpr": 0.14285714285714285,
+        "labels": {
+          "benign": 7,
+          "phishing": 1,
+          "fake_ecommerce": 3,
+          "malware_delivery": 3
+        },
+        "small_n": false
+      }
+    },
+    "operating_point": {
+      "threshold": 0.189868,
+      "target": 0.02,
+      "n_benign": 193,
+      "allowed_false_positives": 3,
+      "oof_benign_fpr": 0.015544041450777202,
+      "oof_threat_recall": 0.5959595959595959,
+      "test": {
+        "argmax": {
+          "benign_fpr": 0.058823529411764705,
+          "macro_f1": 0.8330158730158731,
+          "threat_recall": 0.8823529411764706,
+          "per_class_recall": {
+            "benign": 0.9411764705882353,
+            "phishing": 0.9230769230769231,
+            "fake_ecommerce": 0.875,
+            "crypto_scam": 1.0,
+            "malware_delivery": 0.4444444444444444
+          }
+        },
+        "fpr_constrained": {
+          "benign_fpr": 0.0,
+          "macro_f1": 0.74087917146145,
+          "threat_recall": 0.6764705882352942,
+          "per_class_recall": {
+            "benign": 1.0,
+            "phishing": 0.8461538461538461,
+            "fake_ecommerce": 0.875,
+            "crypto_scam": 0.5,
+            "malware_delivery": 0.2222222222222222
+          },
+          "confusion_matrix": [
+            [
+              34,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              2,
+              11,
+              0,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              7,
+              0,
+              0
+            ],
+            [
+              2,
+              0,
+              0,
+              2,
+              0
+            ],
+            [
+              6,
+              1,
+              0,
+              0,
+              2
+            ]
+          ]
+        }
+      }
+    },
+    "selected_for_row": true,
+    "bootstrap": {
+      "point": 0.8330158730158731,
+      "ci_low": 0.7006969909175791,
+      "ci_high": 0.9275413154097365,
+      "bootstrap_mean": 0.8269223592584031,
+      "bootstrap_std": 0.05809940517772188
+    }
+  },
+  "best_single_by_cv": "text_tfidf",
+  "best_single_on_test": "dom",
+  "comparison": {
+    "final": "tri:mean",
+    "vs_best_single_by_cv": {
+      "single": "text_tfidf",
+      "point": 0.11531650490554601,
+      "ci_low": 0.01756920315435666,
+      "ci_high": 0.23660240358769785,
+      "bootstrap_mean": 0.11750149169253217,
+      "bootstrap_std": 0.05627075721042002,
+      "includes_zero": false,
+      "share_a_better": 0.992
+    },
+    "vs_best_single_on_test": {
+      "single": "dom",
+      "point": 0.046904761904762005,
+      "ci_low": -0.0751766533678413,
+      "ci_high": 0.17397052765541884,
+      "bootstrap_mean": 0.04983324773716571,
+      "bootstrap_std": 0.06422115846967523,
+      "includes_zero": true,
+      "share_a_better": 0.785
+    }
+  },
+  "complementarity": {
+    "modalities": [
+      "dom",
+      "behavior",
+      "text"
+    ],
+    "n": 68,
+    "buckets": {
+      "all_right": {
+        "count": 41,
+        "examples": [
+          "c2_benign_000001",
+          "c2_benign_000008",
+          "c2_benign_000025",
+          "c2_benign_000029",
+          "c2_benign_000048"
+        ],
+        "fusion_right": 41
+      },
+      "only_dom_right": {
+        "count": 2,
+        "examples": [
+          "c2_fake_ecommerce_000032",
+          "c2_malware_delivery_000023"
+        ],
+        "fusion_right": 0
+      },
+      "only_behavior_right": {
+        "count": 1,
+        "examples": [
+          "c2_malware_delivery_000050"
+        ],
+        "fusion_right": 0
+      },
+      "only_text_right": {
+        "count": 3,
+        "examples": [
+          "c2_benign_000011",
+          "c2_benign_000040",
+          "c2_crypto_scam_000011"
+        ],
+        "fusion_right": 2
+      },
+      "only_dom_wrong": {
+        "count": 3,
+        "examples": [
+          "c2_benign_000002",
+          "c2_benign_000062",
+          "c2_benign_000122"
+        ],
+        "fusion_right": 3
+      },
+      "only_behavior_wrong": {
+        "count": 8,
+        "examples": [
+          "c2_benign_000024",
+          "c2_benign_000077",
+          "c2_benign_000083",
+          "c2_benign_000087",
+          "c2_crypto_scam_000039"
+        ],
+        "fusion_right": 8
+      },
+      "only_text_wrong": {
+        "count": 5,
+        "examples": [
+          "c2_benign_000003",
+          "c2_crypto_scam_000010",
+          "c2_malware_delivery_000045",
+          "c2_malware_delivery_000052",
+          "c2_phishing_000071"
+        ],
+        "fusion_right": 5
+      },
+      "all_wrong": {
+        "count": 5,
+        "examples": [
+          "c2_benign_000076",
+          "c2_malware_delivery_000018",
+          "c2_malware_delivery_000036",
+          "c2_malware_delivery_000042",
+          "c2_phishing_000106"
+        ],
+        "fusion_right": 0
+      }
+    },
+    "oracle_accuracy": 0.9264705882352942,
+    "text_arm": "text_tfidf"
+  },
+  "explanations": {
+    "weighted": {
+      "strategy": "weighted",
+      "method": "weights",
+      "arm_share": {
+        "dom": 0.2,
+        "behavior": 0.3,
+        "text_tfidf": 0.5
+      }
+    },
+    "stacking": {
+      "strategy": "stacking",
+      "method": "LR coefficients (mean |coef| over classes, summed per arm)",
+      "arm_share": {
+        "dom": 0.32394844795846156,
+        "behavior": 0.24183809020133448,
+        "text_tfidf": 0.43421346184020404
+      },
+      "coefficients": {
+        "benign": {
+          "dom.p_benign": 1.4171584371494366,
+          "dom.p_phishing": -0.7639269620747033,
+          "dom.p_fake_ecommerce": -0.6395005799439041,
+          "dom.p_crypto_scam": -0.5307310532582884,
+          "dom.p_malware_delivery": 0.47204941141590323,
+          "behavior.p_benign": 1.3546564130532572,
+          "behavior.p_phishing": -0.5205565440295522,
+          "behavior.p_fake_ecommerce": -0.4296205563804299,
+          "behavior.p_crypto_scam": -0.2590431208194393,
+          "behavior.p_malware_delivery": -0.19038523684982667,
+          "text_tfidf.p_benign": 2.30797997674822,
+          "text_tfidf.p_phishing": -0.3585166349111962,
+          "text_tfidf.p_fake_ecommerce": -0.5797363667153476,
+          "text_tfidf.p_crypto_scam": -0.9139613020942803,
+          "text_tfidf.p_malware_delivery": -0.5007164281672765
+        },
+        "phishing": {
+          "dom.p_benign": -0.8165092232724747,
+          "dom.p_phishing": 1.6631473747675471,
+          "dom.p_fake_ecommerce": -0.6828499696503076,
+          "dom.p_crypto_scam": -0.24309582148935788,
+          "dom.p_malware_delivery": 0.07339755672694888,
+          "behavior.p_benign": -0.06719088075304276,
+          "behavior.p_phishing": 0.496297466899765,
+          "behavior.p_fake_ecommerce": -0.12229650156871655,
+          "behavior.p_crypto_scam": -0.30486004002618244,
+          "behavior.p_malware_delivery": -0.007860985750849156,
+          "text_tfidf.p_benign": -0.47395994511863093,
+          "text_tfidf.p_phishing": 2.4871887926900715,
+          "text_tfidf.p_fake_ecommerce": -0.6481308215658521,
+          "text_tfidf.p_crypto_scam": -0.7830569111403957,
+          "text_tfidf.p_malware_delivery": -0.5879456743123225
+        },
+        "fake_ecommerce": {
+          "dom.p_benign": -0.22642044810202178,
+          "dom.p_phishing": -0.3691050774578476,
+          "dom.p_fake_ecommerce": 1.9262501587644314,
+          "dom.p_crypto_scam": -0.2845759429756423,
+          "dom.p_malware_delivery": -1.0394218239969042,
+          "behavior.p_benign": -0.34597667109359187,
+          "behavior.p_phishing": -0.3102878459711999,
+          "behavior.p_fake_ecommerce": 1.1895425513333513,
+          "behavior.p_crypto_scam": 0.12384875295215673,
+          "behavior.p_malware_delivery": -0.650399738893293,
+          "text_tfidf.p_benign": -0.2200849331427663,
+          "text_tfidf.p_phishing": -0.9432651890756681,
+          "text_tfidf.p_fake_ecommerce": 1.736804794300829,
+          "text_tfidf.p_crypto_scam": -0.45239808207478804,
+          "text_tfidf.p_malware_delivery": -0.114337794598114
+        },
+        "crypto_scam": {
+          "dom.p_benign": -0.29716694536536814,
+          "dom.p_phishing": -0.327939021793733,
+          "dom.p_fake_ecommerce": -0.07435564144634309,
+          "dom.p_crypto_scam": 1.4128513476713687,
+          "dom.p_malware_delivery": -0.6778769410909808,
+          "behavior.p_benign": -0.5618188471509071,
+          "behavior.p_phishing": -0.09158605558453063,
+          "behavior.p_fake_ecommerce": 0.143957492106725,
+          "behavior.p_crypto_scam": 1.0180963229734732,
+          "behavior.p_malware_delivery": -0.47313873696627007,
+          "text_tfidf.p_benign": -1.4721966410017095,
+          "text_tfidf.p_phishing": -0.8640216877253083,
+          "text_tfidf.p_fake_ecommerce": -0.29671637693018565,
+          "text_tfidf.p_crypto_scam": 2.919868578108855,
+          "text_tfidf.p_malware_delivery": -0.2514220247936367
+        },
+        "malware_delivery": {
+          "dom.p_benign": -0.07706182040956841,
+          "dom.p_phishing": -0.20217631344125986,
+          "dom.p_fake_ecommerce": -0.5295439677238758,
+          "dom.p_crypto_scam": -0.3544485299480797,
+          "dom.p_malware_delivery": 1.1718517969450337,
+          "behavior.p_benign": -0.3796700140557114,
+          "behavior.p_phishing": 0.42613297868552125,
+          "behavior.p_fake_ecommerce": -0.7815829854909294,
+          "behavior.p_crypto_scam": -0.578041915080009,
+          "behavior.p_malware_delivery": 1.3217846984602386,
+          "text_tfidf.p_benign": -0.1417384574851112,
+          "text_tfidf.p_phishing": -0.3213852809778988,
+          "text_tfidf.p_fake_ecommerce": -0.2122212290894437,
+          "text_tfidf.p_crypto_scam": -0.770452282799389,
+          "text_tfidf.p_malware_delivery": 1.4544219218713499
+        }
+      }
+    },
+    "hybrid": {
+      "strategy": "hybrid",
+      "method": "SHAP (TreeExplainer, mean |SHAP| over the test pages, summed over classes)",
+      "arm_share": {
+        "dom": 0.47817771213908716,
+        "behavior": 0.10590644072051383,
+        "text_tfidf": 0.41591584714039903
+      },
+      "top_features": [
+        {
+          "feature": "text_tfidf.p_crypto_scam",
+          "arm": "text_tfidf",
+          "mean_abs_shap": 2.5590710639953613,
+          "per_class": {
+            "benign": 0.020215671509504318,
+            "phishing": 0.02769625186920166,
+            "fake_ecommerce": 0.09348059445619583,
+            "crypto_scam": 2.30600643157959,
+            "malware_delivery": 0.11167214065790176
+          }
+        },
+        {
+          "feature": "text_tfidf.p_phishing",
+          "arm": "text_tfidf",
+          "mean_abs_shap": 2.2077879905700684,
+          "per_class": {
+            "benign": 0.243758425116539,
+            "phishing": 1.1702409982681274,
+            "fake_ecommerce": 0.27080538868904114,
+            "crypto_scam": 0.32902827858924866,
+            "malware_delivery": 0.19395489990711212
+          }
+        },
+        {
+          "feature": "text_tfidf.p_malware_delivery",
+          "arm": "text_tfidf",
+          "mean_abs_shap": 1.898153305053711,
+          "per_class": {
+            "benign": 0.10943233966827393,
+            "phishing": 0.19012603163719177,
+            "fake_ecommerce": 0.06714852899312973,
+            "crypto_scam": 0.046715714037418365,
+            "malware_delivery": 1.4847307205200195
+          }
+        },
+        {
+          "feature": "text_tfidf.p_fake_ecommerce",
+          "arm": "text_tfidf",
+          "mean_abs_shap": 1.5848369598388672,
+          "per_class": {
+            "benign": 0.062721848487854,
+            "phishing": 0.1491178274154663,
+            "fake_ecommerce": 0.8980937004089355,
+            "crypto_scam": 0.09488145262002945,
+            "malware_delivery": 0.38002222776412964
+          }
+        },
+        {
+          "feature": "text_tfidf.p_benign",
+          "arm": "text_tfidf",
+          "mean_abs_shap": 1.5744019746780396,
+          "per_class": {
+            "benign": 1.248902678489685,
+            "phishing": 0.0783977136015892,
+            "fake_ecommerce": 0.048205867409706116,
+            "crypto_scam": 0.15465672314167023,
+            "malware_delivery": 0.044238872826099396
+          }
+        },
+        {
+          "feature": "dom.external_link_ratio",
+          "arm": "dom",
+          "mean_abs_shap": 1.1262798309326172,
+          "per_class": {
+            "benign": 0.372829407453537,
+            "phishing": 0.3798453211784363,
+            "fake_ecommerce": 0.1753445565700531,
+            "crypto_scam": 0.18597306311130524,
+            "malware_delivery": 0.012287534773349762
+          }
+        },
+        {
+          "feature": "dom.internal_link_count",
+          "arm": "dom",
+          "mean_abs_shap": 1.0020415782928467,
+          "per_class": {
+            "benign": 0.2467353492975235,
+            "phishing": 0.45368269085884094,
+            "fake_ecommerce": 0.062251679599285126,
+            "crypto_scam": 0.23502522706985474,
+            "malware_delivery": 0.004346574191004038
+          }
+        },
+        {
+          "feature": "dom.null_link_ratio",
+          "arm": "dom",
+          "mean_abs_shap": 0.6990078091621399,
+          "per_class": {
+            "benign": 0.17688950896263123,
+            "phishing": 0.23895737528800964,
+            "fake_ecommerce": 0.029963640496134758,
+            "crypto_scam": 0.22236524522304535,
+            "malware_delivery": 0.030832024291157722
+          }
+        },
+        {
+          "feature": "dom.distinct_tag_count",
+          "arm": "dom",
+          "mean_abs_shap": 0.6952312588691711,
+          "per_class": {
+            "benign": 0.11327368021011353,
+            "phishing": 0.14749422669410706,
+            "fake_ecommerce": 0.3689095973968506,
+            "crypto_scam": 0.05758162960410118,
+            "malware_delivery": 0.00797209795564413
+          }
+        },
+        {
+          "feature": "dom.avg_depth",
+          "arm": "dom",
+          "mean_abs_shap": 0.6492770314216614,
+          "per_class": {
+            "benign": 0.12302516400814056,
+            "phishing": 0.05165492743253708,
+            "fake_ecommerce": 0.11733748763799667,
+            "crypto_scam": 0.13575024902820587,
+            "malware_delivery": 0.22150923311710358
+          }
+        },
+        {
+          "feature": "dom.inline_script_chars_total",
+          "arm": "dom",
+          "mean_abs_shap": 0.6489554047584534,
+          "per_class": {
+            "benign": 0.21934103965759277,
+            "phishing": 0.07589122653007507,
+            "fake_ecommerce": 0.10182298719882965,
+            "crypto_scam": 0.11283236742019653,
+            "malware_delivery": 0.13906776905059814
+          }
+        },
+        {
+          "feature": "dom.node_count",
+          "arm": "dom",
+          "mean_abs_shap": 0.6128639578819275,
+          "per_class": {
+            "benign": 0.07535118609666824,
+            "phishing": 0.09109652787446976,
+            "fake_ecommerce": 0.08984614163637161,
+            "crypto_scam": 0.16306930780410767,
+            "malware_delivery": 0.19350077211856842
+          }
+        },
+        {
+          "feature": "dom.leaf_ratio",
+          "arm": "dom",
+          "mean_abs_shap": 0.5956341028213501,
+          "per_class": {
+            "benign": 0.22946785390377045,
+            "phishing": 0.1599128246307373,
+            "fake_ecommerce": 0.055161990225315094,
+            "crypto_scam": 0.08695365488529205,
+            "malware_delivery": 0.06413773447275162
+          }
+        },
+        {
+          "feature": "dom.text_to_html_ratio",
+          "arm": "dom",
+          "mean_abs_shap": 0.5715724229812622,
+          "per_class": {
+            "benign": 0.054504554718732834,
+            "phishing": 0.029743509367108345,
+            "fake_ecommerce": 0.15954217314720154,
+            "crypto_scam": 0.04486933723092079,
+            "malware_delivery": 0.28291285037994385
+          }
+        },
+        {
+          "feature": "dom.external_script_count",
+          "arm": "dom",
+          "mean_abs_shap": 0.5431571006774902,
+          "per_class": {
+            "benign": 0.020979786291718483,
+            "phishing": 0.0363602340221405,
+            "fake_ecommerce": 0.04433935508131981,
+            "crypto_scam": 0.1732490360736847,
+            "malware_delivery": 0.2682287096977234
+          }
+        }
+      ]
+    },
+    "mean": {
+      "strategy": "mean",
+      "method": "weights",
+      "arm_share": {
+        "dom": 0.3333333333333333,
+        "behavior": 0.3333333333333333,
+        "text_tfidf": 0.3333333333333333
+      }
+    }
+  }
+}

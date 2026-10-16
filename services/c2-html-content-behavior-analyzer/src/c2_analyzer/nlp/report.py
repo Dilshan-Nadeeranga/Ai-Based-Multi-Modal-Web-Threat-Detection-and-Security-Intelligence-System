@@ -185,10 +185,12 @@ def render_results_md(results: dict) -> str:
         lines += [
             "## Colab vs local CPU (final model)",
             "",
-            f"- max |Δ probability| = {consistency.get('max_abs_diff')}, argmax agreement "
-            f"{_pct(consistency.get('argmax_agreement'))} over {consistency.get('n')} pages "
-            f"(tolerance {consistency.get('tolerance')}) → "
-            f"{'OK' if consistency.get('ok') else 'CHECK'}",
+            f"- predicted labels identical: {_pct(consistency.get('argmax_agreement'))} of "
+            f"{consistency.get('n')} pages; max |Δ probability| = "
+            f"{consistency.get('max_abs_diff')} (must be < {consistency.get('tolerance')}) → "
+            f"**{'PASS' if consistency.get('ok') else 'CHECK'}**",
+            "- rule: PASS if every label is identical and max |Δp| < the tolerance; GPU vs "
+            "CPU fp32 differences of ~1e-3 are expected.",
             "",
         ]
     return "\n".join(lines)

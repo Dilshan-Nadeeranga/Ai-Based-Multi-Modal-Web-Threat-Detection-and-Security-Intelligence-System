@@ -92,7 +92,18 @@ def export_bundle(
     staging = out_zip.with_suffix("")
     shutil.rmtree(staging, ignore_errors=True)
     export_examples(data, staging / "data", model_name=config.model_name)
+    stage_code(staging, config)
+    (staging / "README.txt").write_text(
+        README.format(
+            version=version, fingerprint=data.meta["split_fingerprint"], counts=data.meta["counts"]
+        ),
+        encoding="utf-8",
+    )
+    return out_zip, zip_folder(staging, out_zip)
 
+
+def stage_code(staging: Path, config: XlmrConfig) -> None:
+    """configs/xlmr.yaml (+ model_name), c2_nlp/ portable code, run_train.py, requirements."""
     configs = staging / "configs"
     configs.mkdir(parents=True)
     source = config.source.read_text(encoding="utf-8").rstrip()
@@ -110,13 +121,10 @@ def export_bundle(
         shutil.copyfile(NLP_DIR / name, package / name)
     (staging / "run_train.py").write_text(RUN_TRAIN, encoding="utf-8")
     (staging / "requirements-colab.txt").write_text(pinned_requirements(), encoding="utf-8")
-    (staging / "README.txt").write_text(
-        README.format(
-            version=version, fingerprint=data.meta["split_fingerprint"], counts=data.meta["counts"]
-        ),
-        encoding="utf-8",
-    )
 
+
+def zip_folder(staging: Path, out_zip: Path) -> list[tuple[str, int]]:
+    """Zip ``staging`` into ``out_zip`` (sorted members), delete staging; [(member, bytes)]."""
     out_zip.parent.mkdir(parents=True, exist_ok=True)
     members = []
     with zipfile.ZipFile(out_zip, "w", compression=zipfile.ZIP_DEFLATED) as archive:
@@ -125,7 +133,7 @@ def export_bundle(
             archive.write(path, name)
             members.append((name, path.stat().st_size))
     shutil.rmtree(staging, ignore_errors=True)
-    return out_zip, members
+    return members
 
 
 # ---- import ----------------------------------------------------------------------------------

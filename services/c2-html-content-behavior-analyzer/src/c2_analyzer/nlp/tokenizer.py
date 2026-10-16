@@ -17,15 +17,41 @@ because Sinhala / Tamil need more tokens per character than English.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import numpy as np
+
+# transformers 4.57.x logs "... incorrect regex pattern ... set fix_mistral_regex=True" for
+# EVERY local checkpoint whose config.json was written by transformers > 4.57.2 and < 5.0
+# (our Colab-trained XLM-R: 4.57.6), whatever the model type - its Mistral check only
+# exempts non-Mistral models for configs written by <= 4.57.2. The warning is FALSE for
+# XLM-R: its pre-tokenizer is WhitespaceSplit + Metaspace (SentencePiece), with no regex
+# Split for the Mistral fix to patch. Verified (Part 9A): the fine-tuned tokenizer and
+# the base xlm-roberta-base tokenizer give identical ids on all 459 v0.3 page_texts
+# (en / si / ta / mixed / other). So exactly that message is dropped; every other
+# transformers warning still shows.
+_FALSE_WARNING = "fix_mistral_regex"
+_WARNING_LOGGER = "transformers.tokenization_utils_base"
+
+
+class _DropMistralRegexWarning(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return _FALSE_WARNING not in record.getMessage()
+
+
+def silence_false_regex_warning() -> None:
+    """Install the filter once (idempotent)."""
+    logger = logging.getLogger(_WARNING_LOGGER)
+    if not any(isinstance(f, _DropMistralRegexWarning) for f in logger.filters):
+        logger.addFilter(_DropMistralRegexWarning())
 
 
 def load_tokenizer(name_or_path: str) -> Any:
     """AutoTokenizer of a hub name (``xlm-roberta-base``) or a local model folder."""
     from transformers import AutoTokenizer
 
+    silence_false_regex_warning()
     return AutoTokenizer.from_pretrained(str(name_or_path))
 
 

@@ -60,8 +60,11 @@ def main(argv: list[str] | None = None) -> int:
             )
             if results.get("consistency"):
                 c = results["consistency"]
-                verdict = "OK" if c["ok"] else "CHECK"
-                print(f"Colab vs local CPU: max |Δp| {c['max_abs_diff']} -> {verdict}")
+                verdict = "PASS" if c["ok"] else "CHECK"
+                print(
+                    f"Colab vs local CPU: labels identical {100 * c['argmax_agreement']:.1f} %, "
+                    f"max |Δp| {c['max_abs_diff']} (< {c['tolerance']}) -> {verdict}"
+                )
             print(f"reports: {config.reports_dir(args.version)}")
     _, _, text = ablation(args.version, config, data)
     print(f"\nAblation so far ({args.version}, same {data.meta['counts']['test']} test pages):")

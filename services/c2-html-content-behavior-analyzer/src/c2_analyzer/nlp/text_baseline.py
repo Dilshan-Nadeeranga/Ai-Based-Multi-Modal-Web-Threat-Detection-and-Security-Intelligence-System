@@ -82,6 +82,26 @@ def predict_proba(pipeline: Pipeline, texts: list[str], n_classes: int) -> np.nd
     return full
 
 
+def cv_probabilities(
+    texts,
+    y: np.ndarray,
+    fold_of: np.ndarray,
+    settings: dict,
+    C: float,
+    n_classes: int,  # noqa: N803
+) -> np.ndarray:
+    """Out-of-fold probabilities over the shared folds: each page is predicted by a pipeline
+    (vectorizer + LR) fit on the OTHER folds only. Used for the C grid here and, with the
+    chosen C, for the Part 9 fusion OOF predictions."""
+    texts = np.asarray(texts, dtype=object)
+    proba = np.zeros((len(y), n_classes))
+    for fold in sorted(set(fold_of.tolist())):
+        fit, held = fold_of != fold, fold_of == fold
+        pipeline = make_pipeline(settings, C).fit(list(texts[fit]), y[fit])
+        proba[held] = predict_proba(pipeline, list(texts[held]), n_classes)
+    return proba
+
+
 def top_ngrams(pipeline: Pipeline, labels: list[str], n: int = 10) -> dict[str, list[str]]:
     """Strongest positive n-grams per class (LR coefficients) - what the model reads."""
     names = pipeline.named_steps["tfidf"].get_feature_names_out()
@@ -121,12 +141,11 @@ def train_text_baseline(
     started = time.perf_counter()
     grid = []
     for C in settings["C"]:  # noqa: N806
+        oof = cv_probabilities(texts, y, fold_of, settings, C, len(labels))
         runs = []
         for fold in sorted(set(fold_of.tolist())):
-            fit, held = fold_of != fold, fold_of == fold
-            pipeline = make_pipeline(settings, C).fit(list(texts[fit]), y[fit])
-            proba = predict_proba(pipeline, list(texts[held]), len(labels))
-            runs.append(full_metrics(y[held], proba.argmax(axis=1), proba, labels))
+            held = fold_of == fold
+            runs.append(full_metrics(y[held], oof[held].argmax(axis=1), oof[held], labels))
         summary = seed_summary(runs)
         grid.append({"C": float(C), "summary": summary, "folds": runs})
         log(

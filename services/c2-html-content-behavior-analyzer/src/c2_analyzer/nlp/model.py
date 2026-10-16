@@ -40,9 +40,11 @@ def build_model(model_name: str, labels: list[str]) -> Any:
 
 def load_classifier(path: str | Path, device: str = "cpu") -> tuple[Any, Any]:
     """(model in eval mode on ``device``, tokenizer) of a saved checkpoint folder."""
-    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+    from transformers import AutoModelForSequenceClassification
 
-    tokenizer = AutoTokenizer.from_pretrained(str(path))
+    from .tokenizer import load_tokenizer  # drops the false "fix_mistral_regex" warning
+
+    tokenizer = load_tokenizer(str(path))
     model = AutoModelForSequenceClassification.from_pretrained(str(path))
     model.to(device)
     model.eval()

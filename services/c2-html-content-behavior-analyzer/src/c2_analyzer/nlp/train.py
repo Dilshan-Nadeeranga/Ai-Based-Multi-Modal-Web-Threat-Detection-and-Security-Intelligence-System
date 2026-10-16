@@ -24,6 +24,16 @@ Design decisions (viva):
   selection, every seed writes val + test probabilities (``predictions.jsonl``) so the
   ~1 GB final model is the only download needed; ``evaluate_xlmr.py`` computes the
   test metrics once from them and re-checks the final model on the local CPU.
+
+CV / OOF mode (Part 9A, ``run_train.py --cv``; bundle from ``export-bundle --cv``):
+the fusion stacker needs XLM-R probabilities for every train+val page from a model that
+NEVER saw that page. For each of the 5 shared grouped folds k: train on the other folds
+minus an inner-validation slice, early-stop on that inner slice (cluster-pure, chosen on
+the laptop, never the test split - the CV bundle does not even contain test pages), then
+predict ONLY fold k. Same hyperparameters as above, one seed (Part 6A's final seed).
+Only the predictions are kept (``oof/fold_<k>.jsonl`` + ``oof_meta.json``, a few KB);
+the fold weights are deleted, so the download is tiny. A finished fold is skipped on a
+re-run (a Colab disconnect does not lose the folds already done).
 """
 
 from __future__ import annotations
@@ -48,6 +58,10 @@ SPLITS = ("train", "val", "test")
 LABEL_MAPPING_FILE = "label_mapping.json"
 META_FILE = "examples_meta.json"
 SELECTION_RULE = "seed with the highest VAL macro-F1 (ties: lower seed); test never used"
+CV_EXAMPLES_FILE = "cv_examples.jsonl"  # train+val pages with their shared CV fold
+CV_PLAN_FILE = "cv_plan.json"  # seed + the inner-validation ids of every fold
+OOF_DIR = "oof"
+OOF_META_FILE = "oof_meta.json"
 
 
 # ---- files ---------------------------------------------------------------------------------
@@ -226,37 +240,34 @@ def _best_epoch(history: list[dict], best: float | None) -> float | None:
     return None
 
 
-def train_seed(
-    data: Examples,
+def fit_trainer(
+    train_rows: list[dict],
+    val_rows: list[dict],
+    labels: list[str],
     config: dict,
     model_name: str,
     seed: int,
-    out_dir: Path,
+    work_dir: Path,
+    weights: list[float],
+    max_length: int,
     smoke: bool = False,
-    log=print,
-) -> dict:
-    """Fine-tune one seed, save the best epoch to ``out_dir``; returns metrics.json."""
+):
+    """Fine-tune one model: early stopping on ``val_rows`` macro-F1, best epoch restored.
+
+    Shared by the 3-seed training (train_seed) and the CV / OOF mode (train_cv), so both
+    use exactly the same Trainer settings. Returns (trainer, tokenizer, args, seconds).
+    """
     import torch
     from transformers import DataCollatorWithPadding, EarlyStoppingCallback, TrainingArguments
     from transformers import set_seed as hf_set_seed
 
-    out_dir = Path(out_dir)
-    labels = data.labels
     t = config["training"]
-    max_length = int(config["max_length"])
-    train_rows, val_rows = data.rows["train"], data.rows["val"]
-    if smoke:
-        per_class = int(config["smoke"]["per_class"])
-        train_rows, val_rows = smoke_subset(train_rows, per_class), smoke_subset(val_rows, 1)
-        max_length = int(config["smoke"]["max_length"])
-    weights = class_weights([row["label_id"] for row in data.rows["train"]], len(labels))
-
     hf_set_seed(seed)  # the new classification head is initialised from this seed
     tokenizer = load_tokenizer(model_name)
     model = build_model(model_name, labels)
     cuda = torch.cuda.is_available()
     arguments = {
-        "output_dir": str(out_dir / "_checkpoints"),
+        "output_dir": str(Path(work_dir) / "_checkpoints"),
         "learning_rate": float(t["learning_rate"]),
         "num_train_epochs": float(t["epochs"]),
         "per_device_train_batch_size": int(t["batch_size"]),
@@ -305,7 +316,33 @@ def train_seed(
     )
     started = time.perf_counter()
     trainer.train()
-    seconds = time.perf_counter() - started
+    return trainer, tokenizer, args, time.perf_counter() - started
+
+
+def train_seed(
+    data: Examples,
+    config: dict,
+    model_name: str,
+    seed: int,
+    out_dir: Path,
+    smoke: bool = False,
+    log=print,
+) -> dict:
+    """Fine-tune one seed, save the best epoch to ``out_dir``; returns metrics.json."""
+    out_dir = Path(out_dir)
+    labels = data.labels
+    t = config["training"]
+    max_length = int(config["max_length"])
+    train_rows, val_rows = data.rows["train"], data.rows["val"]
+    if smoke:
+        per_class = int(config["smoke"]["per_class"])
+        train_rows, val_rows = smoke_subset(train_rows, per_class), smoke_subset(val_rows, 1)
+        max_length = int(config["smoke"]["max_length"])
+    weights = class_weights([row["label_id"] for row in data.rows["train"]], len(labels))
+
+    trainer, tokenizer, args, seconds = fit_trainer(
+        train_rows, val_rows, labels, config, model_name, seed, out_dir, weights, max_length, smoke
+    )
     best = trainer.state.best_metric
     history = trainer.state.log_history
 
@@ -459,6 +496,154 @@ def train_all(
     return card
 
 
+# ---- CV / OOF mode (Part 9A) -----------------------------------------------------------------
+
+
+def load_cv_examples(folder: Path) -> tuple[Examples, list[dict], dict]:
+    """(Examples with label mapping + meta, train+val rows with "fold", cv_plan.json)."""
+    folder = Path(folder)
+    mapping = json.loads((folder / LABEL_MAPPING_FILE).read_text(encoding="utf-8"))
+    meta = json.loads((folder / META_FILE).read_text(encoding="utf-8"))
+    plan = json.loads((folder / CV_PLAN_FILE).read_text(encoding="utf-8"))
+    rows = read_jsonl(folder / CV_EXAMPLES_FILE)
+    data = Examples(labels=list(mapping["classes"]), rows={}, label_mapping=mapping, meta=meta)
+    return data, rows, plan
+
+
+def fold_roles(rows: list[dict], plan: dict, fold: int) -> tuple[list, list, list]:
+    """(train, inner validation, held-out) rows of one fold. The held-out fold is never in
+    train or inner validation, so its predictions are truly out-of-fold."""
+    inner = set(plan["folds"][str(fold)]["inner_val"])
+    held = [row for row in rows if int(row["fold"]) == fold]
+    val = [row for row in rows if int(row["fold"]) != fold and row["sample_id"] in inner]
+    train = [row for row in rows if int(row["fold"]) != fold and row["sample_id"] not in inner]
+    return train, val, held
+
+
+def train_cv_fold(
+    data: Examples,
+    rows: list[dict],
+    plan: dict,
+    config: dict,
+    model_name: str,
+    fold: int,
+    out_root: Path,
+    seed: int,
+    smoke: bool = False,
+    log=print,
+) -> dict:
+    """Train fold ``fold``'s model, write ``oof/fold_<k>.jsonl``, delete the weights."""
+    out_root = Path(out_root)
+    labels = data.labels
+    train_rows, val_rows, held = fold_roles(rows, plan, fold)
+    max_length = int(config["max_length"])
+    weights = class_weights([row["label_id"] for row in train_rows], len(labels))
+    if smoke:
+        per_class = int(config["smoke"]["per_class"])
+        train_rows, val_rows = smoke_subset(train_rows, per_class), smoke_subset(val_rows, 1)
+        max_length = int(config["smoke"]["max_length"])
+    work = out_root / "_work" / f"fold_{fold}"
+    trainer, tokenizer, _, seconds = fit_trainer(
+        train_rows, val_rows, labels, config, model_name, seed, work, weights, max_length, smoke
+    )
+    best = trainer.state.best_metric
+    proba = predict_proba(
+        trainer.model,
+        tokenizer,
+        [row["text"] for row in held],
+        max_length,
+        int(config["training"]["eval_batch_size"]),
+    )
+    predictions = [
+        {
+            "sample_id": row["sample_id"],
+            "fold": fold,
+            "label_id": int(row["label_id"]),
+            "probabilities": [round(float(p), 6) for p in probs],
+        }
+        for row, probs in zip(held, proba, strict=True)
+    ]
+    write_jsonl(predictions, out_root / OOF_DIR / f"fold_{fold}.jsonl")
+    summary = {
+        "fold": fold,
+        "n_train": len(train_rows),
+        "n_inner_val": len(val_rows),
+        "n_heldout": len(held),
+        "best_inner_val_macro_f1": best,
+        "best_epoch": _best_epoch(trainer.state.log_history, best),
+        "epochs_run": trainer.state.epoch,
+        "training_seconds": round(seconds, 1),
+    }
+    write_json(summary, out_root / OOF_DIR / f"fold_{fold}_metrics.json")
+    del trainer
+    shutil.rmtree(work, ignore_errors=True)  # weights are not needed: predictions only
+    log(
+        f"fold {fold}: train {summary['n_train']}, inner val {summary['n_inner_val']}, "
+        f"held out {summary['n_heldout']} - best inner-val macro-F1 "
+        f"{best if best is None else round(best, 4)} at epoch {summary['best_epoch']} "
+        f"({seconds:.0f} s)"
+    )
+    return summary
+
+
+def train_cv(
+    examples_dir: Path,
+    out_root: Path,
+    config: dict,
+    model_name: str,
+    seed: int | None = None,
+    folds: list[int] | None = None,
+    smoke: bool = False,
+    log=print,
+) -> dict:
+    """Every fold (finished folds are skipped) -> oof/ + oof_meta.json. Returns the meta."""
+    data, rows, plan = load_cv_examples(examples_dir)
+    out_root = Path(out_root)
+    seed = int(seed if seed is not None else plan["seed"])
+    all_folds = sorted(int(k) for k in plan["folds"])
+    info = device_info()
+    log(f"CV / OOF mode: device {info['device']} {info['gpu_name'] or ''} - model {model_name}")
+    log(f"seed {seed}, folds {folds or all_folds}, {len(rows)} train+val pages (no test pages)")
+    started = time.perf_counter()
+    for fold in folds or all_folds:
+        if (out_root / OOF_DIR / f"fold_{fold}.jsonl").is_file():
+            log(f"fold {fold}: already done - skipped (delete oof/fold_{fold}.jsonl to redo)")
+            continue
+        train_cv_fold(data, rows, plan, config, model_name, fold, out_root, seed, smoke, log)
+    done = [k for k in all_folds if (out_root / OOF_DIR / f"fold_{k}.jsonl").is_file()]
+    fold_metrics = [
+        json.loads((out_root / OOF_DIR / f"fold_{k}_metrics.json").read_text(encoding="utf-8"))
+        for k in done
+        if (out_root / OOF_DIR / f"fold_{k}_metrics.json").is_file()
+    ]
+    meta = {
+        "mode": "cv_oof",
+        "model_name": str(model_name),
+        "seed": seed,
+        "smoke": smoke,
+        "dataset_version": data.meta.get("dataset_version"),
+        "split_fingerprint": data.meta.get("split_fingerprint"),
+        "cv_folds_fingerprint": data.meta.get("cv_folds_fingerprint"),
+        "manifest_fingerprint": data.meta.get("manifest_fingerprint"),
+        "text_rules_hash": data.meta.get("text_rules_hash"),
+        "classes": data.labels,
+        "label_mapping": data.label_mapping,
+        "folds_expected": all_folds,
+        "folds_done": done,
+        "complete": done == all_folds,
+        "fold_metrics": fold_metrics,
+        "hyperparameters": {"max_length": config["max_length"], **config["training"]},
+        "this_run_seconds": round(time.perf_counter() - started, 1),
+        **info,
+        "library_versions": library_versions(),
+        "finished_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+    }
+    write_json(meta, out_root / OOF_META_FILE)
+    shutil.rmtree(out_root / "_work", ignore_errors=True)
+    log(f"OOF: folds done {done} of {all_folds} -> {out_root / OOF_DIR}")
+    return meta
+
+
 def load_config(path: Path) -> dict:
     import yaml
 
@@ -474,9 +659,17 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--seeds", type=int, nargs="+", default=None)
     parser.add_argument("--model-name", default=None, help="default: model_name in the config")
     parser.add_argument("--smoke", action="store_true", help="tiny subset, 1 step")
+    parser.add_argument("--cv", action="store_true", help="CV / OOF mode (Part 9A bundle)")
+    parser.add_argument("--folds", type=int, nargs="+", default=None, help="CV mode: only these")
     args = parser.parse_args(argv)
     config = load_config(Path(args.config))
     meta = json.loads((Path(args.examples) / META_FILE).read_text(encoding="utf-8"))
+    if args.cv:
+        out = Path(args.out or f"oof_out/{meta['dataset_version']}")
+        model_name = args.model_name or config.get("model_name") or "xlm-roberta-base"
+        seed = args.seeds[0] if args.seeds else None
+        train_cv(Path(args.examples), out, config, model_name, seed, args.folds, args.smoke)
+        return
     out = Path(args.out or f"models/xlmr/{meta['dataset_version']}")
     model_name = args.model_name or config.get("model_name") or "xlm-roberta-base"
     train_all(Path(args.examples), out, config, model_name, args.seeds, args.smoke)
