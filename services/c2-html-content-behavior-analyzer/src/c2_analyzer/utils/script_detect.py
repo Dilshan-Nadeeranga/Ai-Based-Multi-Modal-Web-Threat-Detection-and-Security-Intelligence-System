@@ -96,6 +96,18 @@ def detect_language(text: str) -> str:
     return "mixed"
 
 
+def native_script_hint(*texts: str | None) -> str | None:
+    """ "si" / "ta" if the short texts contain ANY Sinhala / Tamil letter, else None.
+
+    For names and titles (a Telegram channel, a post title), which are too short for
+    ``detect_language``'s ``min_letters``. If both scripts occur, the one with more
+    letters wins (a tie goes to the order in languages.yaml).
+    """
+    counts = count_letters(" ".join(text for text in texts if text))
+    natives = {code: count for code, count in counts.items() if code != "latin" and count}
+    return max(natives, key=natives.get) if natives else None
+
+
 def detect_html_language(html: str) -> str:
     """``detect_language`` applied to the visible text of an HTML page."""
     return detect_language(visible_text(html))

@@ -73,6 +73,7 @@ python scripts/collect.py download --feed openphish             # optional helpe
 python scripts/collect.py import --feed openphish --file data/feeds/openphish.txt
 python scripts/collect.py import --feed tranco --file data/feeds/tranco_top1m.csv.zip --top 1000 --sample 60
 python scripts/collect.py import --feed manual --file data/feeds/manual_urls.csv   # template: data/metadata/manual_urls_template.csv
+python scripts/collect.py import --feed threatradar --dir ../../ingestion/threat-radar/backend/data   # see "Importing from ThreatRadar"
 python scripts/collect.py fetch --label phishing --limit 60     # static mode (default)
 python scripts/collect.py retry-failed                          # failed URLs, max 3 attempts
 python scripts/collect.py progress                              # samples per label x language vs configs/collection_targets.yaml
@@ -105,6 +106,59 @@ The container only sees `data/`, runs as a non-root user and blocks downloads, m
 - **Never commit `data/raw/` or the URL lists.** `data/raw/`, `data/feeds/`, `data/metadata/candidates.csv`, `data/metadata/metadata.csv` and `data/metadata/review/` are git-ignored because they contain live scam pages and URLs. Only `dataset_schema.json`, the templates and `manifests/` (no URLs) are tracked.
 - Windows Defender quarantines many phishing pages. The collector writes pages only inside this project's `data/` folder (`data/tmp/` while saving, then `data/raw/`), never the system Temp folder, so a Defender exclusion for this project's `data\` folder is enough. Never exclude the whole project, your user folder or Temp. Pages Defender still removes are marked `blocked_by_antivirus`; files quarantined later show up as "file not found" in `build_metadata.py validate`.
 - The fetcher never submits forms, never downloads linked resources, and refuses `localhost`/private-network addresses.
+
+### Importing from ThreatRadar
+
+ThreatRadar (`ingestion/threat-radar`, a teammate's service) scrapes Telegram channels, subreddits and newly registered domains. The `threatradar` feed reads its output folder directly, so you don't have to edit any CSVs by hand. ThreatRadar's files are only read, never changed:
+
+| ThreatRadar file (under `backend/data/`) | rows | C2 `source` |
+|---|---|---|
+| `scraped/urls_only.csv` (Telegram) | `domain,url,channel,date,message_id,...` | `social_media_report` |
+| `scraped/reddit_urls_only.csv` (Reddit) | `domain,url,subreddit,date,post_id,score,title` | `social_media_report` |
+| `filtered/filtered_domains_*.json` (domain filter) | `domains[]` with `reasons`, `matchedKeywords`, `mimicBrand` | `other` |
+
+ThreatRadar does not label anything, so each URL gets a **weak suggested label** from `configs/threatradar_rules.yaml`. The first rule that matches wins:
+1. brand mimicry (ThreatRadar's `brand_mimicry:` reason, or a brand from the config inside a host that is not allow-listed, e.g. `paypal-verify.xyz`) → `phishing`;
+2. crypto/investment/airdrop/USDT/profit keywords → `crypto_scam`;
+3. shop/sale/discount/store keywords → `fake_ecommerce`;
+4. download/apk/crack/update keywords → `malware_delivery`.
+
+A row that matches no rule is **skipped**: the importer never guesses `benign`.
+- Keywords are substrings (a domain has no word breaks) and are only searched in the fields that config lists for each source. For Telegram that is the URL and the channel name; for Reddit, the URL and the post title, not the subreddit (otherwise r/CryptoScams would label every link); for the domain filter, the domain and ThreatRadar's matched keywords.
+- Each note reads `ThreatRadar <source>: <reason> — check label; <channel @x message_id=… | r/sub post_id=… | file + reasons>; seen <date>`. The note travels to `metadata.csv` with the page.
+- `language_hint` is `si` or `ta` if the channel name, post title or matched keyword contains Sinhala or Tamil script. Otherwise it is `unknown`; the fetch step then detects the language from the page itself.
+- Bare domains become `https://<domain>/`. URLs are normalized and compared with `candidates.csv`, with `metadata.csv` (`source_url` and `final_url`) and with each other.
+- Well-known legitimate domains and their subdomains are skipped. That allow-list is in the same config file; free hosts such as `*.github.io` are not covered by it.
+- A missing file is reported and skipped; it does not stop the import.
+
+End to end, run from this folder. ThreatRadar is at `../../ingestion/threat-radar`:
+
+```bash
+# 1. queue the URLs (add --since YYYY-MM-DD for new rows only, --sources telegram,reddit,domain_filter, --limit N)
+python scripts/collect.py import --feed threatradar --dir ../../ingestion/threat-radar/backend/data --since 2026-10-01
+#    prints: rows read per source, imported per suggested label, skipped (duplicate / allow-listed / no rule matched)
+
+# 2. fetch per label (static mode; 2xx HTML pages only)
+python scripts/collect.py fetch --label phishing --limit 60
+python scripts/collect.py fetch --label crypto_scam --limit 60
+python scripts/collect.py fetch --label fake_ecommerce --limit 60
+python scripts/collect.py fetch --label malware_delivery --limit 60
+python scripts/collect.py failures                     # why some were skipped / failed
+
+# 3. quality flags + near-duplicate clusters
+python scripts/deduplicate.py all
+
+# 4. review: the suggested labels are WEAK, so confirm or relabel every ThreatRadar page
+python scripts/review_labels.py review --reviewer <your name> --only-flagged
+python scripts/review_labels.py review --reviewer <your name> --label crypto_scam   # repeat per label
+
+# 5. statistics, then freeze the new version (never overwrites an existing one)
+python scripts/dataset_stats.py stats
+python scripts/dataset_stats.py freeze --version v0.4 --notes "v0.3 + ThreatRadar imports (reviewed)"
+python scripts/dataset_stats.py verify --version v0.4
+```
+
+Later parts keep reading the version they name (for example v0.3) until you rerun them with `--version v0.4`.
 
 ## Cleaning & verifying the dataset
 
