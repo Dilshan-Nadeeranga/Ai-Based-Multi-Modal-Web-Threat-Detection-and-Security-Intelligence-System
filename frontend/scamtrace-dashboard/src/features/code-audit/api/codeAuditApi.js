@@ -47,6 +47,7 @@ export async function analyzeRepository(repositoryUrl) {
       401: 'Your session has expired. Please log in again.',
       400: 'Invalid GitHub URL. Use the form https://github.com/owner/repository.',
       404: 'Repository not found. It may not exist, or it is private (private repositories are not supported yet).',
+      422: 'Unsupported repository: at least 70% of the code must be JavaScript/TypeScript.',
       429: 'GitHub rate limit reached. Please try again in a few minutes.',
       502: 'Unable to analyze repository. Please verify that the repository is public and try again.',
     }
@@ -59,6 +60,41 @@ export async function analyzeRepository(repositoryUrl) {
   }
 
   return data
+}
+
+async function gatewayRequest(path, fallbackMessage, method = 'GET') {
+  let response
+  try {
+    response = await fetch(`${GATEWAY_BASE_URL}${path}`, { method, credentials: 'include' })
+  } catch {
+    throw new CodeAuditApiError('Backend is unavailable. Please make sure the API Gateway is running.', 0)
+  }
+  let data = null
+  try {
+    data = await response.json()
+  } catch {
+    // non-JSON body
+  }
+  if (!response.ok) {
+    const message = data && (data.message || data.detail)
+    throw new CodeAuditApiError(typeof message === 'string' ? message : fallbackMessage, response.status)
+  }
+  return data
+}
+
+/** GET {gateway}/code-audit/projects — the user's saved repositories with their scan history */
+export function listProjects() {
+  return gatewayRequest('/code-audit/projects', 'Unable to load your projects.')
+}
+
+/** DELETE {gateway}/code-audit/projects/{scanId} — removes the user's project containing this scan */
+export function deleteProject(scanId) {
+  return gatewayRequest(`/code-audit/projects/${encodeURIComponent(scanId)}`, 'Unable to delete this project.', 'DELETE')
+}
+
+/** GET {gateway}/code-audit/{scanId} — owned scan record + stored C4 summary and findings */
+export function getScanRecord(scanId) {
+  return gatewayRequest(`/code-audit/${encodeURIComponent(scanId)}`, 'Unable to load this scan.')
 }
 
 /** GET /health */

@@ -61,7 +61,76 @@ async function listScans(req, res) {
   res.json({ scope: all ? "all" : "own", scans: rows });
 }
 
-/** GET /api/code-audit/:scanId — owner or ADMIN; includes C4's finding summary when reachable. */
+/**
+ * GET /api/code-audit/projects — the caller's own repositories, one entry per repository URL,
+ * each with its scan history (newest first).
+ */
+async function listProjects(req, res) {
+  const { rows } = await query(
+    `SELECT scan_id, repository_url, status, created_at
+       FROM code_audit_scans
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+      LIMIT 500`,
+    [req.user.id]
+  );
+
+  const projects = new Map();
+  for (const row of rows) {
+    const url = row.repository_url.replace(/\.git$|\/+$/g, "");
+    const key = url.toLowerCase();
+    if (!projects.has(key)) {
+      const [owner = "", name = ""] = url.replace(/^https?:\/\/github\.com\//i, "").split("/");
+      projects.set(key, {
+        repository_url: row.repository_url,
+        owner,
+        name: name || row.repository_url,
+        last_scanned_at: row.created_at,
+        latest_scan_id: row.scan_id,
+        latest_status: row.status,
+        scans: [],
+      });
+    }
+    projects.get(key).scans.push({ scan_id: row.scan_id, status: row.status, created_at: row.created_at });
+  }
+
+  res.json({ projects: [...projects.values()] });
+}
+
+/**
+ * DELETE /api/code-audit/projects/:scanId — removes the caller's project that contains this scan,
+ * i.e. all of the caller's scan records for the same repository. Other users' records are untouched.
+ */
+async function deleteProject(req, res) {
+  const { rows } = await query(
+    "SELECT scan_id, user_id, repository_url FROM code_audit_scans WHERE scan_id = $1",
+    [req.params.scanId]
+  );
+  const scan = rows[0];
+  if (!scan || scan.user_id !== req.user.id) {
+    throw new AppError(404, "Project not found.");
+  }
+
+  const key = scan.repository_url.replace(/\.git$|\/+$/g, "").toLowerCase();
+  const result = await query(
+    `DELETE FROM code_audit_scans
+      WHERE user_id = $1
+        AND lower(regexp_replace(repository_url, '(\\.git|/+)$', '')) = $2`,
+    [req.user.id, key]
+  );
+  res.json({ deleted_scans: result.rowCount, repository_url: scan.repository_url });
+}
+
+async function fetchFromC4(path) {
+  try {
+    const { data } = await axios.get(`${c4BaseUrl}/api/v1${path}`, { timeout: READ_TIMEOUT_MS });
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/** GET /api/code-audit/:scanId — owner or ADMIN; includes C4's stored summary and findings when reachable. */
 async function getScan(req, res) {
   const { rows } = await query(
     `SELECT s.scan_id, s.user_id, s.repository_url, s.status, s.created_at,
@@ -72,16 +141,9 @@ async function getScan(req, res) {
   );
   assertCanAccess(req.user, rows[0], "Repository scan");
 
-  let findings = null;
-  try {
-    ({ data: findings } = await axios.get(
-      `${c4BaseUrl}/api/v1/scans/${encodeURIComponent(req.params.scanId)}/findings`,
-      { timeout: READ_TIMEOUT_MS }
-    ));
-  } catch {
-    findings = null;
-  }
-  res.json({ scan: rows[0], findings, c4_available: findings !== null });
+  const scanPath = `/scans/${encodeURIComponent(req.params.scanId)}`;
+  const [summary, findings] = await Promise.all([fetchFromC4(scanPath), fetchFromC4(`${scanPath}/findings`)]);
+  res.json({ scan: rows[0], summary, findings, c4_available: findings !== null });
 }
 
-module.exports = { submitRepository, listScans, getScan };
+module.exports = { submitRepository, listScans, listProjects, deleteProject, getScan };
