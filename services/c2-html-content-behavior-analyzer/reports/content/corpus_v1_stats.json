@@ -1,0 +1,662 @@
+{
+  "generated_at": "2026-10-15T23:02:14+05:30",
+  "schema_version": "corpus_v1",
+  "dataset_version": "v0.3",
+  "built_at": "2026-10-15T23:01:52+05:30",
+  "taxonomy_version": "intent_v1",
+  "language_backend": "fasttext",
+  "rows": 7330,
+  "active_rows": 7330,
+  "excluded_rows": 0,
+  "exclusion_reasons": {},
+  "languages": [
+    "en",
+    "si",
+    "ta",
+    "mixed",
+    "other"
+  ],
+  "intents": [
+    "credential_request",
+    "payment_request",
+    "investment_lure",
+    "fake_security_warning",
+    "fake_reward",
+    "urgency_threat",
+    "impersonation",
+    "benign"
+  ],
+  "language_x_intent": {
+    "en": {
+      "credential_request": 19,
+      "payment_request": 0,
+      "investment_lure": 10,
+      "fake_security_warning": 7,
+      "fake_reward": 16,
+      "urgency_threat": 20,
+      "impersonation": 0,
+      "benign": 5141
+    },
+    "si": {
+      "credential_request": 12,
+      "payment_request": 0,
+      "investment_lure": 4,
+      "fake_security_warning": 4,
+      "fake_reward": 12,
+      "urgency_threat": 8,
+      "impersonation": 0,
+      "benign": 176
+    },
+    "ta": {
+      "credential_request": 12,
+      "payment_request": 0,
+      "investment_lure": 4,
+      "fake_security_warning": 4,
+      "fake_reward": 12,
+      "urgency_threat": 8,
+      "impersonation": 0,
+      "benign": 69
+    },
+    "mixed": {
+      "credential_request": 0,
+      "payment_request": 0,
+      "investment_lure": 0,
+      "fake_security_warning": 0,
+      "fake_reward": 0,
+      "urgency_threat": 0,
+      "impersonation": 0,
+      "benign": 97
+    },
+    "other": {
+      "credential_request": 0,
+      "payment_request": 0,
+      "investment_lure": 0,
+      "fake_security_warning": 0,
+      "fake_reward": 0,
+      "urgency_threat": 0,
+      "impersonation": 0,
+      "benign": 1695
+    }
+  },
+  "language_x_split": {
+    "en": {
+      "train": 3458,
+      "val": 780,
+      "test": 975
+    },
+    "si": {
+      "train": 133,
+      "val": 54,
+      "test": 29
+    },
+    "ta": {
+      "train": 60,
+      "val": 29,
+      "test": 20
+    },
+    "mixed": {
+      "train": 79,
+      "val": 13,
+      "test": 5
+    },
+    "other": {
+      "train": 1102,
+      "val": 339,
+      "test": 254
+    }
+  },
+  "source_x_split": {
+    "page_segment": {
+      "train": 4712,
+      "val": 1215,
+      "test": 1283
+    },
+    "real_message": {
+      "train": 0,
+      "val": 0,
+      "test": 0
+    },
+    "synthetic_template": {
+      "train": 120,
+      "val": 0,
+      "test": 0
+    },
+    "machine_translation": {
+      "train": 0,
+      "val": 0,
+      "test": 0
+    }
+  },
+  "intent_x_split": {
+    "credential_request": {
+      "train": 38,
+      "val": 0,
+      "test": 5
+    },
+    "payment_request": {
+      "train": 0,
+      "val": 0,
+      "test": 0
+    },
+    "investment_lure": {
+      "train": 16,
+      "val": 2,
+      "test": 0
+    },
+    "fake_security_warning": {
+      "train": 13,
+      "val": 0,
+      "test": 2
+    },
+    "fake_reward": {
+      "train": 38,
+      "val": 2,
+      "test": 0
+    },
+    "urgency_threat": {
+      "train": 35,
+      "val": 1,
+      "test": 0
+    },
+    "impersonation": {
+      "train": 0,
+      "val": 0,
+      "test": 0
+    },
+    "benign": {
+      "train": 4692,
+      "val": 1210,
+      "test": 1276
+    }
+  },
+  "by_source": {
+    "page_segment": {
+      "rows": 7210,
+      "language_x_intent": {
+        "en": {
+          "credential_request": 7,
+          "payment_request": 0,
+          "investment_lure": 6,
+          "fake_security_warning": 3,
+          "fake_reward": 4,
+          "urgency_threat": 12,
+          "impersonation": 0,
+          "benign": 5141
+        },
+        "si": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 176
+        },
+        "ta": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 69
+        },
+        "mixed": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 97
+        },
+        "other": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 1695
+        }
+      },
+      "split": {
+        "train": 4712,
+        "val": 1215,
+        "test": 1283
+      }
+    },
+    "real_message": {
+      "rows": 0,
+      "language_x_intent": {
+        "en": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "si": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "ta": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "mixed": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "other": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        }
+      },
+      "split": {
+        "train": 0,
+        "val": 0,
+        "test": 0
+      }
+    },
+    "synthetic_template": {
+      "rows": 120,
+      "language_x_intent": {
+        "en": {
+          "credential_request": 12,
+          "payment_request": 0,
+          "investment_lure": 4,
+          "fake_security_warning": 4,
+          "fake_reward": 12,
+          "urgency_threat": 8,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "si": {
+          "credential_request": 12,
+          "payment_request": 0,
+          "investment_lure": 4,
+          "fake_security_warning": 4,
+          "fake_reward": 12,
+          "urgency_threat": 8,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "ta": {
+          "credential_request": 12,
+          "payment_request": 0,
+          "investment_lure": 4,
+          "fake_security_warning": 4,
+          "fake_reward": 12,
+          "urgency_threat": 8,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "mixed": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "other": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        }
+      },
+      "split": {
+        "train": 120,
+        "val": 0,
+        "test": 0
+      }
+    },
+    "machine_translation": {
+      "rows": 0,
+      "language_x_intent": {
+        "en": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "si": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "ta": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "mixed": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        },
+        "other": {
+          "credential_request": 0,
+          "payment_request": 0,
+          "investment_lure": 0,
+          "fake_security_warning": 0,
+          "fake_reward": 0,
+          "urgency_threat": 0,
+          "impersonation": 0,
+          "benign": 0
+        }
+      },
+      "split": {
+        "train": 0,
+        "val": 0,
+        "test": 0
+      }
+    }
+  },
+  "multi_intent_rows": 0,
+  "verification": {
+    "verified_rows": 0,
+    "verified_percent": 0.0,
+    "per_source": {
+      "page_segment": 0.0,
+      "real_message": 0.0,
+      "synthetic_template": 0.0,
+      "machine_translation": 0.0
+    },
+    "per_language": {
+      "en": 0.0,
+      "si": 0.0,
+      "ta": 0.0,
+      "mixed": 0.0,
+      "other": 0.0
+    },
+    "needs_review": 1,
+    "reviews_orphaned": 0
+  },
+  "synthetic_share_per_split": {
+    "train": {
+      "rows": 4832,
+      "synthetic": 120,
+      "share_percent": 2.48
+    },
+    "val": {
+      "rows": 1215,
+      "synthetic": 0,
+      "share_percent": 0.0
+    },
+    "test": {
+      "rows": 1283,
+      "synthetic": 0,
+      "share_percent": 0.0
+    }
+  },
+  "duplicates_removed": {
+    "page_segment": {
+      "duplicates_merged_in_group": 126,
+      "dropped_duplicate_of_test": 1465,
+      "dropped_duplicate_of_val": 158
+    },
+    "real_message": {},
+    "synthetic_template": {
+      "duplicates_merged": 48
+    },
+    "machine_translation": {}
+  },
+  "build_counts": {
+    "page_segment": {
+      "pages": 459,
+      "segments_seen": 18765,
+      "rejected_length": 3884,
+      "capped_per_page": 5907,
+      "duplicates_merged_in_group": 126,
+      "rejected_few_letters": 15,
+      "benign_page_strong_cue": 1,
+      "rows": 8833,
+      "dropped_duplicate_of_test": 1465,
+      "dropped_duplicate_of_val": 158
+    },
+    "real_message": {
+      "file_missing": 1
+    },
+    "synthetic_template": {
+      "rows_read": 168,
+      "duplicates_merged": 48,
+      "rows": 120
+    },
+    "machine_translation": {
+      "rows": 0
+    }
+  },
+  "real_split_cells": [],
+  "real_text_gap": {
+    "si": {
+      "target_per_intent": 30,
+      "per_intent": {
+        "credential_request": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 30,
+          "gap": 30
+        },
+        "payment_request": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 30,
+          "gap": 30
+        },
+        "investment_lure": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 30,
+          "gap": 30
+        },
+        "fake_security_warning": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 30,
+          "gap": 30
+        },
+        "fake_reward": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 30,
+          "gap": 30
+        },
+        "urgency_threat": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 30,
+          "gap": 30
+        },
+        "impersonation": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 30,
+          "gap": 30
+        },
+        "benign": {
+          "count": 83,
+          "by_source": {
+            "page_segment": 83,
+            "real_message": 0
+          },
+          "target": 30,
+          "gap": 0
+        }
+      },
+      "intents_meeting_target": 0,
+      "scam_intents": 7,
+      "total_gap": 210
+    },
+    "ta": {
+      "target_per_intent": 15,
+      "per_intent": {
+        "credential_request": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 15,
+          "gap": 15
+        },
+        "payment_request": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 15,
+          "gap": 15
+        },
+        "investment_lure": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 15,
+          "gap": 15
+        },
+        "fake_security_warning": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 15,
+          "gap": 15
+        },
+        "fake_reward": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 15,
+          "gap": 15
+        },
+        "urgency_threat": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 15,
+          "gap": 15
+        },
+        "impersonation": {
+          "count": 0,
+          "by_source": {
+            "page_segment": 0,
+            "real_message": 0
+          },
+          "target": 15,
+          "gap": 15
+        },
+        "benign": {
+          "count": 49,
+          "by_source": {
+            "page_segment": 49,
+            "real_message": 0
+          },
+          "target": 15,
+          "gap": 0
+        }
+      },
+      "intents_meeting_target": 0,
+      "scam_intents": 7,
+      "total_gap": 105
+    }
+  },
+  "integrity": {
+    "synthetic_rows_in_val_test": 0,
+    "texts_in_several_splits": 0,
+    "groups_in_several_splits": 0,
+    "examples": {
+      "synthetic_in_val_test": [],
+      "groups_in_several_splits": []
+    },
+    "passed": true
+  },
+  "warnings": []
+}

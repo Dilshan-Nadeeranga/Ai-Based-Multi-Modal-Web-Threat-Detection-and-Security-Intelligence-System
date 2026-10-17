@@ -53,14 +53,13 @@ dom_baseline:
   reports_dir: reports/dom_baseline
   n_jobs: 4                   # threads per model (RandomForest / XGBoost); 1 = single core
 
-xlmr:
-  model_name: xlm-roberta-base
-  max_length: 512
-  batch_size: 16
-  learning_rate: 2.0e-5
-  epochs: 4
-  weight_decay: 0.01
-  warmup_ratio: 0.1
+# XLM-R page-level text classifier + TF-IDF baseline (Part 6A): every setting and path
+# lives in configs/xlmr.yaml; the base model name comes from .env XLMR_MODEL_NAME.
+# scripts/train_xlmr.py export-bundle | import-model | train --smoke | baseline | token-stats
+# scripts/evaluate_xlmr.py --version v0.3
+
+# Tri-modal fusion + ablation study (Part 9A): arms, strategies, FPR target, bootstrap and
+# paths live in configs/fusion.yaml. scripts/run_ablation.py --version v0.3
 
 # Static JavaScript analysis (Part 7): scripts/analyze_js.py
 # Rules, API catalogue, library signatures and safety limits (500 KB per script,
@@ -85,6 +84,25 @@ behavior_baseline:
   models_dir: models/behavior_baseline
   reports_dir: reports/behavior_baseline
   n_jobs: 4
+
+# Content extraction + language ID (Part 5 Batch A): scripts/build_text_corpus.py
+# Extraction rules: configs/content.yaml; language ID: configs/languages.yaml -> language_id.
+content:
+  output_dir: data/processed/text
+  reports_dir: reports/content
+  workers: 4
+
+# Scam-text corpus (Part 5 Batch B): scripts/build_text_corpus.py build | stats | export-mt-input | freeze
+# Rules: configs/corpus.yaml; intents: configs/intent_taxonomy.yaml. Corpus files with real
+# messages are git-ignored (personal data may survive masking); manifests + stats are tracked.
+corpus:
+  corpus_dir: data/corpus
+  real_texts: data/corpus/real_texts.csv
+  synthetic_texts: data/corpus/raw_texts_clean.csv
+  mt_dir: data/corpus/mt
+  review_dir: data/corpus/review        # review decisions + peer sheets (contain text)
+  manifests_dir: data/corpus/manifests  # frozen corpus versions (ids + hashes, no text)
+  reports_dir: reports/content
 
 # Sample collection (Part 1 Batch B): scripts/collect.py
 collection:

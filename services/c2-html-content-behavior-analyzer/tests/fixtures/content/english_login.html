@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Account Security Center</title>
+  <meta name="description" content="Protect your online banking account with our security center.">
+</head>
+<body>
+  <nav><a href="/">Home</a> <a href="/help">Help</a> <a href="/contact">Contact</a></nav>
+  <div role="alert">Your account has been suspended due to unusual activity.</div>
+  <h1>Restore access to your account</h1>
+  <p>We noticed a sign-in attempt from a new device. To keep your money safe, confirm your identity within 24 hours or your account will be closed permanently.</p>
+  <p>For help, write to support@bank-help.test or call 077 123 4567 today.</p>
+  <form action="/login" method="post">
+    <label for="user">Email address</label>
+    <input id="user" type="email" placeholder="you@example.com">
+    <input type="password" placeholder="Enter your password">
+    <input type="text" aria-label="One-time code">
+    <input type="hidden" name="token" value="abc">
+    <input type="submit" value="Confirm identity">
+    <button type="button">Cancel</button>
+    <button type="submit" style="display:none">Hidden trap</button>
+  </form>
+  <a class="btn btn-primary" href="/verify">Continue to secure page</a>
+  <span role="button">Get help now</span>
+  <a href="/claim">Claim refund</a>
+  <a href="/news">Read our quarterly report about financial wellbeing for families in Asia</a>
+  <p>12/10/2026</p>
+  <p>https://bank-help.test/terms</p>
+  <footer><a href="/">Home</a> <a href="/help">Help</a> <a href="/contact">Contact</a></footer>
+  <footer><a href="/">Home</a> <a href="/help">Help</a> <a href="/contact">Contact</a></footer>
+</body>
+</html>

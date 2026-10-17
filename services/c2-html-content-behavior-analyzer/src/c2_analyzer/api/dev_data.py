@@ -44,6 +44,9 @@ from c2_analyzer.behavior.batch import stored_result as stored_behavior_result
 from c2_analyzer.behavior.pipeline import map_behavior
 from c2_analyzer.classifiers.dom_baseline.common import MODEL_NAMES, BaselineConfig
 from c2_analyzer.classifiers.dom_baseline.predict import predict_features
+from c2_analyzer.content.batch import output_dir as content_output_dir
+from c2_analyzer.content.batch import stored_result as stored_content_result
+from c2_analyzer.content.extractor import extract_content
 from c2_analyzer.dataset.manifest import list_versions, manifest_paths, manifests_dir
 from c2_analyzer.dataset.metadata import MetadataStore
 from c2_analyzer.dataset.page_view import read_html
@@ -54,6 +57,9 @@ from c2_analyzer.dom.exporter import output_dir as dom_output_dir
 from c2_analyzer.dom.exporter import reports_dir as dom_reports_dir
 from c2_analyzer.dom.pipeline import extract_dom_features
 from c2_analyzer.dom.report import label_medians
+from c2_analyzer.fusion.common import FusionConfig
+from c2_analyzer.fusion.model import BUNDLE_NAME
+from c2_analyzer.fusion.predictor import FusionPredictor, FusionUnavailable
 from c2_analyzer.js_analyzer.batch import output_dir as js_output_dir
 from c2_analyzer.js_analyzer.batch import stored_result as stored_js_result
 from c2_analyzer.js_analyzer.pipeline import analyze_js
@@ -62,6 +68,7 @@ from c2_analyzer.preprocessing.loader import from_bytes
 from c2_analyzer.preprocessing.pipeline import preprocess
 from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.schemas.dom_baseline import DomPrediction
+from c2_analyzer.schemas.fusion import FusionExplanation
 from c2_analyzer.schemas.inspector import (
     DomDictionaryInfo,
     DomFeatureInfo,
@@ -117,6 +124,9 @@ class DevDataset:
         splits: Path | None = None,
         js_root: Path | None = None,
         behavior_root: Path | None = None,
+        content_root: Path | None = None,
+        fusion_models: Path | None = None,
+        fusion_oof: Path | None = None,
     ) -> None:
         self.manifests = manifests
         self.parsed_root = parsed_root  # data/processed/parsed_html (one folder per version)
@@ -129,6 +139,10 @@ class DevDataset:
         self.splits = splits  # data/splits (None = split unknown)
         self.js_root = js_root  # data/processed/js (None = never stored)
         self.behavior_root = behavior_root  # data/processed/behavior (None = never stored)
+        self.content_root = content_root  # data/processed/text (None = never stored)
+        self.fusion_models = fusion_models  # models/fusion (None = no fusion model)
+        self.fusion_oof = fusion_oof  # data/processed/fusion (OOF / test probabilities per arm)
+        self._fusion: dict[str, tuple[tuple, object]] = {}
         self._bundles: dict[str, tuple[tuple, dict]] = {}
         self._files: dict[Path, tuple[int, object]] = {}
         self._facts: dict[Path, tuple[int, int, _Facts | None]] = {}
@@ -139,6 +153,7 @@ class DevDataset:
         """The real project folders (same defaults as the Part 1/2 scripts)."""
         store = MetadataStore()  # only used for its paths; metadata.csv is not loaded here
         baseline = BaselineConfig.load()
+        fusion = FusionConfig.load()
         return cls(
             manifests=manifests_dir(store),
             parsed_root=output_dir(None).parent,
@@ -151,6 +166,9 @@ class DevDataset:
             splits=splits_root(),
             js_root=js_output_dir(None).parent,
             behavior_root=behavior_output_dir(None).parent,
+            content_root=content_output_dir(None).parent,
+            fusion_models=fusion.models_root,
+            fusion_oof=fusion.oof_root,
         )
 
     # ---- versions ---------------------------------------------------------------
@@ -276,6 +294,10 @@ class DevDataset:
             raise NotFoundError(f"{sample_id} is not in dataset {version}")
         return match.iloc[0].to_dict()
 
+    def label_of(self, version: str, sample_id: str) -> str:
+        """The manifest label of a sample (NotFoundError for an unknown id)."""
+        return str(self._row(version, sample_id)["label"])
+
     def _raw_file(self, row: dict) -> Path:
         """The original HTML file of a manifest row (must stay inside data/raw)."""
         raw_root = self.raw_dir.resolve()
@@ -393,6 +415,28 @@ class DevDataset:
         js_result = JsAnalysisResult.model_validate_json(self.js_analysis(version, sample_id)[0])
         return map_behavior(page, js_result).model_dump_json(), "on-the-fly"
 
+    def content(self, version: str, sample_id: str) -> tuple[str, str]:
+        """(PageText JSON text, "stored" | "on-the-fly") - Part 5 for one sample.
+
+        The stored result is used when it was made from the same file with the
+        current rules (and language backend); otherwise the text is extracted now
+        from the (stored or fresh) ParsedPage and the raw HTML - not saved.
+        """
+        row = self._row(version, sample_id)
+        if self.content_root is not None:
+            path = self.content_root / version / f"{sample_id}.json"
+            if stored_content_result(path, row["sha256"]) is not None:
+                return path.read_text(encoding="utf-8"), "stored"
+        raw = from_bytes(
+            self._raw_file(row).read_bytes(),
+            page_url=self._page_url(sample_id),
+            sample_id=sample_id,
+            dataset_version=version,
+            label=row["label"],
+        )
+        page = ParsedPage.model_validate_json(self.parsed(version, sample_id)[0])
+        return extract_content(page, raw.html).model_dump_json(), "on-the-fly"
+
     def dom_dictionary(self, version: str | None) -> DomDictionaryInfo:
         """The Part 3 feature dictionary + per-label medians of a version (if reported)."""
         dictionary = load_dictionary()
@@ -501,6 +545,38 @@ class DevDataset:
         )
         prediction.features_source = source
         return prediction
+
+    # ---- Part 9A: fusion -------------------------------------------------------------
+
+    def fusion(self, version: str, sample_id: str) -> FusionExplanation:
+        """The saved fusion model's decision for a sample, from the stored arm probabilities.
+
+        NotFoundError: unknown sample / no fusion model; FusionStale: model or OOF tables
+        no longer match the split (re-run run_ablation.py)."""
+        self._row(version, sample_id)  # validates the id against the pattern + manifest
+        if self.fusion_models is None or self.fusion_oof is None:
+            raise NotFoundError("no fusion model configured")
+        paths = [self.fusion_models / version / BUNDLE_NAME] + sorted(
+            (self.fusion_oof / version).glob("oof_*.*")
+        )
+        stamp = tuple(p.stat().st_mtime_ns if p.is_file() else 0 for p in paths)
+        cached = self._fusion.get(version)
+        if cached is None or cached[0] != stamp:
+            try:
+                predictor = FusionPredictor(
+                    version,
+                    models_root=self.fusion_models,
+                    oof_root=self.fusion_oof,
+                    splits_root=self.splits,
+                )
+            except FusionUnavailable as error:
+                raise NotFoundError(str(error)) from None
+            cached = (stamp, predictor)
+            self._fusion[version] = cached
+        try:
+            return cached[1].explain(sample_id)
+        except KeyError as error:
+            raise NotFoundError(str(error.args[0])) from None
 
     def safe_preview(self, sample_id: str, version: str | None = None) -> str:
         """Part 1's sanitized copy of a sample (scripts, URLs and forms removed).
