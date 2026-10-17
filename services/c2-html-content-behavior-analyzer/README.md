@@ -26,7 +26,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 | 6 | XLM-R content classification (6A: page level) | `nlp/` | `train_xlmr.py`, `evaluate_xlmr.py` |
 | 7 | Static JavaScript intent analyzer | `js_analyzer/` | `analyze_js.py` |
 | 8 | Behavioral intent mapping (sources → sinks) | `behavior/` | `map_behavior.py` |
-| 9 | Tri-modal fusion + ablation (9A) · unified API (9B, next) | `fusion/`, `api/` | `run_ablation.py`, `run_api.py` |
+| 9 | Tri-modal fusion + ablation (9A) · URL analysis engine + `/api/v1/analyze` (9B-1) | `fusion/`, `api/` | `run_ablation.py`, `calibrate_verdict.py`, `evaluate_verdict.py`, `export_openapi.py`, `run_api.py` |
 
 ## Setup
 
@@ -519,7 +519,7 @@ If the Hugging Face download fails with `CERTIFICATE_VERIFY_FAILED` on Windows (
 
 ## Fusion & ablation
 
-Part 9A: the **tri-modal fusion** of the three single-modality arms (DOM, behavior, text) and the **ablation study** that compares every arm, every pair and the fusion on the same shared split. (Part 9B - the public `/api/v1/analyze` and the gateway integration - comes next.)
+Part 9A: the **tri-modal fusion** of the three single-modality arms (DOM, behavior, text) and the **ablation study** that compares every arm, every pair and the fusion on the same shared split. (Part 9 B-1 - the public `/api/v1/analyze` - is described under **Analyze API**; the gateway integration is B-2.)
 
 ```bash
 python scripts/run_ablation.py --version v0.3                  # OOF per arm + fusion + ablation (~1 min)
@@ -675,19 +675,52 @@ v0.3 (459 pages, 5 classes), from `reports/behavior/v0.3_summary.md`:
 | DOM-only (Part 4) | Random Forest | 0.786 | 17.6 % |
 | Behavior-only (Part 7+8) | Random Forest | 0.682 | 20.6 % |
 
+## Analyze API
+
+Part 9 Batch B-1: **one call from a URL (or HTML) to a verdict.** A user (team frontend) or ThreatRadar submits a URL; C2 fetches the page itself, runs the whole tri-modal pipeline and answers with a verdict (Legitimate / Suspicious / Malicious), the threat class, a 0–100 risk score and plain-English findings. Contract + 3 example responses for teammates: [`docs/api_contract.md`](docs/api_contract.md) (OpenAPI: `docs/openapi.json`, regenerate with `python scripts/export_openapi.py`).
+
+```bash
+python scripts/calibrate_verdict.py --version v0.3   # tier thresholds -> configs/verdict.yaml (after every run_ablation.py)
+python scripts/evaluate_verdict.py --version v0.3    # OOF + 68 test pages, latency -> reports/verdict/v0.3_operating_points.md
+python scripts/run_api.py                            # loads every model once at start-up (GET /ready)
+
+curl -s -X POST http://127.0.0.1:8002/api/v1/analyze -H "Content-Type: application/json" \
+     -d '{"url": "https://example.com/", "source": "user"}'
+curl -s -X POST http://127.0.0.1:8002/api/v1/analyze -H "Content-Type: application/json" \
+     -d '{"html": "<form action=\"https://x.example/p\"><input type=password></form>", "url": "https://bank.example/"}'
+```
+
+- **Safe live fetch** (`fusion/live_fetch.py`, reusing Part 1's `StaticFetcher` - not a second fetcher). Why C2 fetches safely: the URL is attacker-controlled. One static GET, no JavaScript, no forms, no images / scripts / CSS; http / https only; 10 s timeout + 15 s whole-download cap, 5 redirects, 5 MB streamed, HTML only. **SSRF guard**: localhost, private, link-local and reserved addresses are refused for the submitted URL, every redirect hop and every address a hostname **resolves** to (`resolve_dns`; residual risk = DNS rebinding between the check and the connect, documented). A URL path / final URL ending in an executable / archive / installer extension (the `url_filters.yaml` lists), or a response with such a content type / `Content-Disposition: attachment`, is **never downloaded** → finding "URL serves a .exe file instead of a webpage" + evidence floor (malware_delivery, at least Suspicious). Other non-HTML → `inconclusive`; DNS / timeout / refused / TLS / 4xx / 5xx → `unreachable` (no verdict). Part 1's quality rules mark bot challenges, parking, suspended-hosting, error and empty pages `inconclusive` (evidence still returned) - unless the page asks for a password (placeholders never do; phishing lures say "account suspended" all the time).
+- **Orchestrator** (`fusion/orchestrator.py`): Part 2 → 3 → 5A → 6A (TF-IDF + XLM-R) → 7 → 8 → the saved 9A fusion model, each through its public function, on ONE parsed page; every step timed (`timings_ms`) and checked against the 30 s budget (504 with the partial result). **Graceful degradation**: a part that raises or a model that is missing is reported as `failed` / `skipped` with the reason; the late-fusion weights are renormalized over the arms that answered, the thresholds calibrated for exactly that arm subset are used, and `degraded: true`. Models are loaded once (background thread at start-up; `XLMR_ENABLED=false` → 3 arms, no torch).
+- **Verdict** (`fusion/verdict.py`, `configs/verdict.yaml`): risk_score = round(100 × (1 − P(benign))). **Malicious** below the 9A threshold (≤ 2 % OOF benign FPR), **Suspicious** below the cut-off where ≥ 95 % of OOF threat pages are caught, else **Legitimate**; threat_class = the most probable non-benign class. Thresholds are fitted on the 9A out-of-fold fused probabilities for **every subset of arms** (`fusion/calibration.py`; the full set reproduces 9A's threshold exactly). **Evidence floor**: password form → external domain / form-collection service, credential exfiltration, keylogging to the network, clipboard crypto swap, ClickFix, automatic risky download, executable URL → at least Suspicious, the rule is named; the floor never lowers a verdict.
+- **Response** (`schemas/analysis.py`, `c2.analysis.v1`): status, verdict, threat_class, risk_score, class probabilities, page language, ≤ 10 findings ranked by severity (PII-masked evidence, never raw HTML), per-modality status / summary / arms, explanation (arm contributions, top features, rules), degraded, warnings (e.g. Sinhala / Tamil text-model caveat), model versions, timings.
+- **API guards** (`api/guards.py`): in-memory cache per normalized URL (10 min, `cached: true`; unreachable results are not cached), per-client rate limit (30 / min → 429 + Retry-After), JSON only (415), url ≤ 2,048 chars and http(s) (422), html ≤ 5 MB (413), CORS only for `CORS_ORIGINS`. `GET /health` = liveness, `GET /ready` = models loaded + versions (503 while loading / broken).
+- **Inspector**: tab "Unified Result (Part 9)" = the AnalysisResponse of the selected sample (html mode) or pasted HTML, plus a **Check a URL** box (url mode, fetched by the server): verdict badge, risk gauge, threat class, findings with severity colours, modality chips, warnings - text only.
+
+v0.3 operating points (`reports/verdict/v0.3_operating_points.md`; flagged = Suspicious or Malicious):
+
+| | benign FPR flagged | benign → Malicious | threat recall flagged | threat recall Malicious |
+|---|---|---|---|---|
+| OOF 391, 4 arms (design targets) | 25.4 % | 1.6 % | 95.5 % | 62.6 % |
+| **test 68, 4 arms (live engine)** | **23.5 %** | **0.0 %** | **94.1 %** | **76.5 %** |
+| test 68, 3 arms (no XLM-R) | 35.3 % | 2.9 % | 94.1 % | 58.8 % |
+
+The evidence floor fired on 0 benign and 14 threat OOF pages and raised no verdict on v0.3 (the models already flag those pages) - it is a backstop for pages the models miss. Live engine = stored 9A test probabilities (max |Δp| ≤ 1e-6). Latency on this laptop (CPU, warm, html mode, 68 test pages): with XLM-R p50 586 ms / p95 1.3 s (model load 7.8 s), without XLM-R p50 202 ms / p95 1.0 s. A url-mode request adds the fetch time.
+
 ## API
 
 | Method | Path | Status |
 |---|---|---|
-| GET | `/health` | ✅ returns `{"status": "ok", "service": "c2"}` |
+| GET | `/health` | ✅ returns `{"status": "ok", "service": "c2"}` (liveness) |
+| GET | `/ready` | ✅ Part 9 B-1: 200 + arms / model versions once every model is loaded, 503 while loading or broken |
 | POST | `/api/v1/dom-features` | ✅ Part 3: same body → `DomResult` (52-feature vector in dictionary order + evidence). No `url` → `base_url_known = 0` and external features 0 |
 | POST | `/api/v1/preprocess` | ✅ Part 2: body `{"html": "...", "url": "..." or null}` → `ParsedPage` JSON (same as the stored files). `url` is never fetched. Body > 5 MB → `413` |
 | POST | `/api/v1/js-analysis` | ✅ Part 7: same body → `JsAnalysisResult` (detections with line numbers / arguments / masked snippets, scripts with obfuscation stats, external scripts, js_v1 features). Nothing is executed or downloaded |
 | POST | `/api/v1/content` | ✅ Part 5: same body → `PageText` (segments per field with language, page language + confidence + method, model-ready `page_text`). Text is prepared, nothing is classified |
 | POST | `/api/v1/text-prediction` | ✅ Part 6A: same body → `TextPrediction` (Part 2 → 5A page_text → fine-tuned XLM-R + TF-IDF baseline: predicted class + probability per class, XLM-R token count / truncation). A model not trained yet answers `available: false` + "model not available" (still 200) |
 | POST | `/api/v1/behavior` | ✅ Part 8: same body → `BehaviorResult` (sources, sinks, flows with evidence chains, findings with severity and message, beh_v1 intent vector, risk score). Runs Part 2 + 7 + 8; nothing is executed or downloaded |
-| POST | `/api/v1/analyze` | stub (501) – body `{"html": "...", "url": "..."}` |
-| POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}` |
+| POST | `/api/v1/analyze` | ✅ Part 9 B-1: `{"url": ...}` (C2 fetches safely) or `{"html": ..., "url"?: ...}` → `AnalysisResponse` (`c2.analysis.v1`: verdict, threat class, risk score, findings, modalities, explanation). See **Analyze API** above |
+| POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}`; the gateway should switch to `/api/v1/analyze` (Batch B-2) |
 | GET | `/api/v1/dev/...`, `/inspector` | developer only – see below (404 unless `APP_ENV=development`) |
 
 The gateway reaches C2 through its `C2_URL` env var (e.g. `http://localhost:8002`). Swagger UI with example requests: `/docs`. Every response carries `X-Content-Type-Options: nosniff`.

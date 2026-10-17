@@ -25,11 +25,18 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import FileResponse, HTMLResponse
 
-from c2_analyzer.api.dependencies import get_dev_dataset, get_text_models
+from c2_analyzer.api.dependencies import (
+    AnalysisEngine,
+    get_dev_dataset,
+    get_engine,
+    get_text_models,
+)
 from c2_analyzer.api.dev_data import DevDataset, NotFoundError
 from c2_analyzer.classifiers.dom_baseline.predict import PredictionError
+from c2_analyzer.fusion.orchestrator import BudgetExceeded
 from c2_analyzer.fusion.predictor import FusionStale
 from c2_analyzer.nlp.inference import TextModelRegistry
+from c2_analyzer.schemas.analysis import AnalysisRequest, AnalysisResponse
 from c2_analyzer.schemas.behavior import BehaviorResult
 from c2_analyzer.schemas.content import PageText
 from c2_analyzer.schemas.dom import DomResult
@@ -56,6 +63,7 @@ INSPECTOR_CSP = (
 NO_STORE = {"Cache-Control": "no-store"}
 DatasetDep = Annotated[DevDataset, Depends(get_dev_dataset)]  # tests override get_dev_dataset
 TextModelsDep = Annotated[TextModelRegistry, Depends(get_text_models)]  # tests override it
+EngineDep = Annotated[AnalysisEngine, Depends(get_engine)]  # tests override get_engine
 
 router = APIRouter(prefix="/api/v1/dev", tags=["developer inspector (APP_ENV=development)"])
 inspector_router = APIRouter()
@@ -264,6 +272,36 @@ def fusion(
         raise HTTPException(status_code=404, detail=str(error)) from None
     except FusionStale as error:
         raise HTTPException(status_code=409, detail=str(error)) from None
+
+
+@router.get(
+    "/samples/{sample_id}/analysis",
+    response_model=AnalysisResponse,
+    summary="Part 9 B-1 unified analysis of a sample (POST /api/v1/analyze in html mode)",
+)
+def analysis(
+    dataset: DatasetDep,
+    engine: EngineDep,
+    sample_id: str,
+    version: str | None = Query(None, examples=["v0.3"], description="default: newest"),
+) -> Response:
+    """The full live pipeline on the sample's stored HTML + its page URL (never fetched):
+    exactly what ``POST /api/v1/analyze {html, url}`` returns for it. 404 unknown sample,
+    503 models not loaded, 504 time budget exceeded (partial result)."""
+    try:
+        html, url = dataset.raw_html(_version(dataset, version), sample_id)
+    except NotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from None
+    try:
+        orchestrator = engine.get()
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail=f"models not loaded: {error}") from None
+    request = AnalysisRequest(html=html, url=url, request_id=sample_id, source="api")
+    try:
+        result = orchestrator.analyze(request)
+    except BudgetExceeded as late:
+        return Response(late.response.model_dump_json(), 504, media_type="application/json")
+    return Response(result.model_dump_json(), media_type="application/json")
 
 
 @router.get(

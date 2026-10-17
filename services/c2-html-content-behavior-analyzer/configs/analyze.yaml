@@ -1,0 +1,94 @@
+# End-to-end URL analysis (Part 9 Batch B-1): POST /api/v1/analyze
+#   src/c2_analyzer/fusion/live_fetch.py   safe live fetch (reuses Part 1's StaticFetcher)
+#   src/c2_analyzer/fusion/orchestrator.py Part 2 -> 3 -> 5A -> 6A -> 7 -> 8 -> 9A fusion
+#   src/c2_analyzer/fusion/verdict.py      tiers + evidence floor (configs/verdict.yaml)
+#   src/c2_analyzer/api/guards.py          cache + per-client rate limit
+# Environment-specific switches (XLMR_ENABLED, CORS_ORIGINS) live in .env / config.Settings.
+
+# Which trained models the API serves (models/<part>/<version>/, configs/verdict.yaml thresholds).
+serving_version: v0.3
+
+# Whole request budget. Every step checks it before starting; when it is exceeded the
+# API answers 504 with whatever was finished (status "error", partial findings).
+time_budget_seconds: 30
+
+input:
+  max_url_chars: 2048
+  max_html_bytes: 5242880      # 5 MB (UTF-8) -> 413 above
+
+# Live fetch (static mode only: one GET, no JavaScript, no sub-resources, no forms).
+# Values not given here come from the `collection:` section of configs/config.yaml
+# (user agent, accept-language, max_bytes). The dataset collector's politeness limits
+# (1 request/s, 5 s per host) would serialize the API, so the API has its own.
+fetch:
+  timeout_seconds: 10
+  max_redirects: 5
+  max_bytes: 5242880           # 5 MB HTML body, larger -> inconclusive
+  rate_per_second: 20          # all outgoing fetches together
+  per_host_delay_seconds: 0.5  # politeness towards one host
+  resolve_dns: true            # refuse hostnames that RESOLVE to private / reserved IPs
+  total_timeout_seconds: 15    # whole download, however slowly the server trickles bytes
+
+# A URL whose path (or final URL after redirects) ends in one of these extensions is
+# not fetched at all, and a response whose content type is one of `download_content_types`
+# or that is sent as an attachment is not downloaded (only the headers are read).
+# The list REUSES configs/url_filters.yaml urlhaus.drop_extensions (binaries, scripts,
+# archives, office documents) minus `not_downloads` (images / plain text are not
+# executable; such URLs are simply "not a web page" -> inconclusive).
+downloads:
+  not_downloads: [png, jpg, jpeg, gif, txt, dat]
+  download_content_types:
+    - application/octet-stream
+    - application/x-msdownload
+    - application/x-msdos-program
+    - application/x-dosexec
+    - application/x-executable
+    - application/x-elf
+    - application/x-sharedlib
+    - application/x-msi
+    - application/x-ms-installer
+    - application/vnd.microsoft.portable-executable
+    - application/vnd.android.package-archive
+    - application/java-archive
+    - application/x-java-archive
+    - application/x-sh
+    - application/x-bat
+    - application/hta
+    - application/x-ms-shortcut
+    - application/zip
+    - application/x-zip-compressed
+    - application/x-rar-compressed
+    - application/vnd.rar
+    - application/x-7z-compressed
+    - application/gzip
+    - application/x-gzip
+    - application/x-tar
+    - application/x-iso9660-image
+    - application/x-apple-diskimage
+    - application/vnd.ms-excel.sheet.macroenabled.12
+    - application/vnd.ms-word.document.macroenabled.12
+
+# Part 1 quality flags (configs/quality_rules.yaml) that mean "this is not the page we
+# were asked about" -> status inconclusive (evidence is still returned).
+inconclusive_quality_flags: [empty, bot_challenge, parked_domain, error_page, suspended_hosting]
+
+cache:
+  ttl_seconds: 600             # repeated checks of the same (final) URL within 10 min
+  max_entries: 1000
+
+rate_limit:
+  requests: 30                 # per client ...
+  per_seconds: 60              # ... per this window -> 429 + Retry-After
+  trust_forwarded_for: false   # true only behind the team gateway (X-Forwarded-For)
+
+response:
+  max_findings: 10             # the rest is counted in findings_omitted
+  max_evidence_chars: 160
+
+# Page languages the text arms have little training data for (v0.3: 1 si, 1 ta test page).
+language_warnings:
+  si: "Sinhala page: the text models have limited Sinhala training data - rely more on the DOM and behavior evidence."
+  si_latn: "Singlish (Sinhala in Latin script): the text models have limited training data for it."
+  ta: "Tamil page: the text models have limited Tamil training data - rely more on the DOM and behavior evidence."
+  ta_latn: "Tanglish (Tamil in Latin script): the text models have limited training data for it."
+  mixed: "Mixed-language page: the text models were trained mostly on single-language pages."

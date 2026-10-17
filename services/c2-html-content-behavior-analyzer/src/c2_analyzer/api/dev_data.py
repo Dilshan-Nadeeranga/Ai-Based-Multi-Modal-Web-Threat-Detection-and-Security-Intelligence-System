@@ -47,6 +47,7 @@ from c2_analyzer.classifiers.dom_baseline.predict import predict_features
 from c2_analyzer.content.batch import output_dir as content_output_dir
 from c2_analyzer.content.batch import stored_result as stored_content_result
 from c2_analyzer.content.extractor import extract_content
+from c2_analyzer.dataset.fetcher import decode_html
 from c2_analyzer.dataset.manifest import list_versions, manifest_paths, manifests_dir
 from c2_analyzer.dataset.metadata import MetadataStore
 from c2_analyzer.dataset.page_view import read_html
@@ -577,6 +578,15 @@ class DevDataset:
             return cached[1].explain(sample_id)
         except KeyError as error:
             raise NotFoundError(str(error.args[0])) from None
+
+    def raw_html(self, version: str, sample_id: str) -> tuple[str, str | None]:
+        """(decoded HTML, page URL) of a sample - the input /analyze gets in html mode.
+
+        Decoded exactly like Part 2's ``from_bytes`` (Part 1 rules), so the analysis sees
+        the same text the dataset pipeline saw."""
+        row = self._row(version, sample_id)
+        html, _ = decode_html(self._raw_file(row).read_bytes())
+        return html, self._page_url(sample_id)
 
     def safe_preview(self, sample_id: str, version: str | None = None) -> str:
         """Part 1's sanitized copy of a sample (scripts, URLs and forms removed).

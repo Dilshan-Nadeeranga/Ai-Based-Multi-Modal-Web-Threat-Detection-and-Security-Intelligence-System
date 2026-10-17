@@ -129,8 +129,9 @@ def test_security_headers_on_every_response(dev_client):
         assert response.headers["referrer-policy"] == "no-referrer"
 
 
-def test_part9_stubs_unchanged(dev_client):
-    assert dev_client.post("/api/v1/analyze", json={"html": "<p>x</p>"}).status_code == 501
+def test_legacy_gateway_stub_unchanged(dev_client):
+    # /api/v1/analyze is implemented in Part 9 B-1 (tests/test_analyze.py); the gateway's
+    # old /analyze-html stays a 501 stub until the gateway switches to /api/v1/analyze.
     assert dev_client.post("/analyze-html").status_code == 501
 
 

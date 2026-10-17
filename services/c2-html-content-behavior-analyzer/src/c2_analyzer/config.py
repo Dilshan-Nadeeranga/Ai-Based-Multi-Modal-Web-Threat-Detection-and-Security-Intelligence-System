@@ -27,6 +27,14 @@ class Settings(BaseSettings):
     config_dir: Path = Path("configs")
     xlmr_model_name: str = "xlm-roberta-base"
     device: str = "cpu"
+    # Part 9 B-1 (/api/v1/analyze): serve the XLM-R arm (CPU, ~1 GB RAM); false = 3 arms.
+    xlmr_enabled: bool = True
+    # Comma-separated browser origins allowed to call the API (team frontend). Empty = none.
+    cors_origins: str = ""
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 @lru_cache
