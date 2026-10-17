@@ -1,10 +1,11 @@
 import AppShell from '../../../components/AppShell.jsx'
+import { CODE_AUDIT_SECTION } from '../navigation.js'
 import '../codeAudit.css'
 
 // Placeholder — implemented in a later sprint (asynchronous scan progress).
 export default function AuditProgress() {
   return (
-    <AppShell title="Audit Progress">
+    <AppShell title="Audit Progress" section={CODE_AUDIT_SECTION}>
       <div className="ca-page">
         <header className="ca-page__header">
           <span className="ca-page__badge">Component C4</span>

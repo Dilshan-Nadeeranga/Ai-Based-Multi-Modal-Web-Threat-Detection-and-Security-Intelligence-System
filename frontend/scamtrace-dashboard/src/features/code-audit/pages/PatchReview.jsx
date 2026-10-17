@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AppShell from '../../../components/AppShell.jsx'
+import { CODE_AUDIT_SECTION } from '../navigation.js'
 import { getReviewWorkspace, startReview, validateRemediation } from '../api/codeAuditApi.js'
 import CodeViewer from '../components/CodeViewer.jsx'
 import DiffViewer from '../components/DiffViewer.jsx'
@@ -17,7 +18,7 @@ const LOAD_ERRORS = {
 
 function ReviewPage({ children }) {
   return (
-    <AppShell title="Analyst Review">
+    <AppShell title="Analyst Review" section={CODE_AUDIT_SECTION}>
       <div className="ca-page ca-review">{children}</div>
     </AppShell>
   )
