@@ -1,9 +1,8 @@
 # Ablation study - v0.3 (C2 Part 9A: tri-modal fusion)
 
-- created: 2026-10-16T22:38:39+05:30
+- created: 2026-10-16T23:19:15+05:30
 - split fingerprint: `7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f`; pages: train+val 391 (grouped 5-fold CV), test 68 (used once)
-- arms: DOM-only, Behavior-only, Text TF-IDF
-- **not included: text_xlmr** - no OOF predictions yet (text_xlmr needs the Colab CV run: `train_xlmr.py export-bundle --cv` → notebook → `import-oof`). Every row and the fusion below run without it.
+- arms: DOM-only, Behavior-only, Text TF-IDF, Text XLM-R
 - every choice (weights, stacker, final strategy, benign threshold) is made on grouped CV over train+val; the test pages are predicted once per row and only reported. CV = mean ± std over the 5 folds of the selected configuration.
 
 ## Main table (test, argmax unless stated)
@@ -13,15 +12,16 @@
 | DOM-only | 0.701 ± 0.077 | **0.786** [0.652, 0.891] | 0.827 | 0.824 | 0.968 | 17.6 % | 0.0 % |
 | Behavior-only | 0.620 ± 0.078 | **0.682** [0.551, 0.805] | 0.755 | 0.735 | 0.861 | 20.6 % | 0.0 % |
 | Text TF-IDF | 0.706 ± 0.065 | **0.718** [0.569, 0.841] | 0.787 | 0.809 | 0.962 | 5.9 % | 0.0 % |
+| Text XLM-R | 0.680 ± 0.041 | **0.657** [0.514, 0.776] | 0.698 | 0.706 | 0.922 | 23.5 % | 5.9 % |
 | DOM+Behavior · Late fusion - weighted | 0.701 ± 0.077 | **0.786** [0.652, 0.891] | 0.827 | 0.824 | 0.967 | 17.6 % | 0.0 % |
-| DOM+Text (TF-IDF) · Late fusion - mean | 0.730 ± 0.048 | **0.824** [0.695, 0.923] | 0.845 | 0.853 | 0.981 | 8.8 % | 0.0 % |
-| Behavior+Text (TF-IDF) · Late fusion - mean | 0.732 ± 0.067 | **0.750** [0.592, 0.870] | 0.811 | 0.824 | 0.958 | 5.9 % | 2.9 % |
-| **DOM+Behavior+Text (TF-IDF) · Late fusion - mean** ★ | 0.726 ± 0.081 | **0.833** [0.701, 0.928] | 0.859 | 0.868 | 0.974 | 5.9 % | 0.0 % |
-| DOM+Behavior+Text (TF-IDF) · Late fusion - weighted | 0.707 ± 0.060 | **0.833** [0.701, 0.928] | 0.859 | 0.868 | 0.974 | 5.9 % | 2.9 % |
-| DOM+Behavior+Text (TF-IDF) · Stacking - LogReg | 0.718 ± 0.065 | **0.769** [0.638, 0.877] | 0.823 | 0.824 | 0.973 | 11.8 % | 0.0 % |
-| DOM+Behavior+Text (TF-IDF) · Hybrid - XGBoost | 0.711 ± 0.057 | **0.807** [0.647, 0.914] | 0.849 | 0.853 | 0.971 | 8.8 % | 2.9 % |
+| DOM+Text (TF-IDF + XLM-R) · Late fusion - mean | 0.761 ± 0.054 | **0.836** [0.704, 0.933] | 0.859 | 0.868 | 0.975 | 5.9 % | 0.0 % |
+| Behavior+Text (TF-IDF + XLM-R) · Late fusion - weighted | 0.757 ± 0.050 | **0.795** [0.654, 0.906] | 0.831 | 0.838 | 0.949 | 8.8 % | 0.0 % |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Late fusion - mean | 0.756 ± 0.075 | **0.836** [0.704, 0.933] | 0.859 | 0.868 | 0.972 | 5.9 % | 0.0 % |
+| **DOM+Behavior+Text (TF-IDF + XLM-R) · Late fusion - weighted** ★ | 0.768 ± 0.073 | **0.795** [0.654, 0.906] | 0.831 | 0.838 | 0.962 | 8.8 % | 0.0 % |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Stacking - LogReg | 0.748 ± 0.084 | **0.783** [0.654, 0.884] | 0.823 | 0.824 | 0.948 | 11.8 % | 0.0 % |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Hybrid - XGBoost | 0.749 ± 0.040 | **0.811** [0.680, 0.909] | 0.831 | 0.838 | 0.969 | 14.7 % | 2.9 % |
 
-★ final fusion model: **DOM+Behavior+Text (TF-IDF) · Late fusion - mean** (best tri-modal CV macro-F1 0.726).
+★ final fusion model: **DOM+Behavior+Text (TF-IDF + XLM-R) · Late fusion - weighted** (best tri-modal CV macro-F1 0.768).
 
 ## Per-class F1 (test)
 
@@ -30,13 +30,14 @@
 | DOM-only | 0.889 | 0.750 | 1.000 | 0.667 | 0.625 |
 | Behavior-only | 0.806 | 0.720 | 0.933 | 0.286 | 0.667 |
 | Text TF-IDF | 0.877 | 0.815 | 0.933 | 0.600 | 0.364 |
+| Text XLM-R | 0.788 | 0.640 | 0.700 | 0.727 | 0.429 |
 | DOM+Behavior · Late fusion - weighted | 0.889 | 0.750 | 1.000 | 0.667 | 0.625 |
-| DOM+Text (TF-IDF) · Late fusion - mean | 0.899 | 0.828 | 0.933 | 0.889 | 0.571 |
-| Behavior+Text (TF-IDF) · Late fusion - mean | 0.901 | 0.786 | 0.933 | 0.667 | 0.462 |
-| **DOM+Behavior+Text (TF-IDF) · Late fusion - mean** ★ | 0.914 | 0.857 | 0.933 | 0.889 | 0.571 |
-| DOM+Behavior+Text (TF-IDF) · Late fusion - weighted | 0.914 | 0.857 | 0.933 | 0.889 | 0.571 |
-| DOM+Behavior+Text (TF-IDF) · Stacking - LogReg | 0.896 | 0.815 | 0.933 | 0.667 | 0.533 |
-| DOM+Behavior+Text (TF-IDF) · Hybrid - XGBoost | 0.899 | 0.889 | 0.875 | 0.750 | 0.625 |
+| DOM+Text (TF-IDF + XLM-R) · Late fusion - mean | 0.914 | 0.828 | 0.933 | 0.889 | 0.615 |
+| Behavior+Text (TF-IDF + XLM-R) · Late fusion - weighted | 0.899 | 0.786 | 0.875 | 0.800 | 0.615 |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Late fusion - mean | 0.914 | 0.828 | 0.933 | 0.889 | 0.615 |
+| **DOM+Behavior+Text (TF-IDF + XLM-R) · Late fusion - weighted** ★ | 0.899 | 0.786 | 0.875 | 0.800 | 0.615 |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Stacking - LogReg | 0.896 | 0.815 | 0.933 | 0.800 | 0.471 |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Hybrid - XGBoost | 0.879 | 0.839 | 0.875 | 0.889 | 0.571 |
 
 ## Per-language accuracy (test; Part 5A detected language, n pages)
 
@@ -45,13 +46,14 @@
 | DOM-only | 0.824 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.786 |
 | Behavior-only | 0.706 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.786 |
 | Text TF-IDF | 0.863 | 1.000 ⚠ | 1.000 ⚠ | 0.000 ⚠ | 0.643 |
+| Text XLM-R | 0.706 | 1.000 ⚠ | 1.000 ⚠ | 0.000 ⚠ | 0.714 |
 | DOM+Behavior · Late fusion - weighted | 0.824 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.786 |
-| DOM+Text (TF-IDF) · Late fusion - mean | 0.863 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.786 |
-| Behavior+Text (TF-IDF) · Late fusion - mean | 0.843 | 1.000 ⚠ | 1.000 ⚠ | 0.000 ⚠ | 0.786 |
-| **DOM+Behavior+Text (TF-IDF) · Late fusion - mean** ★ | 0.882 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.786 |
-| DOM+Behavior+Text (TF-IDF) · Late fusion - weighted | 0.882 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.786 |
-| DOM+Behavior+Text (TF-IDF) · Stacking - LogReg | 0.824 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.786 |
-| DOM+Behavior+Text (TF-IDF) · Hybrid - XGBoost | 0.843 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.857 |
+| DOM+Text (TF-IDF + XLM-R) · Late fusion - mean | 0.863 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.857 |
+| Behavior+Text (TF-IDF + XLM-R) · Late fusion - weighted | 0.843 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.786 |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Late fusion - mean | 0.863 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.857 |
+| **DOM+Behavior+Text (TF-IDF + XLM-R) · Late fusion - weighted** ★ | 0.843 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.786 |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Stacking - LogReg | 0.824 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.786 |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Hybrid - XGBoost | 0.863 | 1.000 ⚠ | 1.000 ⚠ | 1.000 ⚠ | 0.714 |
 
 ⚠ = fewer than 10 test pages: an anecdote, not an estimate.
 
@@ -64,63 +66,63 @@ Rule: benign if P(benign) ≥ t, else the most probable threat class; t = the la
 | DOM-only | 0.095 | 1.6 % | 17.6 % → 0.0 % | 97.1 % → 50.0 % | 0.786 → 0.617 |
 | Behavior-only | 0.102 | 1.6 % | 20.6 % → 0.0 % | 82.4 % → 29.4 % | 0.682 → 0.436 |
 | Text TF-IDF | 0.167 | 1.6 % | 5.9 % → 0.0 % | 79.4 % → 52.9 % | 0.718 → 0.655 |
+| Text XLM-R | 0.120 | 1.6 % | 23.5 % → 5.9 % | 82.4 % → 70.6 % | 0.657 → 0.637 |
 | DOM+Behavior · Late fusion - weighted | 0.108 | 1.6 % | 17.6 % → 0.0 % | 97.1 % → 50.0 % | 0.786 → 0.550 |
-| DOM+Text (TF-IDF) · Late fusion - mean | 0.147 | 1.6 % | 8.8 % → 0.0 % | 88.2 % → 61.8 % | 0.824 → 0.712 |
-| Behavior+Text (TF-IDF) · Late fusion - mean | 0.214 | 1.6 % | 5.9 % → 2.9 % | 85.3 % → 70.6 % | 0.750 → 0.732 |
-| **DOM+Behavior+Text (TF-IDF) · Late fusion - mean** ★ | 0.190 | 1.6 % | 5.9 % → 0.0 % | 88.2 % → 67.6 % | 0.833 → 0.741 |
-| DOM+Behavior+Text (TF-IDF) · Late fusion - weighted | 0.217 | 1.6 % | 5.9 % → 2.9 % | 88.2 % → 73.5 % | 0.833 → 0.710 |
-| DOM+Behavior+Text (TF-IDF) · Stacking - LogReg | 0.056 | 1.6 % | 11.8 % → 0.0 % | 91.2 % → 76.5 % | 0.769 → 0.748 |
-| DOM+Behavior+Text (TF-IDF) · Hybrid - XGBoost | 0.040 | 1.6 % | 8.8 % → 2.9 % | 88.2 % → 73.5 % | 0.807 → 0.759 |
+| DOM+Text (TF-IDF + XLM-R) · Late fusion - mean | 0.161 | 1.6 % | 5.9 % → 0.0 % | 88.2 % → 76.5 % | 0.836 → 0.758 |
+| Behavior+Text (TF-IDF + XLM-R) · Late fusion - weighted | 0.182 | 1.6 % | 8.8 % → 0.0 % | 88.2 % → 70.6 % | 0.795 → 0.720 |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Late fusion - mean | 0.188 | 1.6 % | 5.9 % → 0.0 % | 88.2 % → 73.5 % | 0.836 → 0.720 |
+| **DOM+Behavior+Text (TF-IDF + XLM-R) · Late fusion - weighted** ★ | 0.182 | 1.6 % | 8.8 % → 0.0 % | 88.2 % → 76.5 % | 0.795 → 0.726 |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Stacking - LogReg | 0.066 | 1.6 % | 11.8 % → 0.0 % | 91.2 % → 82.4 % | 0.783 → 0.789 |
+| DOM+Behavior+Text (TF-IDF + XLM-R) · Hybrid - XGBoost | 0.102 | 1.6 % | 14.7 % → 2.9 % | 91.2 % → 85.3 % | 0.811 → 0.819 |
 
 Final model at the threshold: confusion matrix (test, rows = true):
 
 ```
 true \ predicted                  benign          phishing    fake_ecommerce       crypto_scam  malware_delivery
 benign                                34                 0                 0                 0                 0
-phishing                               2                11                 0                 0                 0
-fake_ecommerce                         1                 0                 7                 0                 0
+phishing                               2                10                 0                 1                 0
+fake_ecommerce                         0                 0                 7                 1                 0
 crypto_scam                            2                 0                 0                 2                 0
-malware_delivery                       6                 1                 0                 0                 2
+malware_delivery                       4                 2                 0                 0                 3
 ```
 
 ## Tri-modal vs best single arm (paired bootstrap)
 
 1000 resamples of the 68 test pages (seed 42), the same resamples for every row; 95 % percentile CI of the macro-F1 DIFFERENCE.
 
-- final − best single arm by CV (`text_tfidf`): **+0.115** [+0.018, +0.237]; final better in 99.2 % of resamples → the CI excludes 0.
-- final − best single arm on test (conservative) (`dom`): **+0.047** [-0.075, +0.174]; final better in 78.5 % of resamples → **the CI includes 0 - the test set cannot distinguish them** (small test set).
+- final − best single arm by CV (`text_tfidf`): **+0.077** [-0.019, +0.201]; final better in 94.1 % of resamples → **the CI includes 0 - the test set cannot distinguish them** (small test set).
+- final − best single arm on test (conservative) (`dom`): **+0.009** [-0.136, +0.141]; final better in 57.9 % of resamples → **the CI includes 0 - the test set cannot distinguish them** (small test set).
 
 ## Complementarity (test, argmax; text = `text_tfidf`)
 
-Oracle (any modality right): 92.6 % of 68 pages vs final fusion accuracy 86.8 %.
+Oracle (any modality right): 92.6 % of 68 pages vs final fusion accuracy 83.8 %.
 
 | bucket | pages | final fusion right | examples |
 |---|---|---|---|
-| all right | 41 | 41 | `c2_benign_000001`, `c2_benign_000008`, `c2_benign_000025`, `c2_benign_000029`, `c2_benign_000048` |
+| all right | 41 | 40 | `c2_benign_000001`, `c2_benign_000008`, `c2_benign_000025`, `c2_benign_000029`, `c2_benign_000048` |
 | only dom right | 2 | 0 | `c2_fake_ecommerce_000032`, `c2_malware_delivery_000023` |
 | only behavior right | 1 | 0 | `c2_malware_delivery_000050` |
 | only text right | 3 | 2 | `c2_benign_000011`, `c2_benign_000040`, `c2_crypto_scam_000011` |
-| only dom wrong | 3 | 3 | `c2_benign_000002`, `c2_benign_000062`, `c2_benign_000122` |
+| only dom wrong | 3 | 2 | `c2_benign_000002`, `c2_benign_000062`, `c2_benign_000122` |
 | only behavior wrong | 8 | 8 | `c2_benign_000024`, `c2_benign_000077`, `c2_benign_000083`, `c2_benign_000087`, `c2_crypto_scam_000039` |
-| only text wrong | 5 | 5 | `c2_benign_000003`, `c2_crypto_scam_000010`, `c2_malware_delivery_000045`, `c2_malware_delivery_000052`, `c2_phishing_000071` |
-| all wrong | 5 | 0 | `c2_benign_000076`, `c2_malware_delivery_000018`, `c2_malware_delivery_000036`, `c2_malware_delivery_000042`, `c2_phishing_000106` |
+| only text wrong | 5 | 4 | `c2_benign_000003`, `c2_crypto_scam_000010`, `c2_malware_delivery_000045`, `c2_malware_delivery_000052`, `c2_phishing_000071` |
+| all wrong | 5 | 1 | `c2_benign_000076`, `c2_malware_delivery_000018`, `c2_malware_delivery_000036`, `c2_malware_delivery_000042`, `c2_phishing_000106` |
 
 ## Explainability (test pages)
 
-- **weighted** (weights): Text TF-IDF 50 %, Behavior-only 30 %, DOM-only 20 %
-- **stacking** (LR coefficients (mean |coef| over classes, summed per arm)): Text TF-IDF 43 %, DOM-only 32 %, Behavior-only 24 %
-- **hybrid** (SHAP (TreeExplainer, mean |SHAP| over the test pages, summed over classes)): DOM-only 48 %, Text TF-IDF 42 %, Behavior-only 11 %
-  - `text_tfidf.p_crypto_scam` mean |SHAP| 2.559
-  - `text_tfidf.p_phishing` mean |SHAP| 2.208
-  - `text_tfidf.p_malware_delivery` mean |SHAP| 1.898
-  - `text_tfidf.p_fake_ecommerce` mean |SHAP| 1.585
-  - `text_tfidf.p_benign` mean |SHAP| 1.574
-  - `dom.external_link_ratio` mean |SHAP| 1.126
-  - `dom.internal_link_count` mean |SHAP| 1.002
-  - `dom.null_link_ratio` mean |SHAP| 0.699
-  - `dom.distinct_tag_count` mean |SHAP| 0.695
-  - `dom.avg_depth` mean |SHAP| 0.649
-- **mean** (weights): DOM-only 33 %, Behavior-only 33 %, Text TF-IDF 33 %
+- **weighted** (weights): Text XLM-R 40 %, Behavior-only 30 %, Text TF-IDF 20 %, DOM-only 10 %
+- **stacking** (LR coefficients (mean |coef| over classes, summed per arm)): Text XLM-R 28 %, DOM-only 26 %, Text TF-IDF 26 %, Behavior-only 20 %
+- **hybrid** (SHAP (TreeExplainer, mean |SHAP| over the test pages, summed over classes)): DOM-only 40 %, Text TF-IDF 28 %, Text XLM-R 23 %, Behavior-only 9 %
+  - `text_xlmr.p_crypto_scam` mean |SHAP| 2.002
+  - `text_xlmr.p_malware_delivery` mean |SHAP| 1.501
+  - `text_tfidf.p_malware_delivery` mean |SHAP| 1.493
+  - `text_tfidf.p_benign` mean |SHAP| 1.483
+  - `text_tfidf.p_crypto_scam` mean |SHAP| 1.366
+  - `text_tfidf.p_phishing` mean |SHAP| 1.352
+  - `text_tfidf.p_fake_ecommerce` mean |SHAP| 1.232
+  - `dom.external_link_ratio` mean |SHAP| 1.183
+  - `text_xlmr.p_phishing` mean |SHAP| 0.900
+  - `dom.avg_depth` mean |SHAP| 0.804
 
 ## Pairs: every strategy (✓ = chosen by CV)
 
@@ -130,20 +132,21 @@ Oracle (any modality right): 92.6 % of 68 pages vs final fusion accuracy 86.8 %.
 | DOM+Behavior | Late fusion - weighted ✓ | 0.701 ± 0.077 | 0.786 | 17.6 % |
 | DOM+Behavior | Stacking - LogReg | 0.668 ± 0.073 | 0.745 | 26.5 % |
 | DOM+Behavior | Hybrid - XGBoost | 0.664 ± 0.117 | 0.771 | 8.8 % |
-| DOM+Text (TF-IDF) | Late fusion - mean ✓ | 0.730 ± 0.048 | 0.824 | 8.8 % |
-| DOM+Text (TF-IDF) | Late fusion - weighted | 0.706 ± 0.069 | 0.824 | 8.8 % |
-| DOM+Text (TF-IDF) | Stacking - LogReg | 0.696 ± 0.059 | 0.772 | 11.8 % |
-| DOM+Text (TF-IDF) | Hybrid - XGBoost | 0.729 ± 0.041 | 0.793 | 11.8 % |
-| Behavior+Text (TF-IDF) | Late fusion - mean ✓ | 0.732 ± 0.067 | 0.750 | 5.9 % |
-| Behavior+Text (TF-IDF) | Late fusion - weighted | 0.715 ± 0.065 | 0.761 | 8.8 % |
-| Behavior+Text (TF-IDF) | Stacking - LogReg | 0.716 ± 0.045 | 0.816 | 11.8 % |
-| Behavior+Text (TF-IDF) | Hybrid - XGBoost | 0.724 ± 0.071 | 0.736 | 20.6 % |
+| DOM+Text (TF-IDF + XLM-R) | Late fusion - mean ✓ | 0.761 ± 0.054 | 0.836 | 5.9 % |
+| DOM+Text (TF-IDF + XLM-R) | Late fusion - weighted | 0.750 ± 0.068 | 0.836 | 5.9 % |
+| DOM+Text (TF-IDF + XLM-R) | Stacking - LogReg | 0.733 ± 0.083 | 0.785 | 14.7 % |
+| DOM+Text (TF-IDF + XLM-R) | Hybrid - XGBoost | 0.754 ± 0.042 | 0.800 | 14.7 % |
+| Behavior+Text (TF-IDF + XLM-R) | Late fusion - mean | 0.752 ± 0.061 | 0.804 | 5.9 % |
+| Behavior+Text (TF-IDF + XLM-R) | Late fusion - weighted ✓ | 0.757 ± 0.050 | 0.795 | 8.8 % |
+| Behavior+Text (TF-IDF + XLM-R) | Stacking - LogReg | 0.743 ± 0.063 | 0.755 | 14.7 % |
+| Behavior+Text (TF-IDF + XLM-R) | Hybrid - XGBoost | 0.740 ± 0.048 | 0.782 | 20.6 % |
 
 ## Arm models (OOF = other folds; test = final model on train+val)
 
 - **DOM-only**: Part 4 Random Forest {'n_estimators': 300, 'class_weight': 'balanced_subsample', 'max_depth': 8, 'max_features': 0.5, 'min_samples_leaf': 3} - reproduces the Part's CV: True
 - **Behavior-only**: Part 8 Random Forest {'n_estimators': 300, 'class_weight': 'balanced_subsample', 'max_depth': 8, 'max_features': 'sqrt', 'min_samples_leaf': 1} - reproduces the Part's CV: True
 - **Text TF-IDF**: Part 6A TF-IDF char 2-5 + LogReg {'C': 10.0, 'analyzer': 'char_wb', 'ngram_range': [2, 5], 'min_df': 2, 'max_features': 200000, 'sublinear_tf': True, 'max_iter': 5000} - reproduces the Part's CV: True
+- **Text XLM-R**: Part 6A XLM-R (fine-tuned) {'max_length': 512, 'learning_rate': 2e-05, 'epochs': 10, 'batch_size': 16, 'eval_batch_size': 32, 'gradient_accumulation': 1, 'warmup_ratio': 0.1, 'weight_decay': 0.01, 'max_grad_norm': 1.0, 'fp16': True, 'patience': 3, 'class_weights': 'balanced'}
 
 ## Notes
 
