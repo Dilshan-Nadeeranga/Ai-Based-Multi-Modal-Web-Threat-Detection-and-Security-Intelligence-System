@@ -1,0 +1,62 @@
+# XLM-R page-level text classifier (Part 6A) - the "NLP-only" arm of the ablation study.
+#
+# Input  = Part 5A page_text ([TITLE] ... [CTA] ... [LABEL] ...) of every page.
+# Labels = the 5 threat classes (configs/labels.yaml order, Part 4's label_mapping).
+# Split  = the SHARED data/splits/<version> (never re-split: same 68 test pages as DOM-only
+#          and Behavior-only).
+# The base model name comes from .env XLMR_MODEL_NAME (config.Settings.xlmr_model_name);
+# export-bundle writes the resolved name into the bundled copy of this file.
+
+max_length: 512             # XLM-R's position limit; longer page_text is truncated (token-stats)
+seeds: [42, 43, 44]         # 3 seeds: ~322 train pages -> one run's score is mostly luck
+
+training:
+  learning_rate: 2.0e-5
+  epochs: 10                # upper bound - early stopping usually ends sooner
+  batch_size: 16            # per device; fits a free T4 at 512 tokens with fp16
+  eval_batch_size: 32
+  gradient_accumulation: 1  # raise (and lower batch_size) if the GPU runs out of memory
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  fp16: true                # only used on a CUDA GPU (ignored on CPU)
+  patience: 3               # epochs without a better VAL macro-F1 before stopping
+  class_weights: balanced   # CrossEntropy weight_c = n_train / (k * n_train_c)
+
+# --smoke: a CPU pipeline check (tiny subset, 1 optimizer step). Without --model-name it uses
+# a tiny RANDOM model built in code (no download), so it proves the code runs, nothing more.
+smoke:
+  per_class: 2
+  max_steps: 1
+  max_length: 64
+
+# Local CPU inference / evaluation
+inference:
+  batch_size: 8
+  # Colab (GPU) vs local CPU (fp32) predictions of the SAME final model: PASS if every
+  # predicted label is identical AND max |dp| < this. ~1e-3 differences are expected
+  # (GPU kernels / summation order); 0.01+ or a changed label means a version problem.
+  prediction_tolerance: 0.01
+  serving_version: v0.3     # model version used by POST /api/v1/text-prediction
+
+evaluation:
+  min_language_support: 10  # fewer test pages in a language -> "small n" warning
+  languages: [en, si, ta, mixed, other]   # Part 5A page language buckets (see nlp/dataset.py)
+
+# TF-IDF + Logistic Regression text baseline (cheap, honest comparison for XLM-R)
+text_baseline:
+  analyzer: char_wb         # character n-grams inside word boundaries: works for any script
+  ngram_range: [2, 5]
+  min_df: 2
+  max_features: 200000
+  sublinear_tf: true
+  max_iter: 5000
+  C: [0.1, 1.0, 10.0, 100.0]   # tuned on the shared grouped CV folds (train+val)
+
+paths:
+  models_dir: models/xlmr
+  reports_dir: reports/xlmr
+  baseline_models_dir: models/text_baseline
+  baseline_reports_dir: reports/text_baseline
+  bundle_dir: data/tmp
+  smoke_dir: data/tmp/xlmr_smoke

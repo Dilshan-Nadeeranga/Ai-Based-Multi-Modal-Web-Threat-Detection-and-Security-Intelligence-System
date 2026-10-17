@@ -1,0 +1,197 @@
+{
+  "name": "C2 tri-modal fusion model (Part 9A)",
+  "created_at": "2026-10-16T23:19:15+05:30",
+  "dataset_version": "v0.3",
+  "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+  "cv_folds_fingerprint": "b86537d5071c8ac2eaca6f0000129e5b5ea3528c1e74b71a20365c840cd620a5",
+  "strategy": "weighted",
+  "strategy_display": "Late fusion - weighted",
+  "arms": [
+    "dom",
+    "behavior",
+    "text_tfidf",
+    "text_xlmr"
+  ],
+  "arms_missing": [],
+  "arm_models": {
+    "dom": {
+      "part": "Part 4",
+      "model": "random_forest",
+      "model_display": "Random Forest",
+      "params": {
+        "n_estimators": 300,
+        "class_weight": "balanced_subsample",
+        "max_depth": 8,
+        "max_features": 0.5,
+        "min_samples_leaf": 3
+      },
+      "model_trained_at": "2026-10-14T23:47:12+05:30",
+      "feature_set_version": "dom_v1",
+      "dictionary_hash": "8605201ec979e8ef1602ced8c43964fcb872580223c3503676d242164dead472"
+    },
+    "behavior": {
+      "part": "Part 8",
+      "model": "random_forest",
+      "model_display": "Random Forest",
+      "params": {
+        "n_estimators": 300,
+        "class_weight": "balanced_subsample",
+        "max_depth": 8,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1
+      },
+      "model_trained_at": "2026-10-15T06:55:21+05:30",
+      "feature_set_version": "js_v1+beh_v1",
+      "dictionary_hash": "0a8054dc9209c6f0489d2b49cd00ddff28f3dcee873bb159b471be7b346e27f1"
+    },
+    "text_tfidf": {
+      "part": "Part 6A",
+      "model": "tfidf_logreg",
+      "model_display": "TF-IDF char 2-5 + LogReg",
+      "params": {
+        "C": 10.0,
+        "analyzer": "char_wb",
+        "ngram_range": [
+          2,
+          5
+        ],
+        "min_df": 2,
+        "max_features": 200000,
+        "sublinear_tf": true,
+        "max_iter": 5000
+      },
+      "model_trained_at": "2026-10-16T20:04:02+05:30",
+      "text_rules_hash": "2df7c7ad4a849bcf9de5f848e538f2c65667dd1651c8d8801dc1b530dec3c910"
+    },
+    "text_xlmr": {
+      "part": "Part 6A",
+      "model": "xlmr",
+      "model_display": "XLM-R (fine-tuned)",
+      "params": {
+        "max_length": 512,
+        "learning_rate": 2e-05,
+        "epochs": 10,
+        "batch_size": 16,
+        "eval_batch_size": 32,
+        "gradient_accumulation": 1,
+        "warmup_ratio": 0.1,
+        "weight_decay": 0.01,
+        "max_grad_norm": 1.0,
+        "fp16": true,
+        "patience": 3,
+        "class_weights": "balanced"
+      },
+      "text_rules_hash": "2df7c7ad4a849bcf9de5f848e538f2c65667dd1651c8d8801dc1b530dec3c910",
+      "seed": 43,
+      "base_model": "xlm-roberta-base"
+    }
+  },
+  "params": {
+    "weights": {
+      "dom": 0.1,
+      "behavior": 0.3,
+      "text_tfidf": 0.2,
+      "text_xlmr": 0.4
+    },
+    "grid_step": 0.1
+  },
+  "selection": "tri-modal strategy with the best mean grouped-CV macro-F1 on train+val (ties: the simpler strategy); test never used for any choice",
+  "cv_mean": {
+    "macro_f1": 0.7677825830400922,
+    "weighted_f1": 0.7987529317943467,
+    "accuracy": 0.8003894839337878,
+    "balanced_accuracy": 0.7526313218944798,
+    "roc_auc_ovr_macro": 0.9321237658829226,
+    "benign_fpr": 0.10890688259109313,
+    "f1_benign": 0.8559721105905845,
+    "f1_phishing": 0.722769744160178,
+    "f1_fake_ecommerce": 0.7788888888888889,
+    "f1_crypto_scam": 0.7557575757575759,
+    "f1_malware_delivery": 0.7255245958032335
+  },
+  "cv_std": {
+    "macro_f1": 0.07330507818707904,
+    "weighted_f1": 0.053747500660418716,
+    "accuracy": 0.055680633860097015,
+    "balanced_accuracy": 0.07377488978694159,
+    "roc_auc_ovr_macro": 0.019133015146343867,
+    "benign_fpr": 0.04439022993694636,
+    "f1_benign": 0.0427567276755708,
+    "f1_phishing": 0.11052144352116705,
+    "f1_fake_ecommerce": 0.07555555555555557,
+    "f1_crypto_scam": 0.1649954781359962,
+    "f1_malware_delivery": 0.10316741570722898
+  },
+  "test": {
+    "macro_f1": 0.7949299251473165,
+    "weighted_f1": 0.8309334101533591,
+    "accuracy": 0.8382352941176471,
+    "balanced_accuracy": 0.8154725992961287,
+    "roc_auc_ovr_macro": 0.9621474953367878,
+    "benign_fpr": 0.08823529411764706,
+    "macro_precision": 0.8321428571428571,
+    "macro_recall": 0.8154725992961287
+  },
+  "test_bootstrap_macro_f1": {
+    "point": 0.7949299251473165,
+    "ci_low": 0.6543665266106443,
+    "ci_high": 0.9061737107921318,
+    "bootstrap_mean": 0.7890911943557214,
+    "bootstrap_std": 0.06336089317579068
+  },
+  "benign_threshold": {
+    "threshold": 0.1824664,
+    "target": 0.02,
+    "oof_benign_fpr": 0.015544041450777202,
+    "oof_threat_recall": 0.6262626262626263,
+    "rule": "benign if P(benign) >= threshold, else the most probable threat class",
+    "test": {
+      "benign_fpr": 0.0,
+      "macro_f1": 0.7256140350877193,
+      "threat_recall": 0.7647058823529411,
+      "per_class_recall": {
+        "benign": 1.0,
+        "phishing": 0.7692307692307693,
+        "fake_ecommerce": 0.875,
+        "crypto_scam": 0.5,
+        "malware_delivery": 0.3333333333333333
+      }
+    }
+  },
+  "label_mapping": {
+    "classes": [
+      "benign",
+      "phishing",
+      "fake_ecommerce",
+      "crypto_scam",
+      "malware_delivery"
+    ],
+    "index": {
+      "benign": 0,
+      "phishing": 1,
+      "fake_ecommerce": 2,
+      "crypto_scam": 3,
+      "malware_delivery": 4
+    },
+    "labels_yaml_id": {
+      "benign": 0,
+      "phishing": 1,
+      "fake_ecommerce": 2,
+      "crypto_scam": 3,
+      "malware_delivery": 4
+    },
+    "excluded_classes": {}
+  },
+  "library_versions": {
+    "python": "3.13.3",
+    "numpy": "2.5.4",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "joblib": "1.6.0",
+    "shap": "0.53.0"
+  },
+  "git_commit": "112ffa2b52104ef86920fc45899c30a0c14b8e19-dirty",
+  "intended_use": "Research: the fused arm of C2's ablation study. The public /analyze API (Part 9 Batch B) will use it; not yet a production detector.",
+  "limitations": "68 test pages (wide CIs); arm OOF probabilities of the fusion's training folds come from arm models that saw the fusion's held-out fold (standard stacking, not fully nested); mostly English pages."
+}

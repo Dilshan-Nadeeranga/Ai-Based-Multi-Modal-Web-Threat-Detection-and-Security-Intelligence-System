@@ -1038,11 +1038,293 @@ registerTab({
   },
 });
 
+// ---- 10. Content (Part 5) ---------------------------------------------------
+// The page's TEXT as Part 6 reads it: segments per field with a language
+// chip each, the CTA list, page_text, and the Part 6A text-model card. Segment texts are page content: shown
+// ONLY through el()/textContent (Sinhala/Tamil fonts come from --text-font).
+
+const contentCache = new WeakMap();
+const SCRIPT_NAMES = { si: "Sinhala", ta: "Tamil", latin: "Latin", other: "other" };
+const FIELD_TITLES = [
+  ["title", "Title"], ["meta_description", "Meta description"], ["heading", "Headings"],
+  ["cta", "Buttons / CTAs"], ["form_label", "Form labels"], ["placeholder", "Placeholders"],
+  ["alert_banner", "Alert banners"], ["paragraph", "Paragraphs"], ["visible_other", "Other visible text"],
+  ["hidden", "Hidden text (not seen by the visitor)"],
+];
+
+function contentResult(ctx) {
+  return cached(contentCache, ctx, () => {
+    if (ctx.kind === "sample") {
+      return api(`/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/content` + query({ version: ctx.version }))
+        .then((r) => ({ data: r.data, source: r.headers.get("X-Content-Source") || "stored" }));
+    }
+    return api("/api/v1/content", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html: ctx.html || "", url: ctx.url || null }),
+    }).then((r) => ({ data: r.data, source: "api" }));
+  });
+}
+
+const langChip = (lang, confidence, method) =>
+  el("span", { cls: "lang-chip " + (lang || "unknown"), text: show(lang), title: `confidence ${fmtValue(confidence)} · ${show(method)}` });
+
+function scriptBar(ratios) {
+  const bar = el("div", { cls: "script-bar" });
+  const legend = el("div", { cls: "script-legend" });
+  for (const code of Object.keys(SCRIPT_NAMES)) {
+    const share = Number((ratios || {})[code]) || 0;
+    if (share > 0) {
+      const part = el("div", { cls: "s-" + code, title: `${SCRIPT_NAMES[code]} ${(share * 100).toFixed(1)}%` });
+      part.style.width = (share * 100).toFixed(2) + "%"; // a number, not page data
+      bar.append(part);
+    }
+    legend.append(el("span", {}, el("span", { cls: "sw s-" + code }), `${SCRIPT_NAMES[code]} ${(share * 100).toFixed(1)}%`));
+  }
+  return el("div", {}, bar, legend);
+}
+
+function segmentLine(s) {
+  return el("div", { cls: "seg" },
+    el("span", { cls: "sid", text: s.segment_id }),
+    langChip(s.language, s.lang_confidence, s.lang_method),
+    s.level ? badge("h" + s.level) : null,
+    s.count > 1 ? badge(`×${s.count}`) : null,
+    el("span", { cls: "multi", text: s.text }));
+}
+
+// Part 6A: the text models' answer for this page_text (XLM-R + TF-IDF baseline).
+// Fetched separately, so a missing model only shows "model not available" and never
+// breaks the Content tab. Class names and probabilities are rendered as text only.
+const textPredictionCache = new WeakMap();
+
+function textPrediction(ctx) {
+  return cached(textPredictionCache, ctx, () => {
+    if (ctx.kind === "sample") {
+      return api(`/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/text-prediction` + query({ version: ctx.version }))
+        .then((r) => r.data);
+    }
+    return api("/api/v1/text-prediction", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html: ctx.html || "", url: ctx.url || null }),
+    }).then((r) => r.data);
+  });
+}
+
+function textModelCard(m, trueLabel) {
+  if (!m.available) {
+    return el("div", { cls: "card" },
+      el("h3", {}, m.display_name, badge("model not available", "warn")),
+      el("p", { cls: "muted", text: show(m.reason) }));
+  }
+  const probabilities = Object.entries(m.probabilities || {}).sort((a, b) => b[1] - a[1]);
+  const matches = trueLabel ? trueLabel === m.predicted : null;
+  const b = bars(probabilities, fmtPct);
+  b.classList.add("wide");
+  return el("div", { cls: "card" },
+    el("h3", {},
+      m.display_name, " → ", labelChip(m.predicted), el("strong", { text: fmtPct(m.probabilities[m.predicted]) }),
+      m.seed !== null && m.seed !== undefined ? badge(`seed ${m.seed}`, "info") : null,
+      m.dataset_version ? badge(`trained on ${m.dataset_version}`) : null,
+      matches === null ? null : badge(matches ? "matches the label" : `label is ${trueLabel}`, matches ? "ok" : "danger"),
+      m.truncated ? badge(`${fmtInt(m.input_tokens)} tokens - truncated`, "warn")
+        : m.input_tokens ? badge(`${fmtInt(m.input_tokens)} tokens`) : null),
+    b);
+}
+
+async function renderTextModel(ctx, box) {
+  const title = "Text model (Part 6)";
+  fill(box, section(title, el("p", { cls: "muted", text: "Classifying page_text…" })));
+  let p;
+  try {
+    p = await textPrediction(ctx);
+  } catch (error) {
+    if (state.ctx !== ctx || !box.isConnected) return;
+    fill(clear(box), section(title, el("p", { cls: "note", text: "Text prediction failed: " + error.message })));
+    return;
+  }
+  if (state.ctx !== ctx || !box.isConnected) return;
+  fill(clear(box), section(title,
+    el("p", { cls: "muted", text: "Page-level threat class from the text alone (NLP-only arm of the ablation): Part 5A page_text → fine-tuned XLM-R and the TF-IDF baseline." }),
+    (p.models || []).map((m) => textModelCard(m, p.true_label)),
+    p.split ? el("p", { cls: "muted", text: `split: ${p.split}` + (p.split === "test" ? "" : " - the models have seen this page (train / val), so a match here proves little") }) : null));
+}
+
+registerTab({
+  id: "content",
+  title: "Content (Part 5)",
+  async render(ctx, box) {
+    fill(box, el("p", { cls: "muted", text: "Extracting text segments and identifying languages…" }));
+    const result = await contentResult(ctx);
+    if (state.ctx !== ctx || !box.isConnected) return; // the user moved on meanwhile
+    const r = result.data;
+    const meta = r.meta || {};
+    const lang = r.language || {};
+    const segments = r.segments || [];
+    clear(box);
+
+    fill(box,
+      el("div", { cls: "toolbar" },
+        badge(meta.schema_version || "text_v1", "info"),
+        badge(result.source === "on-the-fly" ? "computed on the fly" : result.source, result.source === "on-the-fly" ? "warn" : null),
+        badge(`CTAs from ${show(meta.cta_source)}`, meta.cta_source === "html" ? null : "warn"),
+        meta.truncated ? badge("capped: " + (meta.truncation_reasons || []).join(", "), "warn") : null,
+        el("span", { cls: "muted", text: `${fmtValue(meta.processing_ms)} ms · rules ${(meta.rules_hash || "").slice(0, 12)} · language backend ${show(lang.backend)}` })),
+      (meta.errors || []).length ? el("div", { cls: "error-box" }, el("ul", {}, meta.errors.map((e) => el("li", { text: e })))) : null,
+      (meta.warnings || []).length ? el("p", { cls: "note", text: "Note: " + meta.warnings.join(" · ") }) : null);
+
+    fill(box, section("Page language",
+      el("div", { cls: "toolbar" },
+        el("span", { cls: "lang-chip " + (lang.language || "unknown"), text: show(lang.language) }),
+        el("strong", { text: `confidence ${fmtValue(lang.confidence)}` }),
+        badge(`method: ${show(lang.method)}`),
+        lang.lang_attr ? el("span", { cls: "muted", text: `<html lang> says ${lang.lang_attr} (hint only)` }) : null,
+        ctx.language ? el("span", { cls: "muted", text: `metadata says ${ctx.language}` }) : null),
+      el("h3", { cls: "heading", text: "Script ratio (letters)" }),
+      scriptBar(lang.script_ratios),
+      el("h3", { cls: "heading", text: "Language share (characters of visible segments)" }),
+      bars(Object.entries(lang.shares || {}).sort((a, b) => b[1] - a[1]), (v) => (v * 100).toFixed(1) + "%"),
+      ["si_latn", "ta_latn"].includes(lang.language)
+        ? el("p", { cls: "note", text: "Romanized Sinhala / Tamil (Singlish / Tanglish): known gap - XLM-R handles it poorly." })
+        : null));
+
+    const textBox = el("div");
+    fill(box, textBox);
+    renderTextModel(ctx, textBox); // async: the rest of the tab does not wait for the model
+
+    const ctas = segments.filter((s) => s.field === "cta");
+    fill(box, section(`CTAs (${ctas.length}) - buttons and action links`,
+      ctas.length
+        ? el("ul", { cls: "cta-list" }, ctas.map((s) => el("li", {}, langChip(s.language, s.lang_confidence, s.lang_method), " ", el("span", { cls: "multi", text: s.text }))))
+        : el("p", { cls: "muted", text: "No CTA found." })));
+
+    const counts = r.counts || {};
+    fill(box, section(`Segments (${segments.length}) by field`,
+      el("div", { cls: "cards" },
+        countCard("visible chars", r.chars),
+        countCard("segments", segments.length),
+        countCard("dropped", Object.values(meta.dropped || {}).reduce((a, b) => a + b, 0),
+          Object.entries(meta.dropped || {}).map(([k, v]) => `${k} ${v}`).join(" · "))),
+      FIELD_TITLES.filter(([field]) => counts[field]).map(([field, title]) =>
+        el("details", { attrs: { open: field !== "hidden" && field !== "visible_other" } },
+          el("summary", { text: `${title} (${counts[field]})` }),
+          segments.filter((s) => s.field === field).map(segmentLine))),
+      r.empty ? el("p", { cls: "muted", text: "This page has no visible text." }) : null));
+
+    fill(box, section(`page_text - model input for Part 6 (${fmtInt(r.page_text_chars)} chars${r.page_text_truncated ? ", truncated" : ""})`,
+      el("pre", { text: r.page_text || "(empty)" })));
+  },
+});
+
+// ---- Part 9A: Fusion ----------------------------------------------------------------------
+// The saved fusion model's decision for a dataset sample, from the STORED per-arm
+// probabilities (out-of-fold for train / val pages, final arm models for test pages).
+// Everything is rendered as text (class names, sample ids, feature names).
+
+const fusionCache = new WeakMap();
+
+function fusionResult(ctx) {
+  return cached(fusionCache, ctx, () =>
+    api(`/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/fusion` + query({ version: ctx.version }))
+      .then((r) => r.data));
+}
+
+function signed(value) {
+  return (value > 0 ? "+" : "") + fmtValue(value);
+}
+
+function fusionArmCard(a, trueLabel) {
+  if (!a.available) {
+    return el("div", { cls: "card" },
+      el("h3", {}, a.display, badge("not available", "warn"), a.used_by_model ? badge("used by the model", "info") : null),
+      el("p", { cls: "muted", text: show(a.reason) }));
+  }
+  const probabilities = Object.entries(a.probabilities || {}).sort((x, y) => y[1] - x[1]);
+  const matches = trueLabel ? trueLabel === a.predicted : null;
+  const b = bars(probabilities, fmtPct);
+  b.classList.add("wide");
+  return el("div", { cls: "card" },
+    el("h3", {},
+      a.display, " → ", labelChip(a.predicted), el("strong", { text: fmtPct(a.probabilities[a.predicted]) }),
+      a.used_by_model ? null : badge("not used by the model"),
+      matches === null ? null : badge(matches ? "right" : "wrong", matches ? "ok" : "danger")),
+    b,
+    el("p", { cls: "muted", text: show(a.source) }));
+}
+
+registerTab({
+  id: "fusion",
+  title: "Fusion (Part 9)",
+  available: (ctx) => ctx.kind === "sample",
+  async render(ctx, box) {
+    const title = "Fusion (Part 9A)";
+    if (ctx.kind !== "sample") {
+      fill(box, section(title, el("p", { cls: "muted", text: "Shown for dataset samples (stored per-arm probabilities). A fused verdict for pasted HTML comes with /api/v1/analyze (Part 9 Batch B)." })));
+      return;
+    }
+    fill(box, el("p", { cls: "muted", text: "Loading the fusion model's decision…" }));
+    let f;
+    try {
+      f = await fusionResult(ctx);
+    } catch (error) {
+      if (state.ctx !== ctx || !box.isConnected) return;
+      const known = error.status === 404 || error.status === 409;
+      fill(clear(box), section(title, el("p", { cls: "note", text: known ? error.message : "Fusion failed: " + error.message })));
+      return;
+    }
+    if (state.ctx !== ctx || !box.isConnected) return;
+    clear(box);
+
+    const matches = f.true_label === f.predicted;
+    const fused = Object.entries(f.probabilities || {}).sort((a, b) => b[1] - a[1]);
+    const fusedBars = bars(fused, fmtPct);
+    fusedBars.classList.add("wide");
+    fill(box, section("Final verdict",
+      el("div", { cls: "card" },
+        el("h3", {},
+          "Fused (argmax) →", labelChip(f.predicted), el("strong", { text: fmtPct(f.probabilities[f.predicted]) }),
+          badge(f.strategy_display, "info"),
+          badge(matches ? "matches the label" : `label is ${f.true_label}`, matches ? "ok" : "danger"),
+          badge(`split: ${f.split}`, f.split === "test" ? "info" : null)),
+        el("h3", {},
+          `At the benign threshold (benign if P(benign) ≥ ${fmtValue(f.benign_threshold)}; OOF benign FPR ≤ ${fmtPct(f.benign_fpr_target)}) →`,
+          labelChip(f.predicted_at_threshold),
+          f.predicted_at_threshold !== f.predicted ? badge("changed by the threshold", "warn") : null),
+        fusedBars,
+        el("p", { cls: "muted", text: f.note }))));
+
+    fill(box, section("Per-arm probabilities",
+      (f.missing_arms || []).length
+        ? el("p", { cls: "note", text: `Not available yet: ${f.missing_arms.join(", ")} - the model runs without it.` })
+        : null,
+      el("div", { cls: "cards" }, (f.arms || []).map((a) => fusionArmCard(a, f.true_label)))));
+
+    const contributions = Object.entries(f.arm_contributions || {}).sort((a, b) => b[1] - a[1]);
+    const names = Object.fromEntries((f.arms || []).map((a) => [a.arm, a.display]));
+    fill(box, section(`Which arm drove it (towards "${f.predicted}")`,
+      el("p", { cls: "muted", text: `Method: ${f.driver_method}. Driving arm: ${names[f.driving_arm] || f.driving_arm}.` }),
+      table(["arm", "contribution"], contributions, ([arm, value]) => [
+        el("span", { text: names[arm] || arm }),
+        signed(value),
+      ]),
+      (f.top_drivers || []).length
+        ? table(["top input", "value", "contribution"], f.top_drivers, (d) => [
+          el("span", { text: d.name }),
+          fmtValue(d.value),
+          signed(d.contribution),
+        ])
+        : null));
+  },
+});
+
 // ---- Future parts (disabled placeholders) -------------------------------------------------
 
+// Part 6A lives in the Content tab ("Text model (Part 6)" card); Part 6B (intent level)
+// is postponed until the scam-text corpus has enough real texts. The unified /analyze
+// result is Part 9 Batch B.
 for (const [id, title] of [
-  ["content-nlp", "Content / NLP (Part 5–6)"],
-  ["unified", "Unified Result (Part 9)"],
+  ["unified", "Unified Result (Part 9B)"],
 ]) {
   registerTab({ id, title, enabled: false, render() {} });
 }

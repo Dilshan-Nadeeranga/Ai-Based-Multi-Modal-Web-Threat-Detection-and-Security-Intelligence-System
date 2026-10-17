@@ -1,0 +1,48 @@
+{
+  "arm": "text_tfidf",
+  "display": "Text TF-IDF",
+  "dataset_version": "v0.3",
+  "classes": [
+    "benign",
+    "phishing",
+    "fake_ecommerce",
+    "crypto_scam",
+    "malware_delivery"
+  ],
+  "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+  "cv_folds_fingerprint": "b86537d5071c8ac2eaca6f0000129e5b5ea3528c1e74b71a20365c840cd620a5",
+  "n_oof": 391,
+  "n_test": 68,
+  "oof_rule": "train+val: model trained on the OTHER grouped CV folds; test: the arm's final model (trained on train+val)",
+  "created_at": "2026-10-16T22:38:01+05:30",
+  "part_cv_macro_f1": 0.7061932778174577,
+  "recomputed_cv_macro_f1": 0.7061932778174577,
+  "reproduces_part_oof": true,
+  "part": "Part 6A",
+  "model": "tfidf_logreg",
+  "model_display": "TF-IDF char 2-5 + LogReg",
+  "params": {
+    "C": 10.0,
+    "analyzer": "char_wb",
+    "ngram_range": [
+      2,
+      5
+    ],
+    "min_df": 2,
+    "max_features": 200000,
+    "sublinear_tf": true,
+    "max_iter": 5000
+  },
+  "selection": "C by mean CV macro-F1 over the shared folds (never test)",
+  "text_rules_hash": "2df7c7ad4a849bcf9de5f848e538f2c65667dd1651c8d8801dc1b530dec3c910",
+  "model_trained_at": "2026-10-16T20:04:02+05:30",
+  "library_versions": {
+    "python": "3.13.3",
+    "numpy": "2.5.4",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "joblib": "1.6.0",
+    "shap": "0.53.0"
+  }
+}

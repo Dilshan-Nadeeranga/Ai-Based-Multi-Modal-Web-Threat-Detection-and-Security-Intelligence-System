@@ -32,6 +32,10 @@ data/interim/**
 !data/interim/**/
 data/processed/**
 !data/processed/**/
+# Part 9A out-of-fold probabilities per arm (sample ids + class probabilities only, no URLs or
+# text): tracked, because the text_xlmr table needs a Colab GPU run to rebuild.
+!data/processed/fusion/**/oof_*.csv
+!data/processed/fusion/**/oof_*.json
 # Live scam/malware URLs - never commit (data/metadata/ keeps the schema + templates tracked)
 data/metadata/candidates.csv
 data/metadata/metadata.csv
@@ -44,6 +48,14 @@ data/feeds/**
 # pages being saved by the collector (deleted after registering)
 data/tmp/**
 !data/tmp/**/
+# Scam-text corpus (Part 5B): real messages may hold personal data even after masking,
+# so corpus files, review decisions, peer sheets and MT files stay local. Tracked: the
+# synthetic templates and the frozen manifests (ids + hashes, no text). raw_texts.csv
+# was committed before this rule and stays tracked (synthetic only).
+data/corpus/**
+!data/corpus/**/
+!data/corpus/raw_texts_clean.csv
+!data/corpus/manifests/**
 !data/**/.gitkeep
 
 # Model artifacts: everything under models/ is ignored (large, rebuildable with one
@@ -54,6 +66,10 @@ models/**
 !models/**/model_card.json
 !models/**/label_mapping.json
 !models/**/features.json
+# Part 6A: per-seed / final metrics + selection (small JSON) are tracked; weights,
+# tokenizers, predictions and training args stay local.
+!models/xlmr/**/metrics.json
+!models/xlmr/**/selection.json
 models/**/*.bin
 *.safetensors
 *.pt

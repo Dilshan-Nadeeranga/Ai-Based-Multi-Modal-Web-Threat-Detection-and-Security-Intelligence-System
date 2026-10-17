@@ -22,11 +22,11 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 | 2 | HTML preprocessing pipeline | `preprocessing/` | `preprocess_html.py` |
 | 3 | DOM structural analysis | `dom/` | `extract_dom_features.py` |
 | 4 | DOM baseline classifier (LogReg / RF / XGBoost) | `classifiers/dom_baseline/` | `train_dom_baseline.py` |
-| 5 | Multilingual scam content analyzer | `content/` | `build_text_corpus.py` |
-| 6 | XLM-R content classification | `nlp/` | `train_xlmr.py`, `evaluate_xlmr.py` |
+| 5 | Multilingual scam content analyzer | `content/` | `build_text_corpus.py`, `review_corpus.py` |
+| 6 | XLM-R content classification (6A: page level) | `nlp/` | `train_xlmr.py`, `evaluate_xlmr.py` |
 | 7 | Static JavaScript intent analyzer | `js_analyzer/` | `analyze_js.py` |
 | 8 | Behavioral intent mapping (sources → sinks) | `behavior/` | `map_behavior.py` |
-| 9 | Preliminary tri-modal output + API | `fusion/`, `api/` | `run_api.py` |
+| 9 | Tri-modal fusion + ablation (9A) · unified API (9B, next) | `fusion/`, `api/` | `run_ablation.py`, `run_api.py` |
 
 ## Setup
 
@@ -41,7 +41,9 @@ pip install --no-deps -e .
 cp .env.example .env    # then edit values
 ```
 
-`torch` / `transformers` are only needed from Part 6 on; skip them for a faster install while working on Parts 1–5.
+`torch` / `transformers` are only needed from Part 6 on; skip them for a faster install while working on Parts 1–5. On Windows install the CPU build first (no CUDA, ~200 MB): `pip install torch --index-url https://download.pytorch.org/whl/cpu`, then `pip install -r requirements.txt`.
+
+Optional for Part 5: the fastText language-ID model (`models/langid/lid.176.ftz`, see [Content extraction & language ID](#content-extraction--language-id)). Without it, langdetect is used.
 
 ## Run
 
@@ -287,6 +289,216 @@ v0.1 pilot (42 test pages), from `reports/dom_baseline/v0.1/results.md`:
 | **Random Forest** (best by CV) | 0.797 ± 0.011 | 0.755 | 0.786 | 10.0 % |
 | XGBoost | 0.788 ± 0.024 | 0.753 | 0.786 | 10.0 % |
 
+## Content extraction & language ID
+
+Part 5 (Batch A) turns a page into **the text the NLP model (Part 6) will read**. It does not classify anything. It reuses Part 2's `ParsedPage` (title, headings, paragraphs, visible / hidden text, form labels and placeholders) and Part 2's normalization (NFC, ZWJ / ZWNJ kept, so ශ්‍රී stays intact). The raw HTML is re-parsed only for facts Part 2 does not store: link classes, `role=button` and `role=alert`. The same `content/extractor.py::extract_content(page, html)` serves dataset samples, the CLI and `POST /api/v1/content`.
+
+```bash
+python scripts/build_text_corpus.py extract --version v0.3 [--force] [--workers 4]   # runs Part 2 for missing samples
+python scripts/build_text_corpus.py one --sample-id c2_benign_000118                  # segments by field + languages + page_text
+python scripts/build_text_corpus.py one --file page.html [--url https://example.com/] [--json]
+```
+
+- **Segments** (`schemas/content.py::PageText`, `text_v1`). Each segment has `segment_id`, `field`, `text`, `order`, `count`, `language`, confidence, method and `script_mix`. The fields are:
+  - `title` and `meta_description`;
+  - `heading`, with its level;
+  - `cta`: buttons, `input[type=submit|button]`, `a.btn` / `.cta` / `role=button`, and short (≤ 6 words) links with an imperative verb in English, Sinhala or Tamil, such as "verify", "තහවුරු", "சரிபார்";
+  - `form_label`: the label, or the aria-label;
+  - `placeholder`;
+  - `alert_banner`: `role=alert`, or short text with an urgency marker;
+  - `paragraph`;
+  - `visible_other`: other visible lines, e.g. text in `<div>`s;
+  - `hidden`: kept for reference, never sent to the model.
+  The rules live in `configs/content.yaml`.
+- **Cleaning:**
+  - Fields are filled in priority order, so text taken by an earlier field is not repeated: "Sign in" stays a CTA.
+  - Repeated menus and footers are merged into one segment with `count`.
+  - Segments that are only a number, date, price, URL, email or encoded blob are dropped.
+  - Emails, phone numbers, NIC numbers and card numbers are masked (`[EMAIL]`, `[PHONE]` …) with Part 2's `mask_pii`. The rest of the wording is kept.
+  - Caps apply per field, per segment and per page.
+- **`page_text`** is the model input, e.g. `[TITLE] … [CTA] … [LABEL] … [HEADING] … [ALERT] … [DESC] … [TEXT] …`. It is assembled in field priority order and cut to 3000 characters at a word boundary, so title, CTAs, labels, headings and alerts survive truncation.
+- **Language ID** (`content/language.py`, `configs/languages.yaml → language_id`), per segment and per page. Labels: `en`, `si`, `ta`, `si_latn`, `ta_latn`, `mixed`, `other`, `unknown`.
+  1. Unicode script ratios (Sinhala U+0D80–0DFF, Tamil U+0B80–0BFF, Latin, other). A Sinhala or Tamil segment is certain even if it is one word. If the second script has more than 25 % of the letters, the segment is `mixed`.
+  2. Latin text first goes through the **Singlish / Tanglish lexicon** (frequent romanized words such as "oya", "karanna", "ungalukku") → `si_latn` / `ta_latn`. *Known gap:* XLM-R handles romanized Sinhala / Tamil poorly, so these pages are flagged, not hidden.
+  3. Then English vs other Latin-script languages, with an offline model: **fastText lid.176** if present, else **langdetect** (seed 0), else "en" with low confidence. Latin segments under 20 characters ("OK", "Login") inherit the page language.
+  4. The page language is weighted by characters over the visible segments. It is `mixed` if the second language has more than 25 %. Every result has a confidence and the method used.
+  This replaces Part 1's `utils/script_detect.py` hint, which still serves collection.
+- **fastText model** (optional, ~1 MB, not in git; the code works without it). `pip install fasttext-predict` is already in `requirements.txt`, then:
+  ```bash
+  curl -L -o models/langid/lid.176.ftz https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.ftz
+  ```
+  The backend name is part of the rules hash, so adding or removing the model redoes every stored result.
+- **Outputs:**
+  - `data/processed/text/<v>/<id>.json` and `text_index.csv` (sample_id, label, cluster_id, page_language, lang_confidence, n_segments, chars, has_cta, has_form_labels, si_ratio, ta_ratio);
+  - `reports/content/<v>_summary.{json,md}`: language per label, metadata-vs-detected confusion table, segments per field, text size, top 20 CTAs per label, empty pages;
+  - `reports/content/<v>_language_mismatch.csv`: a **review list only**. `metadata.csv` is never changed automatically.
+
+v0.3 (459 pages), from `reports/content/v0.3_summary.md`:
+- **Run:** 0 failures, 7 s wall time with 4 workers, median 21 ms per page, 4 pages with no visible text.
+- **Languages:** 7 benign pages `si`, 3 `ta`; 97 pages `other`, which are real foreign-language pages: German, Lithuanian, Chinese, Russian, Spanish, Portuguese, Indonesian …. No Singlish / Tanglish pages yet.
+- **Metadata vs detected:** 123 of 459 disagree. 90 metadata-`en` pages are really another Latin or other-script language, 15 are `mixed`, and 6 `unknown` pages are English.
+
+| page language | en | si | ta | mixed | other | unknown |
+|---|---|---|---|---|---|---|
+| benign (227) | 165 | 7 | 3 | 7 | 44 | 1 |
+| phishing (87) | 60 | 0 | 0 | 7 | 19 | 1 |
+| fake_ecommerce (57) | 38 | 0 | 0 | 1 | 18 | 0 |
+| crypto_scam (29) | 22 | 0 | 0 | 1 | 4 | 2 |
+| malware_delivery (59) | 45 | 0 | 0 | 2 | 12 | 0 |
+
+## Scam-text corpus
+
+Part 5 Batch B builds `corpus_v1`: short texts in English, Sinhala and Tamil, each labelled
+with a **social-engineering intent**. Part 6 trains on it.
+
+**Research integrity.** The corpus mixes four sources with different trust levels. Every row
+records `source_type` and `is_synthetic`. **Synthetic templates and machine translations are
+train-only augmentation. Validation and test contain only real text.** Otherwise the scores
+would be inflated: a model tested on its own template sentences looks better than it is. The
+stats report shows the synthetic share of every split and fails if val / test is not 0 %.
+
+- **Intents** (`configs/intent_taxonomy.yaml`, `intent_v1`): `credential_request`,
+  `payment_request`, `investment_lure`, `fake_security_warning`, `fake_reward`,
+  `urgency_threat`, `impersonation`, `benign`. Each has a definition, inclusion / exclusion
+  rules, 2 English examples and cue words in en / si / ta. A text may have several intents;
+  `primary_intent` = the first in the priority order (the most specific ask wins). The human
+  version for me and the peer reviewer is [`docs/annotation_guide.md`](docs/annotation_guide.md).
+  The si / ta cue words are a seed list that still needs a native-speaker check.
+- **Sources** (`content/corpus_builder.py`, rules in `configs/corpus.yaml`):
+
+  | source_type | from | label | split | group_id |
+  |---|---|---|---|---|
+  | `page_segment` | title / CTA / form label / alert / heading / short paragraph of the v0.3 pages (Part 5A) | weak, from cue words. On a benign page it stays `benign` unless ≥ 2 cue phrases match (then `needs_review`) | the page's split in the **shared** split (never re-split) | page cluster |
+  | `real_message` | `data/corpus/real_texts.csv` (`text,language,intent,source,notes`; my SMS / WhatsApp / CERT / news texts; may be missing) | given | grouped stratified 70/15/15 by language × intent, seed 42 | normalized-text hash |
+  | `synthetic_template` | `data/corpus/raw_texts_clean.csv` | given | **always train** | template_group |
+  | `machine_translation` | `data/corpus/mt/*.csv` (`text,language,intent,source_text_id`) | source's | **always train**; dropped if the source row is not train | source row's group |
+
+  - **PII:** real messages go through Part 2's `mask_pii` + `mask_url`. `[NAME]` placeholders are kept.
+  - **Language:** detected with Part 5A `language.py`. The source's value is kept in
+    `language_given`, and a mismatch gets `needs_review`.
+  - **Near-duplicates:** `corpus.dedup_key` = NFC, case-folded, numbers → 0, URLs → `url`, no
+    punctuation. They are merged within a group (`dup_count`).
+  - **Cross-split duplicates:** a text found in train AND val / test is kept only in the
+    held-out split.
+  - **Small cells:** a real-message cell with fewer than 3 groups cannot be split. It goes
+    to train and is reported.
+- **Commands:**
+  ```bash
+  python scripts/build_text_corpus.py build --version v0.3     # corpus + stats (reviews re-applied)
+  python scripts/build_text_corpus.py stats                    # reports/content/corpus_v1_stats.{json,md}
+  python scripts/build_text_corpus.py export-mt-input          # data/corpus/mt/mt_input_en.csv
+  python scripts/build_text_corpus.py freeze --name corpus_v1  # data/corpus/manifests/ (never overwritten)
+  python scripts/review_corpus.py review --reviewer <name> [--language si] [--split test] [--source-type ...] [--intent ...] [--needs-review] [--random --seed 1 --limit 50]
+  python scripts/review_corpus.py export-peer --fraction 0.1 --seed 42
+  python scripts/review_corpus.py import-peer --file <peer sheet>   # agreement % + Cohen's kappa per language
+  ```
+- **Review tool keys:** `c` confirm, `i` change intents (numbers, first = primary), `l`
+  language, `x` exclude with a reason, `s` skip, `b` back, `q` quit.
+  - Every decision is saved at once to `data/corpus/review/corpus_reviews.csv`.
+  - `text_id` is a hash of the source and the normalized text, so a rebuild keeps all
+    decisions.
+  - Confirming pins the shown intents and language.
+- **Machine translation (optional):** `notebooks/05_corpus_mt_colab.ipynb` (Colab GPU, NLLB-200
+  distilled 600M, `eng_Latn` → `sin_Sinh` / `tam_Taml`, placeholders protected). Upload
+  `mt_input_en.csv`, then download `mt_si.csv` / `mt_ta.csv` into `data/corpus/mt/` and rebuild.
+- **Outputs:**
+  - `data/corpus/corpus_v1.{csv,jsonl}` (all rows, including excluded ones with their reason);
+  - `data/corpus/{en,si,ta}/corpus_v1_<lang>.csv` (active rows);
+  - `data/corpus/corpus_v1_build.json` (what was read, dropped and moved);
+  - `reports/content/corpus_v1_stats.{json,md}` (counts only, no text).
+- **Git:** corpus files can hold personal data even after masking, so `data/corpus/**` is
+  ignored. The exceptions are `raw_texts_clean.csv` and `manifests/`; the stats report and the
+  annotation guide are tracked. **Part 6 must use rows with `excluded = false`.**
+
+First build on v0.3 (no real messages or translations yet), from `reports/content/corpus_v1_stats.md`:
+
+- **Size:** 7,330 rows: 7,210 page segments and 120 synthetic rows (168 templates; 48 merged
+  because they differ only in an amount).
+- **Splits:** train 4,832 / val 1,215 / test 1,283. Synthetic share 2.5 % / 0 % / 0 %.
+  Integrity checks passed.
+- **Cross-split duplicates:** 1,623 train page segments were dropped because the same text is
+  on a val / test page (mostly short CTAs such as "Sign in").
+- **Weak labels:** only 32 page segments get a scam intent. Most text on any page is neutral,
+  even on scam pages: menus and product names. So the page segments are mainly real benign /
+  hard-negative text in en / si / ta / other.
+- **Real Sinhala / Tamil text:** none with a scam intent in val + test yet. The gap to the
+  target is 210 rows for si (30 per intent) and 105 for ta (15 per intent). Collecting real
+  Sinhala / Tamil scam messages into `real_texts.csv` is the next step.
+
+## XLM-R text model
+
+Part 6A: **page-level threat classification from page text** - the *NLP-only* arm of the ablation study. Input = Part 5A `page_text` (`[TITLE] … [CTA] … [LABEL] …`), labels = the 5 threat classes (Part 4's label mapping), split = the **shared** `data/splits/v0.3` (never re-split: the same 68 test pages as DOM-only and Behavior-only; its fingerprint travels with every bundle and model). Part 6B (intent level, on the scam-text corpus) is postponed until the corpus has enough real scam texts.
+
+Why XLM-R: one multilingual encoder (100 languages incl. Sinhala and Tamil) reads English, si, ta and the ~21 % "other" pages without a per-language pipeline. Why a **TF-IDF baseline**: character 2–5-grams work for any script and cost nothing - XLM-R is only worth it if it beats them on the same pages. Why **3 seeds**: with ~322 training pages one fine-tuning run is partly luck, so XLM-R is reported as mean ± std. Why **test once**: seeds, epochs and C are chosen on val / CV only.
+
+```bash
+# laptop
+python scripts/train_xlmr.py token-stats  --version v0.3            # truncation at 512 per language
+python scripts/train_xlmr.py baseline     --version v0.3            # TF-IDF char_wb 2-5 + LogReg
+python scripts/train_xlmr.py train        --version v0.3 --smoke    # CPU pipeline check (tiny model, 1 step)
+python scripts/train_xlmr.py export-bundle --version v0.3           # -> data/tmp/xlmr_bundle_v0.3.zip
+# Colab: notebooks/04_xlmr_finetune_colab.ipynb (T4 GPU, 3 seeds) -> download xlmr_v0.3.zip
+python scripts/train_xlmr.py import-model --zip xlmr_v0.3.zip --version v0.3
+python scripts/evaluate_xlmr.py --version v0.3                      # reports/xlmr/v0.3 + ablation table
+```
+
+- **Training** (`nlp/train.py`, Hugging Face Trainer): class-weighted cross-entropy (n / (k · n_c)), lr 2e-5, ≤ 10 epochs, batch 16, warmup 0.1, weight decay 0.01, fp16 on GPU, early stopping on **val macro-F1** (patience 3, best epoch restored); seeds 42 / 43 / 44 → `models/xlmr/<v>/seed_<n>/` (safetensors, tokenizer, config, training_args, label_mapping, metrics, val + test predictions); final = seed with the best val macro-F1 → `final/` + `model_card.json`. All settings: `configs/xlmr.yaml`; base model: `.env XLMR_MODEL_NAME`.
+- **Colab bundle** (~0.4 MB): examples jsonl (masked page_text only - no HTML, no URLs), label mapping, split fingerprint, the config and a self-contained copy of the training code (`tokenizer.py`, `model.py`, `train.py` never import the repo; a test checks it), `requirements-colab.txt` pinned to the laptop's transformers versions. By default only `final/` weights are downloaded (~1.1 GB); the other seeds come back as metrics + predictions.
+- **import-model** refuses a zip whose split fingerprint, dataset version or label mapping differs from the laptop's, and any zip path outside the target.
+- **Evaluation** (`nlp/evaluate.py`): final model re-run on the local CPU and compared with its Colab predictions (PASS = every predicted label identical and max |Δp| < 0.01; GPU vs CPU fp32 differences of ~1e-3 are expected - v0.3: labels 100 % identical, max |Δp| 0.0016); final + each seed on val and test: per-class P/R/F1, **macro P/R/F1** (primary: macro-F1), weighted-F1, accuracy, benign FPR, ROC-AUC OvR, **per language** (en / si / ta / mixed / other from Part 5A, n + small-n warning), confusion matrices (counts + normalized PNG), `misclassified.csv`, mean ± std over seeds; test metrics are added to the model card.
+- **TF-IDF baseline** (`nlp/text_baseline.py`): Part 4's protocol - C ∈ {0.1, 1, 10, 100} by mean macro-F1 over the shared grouped CV folds (train+val, vectorizer fit inside each fold), refit on train+val, test once → `models/text_baseline/v0.3/`, `reports/text_baseline/v0.3/` (same format + strongest n-grams per class).
+- **Serving** (`nlp/inference.py`): models load lazily on the first request (the API starts without importing torch); CPU, `no_grad`, batched; a missing model → `available: false`, "model not available".
+- **Git:** weights, tokenizers, predictions and joblib files are ignored; `model_card.json`, `label_mapping.json`, `metrics.json`, `selection.json` are tracked.
+
+v0.3 single arms (test = 68 pages, same split for every arm; the fused results are in **Fusion & ablation**):
+
+| arm | model | CV / seed mean ± std | test macro-F1 | benign FPR |
+|---|---|---|---|---|
+| DOM-only (Part 4) | Random Forest | CV 0.701 ± 0.077 | 0.786 | 17.6 % |
+| Behavior-only (Part 8) | Random Forest | CV 0.620 ± 0.078 | 0.682 | 20.6 % |
+| Text TF-IDF (Part 6A) | char_wb 2–5 + LogReg (C = 10) | CV 0.706 ± 0.065 | 0.718 | **5.9 %** |
+| Text XLM-R (Part 6A) | xlm-roberta-base, final seed 43 | 3-seed test 0.610 ± 0.062 | 0.657 | 23.5 % |
+
+Token lengths (xlm-roberta-base tokenizer): median 740 tokens, **65 % of pages are longer than 512** (si / ta: all of them). Part 5A orders page_text by priority, so truncation cuts the trailing `[TEXT]` paragraphs and keeps title, CTAs, form labels and headings.
+
+If the Hugging Face download fails with `CERTIFICATE_VERIFY_FAILED` on Windows (antivirus HTTPS scanning: `requests` trusts certifi, not the Windows store), download the four tokenizer files of `FacebookAI/xlm-roberta-base` by hand and pass the folder: `token-stats --tokenizer models/xlmr/base_tokenizer/xlm-roberta-base`. Colab is not affected.
+
+## Fusion & ablation
+
+Part 9A: the **tri-modal fusion** of the three single-modality arms (DOM, behavior, text) and the **ablation study** that compares every arm, every pair and the fusion on the same shared split. (Part 9B - the public `/api/v1/analyze` and the gateway integration - comes next.)
+
+```bash
+python scripts/run_ablation.py --version v0.3                  # OOF per arm + fusion + ablation (~1 min)
+python scripts/run_ablation.py --version v0.3 --reuse-oof      # keep the stored OOF tables
+# optional XLM-R arm (needs a Colab GPU, ~25-30 min on a T4):
+python scripts/train_xlmr.py export-bundle --version v0.3 --cv # -> data/tmp/xlmr_cv_bundle_v0.3.zip
+# Colab: notebooks/06_xlmr_oof_colab.ipynb -> download xlmr_oof_v0.3.zip (a few KB)
+python scripts/train_xlmr.py import-oof --zip xlmr_oof_v0.3.zip --version v0.3
+python scripts/run_ablation.py --version v0.3 --reuse-oof
+```
+
+- **Out-of-fold (OOF) predictions** (`fusion/oof.py`) - why: a fusion model learns how much to trust each arm from the arms' probabilities; a probability from a model that was trained on the same page is over-confident, and the fusion would learn to over-trust that arm. So every train+val page gets its probabilities from an arm model trained on the **other** folds of the shared grouped 5-fold CV (`cv_folds.csv`, cluster-pure, checked), and every test page from the arm's **final** model (train+val). Each arm reuses its own Part's code and CV-chosen hyperparameters: DOM = Part 4 best model, Behavior = Part 8 best model (their recomputed OOF equals the OOF stored in the Part 4 / 8 bundles, max diff 5e-7), Text TF-IDF = Part 6A with the saved C, Text XLM-R = Part 6A on Colab (5 fold models, early stopping on a cluster-pure inner-validation slice of the training folds, predictions only). Output: `data/processed/fusion/<v>/oof_<arm>.{csv,json}` (tracked: ids + probabilities only).
+- **Fusion strategies** (`fusion/strategies.py`), all fit on CV training folds and scored on the held-out fold: (a) **mean** of the arm probabilities; (b) **weighted** mean, weights on a 0.1 simplex grid (+ equal weights) chosen by CV macro-F1; (c) **stacking** - multinomial LogReg (balanced) on the concatenated OOF probabilities; (d) **hybrid** - XGBoost on raw DOM + behavior features + text OOF probabilities (constant / correlated features dropped on the training folds, Part 4's XGBoost settings). The **final model** = the tri-modal strategy with the best CV macro-F1 → `models/fusion/<v>/{fusion.joblib, model_card.json}`.
+- **Benign-FPR operating point** (`fusion/operating_point.py`): benign if P(benign) ≥ t, else the most probable threat; t = the largest threshold with OOF benign FPR ≤ 2 % (the proposal target), chosen on train+val, applied once to test. Both argmax and threshold results are reported, with the recall cost.
+- **Statistics:** paired bootstrap (1,000 resamples of the 68 test pages, seed 42) → 95 % CI of each row's test macro-F1 and of the difference "final − best single arm" (the report says when the CI includes 0). **Complementarity:** which modality got each test page right ("only DOM right", "all wrong", … + 5 example ids). **Explainability:** weights, LR coefficients, SHAP (hybrid) per arm and feature.
+- **Outputs:** `reports/ablation/<v>/{ablation.md, ablation.json, test_predictions.csv, figures/}` (macro-F1 with CIs, benign FPR argmax vs threshold, confusion matrix of the final model, explanation plots).
+
+v0.3 without XLM-R (test = 68 pages; CV = grouped 5-fold on train+val):
+
+| row | CV macro-F1 | test macro-F1 [95 % CI] | accuracy | benign FPR argmax → at t |
+|---|---|---|---|---|
+| DOM-only | 0.701 ± 0.077 | 0.786 [0.652, 0.891] | 0.824 | 17.6 % → 0.0 % |
+| Behavior-only | 0.620 ± 0.078 | 0.682 [0.551, 0.805] | 0.735 | 20.6 % → 0.0 % |
+| Text TF-IDF | 0.706 ± 0.065 | 0.718 [0.569, 0.841] | 0.809 | 5.9 % → 0.0 % |
+| DOM+Behavior (weighted) | 0.701 ± 0.077 | 0.786 [0.652, 0.891] | 0.824 | 17.6 % → 0.0 % |
+| DOM+Text (mean) | 0.730 ± 0.048 | 0.824 [0.695, 0.923] | 0.853 | 8.8 % → 0.0 % |
+| Behavior+Text (mean) | 0.732 ± 0.067 | 0.750 [0.592, 0.870] | 0.824 | 5.9 % → 2.9 % |
+| **DOM+Behavior+Text (mean) - final** | 0.726 ± 0.081 | **0.833** [0.701, 0.928] | 0.868 | 5.9 % → **0.0 %** |
+| DOM+Behavior+Text (stacking) | 0.718 ± 0.065 | 0.769 [0.638, 0.877] | 0.824 | 11.8 % → 0.0 % |
+| DOM+Behavior+Text (hybrid) | 0.711 ± 0.057 | 0.807 [0.647, 0.914] | 0.853 | 8.8 % → 2.9 % |
+
+Final model at the FPR threshold (t = 0.190): benign FPR 5.9 % → 0.0 %, threat recall 88.2 % → 67.6 %, macro-F1 0.833 → 0.741. Final − best single arm by CV (TF-IDF): +0.115 [+0.018, +0.237]; final − best single arm on test (DOM): +0.047 [−0.075, +0.174] - **the CI includes 0**, so on 68 pages the fusion cannot be shown to beat DOM-only.
+
 ## JavaScript analysis
 
 Part 7 analyses every piece of JavaScript Part 2 found: inline scripts, `on*=` handlers and `javascript:` URLs. It works **statically**. Code is parsed into a syntax tree with [tree-sitter](https://tree-sitter.github.io/) and never executed, and external `<script src>` files are never downloaded; only their address is analysed. Part 7 **reports** API usage. Deciding intent (for example, "credential read + external fetch = exfiltration") is Part 8's job.
@@ -417,6 +629,8 @@ v0.3 (459 pages, 5 classes), from `reports/behavior/v0.3_summary.md`:
 | POST | `/api/v1/dom-features` | ✅ Part 3: same body → `DomResult` (52-feature vector in dictionary order + evidence). No `url` → `base_url_known = 0` and external features 0 |
 | POST | `/api/v1/preprocess` | ✅ Part 2: body `{"html": "...", "url": "..." or null}` → `ParsedPage` JSON (same as the stored files). `url` is never fetched. Body > 5 MB → `413` |
 | POST | `/api/v1/js-analysis` | ✅ Part 7: same body → `JsAnalysisResult` (detections with line numbers / arguments / masked snippets, scripts with obfuscation stats, external scripts, js_v1 features). Nothing is executed or downloaded |
+| POST | `/api/v1/content` | ✅ Part 5: same body → `PageText` (segments per field with language, page language + confidence + method, model-ready `page_text`). Text is prepared, nothing is classified |
+| POST | `/api/v1/text-prediction` | ✅ Part 6A: same body → `TextPrediction` (Part 2 → 5A page_text → fine-tuned XLM-R + TF-IDF baseline: predicted class + probability per class, XLM-R token count / truncation). A model not trained yet answers `available: false` + "model not available" (still 200) |
 | POST | `/api/v1/behavior` | ✅ Part 8: same body → `BehaviorResult` (sources, sinks, flows with evidence chains, findings with severity and message, beh_v1 intent vector, risk score). Runs Part 2 + 7 + 8; nothing is executed or downloaded |
 | POST | `/api/v1/analyze` | stub (501) – body `{"html": "...", "url": "..."}` |
 | POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}` |
@@ -436,7 +650,7 @@ Then open **http://127.0.0.1:8002/inspector** (Swagger: http://127.0.0.1:8002/do
 
 - **Left:** pick a frozen dataset version, filter by label, language, "has password input", "external form action", "misclassified (test)" (test pages the best Part 4 model got wrong) or "has critical behavior finding" (stored Part 8 results), search by id or title, and click a sample. Up/Down arrows move through the list.
 - **Top:** paste HTML (and optionally its URL) or choose a local `.html` file, then press **Analyze**. This calls `POST /api/v1/preprocess`. The file is read as text and never rendered.
-- **Tabs:** DOM Features (Part 3, plus the Part 4 "DOM baseline prediction" card with the predicted class, probability bars, the top 5 features pushing towards or away from it, and a PILOT badge; then evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only) · JS Analysis (Part 7: summary chips per API category, the detections table with snippets shown as monospace text only, external-URL / library / confidence badges, per-script obfuscation cards and the external scripts table) · Behavior (Part 8: risk-score gauge, finding cards coloured by severity with the message, factors and the **evidence chain as numbered steps** (line + code, monospace, text only), the flows table with expandable chains, the intent vector and the sinks with their triggers). Greyed-out tabs are placeholders for Parts 5–6 and 9.
+- **Tabs:** DOM Features (Part 3, plus the Part 4 "DOM baseline prediction" card with the predicted class, probability bars, the top 5 features pushing towards or away from it, and a PILOT badge; then evidence, non-zero features per group next to the label medians, and a full table) · Overview (sizes, timings, errors, count cards) · Text (headings, paragraphs, visible and hidden text; Sinhala/Tamil fonts) · Forms (action, EXTERNAL badge, inputs, buttons) · Scripts (inline JS as text, external scripts, handlers, `javascript:` URLs) · Links & Resources (internal/external ratio, stylesheets, iframes, meta refresh) · DOM (tag-count chart, lazy skeleton tree) · Raw JSON (copy button) · Safe Preview (dataset samples only) · JS Analysis (Part 7: summary chips per API category, the detections table with snippets shown as monospace text only, external-URL / library / confidence badges, per-script obfuscation cards and the external scripts table) · Behavior (Part 8: risk-score gauge, finding cards coloured by severity with the message, factors and the **evidence chain as numbered steps** (line + code, monospace, text only), the flows table with expandable chains, the intent vector and the sinks with their triggers) · Content (Part 5: page language with confidence, method and a script-ratio bar, language shares, the highlighted CTA list, segments grouped by field with a language chip each, and `page_text` in monospace; text only; plus the Part 6A **"Text model (Part 6)"** card: XLM-R and TF-IDF predicted class with probability bars, token count / truncated badge, "model not available" when a model is missing). · Fusion (Part 9: per-arm probability bars side by side, the fused probabilities, the argmax verdict and the verdict at the ≤ 2 % benign-FPR threshold, which arm drove it and the top inputs - weights × probabilities, LR coefficients or SHAP). The greyed-out tab is the placeholder for the unified result (Part 9B).
 - **Deep links:** the URL hash remembers the version, sample and tab (e.g. `/inspector#v=v0.1&sample=c2_phishing_000081&tab=forms`). This is handy for presentations.
 
 Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
@@ -449,6 +663,9 @@ Dev endpoints (only when `APP_ENV=development`; any other value gives `404`):
 | `GET /api/v1/dev/samples/{id}/dom-features?version=v0.1` | the stored Part 3 `DomResult`, or one computed on the fly (header `X-Features-Source`) |
 | `GET /api/v1/dev/samples/{id}/dom-prediction?version=v0.1` | Part 4: probabilities from every trained baseline, the best model's top 5 contributions, the split and whether it is misclassified on test (`404` if no model has been trained) |
 | `GET /api/v1/dev/samples/{id}/js-analysis?version=v0.2` | the stored Part 7 `JsAnalysisResult`, or one computed on the fly (header `X-Js-Source`) |
+| `GET /api/v1/dev/samples/{id}/content?version=v0.3` | the stored Part 5 `PageText`, or one computed on the fly (header `X-Content-Source`) |
+| `GET /api/v1/dev/samples/{id}/text-prediction?version=v0.3` | Part 6A `TextPrediction` of the models trained on that version (+ true label and split) |
+| `GET /api/v1/dev/samples/{id}/fusion?version=v0.3` | Part 9A: the saved fusion model on the STORED arm probabilities (OOF for train / val pages, final arm models for test pages): per-arm probabilities, fused probabilities, argmax verdict, verdict at the benign FPR threshold, which arm / feature drove it (`404` no model, `409` stale) |
 | `GET /api/v1/dev/samples/{id}/behavior?version=v0.3` | the stored Part 8 `BehaviorResult`, or one computed on the fly (header `X-Behavior-Source`) |
 | `GET /api/v1/dev/dom-dictionary?version=v0.1` | the feature dictionary plus per-label medians from the Part 3 report |
 | `GET /api/v1/dev/samples/{id}/safe-preview` | Part 1's sanitized copy, with `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'` and `nosniff` |

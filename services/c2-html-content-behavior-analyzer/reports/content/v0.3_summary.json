@@ -1,0 +1,734 @@
+{
+  "version": "v0.3",
+  "generated_at": "2026-10-15T16:47:40+00:00",
+  "text_set_version": "text_v1",
+  "rules_hash": "2df7c7ad4a849bcf9de5f848e538f2c65667dd1651c8d8801dc1b530dec3c910",
+  "language_backend": "fasttext",
+  "filters": {
+    "label": null,
+    "limit": null,
+    "force": false
+  },
+  "counts": {
+    "run_total": 459,
+    "processed": 459,
+    "skipped_unchanged": 0,
+    "failed": 0,
+    "part2_processed_now": 0,
+    "pages_in_index": 459,
+    "empty_pages": 4,
+    "language_mismatches": 123,
+    "with_errors": 0,
+    "cta_from_parsed_page_only": 0
+  },
+  "timing": {
+    "wall_seconds": 7.0,
+    "median_ms": 21.1,
+    "max_ms": 406.7
+  },
+  "labels": [
+    "benign",
+    "phishing",
+    "fake_ecommerce",
+    "crypto_scam",
+    "malware_delivery"
+  ],
+  "detected_languages": [
+    "en",
+    "si",
+    "ta",
+    "si_latn",
+    "ta_latn",
+    "mixed",
+    "other",
+    "unknown"
+  ],
+  "pages_per_label": {
+    "benign": 227,
+    "phishing": 87,
+    "fake_ecommerce": 57,
+    "crypto_scam": 29,
+    "malware_delivery": 59
+  },
+  "language_distribution": {
+    "benign": {
+      "en": 165,
+      "si": 7,
+      "ta": 3,
+      "si_latn": 0,
+      "ta_latn": 0,
+      "mixed": 7,
+      "other": 44,
+      "unknown": 1
+    },
+    "phishing": {
+      "en": 60,
+      "si": 0,
+      "ta": 0,
+      "si_latn": 0,
+      "ta_latn": 0,
+      "mixed": 7,
+      "other": 19,
+      "unknown": 1
+    },
+    "fake_ecommerce": {
+      "en": 38,
+      "si": 0,
+      "ta": 0,
+      "si_latn": 0,
+      "ta_latn": 0,
+      "mixed": 1,
+      "other": 18,
+      "unknown": 0
+    },
+    "crypto_scam": {
+      "en": 22,
+      "si": 0,
+      "ta": 0,
+      "si_latn": 0,
+      "ta_latn": 0,
+      "mixed": 1,
+      "other": 4,
+      "unknown": 2
+    },
+    "malware_delivery": {
+      "en": 45,
+      "si": 0,
+      "ta": 0,
+      "si_latn": 0,
+      "ta_latn": 0,
+      "mixed": 2,
+      "other": 12,
+      "unknown": 0
+    }
+  },
+  "language_distribution_pct": {
+    "benign": {
+      "en": 72.7,
+      "si": 3.1,
+      "ta": 1.3,
+      "si_latn": 0.0,
+      "ta_latn": 0.0,
+      "mixed": 3.1,
+      "other": 19.4,
+      "unknown": 0.4
+    },
+    "phishing": {
+      "en": 69.0,
+      "si": 0.0,
+      "ta": 0.0,
+      "si_latn": 0.0,
+      "ta_latn": 0.0,
+      "mixed": 8.0,
+      "other": 21.8,
+      "unknown": 1.1
+    },
+    "fake_ecommerce": {
+      "en": 66.7,
+      "si": 0.0,
+      "ta": 0.0,
+      "si_latn": 0.0,
+      "ta_latn": 0.0,
+      "mixed": 1.8,
+      "other": 31.6,
+      "unknown": 0.0
+    },
+    "crypto_scam": {
+      "en": 75.9,
+      "si": 0.0,
+      "ta": 0.0,
+      "si_latn": 0.0,
+      "ta_latn": 0.0,
+      "mixed": 3.4,
+      "other": 13.8,
+      "unknown": 6.9
+    },
+    "malware_delivery": {
+      "en": 76.3,
+      "si": 0.0,
+      "ta": 0.0,
+      "si_latn": 0.0,
+      "ta_latn": 0.0,
+      "mixed": 3.4,
+      "other": 20.3,
+      "unknown": 0.0
+    }
+  },
+  "page_language_methods": {
+    "fasttext": 403,
+    "script": 38,
+    "weighted": 18
+  },
+  "metadata_vs_detected": {
+    "en": {
+      "en": 322,
+      "si": 0,
+      "ta": 0,
+      "si_latn": 0,
+      "ta_latn": 0,
+      "mixed": 15,
+      "other": 90,
+      "unknown": 0
+    },
+    "si": {
+      "en": 2,
+      "si": 7,
+      "ta": 0,
+      "si_latn": 0,
+      "ta_latn": 0,
+      "mixed": 1,
+      "other": 0,
+      "unknown": 0
+    },
+    "ta": {
+      "en": 0,
+      "si": 0,
+      "ta": 3,
+      "si_latn": 0,
+      "ta_latn": 0,
+      "mixed": 1,
+      "other": 0,
+      "unknown": 0
+    },
+    "unknown": {
+      "en": 6,
+      "si": 0,
+      "ta": 0,
+      "si_latn": 0,
+      "ta_latn": 0,
+      "mixed": 1,
+      "other": 7,
+      "unknown": 4
+    }
+  },
+  "segments_per_field_mean": {
+    "benign": {
+      "title": 0.99,
+      "meta_description": 0.82,
+      "heading": 18.22,
+      "paragraph": 21.43,
+      "cta": 13.34,
+      "form_label": 0.78,
+      "placeholder": 0.66,
+      "alert_banner": 0.37,
+      "visible_other": 87.93,
+      "hidden": 5.99
+    },
+    "phishing": {
+      "title": 0.99,
+      "meta_description": 0.48,
+      "heading": 7.46,
+      "paragraph": 12.13,
+      "cta": 4.22,
+      "form_label": 0.68,
+      "placeholder": 0.85,
+      "alert_banner": 0.17,
+      "visible_other": 31.8,
+      "hidden": 1.71
+    },
+    "fake_ecommerce": {
+      "title": 0.98,
+      "meta_description": 0.89,
+      "heading": 12.33,
+      "paragraph": 15.6,
+      "cta": 7.96,
+      "form_label": 0.89,
+      "placeholder": 1.25,
+      "alert_banner": 0.11,
+      "visible_other": 39.88,
+      "hidden": 1.46
+    },
+    "crypto_scam": {
+      "title": 0.93,
+      "meta_description": 0.55,
+      "heading": 14.28,
+      "paragraph": 15.41,
+      "cta": 5.17,
+      "form_label": 0.45,
+      "placeholder": 0.45,
+      "alert_banner": 0.14,
+      "visible_other": 30.31,
+      "hidden": 0.76
+    },
+    "malware_delivery": {
+      "title": 0.97,
+      "meta_description": 0.2,
+      "heading": 4.03,
+      "paragraph": 6.14,
+      "cta": 2.02,
+      "form_label": 0.44,
+      "placeholder": 0.31,
+      "alert_banner": 0.07,
+      "visible_other": 17.34,
+      "hidden": 0.44
+    }
+  },
+  "text_size": {
+    "benign": {
+      "median_chars": 4391,
+      "median_page_text_chars": 2992,
+      "pct_page_text_truncated": 72.7,
+      "pct_has_cta": 89.0,
+      "pct_has_form_labels": 55.9
+    },
+    "phishing": {
+      "median_chars": 781,
+      "median_page_text_chars": 869,
+      "pct_page_text_truncated": 23.0,
+      "pct_has_cta": 85.1,
+      "pct_has_form_labels": 52.9
+    },
+    "fake_ecommerce": {
+      "median_chars": 2358,
+      "median_page_text_chars": 2556,
+      "pct_page_text_truncated": 35.1,
+      "pct_has_cta": 96.5,
+      "pct_has_form_labels": 78.9
+    },
+    "crypto_scam": {
+      "median_chars": 3258,
+      "median_page_text_chars": 2989,
+      "pct_page_text_truncated": 58.6,
+      "pct_has_cta": 79.3,
+      "pct_has_form_labels": 31.0
+    },
+    "malware_delivery": {
+      "median_chars": 201,
+      "median_page_text_chars": 226,
+      "pct_page_text_truncated": 20.3,
+      "pct_has_cta": 50.8,
+      "pct_has_form_labels": 28.8
+    }
+  },
+  "top_ctas": {
+    "benign": [
+      {
+        "text": "Contact Us",
+        "pages": 61
+      },
+      {
+        "text": "Search",
+        "pages": 54
+      },
+      {
+        "text": "Contact",
+        "pages": 34
+      },
+      {
+        "text": "Close",
+        "pages": 27
+      },
+      {
+        "text": "Login",
+        "pages": 25
+      },
+      {
+        "text": "Log in",
+        "pages": 22
+      },
+      {
+        "text": "next",
+        "pages": 22
+      },
+      {
+        "text": "Menu",
+        "pages": 21
+      },
+      {
+        "text": "Subscribe",
+        "pages": 21
+      },
+      {
+        "text": "Sign in",
+        "pages": 19
+      },
+      {
+        "text": "previous",
+        "pages": 19
+      },
+      {
+        "text": "Learn More",
+        "pages": 18
+      },
+      {
+        "text": "Next slide",
+        "pages": 16
+      },
+      {
+        "text": "Shop now",
+        "pages": 15
+      },
+      {
+        "text": "Previous slide",
+        "pages": 15
+      },
+      {
+        "text": "Read more",
+        "pages": 14
+      },
+      {
+        "text": "English",
+        "pages": 12
+      },
+      {
+        "text": "Shop",
+        "pages": 11
+      },
+      {
+        "text": "Open Menu",
+        "pages": 11
+      },
+      {
+        "text": "Sign up",
+        "pages": 11
+      }
+    ],
+    "phishing": [
+      {
+        "text": "Close",
+        "pages": 18
+      },
+      {
+        "text": "Next",
+        "pages": 12
+      },
+      {
+        "text": "Choose dates on Booking.com",
+        "pages": 10
+      },
+      {
+        "text": "See all amenities",
+        "pages": 10
+      },
+      {
+        "text": "Check Availability",
+        "pages": 10
+      },
+      {
+        "text": "See all reviews",
+        "pages": 10
+      },
+      {
+        "text": "Accept",
+        "pages": 10
+      },
+      {
+        "text": "Decline",
+        "pages": 10
+      },
+      {
+        "text": "Currency",
+        "pages": 10
+      },
+      {
+        "text": "Select dates",
+        "pages": 9
+      },
+      {
+        "text": "U.S. dollar USD - US$",
+        "pages": 7
+      },
+      {
+        "text": "USD/en",
+        "pages": 7
+      },
+      {
+        "text": "Sign In",
+        "pages": 6
+      },
+      {
+        "text": "Clear",
+        "pages": 4
+      },
+      {
+        "text": "contact us",
+        "pages": 3
+      },
+      {
+        "text": "English",
+        "pages": 3
+      },
+      {
+        "text": "Slideshow View",
+        "pages": 3
+      },
+      {
+        "text": "Grid View",
+        "pages": 3
+      },
+      {
+        "text": "Open table of contents",
+        "pages": 3
+      },
+      {
+        "text": "On this page",
+        "pages": 3
+      }
+    ],
+    "fake_ecommerce": [
+      {
+        "text": "Shop Now",
+        "pages": 36
+      },
+      {
+        "text": "Contact Us",
+        "pages": 31
+      },
+      {
+        "text": "Search",
+        "pages": 30
+      },
+      {
+        "text": "Shop",
+        "pages": 28
+      },
+      {
+        "text": "Open menu",
+        "pages": 28
+      },
+      {
+        "text": "Subscribe",
+        "pages": 21
+      },
+      {
+        "text": "Scroll left",
+        "pages": 15
+      },
+      {
+        "text": "Scroll right",
+        "pages": 15
+      },
+      {
+        "text": "Quick View",
+        "pages": 12
+      },
+      {
+        "text": "Shop The Collection",
+        "pages": 10
+      },
+      {
+        "text": "Shop Sale",
+        "pages": 9
+      },
+      {
+        "text": "Menu",
+        "pages": 7
+      },
+      {
+        "text": "Shop all",
+        "pages": 6
+      },
+      {
+        "text": "Cart (0)",
+        "pages": 6
+      },
+      {
+        "text": "Shop Collection Now",
+        "pages": 5
+      },
+      {
+        "text": "Iscriviti",
+        "pages": 4
+      },
+      {
+        "text": "Apri menu",
+        "pages": 4
+      },
+      {
+        "text": "Cerca",
+        "pages": 4
+      },
+      {
+        "text": "Shop New Arrivals",
+        "pages": 4
+      },
+      {
+        "text": "Schnellansicht",
+        "pages": 4
+      }
+    ],
+    "crypto_scam": [
+      {
+        "text": "Contact",
+        "pages": 8
+      },
+      {
+        "text": "Login",
+        "pages": 8
+      },
+      {
+        "text": "Get Started",
+        "pages": 4
+      },
+      {
+        "text": "Sign Up",
+        "pages": 4
+      },
+      {
+        "text": "Sign In",
+        "pages": 3
+      },
+      {
+        "text": "LEARN MORE",
+        "pages": 3
+      },
+      {
+        "text": "Invest Now",
+        "pages": 2
+      },
+      {
+        "text": "READ MORE",
+        "pages": 2
+      },
+      {
+        "text": "Open menu",
+        "pages": 2
+      },
+      {
+        "text": "Close",
+        "pages": 2
+      },
+      {
+        "text": "Register",
+        "pages": 2
+      },
+      {
+        "text": "Contact Us",
+        "pages": 2
+      },
+      {
+        "text": "Open Account",
+        "pages": 2
+      },
+      {
+        "text": "立即下载Webull开始投资",
+        "pages": 1
+      },
+      {
+        "text": "下一步",
+        "pages": 1
+      },
+      {
+        "text": "最大",
+        "pages": 1
+      },
+      {
+        "text": "Ouvrir le menu",
+        "pages": 1
+      },
+      {
+        "text": "FR",
+        "pages": 1
+      },
+      {
+        "text": "Create Free Account →",
+        "pages": 1
+      },
+      {
+        "text": "Get Started →",
+        "pages": 1
+      }
+    ],
+    "malware_delivery": [
+      {
+        "text": "download",
+        "pages": 9
+      },
+      {
+        "text": "contact us",
+        "pages": 5
+      },
+      {
+        "text": "Menu",
+        "pages": 3
+      },
+      {
+        "text": "Download anyway",
+        "pages": 3
+      },
+      {
+        "text": "Search",
+        "pages": 2
+      },
+      {
+        "text": "Войти",
+        "pages": 2
+      },
+      {
+        "text": "CONTACT",
+        "pages": 2
+      },
+      {
+        "text": "confirm",
+        "pages": 1
+      },
+      {
+        "text": "delete",
+        "pages": 1
+      },
+      {
+        "text": "submit search",
+        "pages": 1
+      },
+      {
+        "text": "Tombol",
+        "pages": 1
+      },
+      {
+        "text": "best $10 deposit bonus nz",
+        "pages": 1
+      },
+      {
+        "text": "open search tool",
+        "pages": 1
+      },
+      {
+        "text": "Cari",
+        "pages": 1
+      },
+      {
+        "text": "cazinouri apple pay",
+        "pages": 1
+      },
+      {
+        "text": "$10 deposit online casino nz",
+        "pages": 1
+      },
+      {
+        "text": "Gửi yêu cầu",
+        "pages": 1
+      },
+      {
+        "text": "お問い合わせ Contact",
+        "pages": 1
+      },
+      {
+        "text": "PAGE TOP",
+        "pages": 1
+      },
+      {
+        "text": "検索",
+        "pages": 1
+      }
+    ]
+  },
+  "empty_pages": [
+    {
+      "sample_id": "c2_benign_000055",
+      "label": "benign"
+    },
+    {
+      "sample_id": "c2_crypto_scam_000014",
+      "label": "crypto_scam"
+    },
+    {
+      "sample_id": "c2_crypto_scam_000027",
+      "label": "crypto_scam"
+    },
+    {
+      "sample_id": "c2_phishing_000009",
+      "label": "phishing"
+    }
+  ],
+  "failures": []
+}

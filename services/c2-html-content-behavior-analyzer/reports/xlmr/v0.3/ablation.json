@@ -1,0 +1,85 @@
+{
+  "version": "v0.3",
+  "rows": [
+    {
+      "arm": "DOM-only",
+      "available": true,
+      "model": "Random Forest",
+      "score_label": "CV",
+      "score_mean": 0.7006009011107482,
+      "score_std": 0.07717277879953352,
+      "test_macro_f1": 0.7861111111111111,
+      "benign_fpr": 0.17647058823529413,
+      "per_class_f1": {
+        "benign": 0.8888888888888888,
+        "phishing": 0.75,
+        "fake_ecommerce": 1.0,
+        "crypto_scam": 0.6666666666666666,
+        "malware_delivery": 0.625
+      },
+      "n_test": 68,
+      "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+      "same_split": true
+    },
+    {
+      "arm": "Behavior-only",
+      "available": true,
+      "model": "Random Forest",
+      "score_label": "CV",
+      "score_mean": 0.6198821254374565,
+      "score_std": 0.07778488901007173,
+      "test_macro_f1": 0.6823368869936034,
+      "benign_fpr": 0.20588235294117646,
+      "per_class_f1": {
+        "benign": 0.8059701492537313,
+        "phishing": 0.72,
+        "fake_ecommerce": 0.9333333333333333,
+        "crypto_scam": 0.2857142857142857,
+        "malware_delivery": 0.6666666666666666
+      },
+      "n_test": 68,
+      "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+      "same_split": true
+    },
+    {
+      "arm": "Text TF-IDF",
+      "available": true,
+      "model": "TF-IDF char 2-5 + LogReg",
+      "score_label": "CV",
+      "score_mean": 0.7061932778174577,
+      "score_std": 0.06518235573950669,
+      "test_macro_f1": 0.7176993681103271,
+      "benign_fpr": 0.058823529411764705,
+      "per_class_f1": {
+        "benign": 0.8767123287671232,
+        "phishing": 0.8148148148148148,
+        "fake_ecommerce": 0.9333333333333333,
+        "crypto_scam": 0.6,
+        "malware_delivery": 0.36363636363636365
+      },
+      "n_test": 68,
+      "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+      "same_split": true
+    },
+    {
+      "arm": "Text XLM-R",
+      "available": true,
+      "model": "XLM-R (fine-tuned) - final (seed 43)",
+      "score_label": "3-seed test",
+      "score_mean": 0.6102029575362908,
+      "score_std": 0.06196353814896751,
+      "test_macro_f1": 0.6567445887445887,
+      "benign_fpr": 0.23529411764705882,
+      "per_class_f1": {
+        "benign": 0.7878787878787878,
+        "phishing": 0.64,
+        "fake_ecommerce": 0.7,
+        "crypto_scam": 0.7272727272727273,
+        "malware_delivery": 0.42857142857142855
+      },
+      "n_test": 68,
+      "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+      "same_split": true
+    }
+  ]
+}

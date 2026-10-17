@@ -1,0 +1,45 @@
+{
+  "arm": "dom",
+  "display": "DOM-only",
+  "dataset_version": "v0.3",
+  "classes": [
+    "benign",
+    "phishing",
+    "fake_ecommerce",
+    "crypto_scam",
+    "malware_delivery"
+  ],
+  "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+  "cv_folds_fingerprint": "b86537d5071c8ac2eaca6f0000129e5b5ea3528c1e74b71a20365c840cd620a5",
+  "n_oof": 391,
+  "n_test": 68,
+  "oof_rule": "train+val: model trained on the OTHER grouped CV folds; test: the arm's final model (trained on train+val)",
+  "created_at": "2026-10-16T22:37:49+05:30",
+  "part": "Part 4",
+  "model": "random_forest",
+  "model_display": "Random Forest",
+  "params": {
+    "n_estimators": 300,
+    "class_weight": "balanced_subsample",
+    "max_depth": 8,
+    "max_features": 0.5,
+    "min_samples_leaf": 3
+  },
+  "selection": "best mean CV macro-F1 of the Part's models (never test)",
+  "features_used": 48,
+  "feature_set_version": "dom_v1",
+  "dictionary_hash": "8605201ec979e8ef1602ced8c43964fcb872580223c3503676d242164dead472",
+  "model_trained_at": "2026-10-14T23:47:12+05:30",
+  "part_cv_macro_f1": 0.7006009011107482,
+  "max_abs_diff_vs_part_oof": 4.998337046896451e-07,
+  "reproduces_part_oof": true,
+  "library_versions": {
+    "python": "3.13.3",
+    "numpy": "2.5.4",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "joblib": "1.6.0",
+    "shap": "0.53.0"
+  }
+}

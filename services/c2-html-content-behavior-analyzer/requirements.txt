@@ -18,16 +18,25 @@ xgboost>=2.0
 shap>=0.45
 matplotlib>=3.8
 seaborn>=0.13
-# NLP (XLM-R)
-transformers>=4.40
-torch>=2.2
-datasets>=2.19
-sentencepiece>=0.2
+# NLP (Part 6A, XLM-R). Tested with torch 2.14 (CPU build), transformers 4.57, datasets 5.0.
+# Windows CPU torch (no CUDA, ~200 MB):
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# Training runs on Colab; locally torch is only needed for --smoke, evaluation and serving.
+torch>=2.2,<3
+transformers>=4.46,<5
+tokenizers>=0.20,<1
+accelerate>=1.0,<2
+datasets>=3.0,<6
+sentencepiece>=0.2,<0.3
+safetensors>=0.4,<1
 # JS static analysis (Part 7): error-tolerant parser, offline wheels, never executes code
 tree-sitter>=0.25,<0.26
 tree-sitter-javascript>=0.25,<0.26
-# Text / dedup
+# Text / dedup / language ID (Part 5). fasttext-predict = inference-only fastText wheel
+# (the full `fasttext` package does not build on Windows / Python 3.13); it needs the
+# lid.176.ftz model file (README). Without either, langdetect (seed 0) is used.
 langdetect>=1.0.9
+fasttext-predict>=0.9.2.4
 rapidfuzz>=3.6
 datasketch>=1.6
 # Utilities

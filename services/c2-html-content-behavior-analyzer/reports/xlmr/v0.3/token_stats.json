@@ -1,0 +1,80 @@
+{
+  "max_length": 512,
+  "overall": {
+    "n": 459,
+    "median": 740.0,
+    "p90": 952.0,
+    "max": 1889,
+    "truncated": 299,
+    "truncated_share": 0.6514
+  },
+  "per_language": {
+    "en": {
+      "n": 330,
+      "median": 731.0,
+      "p90": 903.2,
+      "max": 1050,
+      "truncated": 214,
+      "truncated_share": 0.6485
+    },
+    "mixed": {
+      "n": 18,
+      "median": 509.0,
+      "p90": 945.7,
+      "max": 1180,
+      "truncated": 9,
+      "truncated_share": 0.5
+    },
+    "other": {
+      "n": 101,
+      "median": 758.0,
+      "p90": 1139.0,
+      "max": 1889,
+      "truncated": 66,
+      "truncated_share": 0.6535
+    },
+    "si": {
+      "n": 7,
+      "median": 945.0,
+      "p90": 1006.6,
+      "max": 1054,
+      "truncated": 7,
+      "truncated_share": 1.0
+    },
+    "ta": {
+      "n": 3,
+      "median": 921.0,
+      "p90": 986.6,
+      "max": 1003,
+      "truncated": 3,
+      "truncated_share": 1.0
+    }
+  },
+  "per_split": {
+    "test": {
+      "n": 68,
+      "median": 717.5,
+      "p90": 943.1000000000001,
+      "max": 1815,
+      "truncated": 44,
+      "truncated_share": 0.6471
+    },
+    "train": {
+      "n": 322,
+      "median": 741.5,
+      "p90": 944.8000000000001,
+      "max": 1706,
+      "truncated": 206,
+      "truncated_share": 0.6398
+    },
+    "val": {
+      "n": 69,
+      "median": 765.0,
+      "p90": 1038.0,
+      "max": 1889,
+      "truncated": 49,
+      "truncated_share": 0.7101
+    }
+  },
+  "tokenizer": "models/xlmr/base_tokenizer/xlm-roberta-base"
+}

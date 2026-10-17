@@ -1,0 +1,73 @@
+# Tri-modal fusion + ablation study (Part 9A).
+#
+# scripts/run_ablation.py --version v0.3
+#   1. out-of-fold (OOF) class probabilities per arm   -> data/processed/fusion/<v>/oof_<arm>.csv
+#   2. fusion strategies, chosen by grouped CV macro-F1 -> models/fusion/<v>/
+#   3. ablation table, bootstrap CIs, figures           -> reports/ablation/<v>/
+# Same shared split as every arm (data/splits/<v>): CV on train+val, the 68 test pages once.
+
+# The arms, in report order. "kind": tabular arms have a feature table the hybrid model can
+# read directly; text arms only give probabilities. text_xlmr is OPTIONAL: its OOF needs a
+# Colab run (scripts/train_xlmr.py export-bundle --cv ... import-oof); without it the
+# fusion runs on the other arms and the report says so.
+arms:
+  dom:
+    display: DOM-only
+    kind: tabular
+  behavior:
+    display: Behavior-only
+    kind: tabular
+  text_tfidf:
+    display: Text TF-IDF
+    kind: text
+  text_xlmr:
+    display: Text XLM-R
+    kind: text
+    optional: true
+
+# Fusion strategies (all fit on the CV training folds only; the held-out fold scores them)
+strategies:
+  mean:
+    display: Late fusion - mean
+  weighted:
+    display: Late fusion - weighted
+    step: 0.1                 # coarse simplex grid: weights in {0, 0.1, ..., 1}, sum = 1
+  stacking:
+    display: Stacking - LogReg
+    C: 1.0                    # LR on concatenated arm probabilities (multinomial, balanced)
+    max_iter: 5000
+  hybrid:
+    display: Hybrid - XGBoost
+    # XGBoost on [DOM features + behavior features + text-arm OOF probabilities]. Not
+    # searched again: these are the settings BOTH Part 4 (DOM) and Part 8 (behavior)
+    # chose by CV for their XGBoost arm on v0.3; balanced sample weights as in Part 4.
+    params:
+      n_estimators: 300
+      tree_method: hist
+      objective: multi:softprob
+      eval_metric: mlogloss
+      learning_rate: 0.05
+      max_depth: 3
+      subsample: 0.8
+
+selection_metric: macro_f1    # final fusion = tri-modal strategy with the best CV mean
+
+operating_point:
+  benign_fpr_target: 0.02     # proposal: <= 2 % of benign pages flagged as a threat
+
+bootstrap:
+  n_resamples: 1000
+  seed: 42
+  confidence: 0.95
+
+complementarity:
+  examples_per_bucket: 5
+
+explain:
+  top_features: 15            # hybrid: top SHAP features in the report / plot
+  page_drivers: 5             # inspector: top drivers of one page's verdict
+
+paths:
+  oof_dir: data/processed/fusion
+  models_dir: models/fusion
+  reports_dir: reports/ablation
