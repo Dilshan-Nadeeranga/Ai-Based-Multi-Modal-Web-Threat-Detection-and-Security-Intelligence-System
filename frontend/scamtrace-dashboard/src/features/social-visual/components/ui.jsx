@@ -1,9 +1,9 @@
 // Small presentational helpers shared by the social-visual result cards.
 import { pct } from './constants.js'
 
-export function Card({ title, subtitle, children, className = '', icon: Icon }) {
+export function Card({ title, subtitle, children, className = '', icon: Icon, id }) {
   return (
-    <section className={`bg-white rounded-xl p-6 shadow-sm ring-1 ring-st-container/60 ${className}`}>
+    <section id={id} className={`st-fade-up scroll-mt-36 bg-white rounded-xl p-6 shadow-sm ring-1 ring-st-container/60 transition-shadow duration-300 hover:shadow-md ${className}`}>
       {title && (
         <header className="mb-4">
           <h2 className="flex items-center gap-2 font-manrope text-base font-bold text-st-navy">
@@ -27,7 +27,7 @@ export function Bar({ label, value, tone, hint }) {
         <span className="font-mono">{pct(value, 1)}</span>
       </div>
       <div className="mt-1 h-2 rounded bg-st-container overflow-hidden">
-        <div className={`h-full ${colour}`} style={{ width: `${width}%` }} />
+        <div className={`st-bar h-full rounded ${colour}`} style={{ width: `${width}%` }} />
       </div>
       {hint && <p className="mt-1 text-[11px] text-st-muted">{hint}</p>}
     </div>
@@ -50,7 +50,7 @@ export function NotAvailable({ children }) {
 export function Check({ ok, children }) {
   return (
     <li className="flex gap-2 text-sm">
-      <span className={ok ? 'text-emerald-700' : 'text-red-700'}>{ok ? '✓' : '✕'}</span>
+      <span className={`st-pop ${ok ? 'text-emerald-700' : 'text-red-700'}`}>{ok ? '✓' : '✕'}</span>
       <span className="text-st-ink">{children}</span>
     </li>
   )

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import { BarChart3, Database, DownloadCloud, ImagePlus, Link2, Loader2, PencilLine, Search } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { BarChart3, Database, DownloadCloud, ExternalLink, Eye, ImageOff, Link2, Loader2, Search } from 'lucide-react'
 import AppShell from '../../../components/AppShell.jsx'
-import { analyzePost, dataUrlToFile, fetchSocialPost } from '../api/socialVisualApi.js'
+import { analyzePostStream, dataUrlToFile, fetchSocialPost } from '../api/socialVisualApi.js'
 import AnalysisProgress from '../components/AnalysisProgress.jsx'
 import BrandAnalysisCard from '../components/BrandAnalysisCard.jsx'
 import ConsistencyAnalysis from '../components/ConsistencyAnalysis.jsx'
@@ -25,11 +25,57 @@ const TABS = [
   { id: 'models', label: 'Model Results', icon: BarChart3 },
 ]
 const PLATFORMS = ['facebook', 'instagram', 'x', 'tiktok', 'whatsapp', 'telegram', 'reddit', 'linkedin', 'youtube', 'other']
+const RESULT_SECTIONS = [
+  ['summary', 'Summary'], ['category', 'Category'], ['input', 'Input'], ['ocr', 'OCR'], ['text', 'Text'],
+  ['brand', 'Brand'], ['logos', 'Logos'], ['destination', 'Destination'], ['visual', 'Visual'],
+  ['consistency', 'Consistency'], ['risk', 'Risk'], ['evidence', 'Evidence'],
+]
 
 const inputClass = 'st-autofill w-full rounded-lg bg-st-low/60 px-3 py-2.5 text-sm text-st-navy outline-none ring-1 ring-st-container transition placeholder:text-st-outline focus:bg-white focus:ring-2 focus:ring-st-blue-dark'
 const labelClass = 'text-xs font-bold uppercase tracking-wider text-st-muted'
 const cardClass = 'rounded-xl bg-white p-6 shadow-sm ring-1 ring-st-container/60'
-const primaryButton = 'flex items-center justify-center gap-2 rounded-lg bg-st-navy px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-st-navy/20 transition hover:bg-st-blue-dark disabled:cursor-not-allowed disabled:opacity-50'
+const primaryButton = 'flex items-center justify-center gap-2 rounded-lg bg-st-navy px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-st-navy/20 transition duration-200 hover:-translate-y-0.5 hover:bg-st-blue-dark hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0'
+
+function ResultNav() {
+  const [active, setActive] = useState('summary')
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+      if (visible[0]) setActive(visible[0].target.id.replace('result-', ''))
+    }, { rootMargin: '-150px 0px -55% 0px' })
+    RESULT_SECTIONS.forEach(([id]) => {
+      const element = document.getElementById(`result-${id}`)
+      if (element) observer.observe(element)
+    })
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <nav className="st-fade-in st-no-scrollbar sticky top-[78px] z-30 -mx-1 overflow-x-auto rounded-xl bg-white/90 p-1.5 shadow-sm ring-1 ring-st-container/60 backdrop-blur"
+         aria-label="Result sections">
+      <ul className="flex gap-1 2xl:gap-1.5">
+        {RESULT_SECTIONS.map(([id, label]) => (
+          <li key={id} className="2xl:flex-1">
+            <a href={`#result-${id}`}
+               onClick={(event) => {
+                 event.preventDefault()
+                 document.getElementById(`result-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+               }}
+               className={`block whitespace-nowrap rounded-md px-3 py-1.5 text-center text-xs font-semibold transition-colors lg:px-2.5 lg:py-2 lg:text-[13px] 2xl:px-4 2xl:text-[15px] ${active === id
+                 ? 'bg-st-navy-2 text-white' : 'text-st-muted hover:bg-st-container hover:text-st-navy'}`}>
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+function Anchor({ id, children }) {
+  return <div id={`result-${id}`} className="scroll-mt-36">{children}</div>
+}
 
 export default function SocialVisualAnalysis() {
   const [tab, setTab] = useState('analyze')
@@ -43,15 +89,22 @@ export default function SocialVisualAnalysis() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
+  const [liveSteps, setLiveSteps] = useState([])
+
+  const resultsRef = useRef(null)
 
   const preview = useMemo(() => (image ? URL.createObjectURL(image) : null), [image])
   useEffect(() => () => preview && URL.revokeObjectURL(preview), [preview])
+  useEffect(() => {
+    if (result) resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [result])
 
   async function runAnalysis(input) {
     setResult(null)
+    setLiveSteps([])
     setLoading(true)
     try {
-      setResult(await analyzePost(input))
+      setResult(await analyzePostStream(input, (step) => setLiveSteps((steps) => [...steps.filter((s) => s.key !== step.key), step])))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -71,23 +124,19 @@ export default function SocialVisualAnalysis() {
     setResult(null)
     setFetched(null)
     setFetching(true)
-    let input
     try {
       const post = await fetchSocialPost(postUrl.trim())
       const file = post.image ? await dataUrlToFile(post.image.data_url, post.image.filename) : null
-      input = { platform: post.platform, postText: post.post_text, image: file, embeddedUrl: post.embedded_url || '' }
-      setPlatform(input.platform)
-      setPostText(input.postText)
-      setEmbeddedUrl(input.embeddedUrl)
+      setPlatform(post.platform)
+      setPostText(post.post_text || '')
+      setEmbeddedUrl(post.embedded_url || '')
       setImage(file)
       setFetched(post)
     } catch (err) {
       setError(err.message)
-      return
     } finally {
       setFetching(false)
     }
-    runAnalysis(input)
   }
 
   const busy = loading || fetching
@@ -117,19 +166,19 @@ export default function SocialVisualAnalysis() {
           ))}
         </nav>
 
-        {tab === 'dataset' && <DatasetTab />}
-        {tab === 'models' && <ModelResultsTab />}
+        {tab === 'dataset' && <div key="dataset" className="st-fade-in"><DatasetTab /></div>}
+        {tab === 'models' && <div key="models" className="st-fade-in"><ModelResultsTab /></div>}
 
         {tab === 'analyze' && (
-          <>
-            <form onSubmit={handleFetch} className={`${cardClass} space-y-3`}>
+          <div key="analyze" className="st-fade-in flex flex-col gap-6">
+            <form onSubmit={handleFetch} className={`st-fade-up ${cardClass} space-y-3`}>
               <div className="flex items-start gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-st-low text-st-blue-dark">
                   <Link2 className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div>
                   <h2 className="font-manrope text-lg font-semibold text-st-navy">Fetch a Social Post</h2>
-                  <p className="text-xs text-st-muted">Paste a public Reddit or Facebook post URL to extract and analyze it automatically.</p>
+                  <p className="text-xs text-st-muted">Paste a public Reddit or Facebook post URL to extract its details for preview.</p>
                 </div>
               </div>
               <label className="block">
@@ -139,34 +188,52 @@ export default function SocialVisualAnalysis() {
                          placeholder="https://www.reddit.com/r/Scams/comments/... or https://www.facebook.com/<page>/posts/..."
                          className={`flex-1 font-mono ${inputClass}`} />
                   <button type="submit" disabled={busy || !postUrl.trim()} className={primaryButton}>
-                    {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <DownloadCloud className="w-4 h-4" />} Fetch &amp; Analyze
+                    {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <DownloadCloud className="w-4 h-4" />} Fetch
                   </button>
                 </div>
               </label>
               <p className="text-[11px] text-st-muted">
                 {fetching ? 'Opening the post and extracting its text, embedded URL and image…'
-                  : 'Extracts the post text, embedded URL and image, fills the fields below and runs the analysis. '
-                    + 'Facebook works only for public posts visible without login. You can also fill the fields manually.'}
+                  : 'Extracts the post text, embedded URL and image for preview. Facebook works only for public posts visible without login.'}
               </p>
-              {fetched && (
-                <p className="rounded-lg bg-st-low px-3 py-2 text-xs text-st-ink">
-                  Fetched {fetched.platform} · <span className="font-semibold text-st-navy">{fetched.source_name}</span> · {fetched.post_type} post ·{' '}
-                  {fetched.post_text ? 'text extracted' : 'no text'} · {fetched.image ? 'image extracted' : 'no image'} ·{' '}
-                  {fetched.embedded_urls.length} embedded URL(s) ·{' '}
-                  <a href={fetched.permalink} target="_blank" rel="noreferrer" className="font-semibold text-st-blue-dark hover:underline">open post</a>
-                </p>
-              )}
             </form>
 
-            <form onSubmit={handleSubmit} className={`${cardClass} space-y-5`}>
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-st-low text-st-blue-dark">
-                  <PencilLine className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <h2 className="font-manrope text-lg font-semibold text-st-navy">Enter Post Details</h2>
-                  <p className="text-xs text-st-muted">Provide the post text, an image, an embedded URL, or any combination.</p>
+            {fetching && (
+              <div className={`st-fade-in ${cardClass} space-y-4`} aria-hidden="true">
+                <div className="flex items-center gap-3">
+                  <div className="st-shimmer h-10 w-10 rounded-lg" />
+                  <div className="space-y-2"><div className="st-shimmer h-4 w-48 rounded" /><div className="st-shimmer h-3 w-72 rounded" /></div>
                 </div>
+                <div className="grid md:grid-cols-[1fr_280px] gap-6">
+                  <div className="space-y-3">
+                    <div className="st-shimmer h-10 rounded-lg" />
+                    <div className="st-shimmer h-28 rounded-lg" />
+                    <div className="st-shimmer h-10 rounded-lg" />
+                  </div>
+                  <div className="st-shimmer h-56 rounded-lg" />
+                </div>
+              </div>
+            )}
+
+            {fetched && (
+            <form onSubmit={handleSubmit} className={`st-fade-up ${cardClass} space-y-5`}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-st-low text-st-blue-dark">
+                    <Eye className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h2 className="font-manrope text-lg font-semibold text-st-navy">Preview Post Details</h2>
+                    <p className="text-xs text-st-muted">
+                      <span className="font-semibold text-st-navy">{fetched.source_name}</span> · {fetched.post_type} post.
+                      Check or edit the extracted details, then analyze.
+                    </p>
+                  </div>
+                </div>
+                <a href={fetched.permalink} target="_blank" rel="noreferrer"
+                   className="flex items-center gap-1 text-xs font-semibold text-st-blue-dark hover:underline">
+                  Open original post <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
               </div>
               <div className="grid md:grid-cols-[1fr_280px] gap-6">
                 <div className="space-y-4">
@@ -184,17 +251,33 @@ export default function SocialVisualAnalysis() {
                   <label className="block">
                     <span className={labelClass}>Embedded URL</span>
                     <input type="text" value={embeddedUrl} onChange={(e) => setEmbeddedUrl(e.target.value)}
-                           placeholder="https://example.com/..." className={`mt-1 font-mono ${inputClass}`} />
+                           placeholder="No embedded URL in this post" className={`mt-1 font-mono ${inputClass}`} />
                   </label>
+                  {fetched.embedded_urls.length > 1 && (
+                    <div>
+                      <span className={labelClass}>Other URLs in the post</span>
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        {fetched.embedded_urls.map((url) => (
+                          <button key={url} type="button" onClick={() => setEmbeddedUrl(url)}
+                                  className={`max-w-full truncate rounded-full px-3 py-1 font-mono text-[11px] ring-1 transition ${url === embeddedUrl
+                                    ? 'bg-st-navy-2 text-white ring-st-navy-2' : 'bg-st-low text-st-ink ring-st-container hover:bg-st-container'}`}>
+                            {url}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col gap-4">
-                  <label className="flex-1 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-st-outline/60 bg-st-low/60 hover:border-st-blue hover:bg-st-low p-4 cursor-pointer text-center transition">
-                    {preview
-                      ? <img src={preview} alt="Selected post" className="max-h-48 rounded object-contain" />
-                      : <><ImagePlus className="w-8 h-8 text-st-blue-dark" /><span className="text-sm font-semibold text-st-navy">Upload post image</span></>}
-                    <span className="text-[11px] text-st-muted break-all">{image ? image.name : 'JPEG, PNG, WebP'}</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => setImage(e.target.files?.[0] || null)} />
-                  </label>
+                  <div>
+                    <span className={labelClass}>Post image</span>
+                    <div className="mt-1 flex min-h-48 flex-col items-center justify-center gap-2 rounded-lg bg-st-low/60 p-4 text-center ring-1 ring-st-container">
+                      {preview
+                        ? <img src={preview} alt="Fetched post" className="st-pop max-h-56 rounded object-contain shadow-sm transition-transform duration-300 hover:scale-[1.02]" />
+                        : <><ImageOff className="w-8 h-8 text-st-muted" /><span className="text-sm text-st-muted">No image in this post</span></>}
+                      {image && <span className="text-[11px] text-st-muted break-all">{image.name}</span>}
+                    </div>
+                  </div>
                   {image && <button type="button" onClick={() => setImage(null)} className="text-xs font-semibold text-st-muted hover:text-st-error">Remove image</button>}
                   <button type="submit" disabled={!canSubmit} className={`${primaryButton} py-3`}>
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Analyze Post
@@ -202,30 +285,40 @@ export default function SocialVisualAnalysis() {
                 </div>
               </div>
             </form>
+            )}
 
-            {error && <p role="alert" className="rounded-lg bg-st-error-bg p-4 text-sm text-st-error-ink">{error}</p>}
-            {(loading || result) && <AnalysisProgress running={loading} pipeline={result?.pipeline} />}
+            {error && <p role="alert" className="st-fade-up rounded-lg bg-st-error-bg p-4 text-sm text-st-error-ink">{error}</p>}
+            {(loading || result) && <AnalysisProgress running={loading} pipeline={result?.pipeline || liveSteps} />}
 
             {result && (
-              <div className="space-y-6">
-                <ThreatAssessment assessment={result.assessment} disclaimer={result.disclaimer} />
-                <ThreatCategoryCard classification={result.classification} />
-                <InputEvidence input={result.input} postImage={result.post_image} />
-                <div className="grid lg:grid-cols-2 gap-6">
-                  <OCRAnalysisCard ocr={result.ocr} preprocessing={result.preprocessing} />
-                  <DuplicateEvidence preprocessing={result.preprocessing} />
+              <div ref={resultsRef} className="scroll-mt-24 space-y-6">
+                <ResultNav />
+                <div className="st-stagger space-y-6">
+                  <Anchor id="summary"><ThreatAssessment assessment={result.assessment} disclaimer={result.disclaimer} /></Anchor>
+                  <Anchor id="category"><ThreatCategoryCard classification={result.classification} /></Anchor>
+                  <Anchor id="input"><InputEvidence input={result.input} postImage={result.post_image} /></Anchor>
+                  <Anchor id="ocr">
+                    <div className="grid lg:grid-cols-2 gap-6">
+                      <OCRAnalysisCard ocr={result.ocr} preprocessing={result.preprocessing} />
+                      <DuplicateEvidence preprocessing={result.preprocessing} />
+                    </div>
+                  </Anchor>
+                  <Anchor id="text"><TextThreatCard textThreat={result.text_threat} /></Anchor>
+                  <Anchor id="brand">
+                    <BrandAnalysisCard brandAnalysis={result.brand_analysis} postImage={result.post_image} logoDetection={result.logo_detection} />
+                  </Anchor>
+                  <Anchor id="logos"><LogoDetectionCard logoDetection={result.logo_detection} /></Anchor>
+                  <Anchor id="destination"><DestinationEvidence destination={result.destination} step={captureStep} /></Anchor>
+                  <Anchor id="visual">
+                    <VisualComparison postImage={result.post_image} screenshot={result.destination?.screenshot} visual={result.visual_similarity} />
+                  </Anchor>
+                  <Anchor id="consistency"><ConsistencyAnalysis consistency={result.consistency} /></Anchor>
+                  <Anchor id="risk"><RiskBreakdown risk={result.risk} /></Anchor>
+                  <Anchor id="evidence"><EvidenceSummary assessment={result.assessment} /></Anchor>
                 </div>
-                <TextThreatCard textThreat={result.text_threat} />
-                <BrandAnalysisCard brandAnalysis={result.brand_analysis} postImage={result.post_image} logoDetection={result.logo_detection} />
-                <LogoDetectionCard logoDetection={result.logo_detection} />
-                <DestinationEvidence destination={result.destination} step={captureStep} />
-                <VisualComparison postImage={result.post_image} screenshot={result.destination?.screenshot} visual={result.visual_similarity} />
-                <ConsistencyAnalysis consistency={result.consistency} />
-                <RiskBreakdown risk={result.risk} />
-                <EvidenceSummary assessment={result.assessment} />
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </AppShell>
