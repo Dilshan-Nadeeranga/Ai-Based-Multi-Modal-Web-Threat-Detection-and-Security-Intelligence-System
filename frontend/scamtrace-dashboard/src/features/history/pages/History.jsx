@@ -43,7 +43,7 @@ function toRecords(analyses, scans) {
     target: repoName(item.repository_url),
     status: item.status,
     date: item.created_at,
-    to: `/code-audit/report?scan=${encodeURIComponent(item.scan_id)}`,
+    to: `/code-audit/scans/${encodeURIComponent(item.scan_id)}`,
   }))
   return [...fromAnalyses, ...fromScans].sort((a, b) => new Date(b.date) - new Date(a.date))
 }

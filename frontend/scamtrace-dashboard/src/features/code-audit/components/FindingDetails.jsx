@@ -1,26 +1,12 @@
 import RemediationSuggestion from './RemediationSuggestion.jsx'
 import SeverityBadge from './SeverityBadge.jsx'
 
-/** Detail panel for a single selected finding. */
-export default function FindingDetails({ finding, loading, onClose }) {
-  if (loading) {
-    return (
-      <section className="ca-detail">
-        <p className="ca-loading">Loading finding details…</p>
-      </section>
-    )
-  }
+/** Details of a single finding (shown inside FindingDrawer). */
+export default function FindingDetails({ finding }) {
   if (!finding) return null
 
   return (
-    <section className="ca-detail">
-      <div className="ca-detail__header">
-        <h3 className="ca-detail__title">{finding.title}</h3>
-        <button type="button" className="ca-detail__close" onClick={onClose}>
-          ✕
-        </button>
-      </div>
-
+    <div className="ca-finding">
       <dl className="ca-detail__grid">
         <div>
           <dt>Severity</dt>
@@ -140,6 +126,6 @@ export default function FindingDetails({ finding, loading, onClose }) {
           AI remediation is available for security findings with grounded repository context.
         </p>
       )}
-    </section>
+    </div>
   )
 }

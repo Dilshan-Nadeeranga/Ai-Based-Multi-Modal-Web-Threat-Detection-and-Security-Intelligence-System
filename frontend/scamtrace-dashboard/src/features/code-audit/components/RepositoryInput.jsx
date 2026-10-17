@@ -51,7 +51,8 @@ export default function RepositoryInput({ onSubmit, loading }) {
       </button>
 
       <p className="ca-form__hint">
-        Public repositories only for the current prototype.
+        Supported: public JavaScript/TypeScript repositories (Node.js, Express, React, Next.js, Vue, Angular),
+        where at least 70% of the code is JavaScript or TypeScript.
       </p>
     </form>
   )

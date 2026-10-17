@@ -46,6 +46,12 @@ export default function ScanSummary({ result }) {
           <dt>Languages</dt>
           <dd>{languages.length}</dd>
         </div>
+        {typeof repository.js_ts_percent === 'number' && (
+          <div className="ca-summary__item">
+            <dt>JS/TS Code</dt>
+            <dd>{repository.js_ts_percent}%</dd>
+          </div>
+        )}
       </dl>
 
       {languages.length > 0 && (
