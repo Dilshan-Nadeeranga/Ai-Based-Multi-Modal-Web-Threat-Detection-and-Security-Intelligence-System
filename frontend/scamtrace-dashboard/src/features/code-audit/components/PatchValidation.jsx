@@ -160,11 +160,28 @@ export default function PatchValidation({ remediation, onValidated }) {
 
           <h5>Original vs Suggested Patch</h5>
           <DiffViewer diff={validation.diff.diff} />
-          <p className="ca-detail__note">
-            +{validation.diff.added_lines} / −{validation.diff.removed_lines} lines ·{' '}
-            validated in {validation.validation_duration_ms} ms · {validation.validation_id}
-          </p>
-          <p className="ca-detail__note">{validation.note}</p>
+
+          <div className="ca-validation__stats">
+            <span className="ca-validation__stat ca-validation__stat--add">
+              +{validation.diff.added_lines} lines
+            </span>
+            <span className="ca-validation__stat ca-validation__stat--del">
+              −{validation.diff.removed_lines} lines
+            </span>
+            <span className="ca-validation__stat">
+              {validation.validation_duration_ms} ms
+            </span>
+            <span className="ca-validation__stat ca-validation__stat--id" title={validation.validation_id}>
+              {validation.validation_id}
+            </span>
+          </div>
+
+          {validation.note && (
+            <div className="ca-remediation__note ca-validation__note" role="note">
+              <span className="ca-remediation__note-label">Note</span>
+              <p>{validation.note}</p>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -30,34 +30,35 @@ export default function RiskGauge({ score, verdict, thresholds, size = 148 }) {
   return (
     <figure className="flex flex-col items-center gap-1" aria-label={label}>
       <svg width={size} height={size} viewBox="0 0 120 120" role="img" aria-label={label}>
-        <circle cx="60" cy="60" r={radius} fill="none" stroke="#1e293b" strokeWidth="10" />
+        <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--c2-gauge-track)" strokeWidth="10" />
         {value !== null && (
           <circle
             cx="60"
             cy="60"
             r={radius}
             fill="none"
-            stroke={color}
+            stroke="currentColor"
             strokeWidth="10"
             strokeLinecap="round"
             strokeDasharray={`${(value / 100) * circumference} ${circumference}`}
             transform="rotate(-90 60 60)"
-            style={{ filter: `drop-shadow(0 0 4px ${color}66)` }}
+            className="c2-gauge-arc"
+            style={{ color }}
           />
         )}
-        {tick(thresholds?.suspicious_min_risk, '#fbbf24')}
-        {tick(thresholds?.malicious_min_risk, '#f87171')}
-        <text x="60" y="58" textAnchor="middle" className="fill-slate-50 font-mono" fontSize="30" fontWeight="700">
+        {tick(thresholds?.suspicious_min_risk, 'var(--c2-sus-solid)')}
+        {tick(thresholds?.malicious_min_risk, 'var(--c2-mal-solid)')}
+        <text x="60" y="58" textAnchor="middle" className="font-mono" fill="var(--c2-fg-strong)" fontSize="30" fontWeight="700">
           {value === null ? '—' : value}
         </text>
-        <text x="60" y="78" textAnchor="middle" className="fill-slate-400 font-mono" fontSize="9" letterSpacing="2">
+        <text x="60" y="78" textAnchor="middle" className="font-mono" fill="var(--c2-fg-muted)" fontSize="9" letterSpacing="2">
           RISK / 100
         </text>
       </svg>
       {thresholds?.suspicious_min_risk !== undefined && (
-        <figcaption className="font-mono text-[0.6875rem] text-slate-400">
-          <span className="text-amber-300">▮</span> Suspicious ≥ {thresholds.suspicious_min_risk} ·{' '}
-          <span className="text-red-300">▮</span> Malicious ≥ {thresholds.malicious_min_risk}
+        <figcaption className="font-mono text-[0.6875rem] text-[color:var(--c2-fg-muted)]">
+          <span className="text-[color:var(--c2-sus)]">▮</span> Suspicious ≥ {thresholds.suspicious_min_risk} ·{' '}
+          <span className="text-[color:var(--c2-mal)]">▮</span> Malicious ≥ {thresholds.malicious_min_risk}
         </figcaption>
       )}
     </figure>

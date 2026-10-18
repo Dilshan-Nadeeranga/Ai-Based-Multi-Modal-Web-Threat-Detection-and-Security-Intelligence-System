@@ -98,7 +98,7 @@ export default function C2Scan() {
                 { value: 'html', label: 'Paste HTML' },
               ]}
             />
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[color:var(--c2-fg-muted)]">
               {mode === 'url'
                 ? 'C2 fetches the page itself: one static GET, no JavaScript, private addresses refused.'
                 : 'Nothing is fetched; the URL (optional) only resolves relative links.'}
@@ -111,7 +111,7 @@ export default function C2Scan() {
                 URL to analyze
               </label>
               <div className="relative flex-1">
-                <Link2 className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-400" aria-hidden="true" />
+                <Link2 className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[color:var(--c2-accent-icon)]" aria-hidden="true" />
                 <input
                   id="c2-url"
                   type="text"
@@ -123,14 +123,14 @@ export default function C2Scan() {
                   placeholder={demo ? 'Pick a demo example below, or type anything' : 'https://suspicious-site.example/login'}
                   aria-invalid={Boolean(inputError)}
                   aria-describedby={inputError ? 'c2-input-error' : undefined}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 py-3.5 pl-11 pr-3 font-mono text-base text-slate-50 placeholder:text-slate-500 focus:border-cyan-400"
+                  className="w-full rounded-lg border border-[color:var(--c2-border-strong)] bg-[color:var(--c2-field-deep)] py-3.5 pl-11 pr-3 font-mono text-base text-[color:var(--c2-fg-strong)] placeholder:text-[color:var(--c2-fg-faint)] focus:border-[color:var(--c2-accent-solid)]"
                 />
               </div>
               <AnalyzeButton running={running} onCancel={cancel} />
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              <label htmlFor="c2-html" className="text-sm font-medium text-slate-300">
+              <label htmlFor="c2-html" className="text-sm font-medium text-[color:var(--c2-fg-2)]">
                 Page HTML
               </label>
               <textarea
@@ -141,17 +141,17 @@ export default function C2Scan() {
                 spellCheck="false"
                 placeholder="<html>…</html>"
                 aria-invalid={Boolean(inputError)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 p-3 font-mono text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400"
+                className="w-full rounded-lg border border-[color:var(--c2-border-strong)] bg-[color:var(--c2-field-deep)] p-3 font-mono text-sm text-[color:var(--c2-fg-hi)] placeholder:text-[color:var(--c2-fg-faint)] focus:border-[color:var(--c2-accent-solid)]"
               />
               <div className="flex flex-col gap-2 md:flex-row md:items-end">
-                <label htmlFor="c2-html-url" className="flex flex-1 flex-col gap-1 text-sm font-medium text-slate-300">
+                <label htmlFor="c2-html-url" className="flex flex-1 flex-col gap-1 text-sm font-medium text-[color:var(--c2-fg-2)]">
                   Page URL (optional, never fetched)
                   <input
                     id="c2-html-url"
                     type="text"
                     value={htmlUrl}
                     onChange={(event) => setHtmlUrl(event.target.value)}
-                    className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm text-slate-100 focus:border-cyan-400"
+                    className="rounded-lg border border-[color:var(--c2-border-strong)] bg-[color:var(--c2-field-deep)] px-3 py-2 font-mono text-sm text-[color:var(--c2-fg-hi)] focus:border-[color:var(--c2-accent-solid)]"
                   />
                 </label>
                 <AnalyzeButton running={running} onCancel={cancel} />
@@ -159,22 +159,22 @@ export default function C2Scan() {
             </div>
           )}
           {inputError && (
-            <p id="c2-input-error" role="alert" className="text-sm text-amber-300">
+            <p id="c2-input-error" role="alert" className="text-sm text-[color:var(--c2-sus)]">
               {inputError}
             </p>
           )}
           {demo && mode === 'url' && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-xs uppercase tracking-wider text-amber-200">Demo examples:</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-[color:var(--c2-sus-hi)]">Demo examples:</span>
               {DEMO_EXAMPLES.map((example) => (
                 <button
                   key={example.key}
                   type="button"
                   onClick={() => setUrlText(example.input)}
-                  className="rounded-md border border-slate-700 px-2.5 py-1 text-left text-xs text-slate-200 hover:border-amber-300 hover:text-amber-100"
+                  className="rounded-md border border-[color:var(--c2-border-strong)] px-2.5 py-1 text-left text-xs text-[color:var(--c2-fg)] hover:border-[color:var(--c2-sus-line)] hover:text-[color:var(--c2-sus-ink)]"
                 >
                   <span className="font-semibold">{example.label}</span>
-                  <span className="text-slate-400"> · {example.hint}</span>
+                  <span className="text-[color:var(--c2-fg-muted)]"> · {example.hint}</span>
                 </button>
               ))}
             </div>
@@ -194,7 +194,7 @@ export default function C2Scan() {
       {run.state === 'error' && (
         <StateBox state="error" message={run.error?.message} onRetry={() => start()}>
           {run.error?.kind === 'network' && (
-            <p className="text-xs text-slate-400">Tip: switch on Demo mode (top right) to present with recorded results.</p>
+            <p className="text-xs text-[color:var(--c2-fg-muted)]">Tip: switch on Demo mode (top right) to present with recorded results.</p>
           )}
         </StateBox>
       )}
@@ -218,7 +218,7 @@ function AnalyzeButton({ running, onCancel }) {
       <button
         type="button"
         onClick={onCancel}
-        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-600 px-6 py-3.5 text-base font-semibold text-slate-100 hover:border-amber-300"
+        className="inline-flex items-center justify-center gap-2 rounded-lg border border-[color:var(--c2-border-stronger)] px-6 py-3.5 text-base font-semibold text-[color:var(--c2-fg-hi)] hover:border-[color:var(--c2-sus-line)]"
       >
         <Square className="h-4 w-4" aria-hidden="true" /> Cancel
       </button>
@@ -227,7 +227,7 @@ function AnalyzeButton({ running, onCancel }) {
   return (
     <button
       type="submit"
-      className="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-400 px-7 py-3.5 text-base font-semibold text-slate-950 shadow-[0_0_18px_rgba(34,211,238,0.35)] hover:bg-cyan-300"
+      className="inline-flex items-center justify-center gap-2 rounded-lg bg-[color:var(--c2-accent-solid)] px-7 py-3.5 text-base font-semibold text-[color:var(--c2-on-accent)] c2-accent-glow hover:bg-[color:var(--c2-accent-solid-hover)]"
     >
       <Play className="h-4 w-4" aria-hidden="true" /> Analyze
     </button>

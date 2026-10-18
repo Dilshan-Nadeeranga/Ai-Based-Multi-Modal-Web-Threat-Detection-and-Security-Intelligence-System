@@ -27,6 +27,11 @@
   --ca-low: #005bb0;
   --ca-low-bg: #e0edff;
 
+  --ca-scroll-size: 10px;
+  --ca-scroll-track: #ececff;
+  --ca-scroll-thumb: #c6c5d5;
+  --ca-scroll-thumb-hover: #071c8c;
+
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -555,12 +560,23 @@
 
 .ca-detail__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px 20px;
   margin: 0 0 16px;
   padding: 14px 16px;
   border-radius: 10px;
   background: var(--ca-surface-2);
+}
+
+.ca-detail__grid > div {
+  min-width: 0;
+}
+
+/* Finding drawer: stable 2×2 meta, no crushed columns or broken paths */
+.ca-detail__grid--meta {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  padding: 16px 18px;
 }
 
 .ca-detail__grid dt {
@@ -568,20 +584,26 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--ca-text-muted);
-  margin-bottom: 4px;
+  color: #454653;
+  margin-bottom: 6px;
 }
 
 .ca-detail__grid dd {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.4;
   color: var(--ca-heading);
+  overflow-wrap: anywhere;
 }
 
 .ca-detail__file {
   font-family: Consolas, ui-monospace, monospace;
-  word-break: break-all;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .ca-detail__section {
@@ -618,6 +640,7 @@
 
 .ca-detail__code {
   margin: 0;
+  max-height: min(320px, 45vh);
   padding: 12px 14px;
   background: var(--ca-surface-2);
   border: 1px solid var(--ca-border);
@@ -626,9 +649,10 @@
   font-size: 13px;
   line-height: 1.55;
   color: var(--ca-text);
-  overflow-x: auto;
+  overflow: auto;
   text-align: left;
   white-space: pre;
+  scrollbar-gutter: stable;
 }
 
 .ca-detail__note {
@@ -648,12 +672,81 @@
   padding: 9px 18px;
 }
 
+.ca-remediation__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 4px;
+}
+
 .ca-remediation__status {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
   font-size: 13px;
+  min-width: 0;
+}
+
+.ca-remediation__review-state {
+  color: var(--ca-text-muted);
+}
+
+.ca-remediation__review-btn,
+.ca-page a.ca-remediation__review-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 9px 18px;
+  white-space: nowrap;
+  color: #fff;
+}
+
+.ca-page a.ca-remediation__review-btn:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+.ca-badge--confidence {
+  color: #1e3a8a;
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+}
+
+.ca-remediation__note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--ca-low-bg);
+  border: 1px solid #bfdbfe;
+  color: var(--ca-text);
+  font-size: 13px;
+  font-style: normal;
+}
+
+.ca-remediation__note p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.ca-remediation__note-label {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #bfdbfe;
+  color: var(--ca-low);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .ca-badge--unvalidated {
@@ -672,6 +765,52 @@
   margin-top: 14px;
   padding-top: 10px;
   border-top: 1px solid var(--ca-border);
+}
+
+.ca-validation__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ca-validation__stat {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--ca-surface-2);
+  border: 1px solid var(--ca-border);
+  color: var(--ca-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ca-validation__stat--add {
+  color: #047857;
+  background: #dcfce7;
+  border-color: #bbf7d0;
+}
+
+.ca-validation__stat--del {
+  color: #b91c1c;
+  background: #fee2e2;
+  border-color: #fecaca;
+}
+
+.ca-validation__stat--id {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.ca-validation__note {
+  margin-top: 10px;
 }
 
 .ca-validation__checks {
@@ -725,10 +864,63 @@
 }
 
 .ca-context__calls {
-  margin: 8px 0 0;
+  margin: 12px 0 0;
+}
+
+.ca-context__calls-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
   font-size: 12px;
-  color: var(--ca-text-muted);
-  font-family: Consolas, Monaco, monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #454653;
+}
+
+.ca-context__calls-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--ca-border);
+  color: var(--ca-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ca-context__calls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ca-context__call {
+  max-width: 100%;
+}
+
+.ca-context__call code {
+  display: block;
+  max-width: 100%;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--ca-border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ca-heading);
+  font-family: Consolas, ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
   word-break: break-word;
 }
 
@@ -898,21 +1090,6 @@
 }
 
 /* Preliminary risk score (model v0.1) */
-.ca-risk__disclaimer {
-  margin: 0 0 18px;
-  padding: 12px 14px;
-  border: 1px dashed #d4a72c;
-  border-radius: 8px;
-  background: #fffbeb;
-  font-size: 13px;
-  color: var(--ca-text);
-}
-
-.ca-risk__disclaimer p {
-  margin: 6px 0 0;
-  color: var(--ca-text-muted);
-}
-
 .ca-risk__cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1059,6 +1236,11 @@
 }
 
 .ca-drawer {
+  --ca-scroll-size: 10px;
+  --ca-scroll-track: #ececff;
+  --ca-scroll-thumb: #c6c5d5;
+  --ca-scroll-thumb-hover: #071c8c;
+
   position: fixed;
   inset: 0;
   z-index: 70;
@@ -1154,10 +1336,13 @@
 
 .ca-drawer__location {
   margin: 0;
+  max-width: 100%;
   font-family: Consolas, ui-monospace, monospace;
-  font-size: 12px;
-  color: var(--ca-text-muted);
-  word-break: break-all;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #454653;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .ca-drawer__body {
@@ -1165,6 +1350,54 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 20px 24px 32px;
+  scrollbar-gutter: stable;
+}
+
+/* Custom scrollbars (drawer + code + other ca overflow areas) */
+.ca-drawer__body,
+.ca-detail__code,
+.ca-diff,
+.ca-context__call code {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ca-scroll-thumb) var(--ca-scroll-track);
+}
+
+.ca-drawer__body::-webkit-scrollbar,
+.ca-detail__code::-webkit-scrollbar,
+.ca-diff::-webkit-scrollbar,
+.ca-context__call code::-webkit-scrollbar {
+  width: var(--ca-scroll-size);
+  height: var(--ca-scroll-size);
+}
+
+.ca-drawer__body::-webkit-scrollbar-track,
+.ca-detail__code::-webkit-scrollbar-track,
+.ca-diff::-webkit-scrollbar-track,
+.ca-context__call code::-webkit-scrollbar-track {
+  background: var(--ca-scroll-track);
+  border-radius: 999px;
+}
+
+.ca-drawer__body::-webkit-scrollbar-thumb,
+.ca-detail__code::-webkit-scrollbar-thumb,
+.ca-diff::-webkit-scrollbar-thumb,
+.ca-context__call code::-webkit-scrollbar-thumb {
+  background: var(--ca-scroll-thumb);
+  border: 2px solid var(--ca-scroll-track);
+  border-radius: 999px;
+}
+
+.ca-drawer__body::-webkit-scrollbar-thumb:hover,
+.ca-detail__code::-webkit-scrollbar-thumb:hover,
+.ca-diff::-webkit-scrollbar-thumb:hover,
+.ca-context__call code::-webkit-scrollbar-thumb:hover {
+  background: var(--ca-scroll-thumb-hover);
+}
+
+.ca-drawer__body::-webkit-scrollbar-corner,
+.ca-detail__code::-webkit-scrollbar-corner,
+.ca-diff::-webkit-scrollbar-corner {
+  background: var(--ca-scroll-track);
 }
 
 .ca-finding h5 {
@@ -1198,6 +1431,10 @@
   .ca-drawer__body {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .ca-detail__grid--meta {
+    grid-template-columns: 1fr;
   }
 }
 

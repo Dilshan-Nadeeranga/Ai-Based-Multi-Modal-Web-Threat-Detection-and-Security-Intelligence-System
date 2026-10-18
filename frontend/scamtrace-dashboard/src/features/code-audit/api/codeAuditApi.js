@@ -243,13 +243,22 @@ export function startReview(remediationId) {
 
 /**
  * POST /remediations/{remediationId}/review
- * Records the human decision (ACCEPTED | REJECTED). Never applies the patch.
+ * Records the human decision (ACCEPTED | REJECTED). ACCEPTED also applies the patch
+ * to the project's stored repository copy (never to GitHub).
  */
 export function submitReviewDecision(remediationId, decision, reason = null) {
   return postJson(
     `${API_BASE_URL}/remediations/${encodeURIComponent(remediationId)}/review`,
     'Decision could not be saved. No repository changes were made.',
     { decision, ...(reason ? { reason } : {}) }
+  )
+}
+
+/** POST /remediations/{remediationId}/review/apply — retry applying an accepted patch */
+export function applyAcceptedPatch(remediationId) {
+  return postJson(
+    `${API_BASE_URL}/remediations/${encodeURIComponent(remediationId)}/review/apply`,
+    'The patch could not be applied.'
   )
 }
 

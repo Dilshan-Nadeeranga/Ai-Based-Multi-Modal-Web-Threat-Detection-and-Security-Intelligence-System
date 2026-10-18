@@ -19,6 +19,7 @@ a released step - append a new one.
 from __future__ import annotations
 
 import sqlite3
+import time
 from pathlib import Path
 
 MIGRATIONS: tuple[str, ...] = (
@@ -94,9 +95,22 @@ def connect(path: Path | str) -> sqlite3.Connection:
     connection.execute("PRAGMA foreign_keys = ON")
     connection.execute("PRAGMA busy_timeout = 10000")
     if str(path) != ":memory:":
-        connection.execute("PRAGMA journal_mode = WAL")
+        _set_wal(connection)
     migrate(connection)
     return connection
+
+
+def _set_wal(connection: sqlite3.Connection, attempts: int = 50) -> None:
+    """Switch to WAL. Several connections opening a NEW file at once can get SQLITE_BUSY
+    here immediately (the busy handler does not cover this change), so retry briefly."""
+    for attempt in range(attempts):
+        try:
+            connection.execute("PRAGMA journal_mode = WAL")
+            return
+        except sqlite3.OperationalError as error:
+            if "locked" not in str(error) or attempt == attempts - 1:
+                raise
+            time.sleep(0.05 * (attempt + 1) if attempt < 10 else 0.5)
 
 
 def migrate(connection: sqlite3.Connection) -> int:
@@ -108,6 +122,11 @@ def migrate(connection: sqlite3.Connection) -> int:
         )
     for version in range(current, SCHEMA_VERSION):
         connection.execute("BEGIN IMMEDIATE")
+        # Re-read under the write lock: another connection (thread or process opening the
+        # same new file at the same time) may have applied this step while we waited.
+        if connection.execute("PRAGMA user_version").fetchone()[0] > version:
+            connection.execute("COMMIT")
+            continue
         try:
             for statement in _statements(MIGRATIONS[version]):
                 connection.execute(statement)
