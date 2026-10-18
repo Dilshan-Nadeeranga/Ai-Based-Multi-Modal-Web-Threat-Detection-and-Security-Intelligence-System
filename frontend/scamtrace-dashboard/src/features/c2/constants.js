@@ -1,21 +1,22 @@
 import { Code2, Globe, Languages, Layers, LayoutTemplate } from 'lucide-react'
 
-// Colour language of the console: cyan = info, amber = suspicious, red = malicious, green = legitimate.
-// Text colours are the 300/400 shades on slate-950 (all >= 4.5:1 contrast).
+// Colour language: blue/cyan = info, amber = suspicious, red = malicious, green = legitimate.
+// Values are C2 theme tokens (c2.css): light = 700-ish text on 50 tints, dark = 300 shades on slate-950;
+// text is >= 4.5:1 in both themes. `hex` is a CSS colour for SVG strokes.
 export const VERDICT_STYLE = {
-  Legitimate: { text: 'text-emerald-300', ring: 'ring-emerald-400/50', bg: 'bg-emerald-400/10', bar: 'bg-emerald-400', hex: '#34d399', label: 'Legitimate' },
-  Suspicious: { text: 'text-amber-300', ring: 'ring-amber-400/50', bg: 'bg-amber-400/10', bar: 'bg-amber-400', hex: '#fbbf24', label: 'Suspicious' },
-  Malicious: { text: 'text-red-300', ring: 'ring-red-400/60', bg: 'bg-red-500/10', bar: 'bg-red-400', hex: '#f87171', label: 'Malicious' },
-  none: { text: 'text-slate-300', ring: 'ring-slate-500/50', bg: 'bg-slate-500/10', bar: 'bg-slate-400', hex: '#94a3b8', label: 'No verdict' },
+  Legitimate: { text: 'text-[color:var(--c2-ok)]', ring: 'ring-[color:var(--c2-ok-ring-strong)]', bg: 'bg-[color:var(--c2-ok-tint)]', bar: 'bg-[color:var(--c2-ok-solid)]', hex: 'var(--c2-ok-solid)', label: 'Legitimate' },
+  Suspicious: { text: 'text-[color:var(--c2-sus)]', ring: 'ring-[color:var(--c2-sus-ring-strong)]', bg: 'bg-[color:var(--c2-sus-tint)]', bar: 'bg-[color:var(--c2-sus-solid)]', hex: 'var(--c2-sus-solid)', label: 'Suspicious' },
+  Malicious: { text: 'text-[color:var(--c2-mal)]', ring: 'ring-[color:var(--c2-mal-ring-strong)]', bg: 'bg-[color:var(--c2-mal-tint)]', bar: 'bg-[color:var(--c2-mal-solid)]', hex: 'var(--c2-mal-solid)', label: 'Malicious' },
+  none: { text: 'text-[color:var(--c2-fg-2)]', ring: 'ring-[color:var(--c2-neutral-ring)]', bg: 'bg-[color:var(--c2-neutral-tint)]', bar: 'bg-[color:var(--c2-neutral-solid)]', hex: 'var(--c2-neutral-solid)', label: 'No verdict' },
 }
 
 export const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1, info: 0 }
 export const SEVERITY_STYLE = {
-  critical: 'bg-red-500/15 text-red-300 ring-red-400/50',
-  high: 'bg-orange-500/15 text-orange-300 ring-orange-400/40',
-  medium: 'bg-amber-400/10 text-amber-300 ring-amber-400/40',
-  low: 'bg-cyan-400/10 text-cyan-300 ring-cyan-400/30',
-  info: 'bg-slate-500/15 text-slate-300 ring-slate-500/40',
+  critical: 'bg-[color:var(--c2-mal-tint-2)] text-[color:var(--c2-mal)] ring-[color:var(--c2-mal-ring)]',
+  high: 'bg-[color:var(--c2-high-tint)] text-[color:var(--c2-high)] ring-[color:var(--c2-high-ring)]',
+  medium: 'bg-[color:var(--c2-sus-tint)] text-[color:var(--c2-sus)] ring-[color:var(--c2-sus-ring)]',
+  low: 'bg-[color:var(--c2-accent-tint)] text-[color:var(--c2-accent)] ring-[color:var(--c2-accent-ring-soft)]',
+  info: 'bg-[color:var(--c2-neutral-tint-2)] text-[color:var(--c2-fg-2)] ring-[color:var(--c2-neutral-ring-soft)]',
 }
 
 export const CLASS_LABELS = {

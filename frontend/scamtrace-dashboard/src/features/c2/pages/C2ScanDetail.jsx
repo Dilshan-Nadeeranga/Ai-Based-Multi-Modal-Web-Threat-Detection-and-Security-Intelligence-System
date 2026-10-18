@@ -27,11 +27,11 @@ export default function C2ScanDetail() {
       <button
         type="button"
         onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/c2/history'))}
-        className="inline-flex w-fit items-center gap-1.5 text-sm text-cyan-300 hover:text-cyan-100"
+        className="inline-flex w-fit items-center gap-1.5 text-sm text-[color:var(--c2-accent)] hover:text-[color:var(--c2-accent-ink)]"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
       </button>
-      <h2 className="font-mono text-lg text-slate-50">Scan #{scanId}</h2>
+      <h2 className="font-mono text-lg text-[color:var(--c2-fg-strong)]">Scan #{scanId}</h2>
       {!data && loading && <StateBox state="loading" message="Loading the stored analysis…" />}
       {error && <StateBox state="error" message={error.message} onRetry={error.status === 404 ? undefined : reload} />}
       {data && !error && <ResultView result={data} />}

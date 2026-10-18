@@ -54,22 +54,22 @@ export default function C2History() {
   const items = data?.items || []
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-xl font-semibold text-slate-50">
-        <History className="h-5 w-5 text-cyan-300" aria-hidden="true" /> Scan history
+      <h2 className="flex items-center gap-2 text-xl font-semibold text-[color:var(--c2-fg-strong)]">
+        <History className="h-5 w-5 text-[color:var(--c2-accent)]" aria-hidden="true" /> Scan history
       </h2>
       <Panel>
         <div className="flex flex-wrap items-end gap-3">
-          <label htmlFor="c2-history-q" className="flex min-w-[16rem] flex-1 flex-col gap-1 text-xs font-medium text-slate-400">
+          <label htmlFor="c2-history-q" className="flex min-w-[16rem] flex-1 flex-col gap-1 text-xs font-medium text-[color:var(--c2-fg-muted)]">
             Search URL or domain
             <span className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--c2-fg-faint)]" aria-hidden="true" />
               <input
                 id="c2-history-q"
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="e.g. paypal, .xyz, netlify"
-                className="w-full rounded-md border border-slate-700 bg-slate-900 py-1.5 pl-8 pr-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400"
+                className="w-full rounded-md border border-[color:var(--c2-border-strong)] bg-[color:var(--c2-field)] py-1.5 pl-8 pr-2 text-sm text-[color:var(--c2-fg-hi)] placeholder:text-[color:var(--c2-fg-faint)] focus:border-[color:var(--c2-accent-solid)]"
               />
             </span>
           </label>
@@ -91,11 +91,11 @@ export default function C2History() {
                 type="button"
                 onClick={newer}
                 disabled={view.index === 0}
-                className="inline-flex items-center gap-1 rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-200 hover:border-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-md border border-[color:var(--c2-border-strong)] px-3 py-1.5 text-sm text-[color:var(--c2-fg)] hover:border-[color:var(--c2-accent-solid)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Newer
               </button>
-              <span className="font-mono text-xs text-slate-400">
+              <span className="font-mono text-xs text-[color:var(--c2-fg-muted)]">
                 page {view.index + 1}
                 {data.total !== undefined ? ` · ${data.total} matching` : ''}
               </span>
@@ -103,7 +103,7 @@ export default function C2History() {
                 type="button"
                 onClick={older}
                 disabled={!data.next_cursor}
-                className="inline-flex items-center gap-1 rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-200 hover:border-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-md border border-[color:var(--c2-border-strong)] px-3 py-1.5 text-sm text-[color:var(--c2-fg)] hover:border-[color:var(--c2-accent-solid)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Older <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
