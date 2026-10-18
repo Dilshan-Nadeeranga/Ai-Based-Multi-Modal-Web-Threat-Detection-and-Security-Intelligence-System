@@ -1,0 +1,494 @@
+{
+  "version": "PP1",
+  "created_at": "2026-10-18T18:51:27.772250+00:00",
+  "freeze_manifest": "data/statistics/pp1_freeze_manifest.json",
+  "positive_class": "scam (fake for the misinformation model)",
+  "models": {
+    "text_scam_model": {
+      "model": "text scam model (DistilBERT, binary)",
+      "test_set": "text_baseline test split",
+      "threshold": 0.5,
+      "n": 66,
+      "accuracy": 0.8333,
+      "precision": 0.8667,
+      "recall": 0.7879,
+      "f1": 0.8254,
+      "roc_auc": 0.8834,
+      "false_positive_rate": 0.1212,
+      "confusion_matrix": {
+        "labels": [
+          "legitimate",
+          "scam"
+        ],
+        "rows_true_cols_pred": [
+          [
+            29,
+            4
+          ],
+          [
+            7,
+            26
+          ]
+        ]
+      },
+      "by_source": {
+        "DIFrauD job_scams": {
+          "n": 30,
+          "accuracy": 0.7333
+        },
+        "Phish360 (Multimodal-Phishing-Benchmarks)": {
+          "n": 30,
+          "accuracy": 0.9
+        },
+        "manual": {
+          "n": 6,
+          "accuracy": 1.0
+        }
+      }
+    },
+    "threat_category_model": {
+      "model": "threat category model (DistilBERT, 4 classes)",
+      "test_set": "text_baseline test split (4 trained classes)",
+      "n": 65,
+      "accuracy": 0.7538,
+      "precision_macro": 0.8117,
+      "recall_macro": 0.6886,
+      "f1_macro": 0.7289,
+      "roc_auc_macro_ovr": 0.9343,
+      "roc_auc_per_class_ovr": {
+        "legitimate": 0.8759,
+        "phishing": 0.9587,
+        "financial_scam": 0.9027,
+        "data_theft": 1.0
+      },
+      "false_positive_rate": 0.2121,
+      "false_positive_rate_note": "legitimate posts predicted as any scam class",
+      "per_class": {
+        "legitimate": {
+          "precision": 0.7647,
+          "recall": 0.7879,
+          "f1": 0.7761,
+          "support": 33
+        },
+        "phishing": {
+          "precision": 0.8571,
+          "recall": 0.8,
+          "f1": 0.8276,
+          "support": 15
+        },
+        "financial_scam": {
+          "precision": 0.625,
+          "recall": 0.6667,
+          "f1": 0.6452,
+          "support": 15
+        },
+        "data_theft": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6667,
+          "support": 2
+        }
+      },
+      "as_scam_vs_legitimate": {
+        "n": 65,
+        "accuracy": 0.7692,
+        "precision": 0.7742,
+        "recall": 0.75,
+        "f1": 0.7619,
+        "roc_auc": 0.8759,
+        "false_positive_rate": 0.2121,
+        "confusion_matrix": {
+          "labels": [
+            "legitimate",
+            "scam"
+          ],
+          "rows_true_cols_pred": [
+            [
+              26,
+              7
+            ],
+            [
+              8,
+              24
+            ]
+          ]
+        }
+      },
+      "confusion_matrix": {
+        "labels": [
+          "legitimate",
+          "phishing",
+          "financial_scam",
+          "data_theft"
+        ],
+        "rows_true_cols_pred": [
+          [
+            26,
+            1,
+            6,
+            0
+          ],
+          [
+            3,
+            12,
+            0,
+            0
+          ],
+          [
+            4,
+            1,
+            10,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1
+          ]
+        ]
+      },
+      "not_trained_categories": [
+        "brand_impersonation",
+        "malware",
+        "browser_abuse",
+        "other_scam (rule-based in the analyzer)"
+      ]
+    },
+    "misinformation_model": {
+      "model": "misinformation model (DistilBERT, binary)",
+      "test_set": "Fakeddit stratified test split (seed 42)",
+      "positive_class": "fake",
+      "threshold": 0.5,
+      "n": 150,
+      "accuracy": 0.7733,
+      "precision": 0.8868,
+      "recall": 0.6267,
+      "f1": 0.7344,
+      "roc_auc": 0.8656,
+      "false_positive_rate": 0.08,
+      "confusion_matrix": {
+        "labels": [
+          "real",
+          "fake"
+        ],
+        "rows_true_cols_pred": [
+          [
+            69,
+            6
+          ],
+          [
+            28,
+            47
+          ]
+        ]
+      },
+      "label_note": "Fakeddit labels are provisional (derived from the subreddit)"
+    },
+    "multimodal_risk_score": {
+      "model": "preliminary multimodal risk score (rule-based fusion)",
+      "test_set": "text_baseline test split",
+      "operating_points": {
+        "MEDIUM_or_HIGH_is_scam": {
+          "n": 66,
+          "accuracy": 0.8636,
+          "precision": 0.8529,
+          "recall": 0.8788,
+          "f1": 0.8657,
+          "roc_auc": 0.888,
+          "false_positive_rate": 0.1515,
+          "confusion_matrix": {
+            "labels": [
+              "legitimate",
+              "scam"
+            ],
+            "rows_true_cols_pred": [
+              [
+                28,
+                5
+              ],
+              [
+                4,
+                29
+              ]
+            ]
+          }
+        },
+        "HIGH_is_scam": {
+          "n": 66,
+          "accuracy": 0.8333,
+          "precision": 0.8667,
+          "recall": 0.7879,
+          "f1": 0.8254,
+          "roc_auc": 0.888,
+          "false_positive_rate": 0.1212,
+          "confusion_matrix": {
+            "labels": [
+              "legitimate",
+              "scam"
+            ],
+            "rows_true_cols_pred": [
+              [
+                29,
+                4
+              ],
+              [
+                7,
+                26
+              ]
+            ]
+          }
+        }
+      },
+      "level_counts_by_label": {
+        "legitimate": {
+          "LOW": 28,
+          "HIGH": 4,
+          "MEDIUM": 1
+        },
+        "scam": {
+          "HIGH": 26,
+          "MEDIUM": 3,
+          "LOW": 4
+        }
+      }
+    },
+    "clip_brand_recognition": {
+      "source": "saved evaluation (clip_brand_experiment_clip-vit-base-patch16.json)",
+      "test_set": "Zenodo phishing test pages",
+      "mode": "fused",
+      "threshold": 0.55,
+      "n": 250,
+      "precision": 0.875,
+      "recall": 0.2393,
+      "f1": 0.3758,
+      "top1_accuracy_closed_set": 0.3077,
+      "false_positive_rate": 0.125,
+      "false_positive_rate_note": "unknown-brand pages wrongly accepted as a catalog brand",
+      "roc_auc": null,
+      "roc_auc_note": "open-set brand identification; reported as precision/recall/F1"
+    },
+    "logo_detector": {
+      "source": "saved evaluation (logo_detector_training.json, logo_baseline_evaluation.json)",
+      "detection_test": {
+        "precision": 0.8499,
+        "recall": 0.7322,
+        "mAP50": 0.7988,
+        "mAP50_95": 0.6615
+      },
+      "brand_matching_test": {
+        "synthetic_gt_crop": {
+          "top1": 0.9554,
+          "n": 112,
+          "precision": 0.9623,
+          "recall": 0.9107,
+          "f1": 0.9358
+        },
+        "synthetic_detected": {
+          "top1": 0.9767,
+          "n": 86,
+          "precision": 0.9878,
+          "recall": 0.9419,
+          "f1": 0.9643
+        },
+        "dom_page": {
+          "top1": 0.6226,
+          "n": 55,
+          "precision": 0.7381,
+          "recall": 0.5849,
+          "f1": 0.6526
+        }
+      },
+      "brand_threshold": 0.79
+    }
+  },
+  "scenarios": {
+    "capture_enabled": true,
+    "results": [
+      {
+        "scenario": "legitimate",
+        "sample_id": "SVT_000001",
+        "true_label": "legitimate",
+        "claimed_brand": "Pan Asia Bank",
+        "level": "LOW",
+        "score": 0.2591,
+        "primary_category": "MISINFORMATION",
+        "detected": [
+          "MISINFORMATION"
+        ],
+        "expected": "LOW, legitimate",
+        "passed": false,
+        "steps": {
+          "preprocessing": "done",
+          "ocr": "done",
+          "text_threat": "done",
+          "brand_analysis": "done",
+          "logo_detection": "done",
+          "web_capture": "skipped",
+          "visual_similarity": "skipped",
+          "consistency": "done",
+          "risk_fusion": "done",
+          "threat_classification": "done"
+        },
+        "reasons": [],
+        "conclusion": "Most likely category: misinformation (risk LOW).",
+        "seconds": 31.5
+      },
+      {
+        "scenario": "legitimate",
+        "sample_id": "SVT_000007",
+        "true_label": "legitimate",
+        "claimed_brand": "Markhor Energy Drink",
+        "level": "LOW",
+        "score": 0.3882,
+        "primary_category": "OTHER_SCAM",
+        "detected": [
+          "OTHER_SCAM",
+          "MISINFORMATION"
+        ],
+        "expected": "LOW, legitimate",
+        "passed": false,
+        "steps": {
+          "preprocessing": "done",
+          "ocr": "done",
+          "text_threat": "done",
+          "brand_analysis": "done",
+          "logo_detection": "done",
+          "web_capture": "skipped",
+          "visual_similarity": "skipped",
+          "consistency": "done",
+          "risk_fusion": "done",
+          "threat_classification": "done"
+        },
+        "reasons": [],
+        "conclusion": "Most likely category: other scam (risk LOW). Also indicates: misinformation.",
+        "seconds": 0.7
+      },
+      {
+        "scenario": "scam",
+        "sample_id": "SVT_000018",
+        "true_label": "data_theft",
+        "claimed_brand": null,
+        "level": "HIGH",
+        "score": 0.7254,
+        "primary_category": "OTHER_SCAM",
+        "detected": [
+          "OTHER_SCAM",
+          "MISINFORMATION"
+        ],
+        "expected": "MEDIUM or HIGH, a scam category",
+        "passed": true,
+        "steps": {
+          "preprocessing": "done",
+          "ocr": "done",
+          "text_threat": "done",
+          "brand_analysis": "done",
+          "logo_detection": "done",
+          "web_capture": "done",
+          "visual_similarity": "done",
+          "consistency": "done",
+          "risk_fusion": "done",
+          "threat_classification": "done"
+        },
+        "reasons": [],
+        "conclusion": "Most likely category: other scam (risk HIGH). Also indicates: misinformation.",
+        "seconds": 8.6
+      },
+      {
+        "scenario": "legitimate",
+        "sample_id": "SVT_001428",
+        "true_label": "legitimate",
+        "claimed_brand": "Bloomberg",
+        "level": "LOW",
+        "score": 0.1363,
+        "primary_category": "MISINFORMATION",
+        "detected": [
+          "MISINFORMATION"
+        ],
+        "expected": "LOW, legitimate",
+        "passed": false,
+        "steps": {
+          "preprocessing": "done",
+          "ocr": "done",
+          "text_threat": "done",
+          "brand_analysis": "done",
+          "logo_detection": "done",
+          "web_capture": "skipped",
+          "visual_similarity": "skipped",
+          "consistency": "done",
+          "risk_fusion": "done",
+          "threat_classification": "done"
+        },
+        "reasons": [],
+        "conclusion": "Most likely category: misinformation (risk LOW).",
+        "seconds": 0.7
+      },
+      {
+        "scenario": "scam",
+        "sample_id": "SVT_001431",
+        "true_label": "data_theft",
+        "claimed_brand": null,
+        "level": "HIGH",
+        "score": 0.7928,
+        "primary_category": "OTHER_SCAM",
+        "detected": [
+          "OTHER_SCAM",
+          "MISINFORMATION"
+        ],
+        "expected": "MEDIUM or HIGH, a scam category",
+        "passed": true,
+        "steps": {
+          "preprocessing": "done",
+          "ocr": "done",
+          "text_threat": "done",
+          "brand_analysis": "done",
+          "logo_detection": "done",
+          "web_capture": "done",
+          "visual_similarity": "done",
+          "consistency": "done",
+          "risk_fusion": "done",
+          "threat_classification": "done"
+        },
+        "reasons": [],
+        "conclusion": "Most likely category: other scam (risk HIGH). Also indicates: misinformation.",
+        "seconds": 12.8
+      },
+      {
+        "scenario": "scam",
+        "sample_id": "SVT_001436",
+        "true_label": "brand_impersonation",
+        "claimed_brand": "Kroger",
+        "level": "HIGH",
+        "score": 0.7972,
+        "primary_category": "PHISHING",
+        "detected": [
+          "PHISHING",
+          "MISINFORMATION"
+        ],
+        "expected": "MEDIUM or HIGH, a scam category",
+        "passed": true,
+        "steps": {
+          "preprocessing": "done",
+          "ocr": "done",
+          "text_threat": "done",
+          "brand_analysis": "done",
+          "logo_detection": "done",
+          "web_capture": "done",
+          "visual_similarity": "done",
+          "consistency": "done",
+          "risk_fusion": "done",
+          "threat_classification": "done"
+        },
+        "reasons": [],
+        "conclusion": "Most likely category: phishing (risk HIGH). Also indicates: misinformation.",
+        "seconds": 6.9
+      }
+    ],
+    "legitimate_passed": 0,
+    "legitimate_total": 3,
+    "scam_passed": 3,
+    "scam_total": 3
+  },
+  "confusion_matrices_png": "data/statistics/pp1_confusion_matrices.png",
+  "runtime_seconds": 77.7
+}

@@ -1,0 +1,59 @@
+{
+  "task": "PP1 Evaluation",
+  "items": [
+    {
+      "item": "Freeze PP1 dataset version",
+      "done": true
+    },
+    {
+      "item": "Freeze baseline model versions",
+      "done": true
+    },
+    {
+      "item": "Run test dataset",
+      "done": true
+    },
+    {
+      "item": "Calculate Accuracy",
+      "done": true
+    },
+    {
+      "item": "Calculate Precision",
+      "done": true
+    },
+    {
+      "item": "Calculate Recall",
+      "done": true
+    },
+    {
+      "item": "Calculate F1-score",
+      "done": true
+    },
+    {
+      "item": "Calculate ROC-AUC",
+      "done": true
+    },
+    {
+      "item": "Calculate False Positive Rate",
+      "done": true
+    },
+    {
+      "item": "Generate confusion matrix",
+      "done": true
+    },
+    {
+      "item": "Test legitimate scenario",
+      "done": true
+    },
+    {
+      "item": "Test scam scenario",
+      "done": true
+    },
+    {
+      "item": "Document limitations + next work",
+      "done": true
+    }
+  ],
+  "done_count": 13,
+  "updated_at": "2026-10-18T18:52:52.5724921Z"
+}
