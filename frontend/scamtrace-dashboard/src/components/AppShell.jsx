@@ -3,7 +3,6 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   ChevronDown,
   ChevronRight,
-  Code,
   FolderGit2,
   History,
   Images,
@@ -26,7 +25,7 @@ const NAV_LINKS = [
   { to: '/url-analyzer', label: 'Threat Analysis', icon: ScanSearch },
   { to: '/c2', label: 'C2 · Content & Behavior', icon: Radar },
   { to: '/social-visual-analysis', label: 'Social Visual Analysis', icon: Images },
-  { to: '/code-audit', label: 'Repository Audit', icon: Code, projects: true },
+  { to: '/code-audit', label: 'Repository Audit', projects: true },
   { to: '/history', label: 'History', icon: History },
   { to: '/profile', label: 'Profile', icon: UserRound },
 ]
@@ -45,7 +44,7 @@ function subLinkClass(active) {
   }`
 }
 
-function ProjectsNav({ icon: Icon, label, to, onNavigate }) {
+function ProjectsNav({ label, to, onNavigate }) {
   const { pathname } = useLocation()
   const inAudit = pathname.startsWith('/code-audit')
   const [open, setOpen] = useState(inAudit)
@@ -59,7 +58,6 @@ function ProjectsNav({ icon: Icon, label, to, onNavigate }) {
     <div>
       <div className="flex items-center gap-1">
         <NavLink to={to} className={() => `${navClass({ isActive: inAudit })} flex-1`} onClick={onNavigate}>
-          <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
           <span>{label}</span>
         </NavLink>
         <button
@@ -134,7 +132,7 @@ function Sidebar({ onNavigate }) {
         <nav className="flex flex-col gap-1 px-4 py-2" aria-label="Main navigation">
           <span className="mb-1 px-2 text-[0.6875rem] font-bold uppercase tracking-wider text-st-outline">Navigation</span>
           {links.map(({ to, label, icon: Icon, end, projects }) => projects ? (
-            <ProjectsNav key={to} to={to} label={label} icon={Icon} onNavigate={onNavigate} />
+            <ProjectsNav key={to} to={to} label={label} onNavigate={onNavigate} />
           ) : (
             <NavLink key={to} to={to} end={end} className={navClass} onClick={onNavigate}>
               <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />

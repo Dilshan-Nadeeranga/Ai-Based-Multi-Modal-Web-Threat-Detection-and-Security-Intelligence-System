@@ -717,6 +717,17 @@
   border: 1px solid #bfdbfe;
 }
 
+.ca-badge--preliminary {
+  margin-left: 8px;
+  vertical-align: middle;
+  color: var(--ca-medium);
+  background: var(--ca-medium-bg);
+  border: 1px solid #fde68a;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 .ca-remediation__note {
   display: flex;
   gap: 10px;
