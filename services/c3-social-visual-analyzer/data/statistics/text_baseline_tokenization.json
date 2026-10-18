@@ -3,29 +3,29 @@
   "max_length": 256,
   "splits": {
     "train": {
-      "samples": 293,
-      "tokens_p50": 160,
-      "tokens_p90": 683,
+      "samples": 306,
+      "tokens_p50": 149,
+      "tokens_p90": 664,
       "tokens_max": 1457,
       "truncated": 99,
-      "unk_rate": 0.0
+      "unk_rate": 0.00025
     },
     "val": {
-      "samples": 63,
-      "tokens_p50": 184,
-      "tokens_p90": 746,
+      "samples": 66,
+      "tokens_p50": 165,
+      "tokens_p90": 713,
       "tokens_max": 1391,
       "truncated": 25,
-      "unk_rate": 0.0
+      "unk_rate": 0.00083
     },
     "test": {
-      "samples": 63,
-      "tokens_p50": 166,
-      "tokens_p90": 519,
+      "samples": 66,
+      "tokens_p50": 158,
+      "tokens_p90": 493,
       "tokens_max": 1402,
       "truncated": 19,
-      "unk_rate": 0.00049
+      "unk_rate": 0.00057
     }
   },
-  "created_at": "2026-10-14T06:09:15.940109+00:00"
+  "created_at": "2026-10-18T17:41:22.386692+00:00"
 }
