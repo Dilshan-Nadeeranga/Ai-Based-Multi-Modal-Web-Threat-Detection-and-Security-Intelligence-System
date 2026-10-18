@@ -41,7 +41,8 @@ export default function DeleteProjectDialog({ project, onDeleted, onCancel }) {
         <p id="ca-delete-message" className="text-sm leading-relaxed text-st-muted">
           This removes {scanCount === 1 ? 'its saved scan' : `all ${scanCount} saved scans`} of{' '}
           <span className="font-semibold text-st-ink">{project.repository_url.replace('https://', '')}</span>{' '}
-          from your projects, history and dashboard. This cannot be undone. The GitHub repository itself is not affected.
+          from your projects, history and dashboard, along with the stored copy of its code. This cannot be undone.
+          The GitHub repository itself is not affected.
         </p>
         {error && <p className="ca-error mt-3" role="alert">{error}</p>}
         <div className="ca-review__buttons justify-end !mb-0">

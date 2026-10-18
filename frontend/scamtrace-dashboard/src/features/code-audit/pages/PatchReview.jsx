@@ -154,8 +154,6 @@ function AnalystReview({ remediationId }) {
   return (
     <ReviewPage>
       <header className="ca-page__header">
-        <Link to="/code-audit" className="ca-review__back">← Code Audit</Link>
-        <span className="ca-page__badge">Component C4</span>
         <h1>HITL Analyst Review</h1>
         <p className="ca-page__subtitle">
           Mandatory human decision before patch approval. Review the deterministic evidence, then

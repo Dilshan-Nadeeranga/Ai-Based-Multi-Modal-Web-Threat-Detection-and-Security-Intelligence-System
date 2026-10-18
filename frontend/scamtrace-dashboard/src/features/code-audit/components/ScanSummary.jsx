@@ -52,6 +52,18 @@ export default function ScanSummary({ result }) {
             <dd>{repository.js_ts_percent}%</dd>
           </div>
         )}
+        {(repository.reapplied_patches > 0 || repository.skipped_patches > 0) && (
+          <div
+            className="ca-summary__item"
+            title="Accepted patches are re-applied to the fresh GitHub clone before analysis, so fixed findings are not reported again."
+          >
+            <dt>Accepted Patches</dt>
+            <dd>
+              {repository.reapplied_patches} re-applied
+              {repository.skipped_patches > 0 && ` · ${repository.skipped_patches} skipped`}
+            </dd>
+          </div>
+        )}
       </dl>
 
       {languages.length > 0 && (

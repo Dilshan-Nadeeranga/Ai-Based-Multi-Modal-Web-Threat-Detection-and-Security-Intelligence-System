@@ -118,7 +118,28 @@ async function deleteProject(req, res) {
         AND lower(regexp_replace(repository_url, '(\\.git|/+)$', '')) = $2`,
     [req.user.id, key]
   );
-  res.json({ deleted_scans: result.rowCount, repository_url: scan.repository_url });
+
+  // C4 keeps one clone per repository; remove it only when no user still has this project.
+  const { rows: remaining } = await query(
+    `SELECT 1 FROM code_audit_scans
+      WHERE lower(regexp_replace(repository_url, '(\\.git|/+)$', '')) = $1
+      LIMIT 1`,
+    [key]
+  );
+  let cloneDeleted = false;
+  if (remaining.length === 0) {
+    try {
+      const { data } = await axios.delete(`${c4BaseUrl}/api/v1/projects/clone`, {
+        params: { repository_url: scan.repository_url.replace(/\.git$|\/+$/g, "") },
+        timeout: READ_TIMEOUT_MS,
+      });
+      cloneDeleted = Boolean(data?.deleted);
+    } catch {
+      cloneDeleted = false;
+    }
+  }
+
+  res.json({ deleted_scans: result.rowCount, repository_url: scan.repository_url, clone_deleted: cloneDeleted });
 }
 
 async function fetchFromC4(path) {
