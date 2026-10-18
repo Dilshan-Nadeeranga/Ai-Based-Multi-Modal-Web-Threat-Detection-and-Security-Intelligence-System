@@ -80,7 +80,12 @@ function RiskScoreView({ scanId }) {
 
   return (
     <section className="ca-summary ca-risk">
-      <h2 className="ca-summary__title">Preliminary Risk / Exploitability Score</h2>
+      <h2 className="ca-summary__title">
+        Preliminary Risk / Exploitability Score{' '}
+        <span className="ca-badge ca-badge--preliminary" title={assessment.model.disclaimer}>
+          Research model v{assessment.model.model_version} · {assessment.model.status}
+        </span>
+      </h2>
       {before.total_security_findings === 0 && (
         <p className="ca-empty">
           No scored security findings for this scan — the index reflects code health only.
@@ -121,6 +126,7 @@ function RiskScoreView({ scanId }) {
           Assessment <code>{assessment.assessment_id}</code> · calculated{' '}
           {new Date(assessment.calculated_at).toLocaleString()} · formula: {assessment.assumptions_reference}
         </p>
+        <p className="ca-detail__note">{assessment.model.disclaimer}</p>
       </details>
 
       <button type="button" className="ca-form__button ca-risk__recalculate"
