@@ -94,7 +94,7 @@ DETECTOR_CONF = 0.25
 SHORTENERS = {"itl.ink", "bit.ly", "bitly.com", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "is.gd", "v.gd", "buff.ly", "rebrand.ly",
               "s.id", "short.gy", "qrco.de", "clck.ru",
               "cutt.ly", "shorturl.at", "lnkd.in", "fb.me", "tiny.cc", "rb.gy", "t.ly"}
-AMBIGUOUS_BRANDS = {"apple", "steam", "chase", "amazon"}
+AMBIGUOUS_BRANDS = {"apple", "steam", "chase", "amazon", "orange", "square", "discord", "ups", "aruba", "bt"}
 SEVERITY = {"low": 1, "medium": 2, "high": 3}
 
 _URL = re.compile(r"(?:https?://|www\.)[^\s<>\"']+", re.IGNORECASE)
@@ -918,7 +918,48 @@ def dataset_overview() -> dict:
     category = _read_json(stats / "threat_category_metrics.json")
     misinfo = _read_json(stats / "misinformation_metrics.json")
     binary_names = {"0": "legitimate", "1": "scam"}
+    tp_phish, tp_legit, tp_candidates, tp_experiment = (_read_json(stats / name) for name in (
+        "telephish_import_phishing.json", "telephish_import_legitimate.json", "telephish_candidates.json",
+        "telephish_experiment.json"))
+    telephish = None
+    if tp_phish or tp_candidates:
+        categories = {"phishing": (tp_phish.get("counts") or {}).get("imported", 0),
+                      "legitimate": (tp_legit.get("counts") or {}).get("imported", 0)}
+        for name in ("brand_impersonation", "financial_scam", "malware"):
+            categories[name] = ((tp_candidates.get("candidates") or {}).get(name) or {}).get("total", 0)
+        telephish = {
+            "source": tp_phish.get("source") or tp_candidates.get("source"),
+            "source_url": tp_phish.get("source_url") or tp_candidates.get("source_url"),
+            "licence": tp_phish.get("licence") or tp_candidates.get("licence"),
+            "label_basis": "VirusTotal URL flags (provisional); categories by evidence rules + review",
+            "categories": categories,
+            "brand_impersonation_by_brand": tp_candidates.get("brand_impersonation_by_brand"),
+            "excluded": {k: v for k, v in (tp_candidates.get("counts") or {}).items() if k.startswith("excluded")},
+            "used_in_training": False,
+            "experiment_decision": tp_experiment.get("decision"),
+        }
+    smish = _read_json(stats / "smishtank_import.json")
+    smishtank = None
+    if smish:
+        categories = {name: (smish.get("categories") or {}).get(name, 0) for name in (
+            "phishing", "brand_impersonation", "financial_scam", "data_theft", "malware", "other_scam")}
+        categories["malware"] = smish.get("malware_candidates", 0)
+        impersonation = smish.get("brand_impersonation") or {}
+        smishtank = {
+            "source": smish.get("source"), "source_url": smish.get("source_url"), "licence": smish.get("licence"),
+            "platform": smish.get("platform"), "label_basis": smish.get("label_basis"),
+            "categories": categories,
+            "category_note": "malware = messages whose URL VirusTotal flagged as malware (candidates, not labels)",
+            "brand_impersonation_by_brand": impersonation.get("top_brands"),
+            "brand_summary": {k: impersonation.get(k) for k in ("distinct_brands", "catalog_brands_covered",
+                                                                 "messages_for_catalog_brands")},
+            "url_types": smish.get("url_types"),
+            "excluded": {"near_duplicates": (smish.get("counts") or {}).get("near_duplicates", 0),
+                         "too_short": (smish.get("counts") or {}).get("too_short", 0)},
+            "used_in_training": False,
+        }
     return {
+        "external": {"telephish": telephish, "smishtank": smishtank},
         "brand_reference": {k: brand.get(k) for k in (
             "generated_at", "brands_in_catalog", "primary_logos_on_disk", "normalized_logos_on_disk", "screenshots_on_disk",
             "logo_annotations", "logo_boxes", "split_counts", "categories")} if brand else None,

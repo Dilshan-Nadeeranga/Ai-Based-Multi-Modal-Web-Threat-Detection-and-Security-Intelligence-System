@@ -2,30 +2,96 @@
   "experiment": "clip_brand_zero_shot",
   "model": "openai/clip-vit-base-patch32",
   "brands": [
+    "1and1ionos",
+    "absa",
     "adobe",
+    "alibaba",
     "amazon",
+    "anzbank",
+    "aol",
     "apple",
+    "aruba",
     "att",
+    "auid",
+    "bancaintesasanpaolo",
+    "bancoindustrial",
+    "bancoitau",
+    "bancolombia",
     "bankofamerica",
+    "bankofceylon",
+    "banquepostale",
+    "banreservas",
+    "bantrab",
+    "bdobank",
+    "biglobe",
+    "bimcell",
+    "bperbanca",
+    "bt",
+    "chainlink",
     "chase",
     "citibank",
+    "citizensbank",
     "coinbase",
+    "combank",
+    "commonwealthbank",
+    "creditagricole",
     "dbsbank",
+    "denizbank",
     "dhl",
+    "dialogaxiata",
+    "discord",
+    "dkb",
+    "docusign",
     "ebay",
     "facebook",
+    "garanti",
     "google",
+    "govau",
     "hdfcbank",
+    "hnb",
+    "impotsgouv",
     "instagram",
+    "leboncoin",
     "linkedin",
+    "madeinchina",
     "metamask",
     "microsoft",
+    "mtbank",
+    "nationstrust",
+    "ndbbank",
     "netflix",
+    "nfcu",
+    "office365",
+    "opensea",
+    "orange",
     "paypal",
+    "peoplesbank",
+    "postbank",
+    "posteitaliane",
+    "rakuten",
+    "sampathbank",
+    "santander",
+    "sbbch",
+    "sbi",
+    "seylanbank",
+    "sfrfr",
+    "sltmobitel",
+    "smbc",
+    "sparkasse",
+    "square",
     "steam",
+    "swisspost",
+    "telekom",
+    "trustwallet",
+    "unionbankph",
+    "uniswap",
+    "ups",
     "usps",
+    "wellsfargo",
     "whatsapp",
-    "yahoo"
+    "xfinity",
+    "yahoo",
+    "yamatotransport"
   ],
   "text_templates": [
     "the {name} logo",
@@ -45,74 +111,74 @@
       "letterbox_header_left"
     ]
   },
-  "selected_mode": "fused",
-  "selected_threshold": 0.78,
+  "selected_mode": "text",
+  "selected_threshold": 0.42,
   "threshold_selection": "max open-set F1 on Zenodo calibration split with unknown rejection >= 0.9",
   "mode_candidates": {
     "text": {
-      "threshold": 0.64,
-      "calibration_f1": 0.3607,
-      "calibration_top1": 0.3172
+      "threshold": 0.42,
+      "calibration_f1": 0.2544,
+      "calibration_top1": 0.1966
     },
     "logo": {
-      "threshold": 0.91,
-      "calibration_f1": 0.3776,
-      "calibration_top1": 0.2759
+      "threshold": 0.88,
+      "calibration_f1": 0.1955,
+      "calibration_top1": 0.141
     },
     "fused": {
-      "threshold": 0.78,
-      "calibration_f1": 0.3838,
-      "calibration_top1": 0.2897
+      "threshold": 0.68,
+      "calibration_f1": 0.2097,
+      "calibration_top1": 0.1624
     }
   },
   "seed": 42,
   "data": {
-    "zenodo_calibration": 249,
-    "zenodo_test": 251,
+    "zenodo_calibration": 250,
+    "zenodo_test": 250,
     "zenodo_target_brands_out_of_catalog": {
-      "aol": 28,
-      "bt": 22,
       "genericemail": 19,
-      "yamatotransport": 12,
-      "creditagricole": 8,
-      "biglobe": 7,
-      "govau": 7,
-      "discord": 6,
       "onedrive": 6,
-      "mtbank": 5,
-      "orange": 5,
-      "banquepostale": 4,
-      "dkb": 4,
-      "opensea": 4,
-      "trustwallet": 4
+      "generic": 3,
+      "hipercard": 3,
+      "genericcrypto": 1
     },
-    "official_homepages": 24,
+    "official_homepages": 80,
     "dataset_post_images": 1019,
     "dataset_website_screenshots": 4
   },
   "results": {
     "zenodo_test": {
       "text": {
-        "n": 251,
-        "n_known": 146,
-        "n_unknown": 105,
-        "closed_set_top1": 0.3767,
-        "closed_set_top3": 0.5753,
-        "closed_set_top5": 0.6849,
-        "open_set_accuracy": 0.5737,
-        "precision": 0.8776,
-        "recall": 0.2945,
-        "f1": 0.441,
-        "unknown_rejection_rate": 0.9619,
+        "n": 250,
+        "n_known": 234,
+        "n_unknown": 16,
+        "closed_set_top1": 0.2393,
+        "closed_set_top3": 0.3504,
+        "closed_set_top5": 0.4103,
+        "open_set_accuracy": 0.248,
+        "precision": 0.8679,
+        "recall": 0.1966,
+        "f1": 0.3206,
+        "unknown_rejection_rate": 1.0,
         "per_brand_recall": {
           "adobe": {
-            "correct": 1,
+            "correct": 0,
             "n": 2,
-            "recall": 0.5
+            "recall": 0.0
           },
           "amazon": {
             "correct": 0,
             "n": 3,
+            "recall": 0.0
+          },
+          "anzbank": {
+            "correct": 1,
+            "n": 1,
+            "recall": 1.0
+          },
+          "aol": {
+            "correct": 0,
+            "n": 14,
             "recall": 0.0
           },
           "apple": {
@@ -120,14 +186,59 @@
             "n": 1,
             "recall": 0.0
           },
-          "att": {
+          "aruba": {
             "correct": 2,
-            "n": 25,
-            "recall": 0.08
+            "n": 2,
+            "recall": 1.0
+          },
+          "att": {
+            "correct": 1,
+            "n": 22,
+            "recall": 0.0455
+          },
+          "bancoitau": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "bancolombia": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
+          "bankofamerica": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "banquepostale": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
+          "banreservas": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "biglobe": {
+            "correct": 0,
+            "n": 4,
+            "recall": 0.0
+          },
+          "bimcell": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "bt": {
+            "correct": 0,
+            "n": 11,
+            "recall": 0.0
           },
           "citibank": {
             "correct": 0,
-            "n": 4,
+            "n": 3,
             "recall": 0.0
           },
           "coinbase": {
@@ -135,85 +246,200 @@
             "n": 4,
             "recall": 0.25
           },
+          "commonwealthbank": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "creditagricole": {
+            "correct": 0,
+            "n": 6,
+            "recall": 0.0
+          },
+          "denizbank": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
           "dhl": {
             "correct": 2,
-            "n": 4,
-            "recall": 0.5
+            "n": 7,
+            "recall": 0.2857
+          },
+          "discord": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
+          "dkb": {
+            "correct": 2,
+            "n": 3,
+            "recall": 0.6667
           },
           "facebook": {
-            "correct": 7,
-            "n": 19,
-            "recall": 0.3684
+            "correct": 4,
+            "n": 13,
+            "recall": 0.3077
           },
           "google": {
-            "correct": 1,
+            "correct": 0,
             "n": 1,
-            "recall": 1.0
+            "recall": 0.0
+          },
+          "govau": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
           },
           "instagram": {
-            "correct": 1,
-            "n": 2,
-            "recall": 0.5
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "leboncoin": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
           },
           "linkedin": {
             "correct": 0,
             "n": 1,
             "recall": 0.0
           },
+          "madeinchina": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
           "metamask": {
-            "correct": 1,
-            "n": 8,
-            "recall": 0.125
+            "correct": 0,
+            "n": 5,
+            "recall": 0.0
           },
           "microsoft": {
-            "correct": 14,
-            "n": 42,
-            "recall": 0.3333
+            "correct": 17,
+            "n": 48,
+            "recall": 0.3542
           },
-          "netflix": {
-            "correct": 2,
-            "n": 2,
-            "recall": 1.0
-          },
-          "paypal": {
+          "mtbank": {
             "correct": 1,
             "n": 4,
             "recall": 0.25
           },
+          "netflix": {
+            "correct": 3,
+            "n": 3,
+            "recall": 1.0
+          },
+          "office365": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "opensea": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "orange": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "paypal": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "postbank": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "rakuten": {
+            "correct": 1,
+            "n": 3,
+            "recall": 0.3333
+          },
+          "santander": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "sbbch": {
+            "correct": 1,
+            "n": 1,
+            "recall": 1.0
+          },
           "steam": {
-            "correct": 9,
-            "n": 15,
+            "correct": 6,
+            "n": 10,
             "recall": 0.6
+          },
+          "telekom": {
+            "correct": 2,
+            "n": 2,
+            "recall": 1.0
+          },
+          "trustwallet": {
+            "correct": 1,
+            "n": 2,
+            "recall": 0.5
+          },
+          "unionbankph": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "ups": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
           },
           "usps": {
             "correct": 0,
             "n": 7,
             "recall": 0.0
           },
-          "whatsapp": {
+          "wellsfargo": {
             "correct": 0,
             "n": 1,
             "recall": 0.0
           },
+          "whatsapp": {
+            "correct": 0,
+            "n": 6,
+            "recall": 0.0
+          },
+          "xfinity": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
           "yahoo": {
             "correct": 1,
-            "n": 1,
-            "recall": 1.0
+            "n": 2,
+            "recall": 0.5
+          },
+          "yamatotransport": {
+            "correct": 0,
+            "n": 4,
+            "recall": 0.0
           }
         }
       },
       "logo": {
-        "n": 251,
-        "n_known": 146,
-        "n_unknown": 105,
-        "closed_set_top1": 0.2534,
-        "closed_set_top3": 0.3014,
-        "closed_set_top5": 0.3699,
-        "open_set_accuracy": 0.5339,
-        "precision": 0.825,
-        "recall": 0.226,
-        "f1": 0.3548,
-        "unknown_rejection_rate": 0.9619,
+        "n": 250,
+        "n_known": 234,
+        "n_unknown": 16,
+        "closed_set_top1": 0.1624,
+        "closed_set_top3": 0.1795,
+        "closed_set_top5": 0.2094,
+        "open_set_accuracy": 0.184,
+        "precision": 0.8857,
+        "recall": 0.1325,
+        "f1": 0.2305,
+        "unknown_rejection_rate": 0.9375,
         "per_brand_recall": {
           "adobe": {
             "correct": 0,
@@ -225,19 +451,74 @@
             "n": 3,
             "recall": 0.0
           },
+          "anzbank": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "aol": {
+            "correct": 0,
+            "n": 14,
+            "recall": 0.0
+          },
           "apple": {
             "correct": 0,
             "n": 1,
             "recall": 0.0
           },
+          "aruba": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
           "att": {
             "correct": 0,
-            "n": 25,
+            "n": 22,
+            "recall": 0.0
+          },
+          "bancoitau": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "bancolombia": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
+          "bankofamerica": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "banquepostale": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
+          "banreservas": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "biglobe": {
+            "correct": 0,
+            "n": 4,
+            "recall": 0.0
+          },
+          "bimcell": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "bt": {
+            "correct": 0,
+            "n": 11,
             "recall": 0.0
           },
           "citibank": {
             "correct": 0,
-            "n": 4,
+            "n": 3,
             "recall": 0.0
           },
           "coinbase": {
@@ -245,24 +526,59 @@
             "n": 4,
             "recall": 0.0
           },
+          "commonwealthbank": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "creditagricole": {
+            "correct": 0,
+            "n": 6,
+            "recall": 0.0
+          },
+          "denizbank": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
           "dhl": {
-            "correct": 1,
-            "n": 4,
-            "recall": 0.25
+            "correct": 0,
+            "n": 7,
+            "recall": 0.0
+          },
+          "discord": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
+          "dkb": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
           },
           "facebook": {
-            "correct": 7,
-            "n": 19,
-            "recall": 0.3684
+            "correct": 4,
+            "n": 13,
+            "recall": 0.3077
           },
           "google": {
             "correct": 0,
             "n": 1,
             "recall": 0.0
           },
+          "govau": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
           "instagram": {
             "correct": 0,
-            "n": 2,
+            "n": 1,
+            "recall": 0.0
+          },
+          "leboncoin": {
+            "correct": 0,
+            "n": 1,
             "recall": 0.0
           },
           "linkedin": {
@@ -270,60 +586,140 @@
             "n": 1,
             "recall": 0.0
           },
+          "madeinchina": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
           "metamask": {
             "correct": 0,
-            "n": 8,
+            "n": 5,
             "recall": 0.0
           },
           "microsoft": {
-            "correct": 20,
-            "n": 42,
-            "recall": 0.4762
+            "correct": 22,
+            "n": 48,
+            "recall": 0.4583
           },
-          "netflix": {
-            "correct": 2,
-            "n": 2,
-            "recall": 1.0
-          },
-          "paypal": {
+          "mtbank": {
             "correct": 0,
             "n": 4,
             "recall": 0.0
           },
-          "steam": {
+          "netflix": {
             "correct": 3,
-            "n": 15,
+            "n": 3,
+            "recall": 1.0
+          },
+          "office365": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "opensea": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "orange": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "paypal": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "postbank": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "rakuten": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
+          "santander": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "sbbch": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "steam": {
+            "correct": 2,
+            "n": 10,
             "recall": 0.2
+          },
+          "telekom": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "trustwallet": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "unionbankph": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "ups": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
           },
           "usps": {
             "correct": 0,
             "n": 7,
             "recall": 0.0
           },
-          "whatsapp": {
+          "wellsfargo": {
             "correct": 0,
             "n": 1,
             "recall": 0.0
           },
+          "whatsapp": {
+            "correct": 0,
+            "n": 6,
+            "recall": 0.0
+          },
+          "xfinity": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
           "yahoo": {
             "correct": 0,
-            "n": 1,
+            "n": 2,
+            "recall": 0.0
+          },
+          "yamatotransport": {
+            "correct": 0,
+            "n": 4,
             "recall": 0.0
           }
         }
       },
       "fused": {
-        "n": 251,
-        "n_known": 146,
-        "n_unknown": 105,
-        "closed_set_top1": 0.3014,
-        "closed_set_top3": 0.363,
-        "closed_set_top5": 0.4247,
-        "open_set_accuracy": 0.5657,
-        "precision": 0.8571,
-        "recall": 0.2877,
-        "f1": 0.4308,
-        "unknown_rejection_rate": 0.9524,
+        "n": 250,
+        "n_known": 234,
+        "n_unknown": 16,
+        "closed_set_top1": 0.2179,
+        "closed_set_top3": 0.2607,
+        "closed_set_top5": 0.2692,
+        "open_set_accuracy": 0.204,
+        "precision": 0.9231,
+        "recall": 0.1538,
+        "f1": 0.2637,
+        "unknown_rejection_rate": 0.9375,
         "per_brand_recall": {
           "adobe": {
             "correct": 0,
@@ -335,44 +731,134 @@
             "n": 3,
             "recall": 0.0
           },
+          "anzbank": {
+            "correct": 1,
+            "n": 1,
+            "recall": 1.0
+          },
+          "aol": {
+            "correct": 0,
+            "n": 14,
+            "recall": 0.0
+          },
           "apple": {
             "correct": 0,
             "n": 1,
             "recall": 0.0
           },
+          "aruba": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
           "att": {
             "correct": 0,
-            "n": 25,
+            "n": 22,
+            "recall": 0.0
+          },
+          "bancoitau": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "bancolombia": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
+          "bankofamerica": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "banquepostale": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
+          "banreservas": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "biglobe": {
+            "correct": 0,
+            "n": 4,
+            "recall": 0.0
+          },
+          "bimcell": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "bt": {
+            "correct": 0,
+            "n": 11,
             "recall": 0.0
           },
           "citibank": {
             "correct": 0,
-            "n": 4,
+            "n": 3,
             "recall": 0.0
           },
           "coinbase": {
-            "correct": 1,
+            "correct": 0,
             "n": 4,
-            "recall": 0.25
+            "recall": 0.0
+          },
+          "commonwealthbank": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "creditagricole": {
+            "correct": 0,
+            "n": 6,
+            "recall": 0.0
+          },
+          "denizbank": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
           },
           "dhl": {
+            "correct": 0,
+            "n": 7,
+            "recall": 0.0
+          },
+          "discord": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
+          "dkb": {
             "correct": 2,
-            "n": 4,
-            "recall": 0.5
+            "n": 3,
+            "recall": 0.6667
           },
           "facebook": {
-            "correct": 8,
-            "n": 19,
-            "recall": 0.4211
+            "correct": 6,
+            "n": 13,
+            "recall": 0.4615
           },
           "google": {
-            "correct": 1,
+            "correct": 0,
             "n": 1,
-            "recall": 1.0
+            "recall": 0.0
+          },
+          "govau": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
           },
           "instagram": {
             "correct": 0,
-            "n": 2,
+            "n": 1,
+            "recall": 0.0
+          },
+          "leboncoin": {
+            "correct": 0,
+            "n": 1,
             "recall": 0.0
           },
           "linkedin": {
@@ -380,70 +866,160 @@
             "n": 1,
             "recall": 0.0
           },
+          "madeinchina": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
           "metamask": {
             "correct": 0,
-            "n": 8,
+            "n": 5,
             "recall": 0.0
           },
           "microsoft": {
-            "correct": 20,
-            "n": 42,
-            "recall": 0.4762
+            "correct": 22,
+            "n": 48,
+            "recall": 0.4583
+          },
+          "mtbank": {
+            "correct": 0,
+            "n": 4,
+            "recall": 0.0
           },
           "netflix": {
-            "correct": 2,
-            "n": 2,
+            "correct": 3,
+            "n": 3,
             "recall": 1.0
           },
+          "office365": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "opensea": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "orange": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
           "paypal": {
-            "correct": 1,
-            "n": 4,
-            "recall": 0.25
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "postbank": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "rakuten": {
+            "correct": 0,
+            "n": 3,
+            "recall": 0.0
+          },
+          "santander": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "sbbch": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
           },
           "steam": {
-            "correct": 6,
-            "n": 15,
-            "recall": 0.4
+            "correct": 2,
+            "n": 10,
+            "recall": 0.2
+          },
+          "telekom": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "trustwallet": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "unionbankph": {
+            "correct": 0,
+            "n": 1,
+            "recall": 0.0
+          },
+          "ups": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
           },
           "usps": {
             "correct": 0,
             "n": 7,
             "recall": 0.0
           },
-          "whatsapp": {
+          "wellsfargo": {
             "correct": 0,
             "n": 1,
             "recall": 0.0
           },
+          "whatsapp": {
+            "correct": 0,
+            "n": 6,
+            "recall": 0.0
+          },
+          "xfinity": {
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
           "yahoo": {
-            "correct": 1,
-            "n": 1,
-            "recall": 1.0
+            "correct": 0,
+            "n": 2,
+            "recall": 0.0
+          },
+          "yamatotransport": {
+            "correct": 0,
+            "n": 4,
+            "recall": 0.0
           }
         }
       }
     },
     "zenodo_calibration": {
-      "n": 249,
-      "n_known": 145,
-      "n_unknown": 104,
-      "closed_set_top1": 0.2897,
-      "closed_set_top3": 0.3724,
-      "closed_set_top5": 0.4069,
-      "open_set_accuracy": 0.5301,
-      "precision": 0.717,
-      "recall": 0.2621,
-      "f1": 0.3838,
-      "unknown_rejection_rate": 0.9038,
+      "n": 250,
+      "n_known": 234,
+      "n_unknown": 16,
+      "closed_set_top1": 0.1966,
+      "closed_set_top3": 0.3675,
+      "closed_set_top5": 0.4017,
+      "open_set_accuracy": 0.204,
+      "precision": 0.7347,
+      "recall": 0.1538,
+      "f1": 0.2544,
+      "unknown_rejection_rate": 0.9375,
       "per_brand_recall": {
+        "1and1ionos": {
+          "correct": 0,
+          "n": 3,
+          "recall": 0.0
+        },
         "adobe": {
-          "correct": 1,
+          "correct": 0,
           "n": 4,
-          "recall": 0.25
+          "recall": 0.0
         },
         "amazon": {
           "correct": 0,
           "n": 1,
+          "recall": 0.0
+        },
+        "aol": {
+          "correct": 0,
+          "n": 14,
           "recall": 0.0
         },
         "apple": {
@@ -451,25 +1027,70 @@
           "n": 3,
           "recall": 0.0
         },
-        "att": {
-          "correct": 0,
-          "n": 23,
-          "recall": 0.0
+        "aruba": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
         },
-        "bankofamerica": {
+        "att": {
+          "correct": 1,
+          "n": 26,
+          "recall": 0.0385
+        },
+        "bancoitau": {
           "correct": 0,
           "n": 1,
           "recall": 0.0
         },
+        "banquepostale": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "banreservas": {
+          "correct": 0,
+          "n": 2,
+          "recall": 0.0
+        },
+        "biglobe": {
+          "correct": 0,
+          "n": 3,
+          "recall": 0.0
+        },
+        "bimcell": {
+          "correct": 0,
+          "n": 2,
+          "recall": 0.0
+        },
+        "bt": {
+          "correct": 0,
+          "n": 11,
+          "recall": 0.0
+        },
         "citibank": {
           "correct": 0,
-          "n": 4,
+          "n": 5,
+          "recall": 0.0
+        },
+        "creditagricole": {
+          "correct": 0,
+          "n": 2,
           "recall": 0.0
         },
         "dhl": {
+          "correct": 1,
+          "n": 3,
+          "recall": 0.3333
+        },
+        "discord": {
           "correct": 0,
-          "n": 6,
+          "n": 3,
           "recall": 0.0
+        },
+        "dkb": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
         },
         "ebay": {
           "correct": 0,
@@ -477,81 +1098,211 @@
           "recall": 0.0
         },
         "facebook": {
-          "correct": 3,
-          "n": 9,
+          "correct": 5,
+          "n": 15,
           "recall": 0.3333
         },
         "google": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "govau": {
+          "correct": 0,
+          "n": 4,
+          "recall": 0.0
+        },
+        "instagram": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "leboncoin": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "madeinchina": {
           "correct": 0,
           "n": 1,
           "recall": 0.0
         },
         "metamask": {
           "correct": 0,
-          "n": 4,
+          "n": 7,
           "recall": 0.0
         },
         "microsoft": {
-          "correct": 28,
-          "n": 50,
-          "recall": 0.56
+          "correct": 13,
+          "n": 44,
+          "recall": 0.2955
         },
-        "netflix": {
-          "correct": 3,
-          "n": 3,
-          "recall": 1.0
-        },
-        "paypal": {
+        "mtbank": {
           "correct": 0,
           "n": 1,
           "recall": 0.0
         },
-        "steam": {
+        "netflix": {
           "correct": 2,
-          "n": 10,
-          "recall": 0.2
+          "n": 2,
+          "recall": 1.0
+        },
+        "nfcu": {
+          "correct": 0,
+          "n": 2,
+          "recall": 0.0
+        },
+        "opensea": {
+          "correct": 0,
+          "n": 3,
+          "recall": 0.0
+        },
+        "orange": {
+          "correct": 0,
+          "n": 3,
+          "recall": 0.0
+        },
+        "paypal": {
+          "correct": 1,
+          "n": 3,
+          "recall": 0.3333
+        },
+        "postbank": {
+          "correct": 0,
+          "n": 2,
+          "recall": 0.0
+        },
+        "santander": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "sbbch": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "sbi": {
+          "correct": 0,
+          "n": 4,
+          "recall": 0.0
+        },
+        "sfrfr": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "smbc": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "steam": {
+          "correct": 5,
+          "n": 15,
+          "recall": 0.3333
+        },
+        "swisspost": {
+          "correct": 0,
+          "n": 2,
+          "recall": 0.0
+        },
+        "trustwallet": {
+          "correct": 0,
+          "n": 2,
+          "recall": 0.0
+        },
+        "unionbankph": {
+          "correct": 0,
+          "n": 2,
+          "recall": 0.0
+        },
+        "ups": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
         },
         "usps": {
           "correct": 0,
           "n": 16,
           "recall": 0.0
         },
+        "wellsfargo": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
         "whatsapp": {
           "correct": 0,
-          "n": 6,
+          "n": 1,
           "recall": 0.0
         },
         "yahoo": {
           "correct": 1,
-          "n": 2,
-          "recall": 0.5
+          "n": 1,
+          "recall": 1.0
+        },
+        "yamatotransport": {
+          "correct": 0,
+          "n": 8,
+          "recall": 0.0
         }
       }
     },
     "official_homepages": {
-      "n": 24,
-      "n_known": 24,
+      "n": 80,
+      "n_known": 80,
       "n_unknown": 0,
-      "closed_set_top1": 0.7083,
-      "closed_set_top3": 0.875,
-      "closed_set_top5": 0.875,
-      "open_set_accuracy": 0.5417,
-      "precision": 1.0,
-      "recall": 0.5417,
-      "f1": 0.7027,
+      "closed_set_top1": 0.65,
+      "closed_set_top3": 0.7875,
+      "closed_set_top5": 0.8625,
+      "open_set_accuracy": 0.5875,
+      "precision": 0.8704,
+      "recall": 0.5875,
+      "f1": 0.7015,
       "unknown_rejection_rate": null,
       "per_brand_recall": {
+        "1and1ionos": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "absa": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
         "adobe": {
           "correct": 0,
           "n": 1,
           "recall": 0.0
         },
-        "amazon": {
-          "correct": 0,
+        "alibaba": {
+          "correct": 1,
           "n": 1,
-          "recall": 0.0
+          "recall": 1.0
+        },
+        "amazon": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "anzbank": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "aol": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
         },
         "apple": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "aruba": {
           "correct": 1,
           "n": 1,
           "recall": 1.0
@@ -561,15 +1312,70 @@
           "n": 1,
           "recall": 1.0
         },
-        "bankofamerica": {
+        "auid": {
           "correct": 0,
           "n": 1,
           "recall": 0.0
         },
-        "chase": {
+        "bancaintesasanpaolo": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "bancolombia": {
           "correct": 0,
           "n": 1,
           "recall": 0.0
+        },
+        "bankofamerica": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "bankofceylon": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "banquepostale": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "banreservas": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "biglobe": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "bimcell": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "bperbanca": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "bt": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "chainlink": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "chase": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
         },
         "citibank": {
           "correct": 0,
@@ -577,6 +1383,16 @@
           "recall": 0.0
         },
         "coinbase": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "combank": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "creditagricole": {
           "correct": 0,
           "n": 1,
           "recall": 0.0
@@ -586,10 +1402,35 @@
           "n": 1,
           "recall": 1.0
         },
+        "denizbank": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
         "dhl": {
           "correct": 1,
           "n": 1,
           "recall": 1.0
+        },
+        "dialogaxiata": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "discord": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "dkb": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "docusign": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
         },
         "ebay": {
           "correct": 0,
@@ -601,7 +1442,17 @@
           "n": 1,
           "recall": 0.0
         },
+        "garanti": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
         "google": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "govau": {
           "correct": 1,
           "n": 1,
           "recall": 1.0
@@ -611,12 +1462,32 @@
           "n": 1,
           "recall": 1.0
         },
+        "hnb": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "impotsgouv": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
         "instagram": {
           "correct": 1,
           "n": 1,
           "recall": 1.0
         },
+        "leboncoin": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
         "linkedin": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "madeinchina": {
           "correct": 1,
           "n": 1,
           "recall": 1.0
@@ -631,25 +1502,150 @@
           "n": 1,
           "recall": 1.0
         },
+        "mtbank": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "nationstrust": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "ndbbank": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
         "netflix": {
           "correct": 1,
           "n": 1,
           "recall": 1.0
+        },
+        "nfcu": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "office365": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "opensea": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "orange": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
         },
         "paypal": {
           "correct": 1,
           "n": 1,
           "recall": 1.0
         },
+        "peoplesbank": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "postbank": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "posteitaliane": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "rakuten": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "sampathbank": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "santander": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "sbbch": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "sbi": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "seylanbank": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "sfrfr": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "sltmobitel": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "smbc": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "sparkasse": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "square": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
         "steam": {
           "correct": 1,
           "n": 1,
           "recall": 1.0
         },
-        "usps": {
+        "swisspost": {
           "correct": 0,
           "n": 1,
           "recall": 0.0
+        },
+        "telekom": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "uniswap": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
+        },
+        "usps": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
+        },
+        "wellsfargo": {
+          "correct": 1,
+          "n": 1,
+          "recall": 1.0
         },
         "whatsapp": {
           "correct": 0,
@@ -660,6 +1656,11 @@
           "correct": 1,
           "n": 1,
           "recall": 1.0
+        },
+        "yamatotransport": {
+          "correct": 0,
+          "n": 1,
+          "recall": 0.0
         }
       }
     },
@@ -670,36 +1671,56 @@
       "closed_set_top1": null,
       "closed_set_top3": null,
       "closed_set_top5": null,
-      "open_set_accuracy": 0.8889,
+      "open_set_accuracy": 0.6667,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0,
-      "unknown_rejection_rate": 0.8889,
+      "unknown_rejection_rate": 0.6667,
       "per_brand_recall": {}
     }
   },
   "dataset_predictions": {
-    "accepted": 95,
-    "rejected_unknown": 928,
+    "accepted": 87,
+    "rejected_unknown": 936,
     "accepted_by_brand": {
-      "instagram": 22,
-      "yahoo": 1,
-      "netflix": 13,
-      "google": 4,
-      "adobe": 4,
-      "bankofamerica": 15,
-      "metamask": 8,
-      "apple": 5,
-      "amazon": 11,
+      "sltmobitel": 3,
+      "commonwealthbank": 1,
+      "amazon": 3,
+      "auid": 2,
+      "instagram": 12,
+      "creditagricole": 4,
+      "hnb": 1,
+      "yamatotransport": 5,
+      "netflix": 2,
+      "ups": 5,
+      "biglobe": 1,
+      "sparkasse": 1,
+      "swisspost": 2,
+      "bancolombia": 3,
+      "opensea": 2,
+      "apple": 3,
+      "banreservas": 3,
+      "bimcell": 1,
       "facebook": 2,
-      "microsoft": 1,
-      "steam": 3,
-      "chase": 1,
-      "paypal": 1,
-      "coinbase": 1,
-      "dhl": 1,
-      "linkedin": 1,
-      "dbsbank": 1
+      "bankofceylon": 1,
+      "smbc": 3,
+      "banquepostale": 2,
+      "steam": 1,
+      "aol": 1,
+      "wellsfargo": 2,
+      "square": 1,
+      "uniswap": 1,
+      "usps": 2,
+      "ebay": 1,
+      "madeinchina": 3,
+      "discord": 1,
+      "google": 1,
+      "absa": 2,
+      "mtbank": 1,
+      "metamask": 2,
+      "govau": 2,
+      "orange": 2,
+      "nfcu": 2
     },
     "metadata_rows_updated": 0
   },
@@ -708,6 +1729,6 @@
     "eval_predictions": "data/statistics/clip_brand_eval_predictions_clip-vit-base-patch32.jsonl",
     "embeddings": "models/clip_brand/clip-vit-base-patch32/"
   },
-  "runtime_seconds": 156.7,
-  "created_at": "2026-10-14T18:10:09.825428+00:00"
+  "runtime_seconds": 167.6,
+  "created_at": "2026-10-18T06:27:38.950538+00:00"
 }

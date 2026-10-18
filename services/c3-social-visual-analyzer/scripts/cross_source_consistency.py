@@ -96,7 +96,8 @@ SHORTENERS = {"itl.ink", "bit.ly", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "is
               "cutt.ly", "shorturl.at", "lnkd.in", "fb.me", "tiny.cc", "rb.gy", "t.ly"}
 GENERIC_NAME_TOKENS = {"bank", "the", "of", "and", "ltd", "plc", "inc", "incorporated", "sri", "lanka", "company",
                        "co", "limited", "group", "official", "pvt", "corporation", "corp", "middle", "east", "united"}
-AMBIGUOUS_BRANDS = {"apple", "steam", "chase", "amazon", "match", "orange", "office"}
+AMBIGUOUS_BRANDS = {"apple", "steam", "chase", "amazon", "match", "orange", "office", "square", "discord", "ups",
+                    "aruba", "bt"}
 SEVERITY = {"low": 1, "medium": 2, "high": 3}
 
 _TLD = tldextract.TLDExtract(suffix_list_urls=())

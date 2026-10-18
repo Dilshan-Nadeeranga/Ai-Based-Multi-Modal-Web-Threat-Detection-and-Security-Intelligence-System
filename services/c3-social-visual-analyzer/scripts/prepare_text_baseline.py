@@ -92,7 +92,10 @@ def mark_checklist(item: str, done: bool) -> None:
 
 def _url_token(match: re.Match) -> str:
     raw = match.group(0).rstrip(".,);]")
-    host = urlparse(raw if "://" in raw else f"http://{raw}").hostname or ""
+    try:
+        host = urlparse(raw if "://" in raw else f"http://{raw}").hostname or ""
+    except ValueError:  # malformed URL, e.g. an unbalanced "[" read as an IPv6 host
+        host = ""
     return f" [URL {host.removeprefix('www.')}] " if host else " [URL] "
 
 

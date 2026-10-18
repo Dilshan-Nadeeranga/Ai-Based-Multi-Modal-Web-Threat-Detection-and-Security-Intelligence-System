@@ -154,6 +154,47 @@ function LogoDetectorCard({ logo }) {
   )
 }
 
+function ExternalDatasetCard({ title, data }) {
+  const excluded = Object.entries(data.excluded || {}).map(([k, v]) => [k.replace(/^excluded_/, '').replaceAll('_', ' '), v])
+  const brands = data.brand_summary || {}
+  return (
+    <Card title={title} subtitle={`${data.source} · ${data.label_basis} · kept apart from the multimodal dataset above`}>
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <Distribution title="Imported samples by category" data={data.categories} includeZero />
+          {data.category_note && <p className="mt-2 text-[11px] text-st-muted">{data.category_note}</p>}
+        </div>
+        <div className="space-y-4">
+          {brands.distinct_brands !== undefined && (
+            <Section title="Brand impersonation coverage">
+              <CountChips data={{ 'distinct brands': brands.distinct_brands, 'catalog brands covered': brands.catalog_brands_covered,
+                'messages for catalog brands': brands.messages_for_catalog_brands }} />
+            </Section>
+          )}
+          {data.brand_impersonation_by_brand && Object.keys(data.brand_impersonation_by_brand).length > 0 && (
+            <Section title={brands.distinct_brands !== undefined ? 'Most impersonated brands' : 'Impersonated brands'}>
+              <CountChips data={data.brand_impersonation_by_brand} />
+            </Section>
+          )}
+          {data.url_types && <Section title="URL types"><CountChips data={data.url_types} /></Section>}
+          {excluded.length > 0 && (
+            <Section title="Excluded"><CountChips data={Object.fromEntries(excluded)} /></Section>
+          )}
+          <Section title="Use">
+            <p className="text-xs text-st-muted">
+              {data.used_in_training ? 'Used in training.' : 'Not used in the deployed models.'}
+              {data.experiment_decision ? ` ${data.experiment_decision}.` : ''}
+            </p>
+          </Section>
+          <Section title="Licence">
+            <p className="text-xs text-st-muted">{data.licence}</p>
+          </Section>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
 export default function DatasetTab() {
   const [stats, setStats] = useState(null)
   const [overview, setOverview] = useState(null)
@@ -238,6 +279,13 @@ export default function DatasetTab() {
             <SplitTable title="Threat category splits" subtitle="Four-class category model" counts={splits.threat_category} />
             <SplitTable title="Misinformation splits" subtitle="Fakeddit, stratified by fake type" counts={splits.misinformation} />
           </div>
+
+          {overview.external?.smishtank && (
+            <ExternalDatasetCard title="External dataset: Smishtank (reported scam SMS)" data={overview.external.smishtank} />
+          )}
+          {overview.external?.telephish && (
+            <ExternalDatasetCard title="External dataset: TelePhish (Telegram)" data={overview.external.telephish} />
+          )}
         </>
       )}
     </div>
