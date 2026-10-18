@@ -1,0 +1,1742 @@
+{
+  "version": "v0.3",
+  "arms": [
+    "dom",
+    "behavior",
+    "text_tfidf",
+    "text_xlmr"
+  ],
+  "thresholds": {
+    "arms": "dom+behavior+text_tfidf+text_xlmr",
+    "malicious_below_p_benign": 0.182466,
+    "suspicious_below_p_benign": 0.511482,
+    "malicious_min_risk": 82,
+    "suspicious_min_risk": 49
+  },
+  "tagging_rule": " (benign pages only, metadata.csv of the frozen version):\n- ``lk_sme``   notes match SME / \"local company|business|shop|cafe|retail|boutique|\n               bookstore|handloom\" (the collector's own description of small LK businesses)\n- ``lk_other`` not lk_sme, and the registrable domain of source_url or final_url ends in\n               ``.lk`` or the notes mention Sri Lanka / \"local\"\n- ``non_lk``   everything else\n``lk_all`` = lk_sme + lk_other. Language = metadata language AND the Part 5A detected page\nlanguage. ",
+  "scopes": {
+    "OOF + test": {
+      "n_benign": 227,
+      "lk_group": [
+        {
+          "group": "non_lk",
+          "n": 176,
+          "flagged": {
+            "k": 51,
+            "n": 176,
+            "rate": 0.2897727272727273,
+            "ci95": [
+              0.22780873526614107,
+              0.3607177343237016
+            ],
+            "text": "51/176 = 29.0 % [22.8, 36.1]"
+          },
+          "malicious": {
+            "k": 3,
+            "n": 176,
+            "rate": 0.017045454545454544,
+            "ci95": [
+              0.00581364258011411,
+              0.04890932809925429
+            ],
+            "text": "3/176 = 1.7 % [0.6, 4.9]"
+          },
+          "examples_flagged": [
+            "c2_benign_000009",
+            "c2_benign_000010",
+            "c2_benign_000012",
+            "c2_benign_000016",
+            "c2_benign_000019",
+            "c2_benign_000020",
+            "c2_benign_000021",
+            "c2_benign_000027"
+          ]
+        },
+        {
+          "group": "lk_other",
+          "n": 42,
+          "flagged": {
+            "k": 6,
+            "n": 42,
+            "rate": 0.14285714285714285,
+            "ci95": [
+              0.06715966976757391,
+              0.2784108960016483
+            ],
+            "text": "6/42 = 14.3 % [6.7, 27.8]",
+            "fisher_p_vs_reference": 0.05326209098660989,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 42,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.08379879207691124
+            ],
+            "text": "0/42 = 0.0 % [0.0, 8.4]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000125",
+            "c2_benign_000149",
+            "c2_benign_000152",
+            "c2_benign_000153",
+            "c2_benign_000155",
+            "c2_benign_000122"
+          ]
+        },
+        {
+          "group": "lk_sme",
+          "n": 9,
+          "flagged": {
+            "k": 0,
+            "n": 9,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.299145051727044
+            ],
+            "text": "0/9 = 0.0 % [0.0, 29.9]",
+            "fisher_p_vs_reference": 0.06506899968048246,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 9,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.299145051727044
+            ],
+            "text": "0/9 = 0.0 % [0.0, 29.9]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": []
+        }
+      ],
+      "lk_all": [
+        {
+          "group": "non_lk",
+          "n": 176,
+          "flagged": {
+            "k": 51,
+            "n": 176,
+            "rate": 0.2897727272727273,
+            "ci95": [
+              0.22780873526614107,
+              0.3607177343237016
+            ],
+            "text": "51/176 = 29.0 % [22.8, 36.1]"
+          },
+          "malicious": {
+            "k": 3,
+            "n": 176,
+            "rate": 0.017045454545454544,
+            "ci95": [
+              0.00581364258011411,
+              0.04890932809925429
+            ],
+            "text": "3/176 = 1.7 % [0.6, 4.9]"
+          },
+          "examples_flagged": [
+            "c2_benign_000009",
+            "c2_benign_000010",
+            "c2_benign_000012",
+            "c2_benign_000016",
+            "c2_benign_000019",
+            "c2_benign_000020",
+            "c2_benign_000021",
+            "c2_benign_000027"
+          ]
+        },
+        {
+          "group": "lk_all",
+          "n": 51,
+          "flagged": {
+            "k": 6,
+            "n": 51,
+            "rate": 0.11764705882352941,
+            "ci95": [
+              0.05505073645760554,
+              0.23380844425063818
+            ],
+            "text": "6/51 = 11.8 % [5.5, 23.4]",
+            "fisher_p_vs_reference": 0.016184545301993314,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 51,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.07004662092616488
+            ],
+            "text": "0/51 = 0.0 % [0.0, 7.0]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000125",
+            "c2_benign_000149",
+            "c2_benign_000152",
+            "c2_benign_000153",
+            "c2_benign_000155",
+            "c2_benign_000122"
+          ]
+        }
+      ],
+      "metadata_language": [
+        {
+          "group": "en",
+          "n": 208,
+          "flagged": {
+            "k": 49,
+            "n": 208,
+            "rate": 0.23557692307692307,
+            "ci95": [
+              0.18302637127179044,
+              0.29771738596584363
+            ],
+            "text": "49/208 = 23.6 % [18.3, 29.8]"
+          },
+          "malicious": {
+            "k": 2,
+            "n": 208,
+            "rate": 0.009615384615384616,
+            "ci95": [
+              0.0026408579840607876,
+              0.03437483725664237
+            ],
+            "text": "2/208 = 1.0 % [0.3, 3.4]"
+          },
+          "examples_flagged": [
+            "c2_benign_000009",
+            "c2_benign_000010",
+            "c2_benign_000016",
+            "c2_benign_000019",
+            "c2_benign_000020",
+            "c2_benign_000027",
+            "c2_benign_000035",
+            "c2_benign_000038"
+          ]
+        },
+        {
+          "group": "si",
+          "n": 10,
+          "flagged": {
+            "k": 2,
+            "n": 10,
+            "rate": 0.2,
+            "ci95": [
+              0.05668215093776685,
+              0.5098375308778678
+            ],
+            "text": "2/10 = 20.0 % [5.7, 51.0]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 10,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.2775328030260577
+            ],
+            "text": "0/10 = 0.0 % [0.0, 27.8]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000104",
+            "c2_benign_000152"
+          ]
+        },
+        {
+          "group": "unknown",
+          "n": 5,
+          "flagged": {
+            "k": 5,
+            "n": 5,
+            "rate": 1.0,
+            "ci95": [
+              0.5655175313406071,
+              1.0
+            ],
+            "text": "5/5 = 100.0 % [56.6, 100.0]",
+            "fisher_p_vs_reference": 0.0009075063090851511,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 1,
+            "n": 5,
+            "rate": 0.2,
+            "ci95": [
+              0.03622410822563066,
+              0.6244653729700049
+            ],
+            "text": "1/5 = 20.0 % [3.6, 62.4]",
+            "fisher_p_vs_reference": 0.0691001054165465,
+            "higher_than_reference": true
+          },
+          "examples_flagged": [
+            "c2_benign_000012",
+            "c2_benign_000021",
+            "c2_benign_000055",
+            "c2_benign_000084",
+            "c2_benign_000076"
+          ]
+        },
+        {
+          "group": "ta",
+          "n": 4,
+          "flagged": {
+            "k": 1,
+            "n": 4,
+            "rate": 0.25,
+            "ci95": [
+              0.04558726029536886,
+              0.6993581599030918
+            ],
+            "text": "1/4 = 25.0 % [4.6, 69.9]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 0,
+            "n": 4,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.4898908403969213
+            ],
+            "text": "0/4 = 0.0 % [0.0, 49.0]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000153"
+          ]
+        }
+      ],
+      "detected_language": [
+        {
+          "group": "en",
+          "n": 165,
+          "flagged": {
+            "k": 36,
+            "n": 165,
+            "rate": 0.21818181818181817,
+            "ci95": [
+              0.16196709749356258,
+              0.28722032000332326
+            ],
+            "text": "36/165 = 21.8 % [16.2, 28.7]"
+          },
+          "malicious": {
+            "k": 1,
+            "n": 165,
+            "rate": 0.006060606060606061,
+            "ci95": [
+              0.0010706481068013043,
+              0.03352665352752559
+            ],
+            "text": "1/165 = 0.6 % [0.1, 3.4]"
+          },
+          "examples_flagged": [
+            "c2_benign_000009",
+            "c2_benign_000010",
+            "c2_benign_000012",
+            "c2_benign_000016",
+            "c2_benign_000019",
+            "c2_benign_000020",
+            "c2_benign_000021",
+            "c2_benign_000038"
+          ]
+        },
+        {
+          "group": "other",
+          "n": 44,
+          "flagged": {
+            "k": 17,
+            "n": 44,
+            "rate": 0.38636363636363635,
+            "ci95": [
+              0.2572120266301497,
+              0.5337642472160982
+            ],
+            "text": "17/44 = 38.6 % [25.7, 53.4]",
+            "fisher_p_vs_reference": 0.03127839762044364,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 2,
+            "n": 44,
+            "rate": 0.045454545454545456,
+            "ci95": [
+              0.012555109836448336,
+              0.1513499855485438
+            ],
+            "text": "2/44 = 4.5 % [1.3, 15.1]",
+            "fisher_p_vs_reference": 0.11290559173854367,
+            "higher_than_reference": true
+          },
+          "examples_flagged": [
+            "c2_benign_000035",
+            "c2_benign_000044",
+            "c2_benign_000051",
+            "c2_benign_000052",
+            "c2_benign_000054",
+            "c2_benign_000059",
+            "c2_benign_000063",
+            "c2_benign_000084"
+          ]
+        },
+        {
+          "group": "mixed",
+          "n": 7,
+          "flagged": {
+            "k": 3,
+            "n": 7,
+            "rate": 0.42857142857142855,
+            "ci95": [
+              0.15821985399244537,
+              0.7495416372469643
+            ],
+            "text": "3/7 = 42.9 % [15.8, 75.0]",
+            "fisher_p_vs_reference": 0.1932261383573147,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 0,
+            "n": 7,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.35433043867586833
+            ],
+            "text": "0/7 = 0.0 % [0.0, 35.4]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000027",
+            "c2_benign_000153",
+            "c2_benign_000207"
+          ]
+        },
+        {
+          "group": "si",
+          "n": 7,
+          "flagged": {
+            "k": 0,
+            "n": 7,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.35433043867586833
+            ],
+            "text": "0/7 = 0.0 % [0.0, 35.4]",
+            "fisher_p_vs_reference": 0.34728804546450975,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 7,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.35433043867586833
+            ],
+            "text": "0/7 = 0.0 % [0.0, 35.4]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": []
+        },
+        {
+          "group": "ta",
+          "n": 3,
+          "flagged": {
+            "k": 0,
+            "n": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5614970356393196
+            ],
+            "text": "0/3 = 0.0 % [0.0, 56.1]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5614970356393196
+            ],
+            "text": "0/3 = 0.0 % [0.0, 56.1]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": []
+        },
+        {
+          "group": "unknown",
+          "n": 1,
+          "flagged": {
+            "k": 1,
+            "n": 1,
+            "rate": 1.0,
+            "ci95": [
+              0.2065493117918027,
+              1.0
+            ],
+            "text": "1/1 = 100.0 % [20.7, 100.0]",
+            "fisher_p_vs_reference": 0.22289156626506024,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000055"
+          ]
+        }
+      ],
+      "source": [
+        {
+          "group": "tranco",
+          "n": 96,
+          "flagged": {
+            "k": 34,
+            "n": 96,
+            "rate": 0.3541666666666667,
+            "ci95": [
+              0.2657984025841917,
+              0.45375697737785486
+            ],
+            "text": "34/96 = 35.4 % [26.6, 45.4]"
+          },
+          "malicious": {
+            "k": 2,
+            "n": 96,
+            "rate": 0.020833333333333332,
+            "ci95": [
+              0.005731969800857613,
+              0.07280713578872422
+            ],
+            "text": "2/96 = 2.1 % [0.6, 7.3]"
+          },
+          "examples_flagged": [
+            "c2_benign_000009",
+            "c2_benign_000010",
+            "c2_benign_000012",
+            "c2_benign_000016",
+            "c2_benign_000019",
+            "c2_benign_000020",
+            "c2_benign_000021",
+            "c2_benign_000027"
+          ]
+        },
+        {
+          "group": "other",
+          "n": 72,
+          "flagged": {
+            "k": 16,
+            "n": 72,
+            "rate": 0.2222222222222222,
+            "ci95": [
+              0.14167443488228082,
+              0.3309095503149661
+            ],
+            "text": "16/72 = 22.2 % [14.2, 33.1]"
+          },
+          "malicious": {
+            "k": 1,
+            "n": 72,
+            "rate": 0.013888888888888888,
+            "ci95": [
+              0.0024559518557579277,
+              0.07456602223942418
+            ],
+            "text": "1/72 = 1.4 % [0.2, 7.5]"
+          },
+          "examples_flagged": [
+            "c2_benign_000166",
+            "c2_benign_000169",
+            "c2_benign_000174",
+            "c2_benign_000175",
+            "c2_benign_000176",
+            "c2_benign_000181",
+            "c2_benign_000182",
+            "c2_benign_000183"
+          ]
+        },
+        {
+          "group": "manual",
+          "n": 59,
+          "flagged": {
+            "k": 7,
+            "n": 59,
+            "rate": 0.11864406779661017,
+            "ci95": [
+              0.05867582743811221,
+              0.2252364050101751
+            ],
+            "text": "7/59 = 11.9 % [5.9, 22.5]"
+          },
+          "malicious": {
+            "k": 0,
+            "n": 59,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.06112937143219893
+            ],
+            "text": "0/59 = 0.0 % [0.0, 6.1]"
+          },
+          "examples_flagged": [
+            "c2_benign_000104",
+            "c2_benign_000125",
+            "c2_benign_000149",
+            "c2_benign_000152",
+            "c2_benign_000153",
+            "c2_benign_000155",
+            "c2_benign_000122"
+          ]
+        }
+      ]
+    },
+    "OOF": {
+      "n_benign": 193,
+      "lk_group": [
+        {
+          "group": "non_lk",
+          "n": 147,
+          "flagged": {
+            "k": 44,
+            "n": 147,
+            "rate": 0.29931972789115646,
+            "ci95": [
+              0.23116911827391268,
+              0.3776917318029234
+            ],
+            "text": "44/147 = 29.9 % [23.1, 37.8]"
+          },
+          "malicious": {
+            "k": 3,
+            "n": 147,
+            "rate": 0.02040816326530612,
+            "ci95": [
+              0.006964513280371003,
+              0.058279213174440674
+            ],
+            "text": "3/147 = 2.0 % [0.7, 5.8]"
+          },
+          "examples_flagged": [
+            "c2_benign_000009",
+            "c2_benign_000010",
+            "c2_benign_000012",
+            "c2_benign_000016",
+            "c2_benign_000019",
+            "c2_benign_000020",
+            "c2_benign_000021",
+            "c2_benign_000027"
+          ]
+        },
+        {
+          "group": "lk_other",
+          "n": 38,
+          "flagged": {
+            "k": 5,
+            "n": 38,
+            "rate": 0.13157894736842105,
+            "ci95": [
+              0.05753867653712515,
+              0.2732685957562274
+            ],
+            "text": "5/38 = 13.2 % [5.8, 27.3]",
+            "fisher_p_vs_reference": 0.03999388174600106,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 38,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.09180986954097846
+            ],
+            "text": "0/38 = 0.0 % [0.0, 9.2]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000125",
+            "c2_benign_000149",
+            "c2_benign_000152",
+            "c2_benign_000153",
+            "c2_benign_000155"
+          ]
+        },
+        {
+          "group": "lk_sme",
+          "n": 8,
+          "flagged": {
+            "k": 0,
+            "n": 8,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.3244075683414076
+            ],
+            "text": "0/8 = 0.0 % [0.0, 32.4]",
+            "fisher_p_vs_reference": 0.10614706504016885,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 8,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.3244075683414076
+            ],
+            "text": "0/8 = 0.0 % [0.0, 32.4]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": []
+        }
+      ],
+      "lk_all": [
+        {
+          "group": "non_lk",
+          "n": 147,
+          "flagged": {
+            "k": 44,
+            "n": 147,
+            "rate": 0.29931972789115646,
+            "ci95": [
+              0.23116911827391268,
+              0.3776917318029234
+            ],
+            "text": "44/147 = 29.9 % [23.1, 37.8]"
+          },
+          "malicious": {
+            "k": 3,
+            "n": 147,
+            "rate": 0.02040816326530612,
+            "ci95": [
+              0.006964513280371003,
+              0.058279213174440674
+            ],
+            "text": "3/147 = 2.0 % [0.7, 5.8]"
+          },
+          "examples_flagged": [
+            "c2_benign_000009",
+            "c2_benign_000010",
+            "c2_benign_000012",
+            "c2_benign_000016",
+            "c2_benign_000019",
+            "c2_benign_000020",
+            "c2_benign_000021",
+            "c2_benign_000027"
+          ]
+        },
+        {
+          "group": "lk_all",
+          "n": 46,
+          "flagged": {
+            "k": 5,
+            "n": 46,
+            "rate": 0.10869565217391304,
+            "ci95": [
+              0.04733145828147013,
+              0.23037828762025514
+            ],
+            "text": "5/46 = 10.9 % [4.7, 23.0]",
+            "fisher_p_vs_reference": 0.010905487709622025,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 46,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.07707356420776004
+            ],
+            "text": "0/46 = 0.0 % [0.0, 7.7]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000125",
+            "c2_benign_000149",
+            "c2_benign_000152",
+            "c2_benign_000153",
+            "c2_benign_000155"
+          ]
+        }
+      ],
+      "metadata_language": [
+        {
+          "group": "en",
+          "n": 177,
+          "flagged": {
+            "k": 42,
+            "n": 177,
+            "rate": 0.23728813559322035,
+            "ci95": [
+              0.18061440330006878,
+              0.3051229902417239
+            ],
+            "text": "42/177 = 23.7 % [18.1, 30.5]"
+          },
+          "malicious": {
+            "k": 2,
+            "n": 177,
+            "rate": 0.011299435028248588,
+            "ci95": [
+              0.0031042018037149323,
+              0.040256756075103775
+            ],
+            "text": "2/177 = 1.1 % [0.3, 4.0]"
+          },
+          "examples_flagged": [
+            "c2_benign_000009",
+            "c2_benign_000010",
+            "c2_benign_000016",
+            "c2_benign_000019",
+            "c2_benign_000020",
+            "c2_benign_000027",
+            "c2_benign_000035",
+            "c2_benign_000038"
+          ]
+        },
+        {
+          "group": "si",
+          "n": 9,
+          "flagged": {
+            "k": 2,
+            "n": 9,
+            "rate": 0.2222222222222222,
+            "ci95": [
+              0.06322510654056959,
+              0.5474110333077882
+            ],
+            "text": "2/9 = 22.2 % [6.3, 54.7]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 9,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.299145051727044
+            ],
+            "text": "0/9 = 0.0 % [0.0, 29.9]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000104",
+            "c2_benign_000152"
+          ]
+        },
+        {
+          "group": "unknown",
+          "n": 4,
+          "flagged": {
+            "k": 4,
+            "n": 4,
+            "rate": 1.0,
+            "ci95": [
+              0.5101091596030786,
+              0.9999999999999999
+            ],
+            "text": "4/4 = 100.0 % [51.0, 100.0]",
+            "fisher_p_vs_reference": 0.003772831107632327,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 1,
+            "n": 4,
+            "rate": 0.25,
+            "ci95": [
+              0.04558726029536886,
+              0.6993581599030918
+            ],
+            "text": "1/4 = 25.0 % [4.6, 69.9]",
+            "fisher_p_vs_reference": 0.06519748551910039,
+            "higher_than_reference": true
+          },
+          "examples_flagged": [
+            "c2_benign_000012",
+            "c2_benign_000021",
+            "c2_benign_000055",
+            "c2_benign_000084"
+          ]
+        },
+        {
+          "group": "ta",
+          "n": 3,
+          "flagged": {
+            "k": 1,
+            "n": 3,
+            "rate": 0.3333333333333333,
+            "ci95": [
+              0.06149194402093078,
+              0.7923404011921757
+            ],
+            "text": "1/3 = 33.3 % [6.1, 79.2]",
+            "fisher_p_vs_reference": 0.5614211286171615,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 0,
+            "n": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5614970356393196
+            ],
+            "text": "0/3 = 0.0 % [0.0, 56.1]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000153"
+          ]
+        }
+      ],
+      "detected_language": [
+        {
+          "group": "en",
+          "n": 140,
+          "flagged": {
+            "k": 30,
+            "n": 140,
+            "rate": 0.21428571428571427,
+            "ci95": [
+              0.1544277301706321,
+              0.28940438456049455
+            ],
+            "text": "30/140 = 21.4 % [15.4, 28.9]"
+          },
+          "malicious": {
+            "k": 1,
+            "n": 140,
+            "rate": 0.007142857142857143,
+            "ci95": [
+              0.0012620044303244572,
+              0.03934839348086899
+            ],
+            "text": "1/140 = 0.7 % [0.1, 3.9]"
+          },
+          "examples_flagged": [
+            "c2_benign_000009",
+            "c2_benign_000010",
+            "c2_benign_000012",
+            "c2_benign_000016",
+            "c2_benign_000019",
+            "c2_benign_000020",
+            "c2_benign_000021",
+            "c2_benign_000038"
+          ]
+        },
+        {
+          "group": "other",
+          "n": 37,
+          "flagged": {
+            "k": 15,
+            "n": 37,
+            "rate": 0.40540540540540543,
+            "ci95": [
+              0.26346518096567406,
+              0.5651403539064959
+            ],
+            "text": "15/37 = 40.5 % [26.3, 56.5]",
+            "fisher_p_vs_reference": 0.03207242074078852,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 2,
+            "n": 37,
+            "rate": 0.05405405405405406,
+            "ci95": [
+              0.014950976698341792,
+              0.1770465448418871
+            ],
+            "text": "2/37 = 5.4 % [1.5, 17.7]",
+            "fisher_p_vs_reference": 0.11117103235747304,
+            "higher_than_reference": true
+          },
+          "examples_flagged": [
+            "c2_benign_000035",
+            "c2_benign_000044",
+            "c2_benign_000051",
+            "c2_benign_000052",
+            "c2_benign_000054",
+            "c2_benign_000059",
+            "c2_benign_000063",
+            "c2_benign_000084"
+          ]
+        },
+        {
+          "group": "mixed",
+          "n": 7,
+          "flagged": {
+            "k": 3,
+            "n": 7,
+            "rate": 0.42857142857142855,
+            "ci95": [
+              0.15821985399244537,
+              0.7495416372469643
+            ],
+            "text": "3/7 = 42.9 % [15.8, 75.0]",
+            "fisher_p_vs_reference": 0.1881820564063672,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 0,
+            "n": 7,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.35433043867586833
+            ],
+            "text": "0/7 = 0.0 % [0.0, 35.4]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000027",
+            "c2_benign_000153",
+            "c2_benign_000207"
+          ]
+        },
+        {
+          "group": "si",
+          "n": 6,
+          "flagged": {
+            "k": 0,
+            "n": 6,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.39033429165637346
+            ],
+            "text": "0/6 = 0.0 % [0.0, 39.0]",
+            "fisher_p_vs_reference": 0.34614544223597554,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 6,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.39033429165637346
+            ],
+            "text": "0/6 = 0.0 % [0.0, 39.0]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": []
+        },
+        {
+          "group": "ta",
+          "n": 2,
+          "flagged": {
+            "k": 0,
+            "n": 2,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.6576197760453506
+            ],
+            "text": "0/2 = 0.0 % [0.0, 65.8]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 2,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.6576197760453506
+            ],
+            "text": "0/2 = 0.0 % [0.0, 65.8]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": []
+        },
+        {
+          "group": "unknown",
+          "n": 1,
+          "flagged": {
+            "k": 1,
+            "n": 1,
+            "rate": 1.0,
+            "ci95": [
+              0.2065493117918027,
+              1.0
+            ],
+            "text": "1/1 = 100.0 % [20.7, 100.0]",
+            "fisher_p_vs_reference": 0.2198581560283688,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000055"
+          ]
+        }
+      ],
+      "source": [
+        {
+          "group": "tranco",
+          "n": 75,
+          "flagged": {
+            "k": 28,
+            "n": 75,
+            "rate": 0.37333333333333335,
+            "ci95": [
+              0.2725596905276887,
+              0.4864503497531937
+            ],
+            "text": "28/75 = 37.3 % [27.3, 48.6]"
+          },
+          "malicious": {
+            "k": 2,
+            "n": 75,
+            "rate": 0.02666666666666667,
+            "ci95": [
+              0.007343688940032171,
+              0.09211488263589632
+            ],
+            "text": "2/75 = 2.7 % [0.7, 9.2]"
+          },
+          "examples_flagged": [
+            "c2_benign_000009",
+            "c2_benign_000010",
+            "c2_benign_000012",
+            "c2_benign_000016",
+            "c2_benign_000019",
+            "c2_benign_000020",
+            "c2_benign_000021",
+            "c2_benign_000027"
+          ]
+        },
+        {
+          "group": "other",
+          "n": 65,
+          "flagged": {
+            "k": 15,
+            "n": 65,
+            "rate": 0.23076923076923078,
+            "ci95": [
+              0.14513834791904573,
+              0.3464470924715938
+            ],
+            "text": "15/65 = 23.1 % [14.5, 34.6]"
+          },
+          "malicious": {
+            "k": 1,
+            "n": 65,
+            "rate": 0.015384615384615385,
+            "ci95": [
+              0.0027209445719428432,
+              0.08213284813120839
+            ],
+            "text": "1/65 = 1.5 % [0.3, 8.2]"
+          },
+          "examples_flagged": [
+            "c2_benign_000166",
+            "c2_benign_000169",
+            "c2_benign_000174",
+            "c2_benign_000175",
+            "c2_benign_000176",
+            "c2_benign_000181",
+            "c2_benign_000182",
+            "c2_benign_000183"
+          ]
+        },
+        {
+          "group": "manual",
+          "n": 53,
+          "flagged": {
+            "k": 6,
+            "n": 53,
+            "rate": 0.11320754716981132,
+            "ci95": [
+              0.05293030916779973,
+              0.22576519219817098
+            ],
+            "text": "6/53 = 11.3 % [5.3, 22.6]"
+          },
+          "malicious": {
+            "k": 0,
+            "n": 53,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.06758198957064511
+            ],
+            "text": "0/53 = 0.0 % [0.0, 6.8]"
+          },
+          "examples_flagged": [
+            "c2_benign_000104",
+            "c2_benign_000125",
+            "c2_benign_000149",
+            "c2_benign_000152",
+            "c2_benign_000153",
+            "c2_benign_000155"
+          ]
+        }
+      ]
+    },
+    "test": {
+      "n_benign": 34,
+      "lk_group": [
+        {
+          "group": "non_lk",
+          "n": 29,
+          "flagged": {
+            "k": 7,
+            "n": 29,
+            "rate": 0.2413793103448276,
+            "ci95": [
+              0.1221842237630329,
+              0.4210760176830966
+            ],
+            "text": "7/29 = 24.1 % [12.2, 42.1]"
+          },
+          "malicious": {
+            "k": 0,
+            "n": 29,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.11696980012918376
+            ],
+            "text": "0/29 = 0.0 % [0.0, 11.7]"
+          },
+          "examples_flagged": [
+            "c2_benign_000002",
+            "c2_benign_000011",
+            "c2_benign_000024",
+            "c2_benign_000040",
+            "c2_benign_000062",
+            "c2_benign_000076",
+            "c2_benign_000208"
+          ]
+        },
+        {
+          "group": "lk_other",
+          "n": 4,
+          "flagged": {
+            "k": 1,
+            "n": 4,
+            "rate": 0.25,
+            "ci95": [
+              0.04558726029536886,
+              0.6993581599030918
+            ],
+            "text": "1/4 = 25.0 % [4.6, 69.9]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 0,
+            "n": 4,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.4898908403969213
+            ],
+            "text": "0/4 = 0.0 % [0.0, 49.0]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000122"
+          ]
+        },
+        {
+          "group": "lk_sme",
+          "n": 1,
+          "flagged": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": []
+        }
+      ],
+      "lk_all": [
+        {
+          "group": "non_lk",
+          "n": 29,
+          "flagged": {
+            "k": 7,
+            "n": 29,
+            "rate": 0.2413793103448276,
+            "ci95": [
+              0.1221842237630329,
+              0.4210760176830966
+            ],
+            "text": "7/29 = 24.1 % [12.2, 42.1]"
+          },
+          "malicious": {
+            "k": 0,
+            "n": 29,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.11696980012918376
+            ],
+            "text": "0/29 = 0.0 % [0.0, 11.7]"
+          },
+          "examples_flagged": [
+            "c2_benign_000002",
+            "c2_benign_000011",
+            "c2_benign_000024",
+            "c2_benign_000040",
+            "c2_benign_000062",
+            "c2_benign_000076",
+            "c2_benign_000208"
+          ]
+        },
+        {
+          "group": "lk_all",
+          "n": 5,
+          "flagged": {
+            "k": 1,
+            "n": 5,
+            "rate": 0.2,
+            "ci95": [
+              0.03622410822563066,
+              0.6244653729700049
+            ],
+            "text": "1/5 = 20.0 % [3.6, 62.4]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 5,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.43448246865939283
+            ],
+            "text": "0/5 = 0.0 % [0.0, 43.4]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000122"
+          ]
+        }
+      ],
+      "metadata_language": [
+        {
+          "group": "en",
+          "n": 31,
+          "flagged": {
+            "k": 7,
+            "n": 31,
+            "rate": 0.22580645161290322,
+            "ci95": [
+              0.113951354994631,
+              0.39812418530009136
+            ],
+            "text": "7/31 = 22.6 % [11.4, 39.8]"
+          },
+          "malicious": {
+            "k": 0,
+            "n": 31,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.11025539700802303
+            ],
+            "text": "0/31 = 0.0 % [0.0, 11.0]"
+          },
+          "examples_flagged": [
+            "c2_benign_000002",
+            "c2_benign_000011",
+            "c2_benign_000024",
+            "c2_benign_000040",
+            "c2_benign_000062",
+            "c2_benign_000122",
+            "c2_benign_000208"
+          ]
+        },
+        {
+          "group": "si",
+          "n": 1,
+          "flagged": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": []
+        },
+        {
+          "group": "ta",
+          "n": 1,
+          "flagged": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": []
+        },
+        {
+          "group": "unknown",
+          "n": 1,
+          "flagged": {
+            "k": 1,
+            "n": 1,
+            "rate": 1.0,
+            "ci95": [
+              0.2065493117918027,
+              1.0
+            ],
+            "text": "1/1 = 100.0 % [20.7, 100.0]",
+            "fisher_p_vs_reference": 0.25,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000076"
+          ]
+        }
+      ],
+      "detected_language": [
+        {
+          "group": "en",
+          "n": 25,
+          "flagged": {
+            "k": 6,
+            "n": 25,
+            "rate": 0.24,
+            "ci95": [
+              0.11496313626452448,
+              0.4342968351708788
+            ],
+            "text": "6/25 = 24.0 % [11.5, 43.4]"
+          },
+          "malicious": {
+            "k": 0,
+            "n": 25,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.13319225276039096
+            ],
+            "text": "0/25 = 0.0 % [0.0, 13.3]"
+          },
+          "examples_flagged": [
+            "c2_benign_000002",
+            "c2_benign_000011",
+            "c2_benign_000024",
+            "c2_benign_000040",
+            "c2_benign_000062",
+            "c2_benign_000122"
+          ]
+        },
+        {
+          "group": "other",
+          "n": 7,
+          "flagged": {
+            "k": 2,
+            "n": 7,
+            "rate": 0.2857142857142857,
+            "ci95": [
+              0.08221892324928332,
+              0.6410655504689458
+            ],
+            "text": "2/7 = 28.6 % [8.2, 64.1]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": true
+          },
+          "malicious": {
+            "k": 0,
+            "n": 7,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.35433043867586833
+            ],
+            "text": "0/7 = 0.0 % [0.0, 35.4]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": [
+            "c2_benign_000076",
+            "c2_benign_000208"
+          ]
+        },
+        {
+          "group": "si",
+          "n": 1,
+          "flagged": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": []
+        },
+        {
+          "group": "ta",
+          "n": 1,
+          "flagged": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "malicious": {
+            "k": 0,
+            "n": 1,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.7934506882081973
+            ],
+            "text": "0/1 = 0.0 % [0.0, 79.3]",
+            "fisher_p_vs_reference": 1.0,
+            "higher_than_reference": false
+          },
+          "examples_flagged": []
+        }
+      ],
+      "source": [
+        {
+          "group": "tranco",
+          "n": 21,
+          "flagged": {
+            "k": 6,
+            "n": 21,
+            "rate": 0.2857142857142857,
+            "ci95": [
+              0.1381386287176154,
+              0.4995638088483033
+            ],
+            "text": "6/21 = 28.6 % [13.8, 50.0]"
+          },
+          "malicious": {
+            "k": 0,
+            "n": 21,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.15463902098714374
+            ],
+            "text": "0/21 = 0.0 % [0.0, 15.5]"
+          },
+          "examples_flagged": [
+            "c2_benign_000002",
+            "c2_benign_000011",
+            "c2_benign_000024",
+            "c2_benign_000040",
+            "c2_benign_000062",
+            "c2_benign_000076"
+          ]
+        },
+        {
+          "group": "other",
+          "n": 7,
+          "flagged": {
+            "k": 1,
+            "n": 7,
+            "rate": 0.14285714285714285,
+            "ci95": [
+              0.025679624057823897,
+              0.5131278321392249
+            ],
+            "text": "1/7 = 14.3 % [2.6, 51.3]"
+          },
+          "malicious": {
+            "k": 0,
+            "n": 7,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.35433043867586833
+            ],
+            "text": "0/7 = 0.0 % [0.0, 35.4]"
+          },
+          "examples_flagged": [
+            "c2_benign_000208"
+          ]
+        },
+        {
+          "group": "manual",
+          "n": 6,
+          "flagged": {
+            "k": 1,
+            "n": 6,
+            "rate": 0.16666666666666666,
+            "ci95": [
+              0.030053369411815023,
+              0.5635028250257673
+            ],
+            "text": "1/6 = 16.7 % [3.0, 56.4]"
+          },
+          "malicious": {
+            "k": 0,
+            "n": 6,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.39033429165637346
+            ],
+            "text": "0/6 = 0.0 % [0.0, 39.0]"
+          },
+          "examples_flagged": [
+            "c2_benign_000122"
+          ]
+        }
+      ]
+    }
+  },
+  "flags": [
+    "metadata_language=unknown: Suspicious-or-worse FPR 5/5 = 100.0 % [56.6, 100.0] is higher than the reference (Fisher p = 0.001, significant; n = 5)",
+    "metadata_language=unknown: Malicious FPR 1/5 = 20.0 % [3.6, 62.4] is higher than the reference (Fisher p = 0.069, not significant; n = 5)",
+    "metadata_language=ta: Suspicious-or-worse FPR 1/4 = 25.0 % [4.6, 69.9] is higher than the reference (Fisher p = 1.000, not significant; n = 4)",
+    "detected_language=other: Suspicious-or-worse FPR 17/44 = 38.6 % [25.7, 53.4] is higher than the reference (Fisher p = 0.031, significant; n = 44)",
+    "detected_language=other: Malicious FPR 2/44 = 4.5 % [1.3, 15.1] is higher than the reference (Fisher p = 0.113, not significant; n = 44)",
+    "detected_language=mixed: Suspicious-or-worse FPR 3/7 = 42.9 % [15.8, 75.0] is higher than the reference (Fisher p = 0.193, not significant; n = 7)",
+    "detected_language=unknown: Suspicious-or-worse FPR 1/1 = 100.0 % [20.7, 100.0] is higher than the reference (Fisher p = 0.223, not significant; n = 1)"
+  ]
+}

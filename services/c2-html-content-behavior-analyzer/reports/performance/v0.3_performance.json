@@ -1,0 +1,404 @@
+{
+  "version": "v0.3",
+  "measured_at": "2026-10-18 06:48 UTC",
+  "machine": {
+    "cpu": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+    "logical_cpus": 12,
+    "physical_cpus": 8,
+    "ram_gb": 15.6,
+    "os": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.3"
+  },
+  "fetch": {
+    "n_urls": 20,
+    "ok": 19,
+    "statuses": {
+      "ok": 19,
+      "unreachable": 1
+    },
+    "fetch_ms": {
+      "n": 19,
+      "p50": 669.1,
+      "p95": 2260.7,
+      "mean": 945.8,
+      "max": 3485.0,
+      "within_target": 19
+    },
+    "median_kb": 297,
+    "pages": [
+      {
+        "sample_id": "c2_benign_000077",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 1183.7,
+        "bytes": 1425314
+      },
+      {
+        "sample_id": "c2_benign_000110",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 192.2,
+        "bytes": 125886
+      },
+      {
+        "sample_id": "c2_benign_000003",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 1863.1,
+        "bytes": 128543
+      },
+      {
+        "sample_id": "c2_benign_000138",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 1288.8,
+        "bytes": 72312
+      },
+      {
+        "sample_id": "c2_benign_000048",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 1383.3,
+        "bytes": 598532
+      },
+      {
+        "sample_id": "c2_benign_000108",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 669.1,
+        "bytes": 922391
+      },
+      {
+        "sample_id": "c2_benign_000176",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 713.7,
+        "bytes": 449962
+      },
+      {
+        "sample_id": "c2_benign_000045",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 3485.0,
+        "bytes": 1931944
+      },
+      {
+        "sample_id": "c2_benign_000175",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 444.9,
+        "bytes": 5101
+      },
+      {
+        "sample_id": "c2_benign_000088",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 636.8,
+        "bytes": 138226
+      },
+      {
+        "sample_id": "c2_benign_000180",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 807.0,
+        "bytes": 304462
+      },
+      {
+        "sample_id": "c2_benign_000082",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 756.2,
+        "bytes": 1346764
+      },
+      {
+        "sample_id": "c2_benign_000055",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 553.4,
+        "bytes": 14469
+      },
+      {
+        "sample_id": "c2_benign_000221",
+        "status": "unreachable",
+        "reason": "HTTP 403",
+        "fetch_ms": 82.6,
+        "bytes": 0
+      },
+      {
+        "sample_id": "c2_benign_000109",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 454.8,
+        "bytes": 246251
+      },
+      {
+        "sample_id": "c2_benign_000050",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 226.9,
+        "bytes": 170254
+      },
+      {
+        "sample_id": "c2_benign_000147",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 411.5,
+        "bytes": 582286
+      },
+      {
+        "sample_id": "c2_benign_000198",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 2124.7,
+        "bytes": 1005734
+      },
+      {
+        "sample_id": "c2_benign_000081",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 459.0,
+        "bytes": 892534
+      },
+      {
+        "sample_id": "c2_benign_000104",
+        "status": "ok",
+        "reason": null,
+        "fetch_ms": 316.4,
+        "bytes": 44294
+      }
+    ]
+  },
+  "end_to_end": [
+    {
+      "xlmr": true,
+      "load_seconds": 6.0,
+      "analysis_ms": {
+        "n": 19,
+        "p50": 816.4,
+        "p95": 1676.4,
+        "mean": 843.8,
+        "max": 1743.1,
+        "within_target": 19
+      },
+      "end_to_end_ms": {
+        "n": 19,
+        "p50": 1560.8,
+        "p95": 3996.4,
+        "mean": 1789.6,
+        "max": 5154.0,
+        "within_target": 18
+      },
+      "statuses": {
+        "ok": 19
+      }
+    },
+    {
+      "xlmr": false,
+      "load_seconds": 0.4,
+      "analysis_ms": {
+        "n": 19,
+        "p50": 362.9,
+        "p95": 1224.9,
+        "mean": 477.8,
+        "max": 1282.6,
+        "within_target": 19
+      },
+      "end_to_end_ms": {
+        "n": 19,
+        "p50": 1142.3,
+        "p95": 3536.9,
+        "mean": 1423.6,
+        "max": 4703.4,
+        "within_target": 19
+      },
+      "statuses": {
+        "ok": 19
+      }
+    }
+  ],
+  "concurrency": [
+    {
+      "xlmr": true,
+      "ready_seconds": 9.3,
+      "idle_rss_mb": 878,
+      "levels": [
+        {
+          "clients": 1,
+          "requests": 68,
+          "wall_seconds": 46.3,
+          "throughput_per_s": 1.47,
+          "latency_ms": {
+            "n": 68,
+            "p50": 659.4,
+            "p95": 1598.8,
+            "mean": 676.6,
+            "max": 2395.4,
+            "within_target": 68
+          },
+          "status_codes": {
+            "200": 68
+          },
+          "cpu_percent_all_cores_mean": 53.4,
+          "cpu_percent_all_cores_max": 86.5,
+          "rss_mb_peak": 1364
+        },
+        {
+          "clients": 5,
+          "requests": 68,
+          "wall_seconds": 46.7,
+          "throughput_per_s": 1.46,
+          "latency_ms": {
+            "n": 68,
+            "p50": 3012.6,
+            "p95": 7438.8,
+            "mean": 3346.6,
+            "max": 12161.8,
+            "within_target": 58
+          },
+          "status_codes": {
+            "200": 68
+          },
+          "cpu_percent_all_cores_mean": 67.9,
+          "cpu_percent_all_cores_max": 90.5,
+          "rss_mb_peak": 1531
+        },
+        {
+          "clients": 10,
+          "requests": 68,
+          "wall_seconds": 47.8,
+          "throughput_per_s": 1.42,
+          "latency_ms": {
+            "n": 68,
+            "p50": 5753.8,
+            "p95": 15256.0,
+            "mean": 6755.9,
+            "max": 28896.4,
+            "within_target": 32
+          },
+          "status_codes": {
+            "200": 68
+          },
+          "cpu_percent_all_cores_mean": 70.7,
+          "cpu_percent_all_cores_max": 96.6,
+          "rss_mb_peak": 1676
+        },
+        {
+          "clients": 20,
+          "requests": 80,
+          "wall_seconds": 53.6,
+          "throughput_per_s": 1.49,
+          "latency_ms": {
+            "n": 80,
+            "p50": 9454.6,
+            "p95": 31142.9,
+            "mean": 11787.6,
+            "max": 43373.0,
+            "within_target": 16
+          },
+          "status_codes": {
+            "200": 74,
+            "504": 6
+          },
+          "cpu_percent_all_cores_mean": 72.7,
+          "cpu_percent_all_cores_max": 94.4,
+          "rss_mb_peak": 1806
+        }
+      ]
+    },
+    {
+      "xlmr": false,
+      "ready_seconds": 3.2,
+      "idle_rss_mb": 379,
+      "levels": [
+        {
+          "clients": 1,
+          "requests": 68,
+          "wall_seconds": 20.3,
+          "throughput_per_s": 3.34,
+          "latency_ms": {
+            "n": 68,
+            "p50": 197.8,
+            "p95": 1030.9,
+            "mean": 295.5,
+            "max": 2316.0,
+            "within_target": 68
+          },
+          "status_codes": {
+            "200": 68
+          },
+          "cpu_percent_all_cores_mean": 20.4,
+          "cpu_percent_all_cores_max": 33.9,
+          "rss_mb_peak": 468
+        },
+        {
+          "clients": 5,
+          "requests": 68,
+          "wall_seconds": 28.1,
+          "throughput_per_s": 2.42,
+          "latency_ms": {
+            "n": 68,
+            "p50": 1756.9,
+            "p95": 4853.8,
+            "mean": 1974.4,
+            "max": 8009.5,
+            "within_target": 65
+          },
+          "status_codes": {
+            "200": 68
+          },
+          "cpu_percent_all_cores_mean": 21.9,
+          "cpu_percent_all_cores_max": 51.8,
+          "rss_mb_peak": 514
+        },
+        {
+          "clients": 10,
+          "requests": 68,
+          "wall_seconds": 29.5,
+          "throughput_per_s": 2.31,
+          "latency_ms": {
+            "n": 68,
+            "p50": 2997.4,
+            "p95": 11885.9,
+            "mean": 3849.1,
+            "max": 18098.6,
+            "within_target": 51
+          },
+          "status_codes": {
+            "200": 68
+          },
+          "cpu_percent_all_cores_mean": 21.4,
+          "cpu_percent_all_cores_max": 56.0,
+          "rss_mb_peak": 559
+        },
+        {
+          "clients": 20,
+          "requests": 80,
+          "wall_seconds": 34.6,
+          "throughput_per_s": 2.31,
+          "latency_ms": {
+            "n": 80,
+            "p50": 5273.3,
+            "p95": 24646.3,
+            "mean": 7388.4,
+            "max": 31078.9,
+            "within_target": 38
+          },
+          "status_codes": {
+            "200": 79,
+            "504": 1
+          },
+          "cpu_percent_all_cores_mean": 21.8,
+          "cpu_percent_all_cores_max": 48.2,
+          "rss_mb_peak": 620
+        }
+      ]
+    }
+  ],
+  "reading": [
+    "NFR1 with XLM-R: end-to-end p95 3,996 ms vs 5 s → MET (18/19 URLs ≤ 5 s; network time dominates the tail).",
+    "NFR1 without XLM-R: end-to-end p95 3,537 ms vs 5 s → MET (19/19 URLs ≤ 5 s; network time dominates the tail).",
+    "NFR5 with XLM-R: peak 1.49 req/s at 20 clients (p95 31,143 ms); more clients only queue (throughput flat, latency grows, 6 request(s) hit the 30 s budget at the highest level). 50 URLs/s is a SERVER-scale target: it would need ≈ 34 such processes (e.g. one per core on several machines behind a load balancer) - NOT met on one laptop process.",
+    "NFR5 without XLM-R: peak 3.34 req/s at 1 clients (p95 1,031 ms); more clients only queue (throughput flat, latency grows, 1 request(s) hit the 30 s budget at the highest level). 50 URLs/s is a SERVER-scale target: it would need ≈ 15 such processes (e.g. one per core on several machines behind a load balancer) - NOT met on one laptop process.",
+    "Horizontal scaling needs: the in-process pieces moved out - SQLite results store → PostgreSQL, in-process queue / worker → a shared queue (Redis / RabbitMQ) with separate worker processes, the per-process result cache and rate limiter → Redis, the SSE event bus → pub/sub; each process loads its own models (~878 MB RSS for the largest configuration measured), so RAM per box limits processes per box. url mode adds network time per request, which is I/O-bound and overlaps well across threads."
+  ]
+}

@@ -707,6 +707,20 @@ v0.3 operating points (`reports/verdict/v0.3_operating_points.md`; flagged = Sus
 
 The evidence floor fired on 0 benign and 14 threat OOF pages and raised no verdict on v0.3 (the models already flag those pages) - it is a backstop for pages the models miss. Live engine = stored 9A test probabilities (max |Δp| ≤ 1e-6). Latency on this laptop (CPU, warm, html mode, 68 test pages): with XLM-R p50 586 ms / p95 1.3 s (model load 7.8 s), without XLM-R p50 202 ms / p95 1.0 s. A url-mode request adds the fetch time.
 
+## Evaluation reports (proposal requirements)
+
+```bash
+python scripts/eval_behavior.py --version v0.3        # behavior detection on hand-labelled REAL pages -> reports/behavior/benchmark_v1.md
+python scripts/evaluate_fairness.py --version v0.3    # benign FPR by LK SME / local + language -> reports/fairness/v0.3_fairness.md
+python scripts/bench_api.py --version v0.3            # fetch + analysis latency, 1/5/10/20 clients -> reports/performance/v0.3_performance.md (~10 min)
+python scripts/bench_api.py --version v0.3 --skip-fetch   # concurrency only, no network
+```
+
+- **Behavior benchmark** (`data/benchmarks/behavior_v1/candidates.csv`): REAL v0.3 pages only, labelled by reading their code (never from the detector's output); no attack snippets are written. All rows are `confirmed=false` until a reviewer checks them in the inspector, so the numbers are **preliminary, small n** (Wilson 95 % CIs; a rate needs ≥ 3 pages). First run (detector not tuned on it): TPR 14/18 = 77.8 % [54.8, 91.0], FPR 0/15; keylogging and download have no real positives (not measurable).
+- **Fairness**: Sri Lankan SME / local benign sites are **not** flagged more (Suspicious-or-worse 0/9 SME, 6/42 other LK vs 51/176 non-LK); foreign-language ("other") benign pages are (17/44 = 38.6 % vs English 21.8 %, Fisher p = 0.031). Tagging rule in the report.
+- **Performance** (this laptop, one process): end-to-end (fetch + analysis) p95 4.0 s with XLM-R / 3.5 s without (≤ 5 s met); throughput 1.5 req/s with XLM-R, 3.3 without - 50 URLs/s needs horizontal scaling (report lists what has to move out of the process). The benchmark server uses a throw-away results DB under `data/tmp/`.
+- Requirement → implementation → evidence: [`docs/requirements_traceability.md`](docs/requirements_traceability.md).
+
 ## ThreatRadar ingestion & dashboard APIs
 
 Part 9 Batch B-2: **ThreatRadar pushes newly found URLs, C2 analyses them in the background and keeps the results for the team dashboard.** Teammate guide (exact request, retry rule, env vars, Node.js snippet): [`docs/threatradar_integration.md`](docs/threatradar_integration.md).
