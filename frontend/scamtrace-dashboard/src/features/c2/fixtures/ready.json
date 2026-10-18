@@ -1,0 +1,36 @@
+{
+ "ready": true,
+ "loading": false,
+ "reason": null,
+ "xlmr_enabled": true,
+ "arms": {
+  "dom": {
+   "loaded": true,
+   "reason": null
+  },
+  "behavior": {
+   "loaded": true,
+   "reason": null
+  },
+  "text_tfidf": {
+   "loaded": true,
+   "reason": null
+  },
+  "text_xlmr": {
+   "loaded": true,
+   "reason": null
+  }
+ },
+ "model_versions": {
+  "analyzer": "0.1.0",
+  "schema": "c2.analysis.v1",
+  "dataset": "v0.3",
+  "dom": "random_forest@2026-10-14T23:47:12+05:30",
+  "behavior": "random_forest@2026-10-15T06:55:21+05:30",
+  "text_tfidf": "tfidf_logreg@2026-10-16T20:04:02+05:30",
+  "text_xlmr": "xlm-roberta-base fine-tuned (seed 43)",
+  "fusion": "weighted@2026-10-16T23:19:15+05:30",
+  "verdict_thresholds": "2026-10-17T21:04:36+05:30"
+ },
+ "load_ms": 8071.5
+}

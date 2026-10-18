@@ -1,0 +1,8 @@
+domain,url,subreddit,date,post_id,score,title
+mega-sale.example,https://mega-sale.example/,Scams,2026-10-12T10:00:00+00:00,abc1,5,"Is this store legit? 90% off"
+reddit.com,https://www.reddit.com/r/Scams/,Scams,2026-10-12T10:05:00+00:00,abc2,1,"Weekly thread"
+apps-free.example,https://apps-free.example/get,Scams,2026-10-13T10:00:00+00:00,abc3,9,"Got sent a modded app
+download link, legit?"
+usdt-double.example,https://USDT-double.example/join/,CryptoScams,2026-10-13T11:00:00+00:00,abc4,2,"Same group again"
+kadai.example,https://kadai.example/,srilanka,2026-10-14T10:00:00+00:00,abc5,4,"தள்ளுபடி offer"
+quiet-page.example,https://quiet-page.example/,CryptoScams,2026-10-14T11:00:00+00:00,abc6,1,"What is this?"

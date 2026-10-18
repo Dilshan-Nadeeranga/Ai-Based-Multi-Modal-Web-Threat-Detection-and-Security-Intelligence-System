@@ -165,11 +165,53 @@ class TextModels:
             **extra,
         )
 
-    def predict_many(self, texts: list[str]) -> list[list[TextModelOutput]]:
-        """Per text: [XLM-R output, TF-IDF output]."""
+    def predict_many(self, texts: list[str], xlmr: bool = True) -> list[list[TextModelOutput]]:
+        """Per text: [XLM-R output, TF-IDF output].
+
+        ``xlmr=False`` (Part 9 /analyze with XLMR_ENABLED=false) answers XLM-R with
+        ``available=false`` "disabled" and never loads torch."""
         texts = [text or "" for text in texts]
-        xlmr, baseline = self._xlmr_outputs(texts), self._baseline_outputs(texts)
-        return [[a, b] for a, b in zip(xlmr, baseline, strict=True)]
+        if xlmr:
+            xlmr_out = self._xlmr_outputs(texts)
+        else:
+            reason = "model disabled (XLMR_ENABLED=false)"
+            xlmr_out = [self._missing("xlmr", XLMR_DISPLAY, reason) for _ in texts]
+        baseline = self._baseline_outputs(texts)
+        return [[a, b] for a, b in zip(xlmr_out, baseline, strict=True)]
+
+    def warm_up(self, xlmr: bool = True) -> dict[str, str | None]:
+        """Load the models now (API start-up) - model -> None if loaded, else the reason."""
+        status: dict[str, str | None] = {}
+        for name, enabled, load in (
+            ("xlmr", xlmr, self._load_xlmr),
+            (BASELINE_NAME, True, self._load_baseline),
+        ):
+            if not enabled:
+                status[name] = "model disabled (XLMR_ENABLED=false)"
+                continue
+            try:
+                load()
+                status[name] = None
+            except _Unavailable as error:
+                status[name] = str(error)
+        return status
+
+    def model_info(self) -> dict[str, dict]:
+        """Version facts of the loaded models (for model_versions / GET /ready)."""
+        info: dict[str, dict] = {}
+        if self._xlmr is not None:
+            meta = self._xlmr[3]
+            info["xlmr"] = {
+                "seed": meta.get("seed"),
+                "model_name": meta.get("model_name") or meta.get("base_model"),
+                "max_length": meta.get("max_length"),
+            }
+        if self._baseline is not None:
+            info[BASELINE_NAME] = {
+                "trained_at": self._baseline.get("trained_at"),
+                "C": self._baseline.get("params", {}).get("C"),
+            }
+        return info
 
     def predict(
         self, page_text: str, page_language: str | None = None, sample_id: str | None = None

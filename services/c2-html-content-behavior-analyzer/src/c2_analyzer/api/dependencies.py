@@ -5,12 +5,20 @@ Part 9: Preliminary tri-modal output (fusion + FastAPI).
 
 from __future__ import annotations
 
+import threading
+import time
 from functools import lru_cache
 
 from c2_analyzer.api.dev_data import DevDataset
-from c2_analyzer.config import Settings, get_settings
+from c2_analyzer.api.guards import RateLimiter, ResultCache
+from c2_analyzer.config import Settings, get_settings, resolve_path
+from c2_analyzer.fusion.live_fetch import analyze_config
 from c2_analyzer.fusion.orchestrator import Orchestrator
+from c2_analyzer.ingest.events import EventBus
+from c2_analyzer.ingest.service import IngestService
+from c2_analyzer.ingest.worker import IngestWorker
 from c2_analyzer.nlp.inference import TextModelRegistry
+from c2_analyzer.store.repository import ResultsStore
 
 
 def settings_dependency() -> Settings:
@@ -36,7 +44,107 @@ def get_text_models() -> TextModelRegistry:
     return TextModelRegistry()
 
 
+class AnalysisEngine:
+    """The ONE Orchestrator of the process (Part 9 B-1), loaded once.
+
+    ``start()`` (API start-up) loads every model in a background thread, so ``/health``
+    answers at once and ``/ready`` reports "loading" until the models are in memory;
+    the first ``/analyze`` before that simply waits for the load to finish.
+    """
+
+    def __init__(self, factory=Orchestrator.load) -> None:
+        self._factory = factory
+        self._orchestrator: Orchestrator | None = None
+        self._error: str | None = None
+        self._lock = threading.Lock()
+        self._thread: threading.Thread | None = None
+        self.started_at: float | None = None
+
+    def _load(self) -> None:
+        with self._lock:
+            if self._orchestrator is not None:
+                return
+            try:
+                self._orchestrator = self._factory()
+                self._error = None
+            except Exception as error:  # noqa: BLE001 - reported by /ready, retried later
+                self._error = f"{type(error).__name__}: {error}"
+
+    def start(self) -> None:
+        """Begin loading in the background (idempotent)."""
+        if self._orchestrator is not None or (self._thread and self._thread.is_alive()):
+            return
+        self.started_at = time.perf_counter()
+        self._thread = threading.Thread(target=self._load, name="c2-model-load", daemon=True)
+        self._thread.start()
+
+    @property
+    def loading(self) -> bool:
+        return bool(self._thread and self._thread.is_alive())
+
+    @property
+    def error(self) -> str | None:
+        return self._error
+
+    def peek(self) -> Orchestrator | None:
+        """The orchestrator if loaded (never blocks)."""
+        return self._orchestrator
+
+    def get(self) -> Orchestrator:
+        """The orchestrator, loading it now if needed (raises RuntimeError if that fails)."""
+        if self._orchestrator is None:
+            self._load()  # waits for a background load holding the lock
+        if self._orchestrator is None:
+            raise RuntimeError(self._error or "models not loaded")
+        return self._orchestrator
+
+
+@lru_cache
+def get_engine() -> AnalysisEngine:
+    """The shared analysis engine. Tests replace it with ``dependency_overrides``."""
+    return AnalysisEngine()
+
+
+@lru_cache
+def get_result_cache() -> ResultCache:
+    config = analyze_config()["cache"]
+    return ResultCache(config["ttl_seconds"], config["max_entries"])
+
+
+@lru_cache
+def get_rate_limiter() -> RateLimiter:
+    config = analyze_config()["rate_limit"]
+    return RateLimiter(config["requests"], config["per_seconds"])
+
+
 def get_orchestrator() -> Orchestrator:
-    """Return the shared, lazily-initialised Orchestrator."""
-    # TODO (Part 9): cache a single Orchestrator instance.
-    raise NotImplementedError
+    """Return the shared Orchestrator (loaded on first use)."""
+    return get_engine().get()
+
+
+# ---- Part 9 B-2: results store, live feed, ingestion service + worker ------------------
+
+
+@lru_cache
+def get_results_store() -> ResultsStore:
+    """The shared results database (RESULTS_DB, default data/c2_results.db)."""
+    return ResultsStore(resolve_path(get_settings().results_db))
+
+
+@lru_cache
+def get_event_bus() -> EventBus:
+    return EventBus()
+
+
+@lru_cache
+def get_ingest_service() -> IngestService:
+    """Queue + history bookkeeping. Tests replace it with ``dependency_overrides``."""
+    return IngestService(get_results_store(), get_event_bus())
+
+
+@lru_cache
+def get_worker() -> IngestWorker:
+    """The background worker (started by the app lifespan when INGEST_WORKER_ENABLED)."""
+    return IngestWorker(
+        get_ingest_service(), get_engine(), enabled=get_settings().ingest_worker_enabled
+    )

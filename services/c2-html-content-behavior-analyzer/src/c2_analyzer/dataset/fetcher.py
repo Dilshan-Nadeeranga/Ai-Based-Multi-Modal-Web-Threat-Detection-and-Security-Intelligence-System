@@ -19,6 +19,11 @@ rendered (Playwright, optional)
 
 Both modes refuse URLs that point to this computer or the local network, wait
 politely between requests and report final_url / http_status / content_type.
+
+The live /api/v1/analyze (Part 9 Batch B-1) reuses the STATIC fetcher with
+``resolve_dns=True``: a hostname is resolved and refused when ANY of its addresses
+is private / loopback / link-local / reserved - before the first request and before
+every redirect hop. The dataset collector keeps the old behaviour (no DNS lookup).
 """
 
 from __future__ import annotations
@@ -27,6 +32,7 @@ import codecs
 import ipaddress
 import os
 import re
+import socket
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -80,11 +86,16 @@ class FetchSettings:
     rendered_wait_ms: int
     user_agent: str
     accept_language: str
+    resolve_dns: bool = False  # Part 9 API: also refuse hostnames resolving to private IPs
+    # Part 9 API: whole-download cap (httpx's timeout is per network read, so a server
+    # trickling 1 byte every 9 s would otherwise never time out). None = no cap.
+    total_timeout_seconds: float | None = None
 
     @classmethod
     def from_config(cls, **overrides: object) -> FetchSettings:
         config = load_yaml_config("config")["collection"]
-        values = {name: config[name] for name in cls.__dataclass_fields__}
+        # Fields with a default (resolve_dns) are optional in configs/config.yaml.
+        values = {name: config[name] for name in cls.__dataclass_fields__ if name in config}
         values.update({key: value for key, value in overrides.items() if value is not None})
         return cls(**values)
 
@@ -105,27 +116,64 @@ class FetchResult:
     http_status: int | None = None
     content_type: str | None = None
     encoding: str | None = None
+    # Added for the live /analyze (Part 9 B-1); the collector ignores them.
+    redirect_hosts: list[str] = field(default_factory=list)  # every hop's host, in order
+    content_disposition: str | None = None  # "attachment; filename=..." = a download
+    blocked: bool = False  # refused because a URL / redirect / DNS answer is not public
+    fetch_ms: float = 0.0
 
 
 # ---- helpers -----------------------------------------------------------------------
 
 
-def check_host_allowed(url: str) -> None:
+def _is_public(address: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """False for loopback, private, link-local, reserved, multicast ... (not is_global)."""
+    address = getattr(address, "ipv4_mapped", None) or address  # ::ffff:127.0.0.1
+    return address.is_global and not address.is_multicast
+
+
+def resolve_addresses(host: str, port: int | None) -> list[str]:
+    """Every IP address ``host`` resolves to (getaddrinfo, the resolver httpx uses too)."""
+    infos = socket.getaddrinfo(host, port or 443, type=socket.SOCK_STREAM)
+    return sorted({str(info[4][0]).split("%")[0] for info in infos})
+
+
+def check_host_allowed(url: str, resolve: bool = False) -> None:
     """Refuse localhost and private/link-local IP addresses (e.g. your router at 192.168.1.1).
 
     A malicious feed entry or redirect could otherwise make the collector send
-    requests into your own network. Limitation: a public hostname whose DNS
-    points to a private IP is not detected (that would need a DNS lookup).
+    requests into your own network. With ``resolve=True`` (the live API) the
+    hostname is also resolved and refused if ANY address is not public - this
+    catches ``evil.example -> 10.0.0.5`` and numeric tricks like ``http://2130706433/``.
+    Residual risk (documented): DNS rebinding between this lookup and httpx's own
+    connect; the short timeout and the GET-only, no-JS policy limit what it could do.
+    A name that does not resolve is left to httpx (it then fails as "unreachable").
     """
-    host = (urlsplit(url).hostname or "").lower()
+    parts = urlsplit(url)
+    host = (parts.hostname or "").lower().rstrip(".")
     if host == "localhost" or host.endswith(".localhost") or not host:
         raise BlockedHostError(f"blocked host {host or '(none)'!r}")
     try:
         address = ipaddress.ip_address(host)
     except ValueError:
-        return  # a normal hostname
-    if not address.is_global:
-        raise BlockedHostError(f"blocked non-public address {host}")
+        address = None  # a normal hostname
+    if address is not None:
+        if not _is_public(address):
+            raise BlockedHostError(f"blocked non-public address {host}")
+        return
+    if not resolve:
+        return
+    try:
+        port = parts.port
+    except ValueError:
+        port = None
+    try:
+        resolved = resolve_addresses(host, port)
+    except (OSError, UnicodeError):
+        return
+    for value in resolved:
+        if not _is_public(ipaddress.ip_address(value)):
+            raise BlockedHostError(f"blocked: {host} resolves to non-public address {value}")
 
 
 def mime_type(content_type: str | None) -> str:
@@ -226,18 +274,30 @@ class StaticFetcher:
                 "Accept-Language": s.accept_language,
             },
             # Runs before every request, including each redirect hop.
-            event_hooks={"request": [lambda request: check_host_allowed(str(request.url))]},
+            event_hooks={
+                "request": [
+                    lambda request: check_host_allowed(str(request.url), resolve=s.resolve_dns)
+                ]
+            },
             transport=transport,  # tests pass httpx.MockTransport here
         )
 
     def fetch(self, url: str) -> FetchResult:
+        started = time.perf_counter()
+        result = self._fetch(url)
+        result.fetch_ms = round((time.perf_counter() - started) * 1000, 1)
+        return result
+
+    def _fetch(self, url: str) -> FetchResult:
         try:
-            check_host_allowed(url)
+            check_host_allowed(url, resolve=self.settings.resolve_dns)
             self.limiter.wait(extract_domain(url) or url)
+            total = self.settings.total_timeout_seconds
+            deadline = time.perf_counter() + total if total else None
             with self.client.stream("GET", url) as response:
-                return self._read(url, response)
+                return self._read(url, response, deadline)
         except BlockedHostError as error:
-            return FetchResult("skipped", url, reason=str(error))
+            return FetchResult("skipped", url, reason=str(error), blocked=True)
         except httpx.TooManyRedirects:
             return FetchResult(
                 "failed", url, reason=f"more than {self.settings.max_redirects} redirects"
@@ -249,12 +309,17 @@ class StaticFetcher:
         except (httpx.HTTPError, httpx.InvalidURL) as error:
             return FetchResult("failed", url, reason=f"{type(error).__name__}: {error}")
 
-    def _read(self, url: str, response: httpx.Response) -> FetchResult:
+    def _read(
+        self, url: str, response: httpx.Response, deadline: float | None = None
+    ) -> FetchResult:
         content_type = response.headers.get("content-type")
+        hops = [*response.history, response]
         info = {
             "final_url": str(response.url),
             "http_status": response.status_code,
             "content_type": content_type,
+            "redirect_hosts": [hop.url.host for hop in hops],
+            "content_disposition": response.headers.get("content-disposition"),
         }
         if not response.is_success:
             return FetchResult("failed", url, reason=f"HTTP {response.status_code}", **info)
@@ -273,6 +338,9 @@ class StaticFetcher:
             body += chunk
             if len(body) > limit:
                 return too_large
+            if deadline is not None and time.perf_counter() > deadline:
+                reason = f"timeout: body not received within {self.settings.total_timeout_seconds}s"
+                return FetchResult("failed", url, reason=reason, **info)
 
         html, encoding = decode_html(bytes(body), content_type)
         return FetchResult("ok", url, html=html, encoding=encoding, **info)

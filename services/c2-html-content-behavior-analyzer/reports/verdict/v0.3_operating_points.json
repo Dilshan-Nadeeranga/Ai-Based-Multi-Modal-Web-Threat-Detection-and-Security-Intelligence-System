@@ -1,0 +1,2488 @@
+{
+  "oof": {
+    "rules_fired": {
+      "dom.password_form_external_action": {
+        "benign": 0,
+        "threat": 2
+      },
+      "dom.password_form_to_form_service": {
+        "benign": 0,
+        "threat": 2
+      },
+      "behavior.credential_exfiltration": {
+        "benign": 0,
+        "threat": 10
+      },
+      "behavior.keylogging_network": {
+        "benign": 0,
+        "threat": 0
+      },
+      "behavior.clipboard_crypto_swap": {
+        "benign": 0,
+        "threat": 0
+      },
+      "behavior.clickfix": {
+        "benign": 0,
+        "threat": 0
+      },
+      "behavior.auto_risky_download": {
+        "benign": 0,
+        "threat": 0
+      },
+      "fetch.executable_download": {
+        "benign": 0,
+        "threat": 0
+      }
+    },
+    "all arms": {
+      "arms": [
+        "dom",
+        "behavior",
+        "text_tfidf",
+        "text_xlmr"
+      ],
+      "thresholds": {
+        "arms": "dom+behavior+text_tfidf+text_xlmr",
+        "malicious_below_p_benign": 0.182466,
+        "suspicious_below_p_benign": 0.511482,
+        "malicious_min_risk": 82,
+        "suspicious_min_risk": 49
+      },
+      "fusion_only": {
+        "n_benign": 193,
+        "n_threat": 198,
+        "benign_fpr_flagged": 0.2538860103626943,
+        "benign_fpr_malicious": 0.015544041450777202,
+        "threat_recall_flagged": 0.9545454545454546,
+        "threat_recall_malicious": 0.6262626262626263,
+        "threat_class_accuracy": 0.8095238095238095,
+        "no_verdict": 0,
+        "recall_per_class": {
+          "phishing": 0.9594594594594594,
+          "fake_ecommerce": 0.9387755102040817,
+          "crypto_scam": 1.0,
+          "malware_delivery": 0.94
+        }
+      },
+      "with_floor": {
+        "n_benign": 193,
+        "n_threat": 198,
+        "benign_fpr_flagged": 0.2538860103626943,
+        "benign_fpr_malicious": 0.015544041450777202,
+        "threat_recall_flagged": 0.9545454545454546,
+        "threat_recall_malicious": 0.6262626262626263,
+        "threat_class_accuracy": 0.8095238095238095,
+        "no_verdict": 0,
+        "recall_per_class": {
+          "phishing": 0.9594594594594594,
+          "fake_ecommerce": 0.9387755102040817,
+          "crypto_scam": 1.0,
+          "malware_delivery": 0.94
+        }
+      },
+      "floor_raised": {
+        "benign_pages": 0,
+        "threat_pages": 0,
+        "benign_examples": []
+      }
+    },
+    "without XLM-R": {
+      "arms": [
+        "dom",
+        "behavior",
+        "text_tfidf"
+      ],
+      "thresholds": {
+        "arms": "dom+behavior+text_tfidf",
+        "malicious_below_p_benign": 0.196758,
+        "suspicious_below_p_benign": 0.500517,
+        "malicious_min_risk": 81,
+        "suspicious_min_risk": 50
+      },
+      "fusion_only": {
+        "n_benign": 193,
+        "n_threat": 198,
+        "benign_fpr_flagged": 0.23316062176165803,
+        "benign_fpr_malicious": 0.015544041450777202,
+        "threat_recall_flagged": 0.9545454545454546,
+        "threat_recall_malicious": 0.5858585858585859,
+        "threat_class_accuracy": 0.7724867724867724,
+        "no_verdict": 0,
+        "recall_per_class": {
+          "phishing": 0.9594594594594594,
+          "fake_ecommerce": 0.9387755102040817,
+          "crypto_scam": 1.0,
+          "malware_delivery": 0.94
+        }
+      },
+      "with_floor": {
+        "n_benign": 193,
+        "n_threat": 198,
+        "benign_fpr_flagged": 0.23316062176165803,
+        "benign_fpr_malicious": 0.015544041450777202,
+        "threat_recall_flagged": 0.9545454545454546,
+        "threat_recall_malicious": 0.5858585858585859,
+        "threat_class_accuracy": 0.7724867724867724,
+        "no_verdict": 0,
+        "recall_per_class": {
+          "phishing": 0.9594594594594594,
+          "fake_ecommerce": 0.9387755102040817,
+          "crypto_scam": 1.0,
+          "malware_delivery": 0.94
+        }
+      },
+      "floor_raised": {
+        "benign_pages": 0,
+        "threat_pages": 0,
+        "benign_examples": []
+      }
+    }
+  },
+  "test": [
+    {
+      "xlmr": true,
+      "arms": [
+        "dom",
+        "behavior",
+        "text_tfidf",
+        "text_xlmr"
+      ],
+      "thresholds": {
+        "arms": "dom+behavior+text_tfidf+text_xlmr",
+        "malicious_below_p_benign": 0.182466,
+        "suspicious_below_p_benign": 0.511482,
+        "malicious_min_risk": 82,
+        "suspicious_min_risk": 49
+      },
+      "load_seconds": 7.8,
+      "latency_ms": {
+        "p50": 586.0,
+        "p95": 1306.5,
+        "mean": 599.1,
+        "max": 2348.1
+      },
+      "statuses": {
+        "ok": 68
+      },
+      "parity": {
+        "max_abs_diff_per_arm": {
+          "dom": 0.0,
+          "behavior": 0.0,
+          "text_tfidf": 1e-06,
+          "text_xlmr": 1e-06
+        },
+        "max_abs_diff_fused": 1e-06
+      },
+      "fusion_only": {
+        "n_benign": 34,
+        "n_threat": 34,
+        "benign_fpr_flagged": 0.23529411764705882,
+        "benign_fpr_malicious": 0.0,
+        "threat_recall_flagged": 0.9411764705882353,
+        "threat_recall_malicious": 0.7647058823529411,
+        "threat_class_accuracy": 0.875,
+        "no_verdict": 0,
+        "recall_per_class": {
+          "phishing": 1.0,
+          "fake_ecommerce": 1.0,
+          "crypto_scam": 1.0,
+          "malware_delivery": 0.7777777777777778
+        }
+      },
+      "with_floor": {
+        "n_benign": 34,
+        "n_threat": 34,
+        "benign_fpr_flagged": 0.23529411764705882,
+        "benign_fpr_malicious": 0.0,
+        "threat_recall_flagged": 0.9411764705882353,
+        "threat_recall_malicious": 0.7647058823529411,
+        "threat_class_accuracy": 0.875,
+        "no_verdict": 0,
+        "recall_per_class": {
+          "phishing": 1.0,
+          "fake_ecommerce": 1.0,
+          "crypto_scam": 1.0,
+          "malware_delivery": 0.7777777777777778
+        }
+      },
+      "floor_raised": {
+        "benign_pages": 0,
+        "threat_pages": 0,
+        "benign_examples": []
+      },
+      "pages": [
+        {
+          "sample_id": "c2_benign_000001",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 28,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000002",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 54,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000003",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 40,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000008",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 27,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000011",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 51,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000024",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "floor": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 62,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000025",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 46,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000029",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 43,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000040",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 81,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000048",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 25,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000057",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 23,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000058",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 25,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000062",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 74,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000069",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 34,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000071",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 19,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000076",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 60,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000077",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 47,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000083",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 35,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000087",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 37,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000091",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 39,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000097",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 18,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000109",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 30,
+          "language": "ta"
+        },
+        {
+          "sample_id": "c2_benign_000118",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 14,
+          "language": "si"
+        },
+        {
+          "sample_id": "c2_benign_000122",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 52,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000136",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 20,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000145",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 10,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000156",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 21,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000186",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 29,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000187",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 34,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000198",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 33,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000199",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 19,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000208",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Suspicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 56,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000233",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 44,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000234",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 14,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_crypto_scam_000010",
+          "label": "crypto_scam",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 79,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_crypto_scam_000011",
+          "label": "crypto_scam",
+          "fusion": [
+            "Malicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Malicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 86,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_crypto_scam_000037",
+          "label": "crypto_scam",
+          "fusion": [
+            "Malicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Malicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 87,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_crypto_scam_000039",
+          "label": "crypto_scam",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 71,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000008",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 89,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000009",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 91,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000022",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 87,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000031",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 93,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000032",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Malicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 83,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000038",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 93,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000040",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 95,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000051",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 83,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000018",
+          "label": "malware_delivery",
+          "fusion": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "floor": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 54,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000023",
+          "label": "malware_delivery",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 87,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000036",
+          "label": "malware_delivery",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 35,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000042",
+          "label": "malware_delivery",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 34,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000045",
+          "label": "malware_delivery",
+          "fusion": [
+            "Malicious",
+            "malware_delivery"
+          ],
+          "floor": [
+            "Malicious",
+            "malware_delivery"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 82,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000048",
+          "label": "malware_delivery",
+          "fusion": [
+            "Malicious",
+            "malware_delivery"
+          ],
+          "floor": [
+            "Malicious",
+            "malware_delivery"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 94,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000050",
+          "label": "malware_delivery",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 92,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000052",
+          "label": "malware_delivery",
+          "fusion": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "floor": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 71,
+          "language": "mixed"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000087",
+          "label": "malware_delivery",
+          "fusion": [
+            "Malicious",
+            "malware_delivery"
+          ],
+          "floor": [
+            "Malicious",
+            "malware_delivery"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 99,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000012",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 95,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000015",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 93,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_phishing_000031",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 92,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000040",
+          "label": "phishing",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 74,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000046",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 87,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000048",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 87,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000063",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 98,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000071",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Malicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 90,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000093",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 92,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000095",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 87,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000103",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 92,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000106",
+          "label": "phishing",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 53,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000115",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 91,
+          "language": "en"
+        }
+      ]
+    },
+    {
+      "xlmr": false,
+      "arms": [
+        "dom",
+        "behavior",
+        "text_tfidf"
+      ],
+      "thresholds": {
+        "arms": "dom+behavior+text_tfidf",
+        "malicious_below_p_benign": 0.196758,
+        "suspicious_below_p_benign": 0.500517,
+        "malicious_min_risk": 81,
+        "suspicious_min_risk": 50
+      },
+      "load_seconds": 0.4,
+      "latency_ms": {
+        "p50": 202.4,
+        "p95": 1022.2,
+        "mean": 300.1,
+        "max": 2249.5
+      },
+      "statuses": {
+        "ok": 68
+      },
+      "parity": {
+        "max_abs_diff_per_arm": {
+          "dom": 0.0,
+          "behavior": 0.0,
+          "text_tfidf": 1e-06
+        },
+        "max_abs_diff_fused": 1e-06
+      },
+      "fusion_only": {
+        "n_benign": 34,
+        "n_threat": 34,
+        "benign_fpr_flagged": 0.35294117647058826,
+        "benign_fpr_malicious": 0.029411764705882353,
+        "threat_recall_flagged": 0.9411764705882353,
+        "threat_recall_malicious": 0.5882352941176471,
+        "threat_class_accuracy": 0.875,
+        "no_verdict": 0,
+        "recall_per_class": {
+          "phishing": 1.0,
+          "fake_ecommerce": 1.0,
+          "crypto_scam": 1.0,
+          "malware_delivery": 0.7777777777777778
+        }
+      },
+      "with_floor": {
+        "n_benign": 34,
+        "n_threat": 34,
+        "benign_fpr_flagged": 0.35294117647058826,
+        "benign_fpr_malicious": 0.029411764705882353,
+        "threat_recall_flagged": 0.9411764705882353,
+        "threat_recall_malicious": 0.5882352941176471,
+        "threat_class_accuracy": 0.875,
+        "no_verdict": 0,
+        "recall_per_class": {
+          "phishing": 1.0,
+          "fake_ecommerce": 1.0,
+          "crypto_scam": 1.0,
+          "malware_delivery": 0.7777777777777778
+        }
+      },
+      "floor_raised": {
+        "benign_pages": 0,
+        "threat_pages": 0,
+        "benign_examples": []
+      },
+      "pages": [
+        {
+          "sample_id": "c2_benign_000001",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 22,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000002",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 55,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000003",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 50,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000008",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 34,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000011",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 62,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000024",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 62,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000025",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 28,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000029",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 56,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000040",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "floor": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 77,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000048",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 29,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000057",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 30,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000058",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 28,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000062",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 64,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000069",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 40,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000071",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 21,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000076",
+          "label": "benign",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 82,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000077",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 64,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000083",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 48,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000087",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 51,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000091",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 54,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000097",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 18,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000109",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 37,
+          "language": "ta"
+        },
+        {
+          "sample_id": "c2_benign_000118",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 14,
+          "language": "si"
+        },
+        {
+          "sample_id": "c2_benign_000122",
+          "label": "benign",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 51,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000136",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 23,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000145",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 9,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000156",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 24,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000186",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 32,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000187",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 15,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000198",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 18,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000199",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 14,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000208",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 39,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_benign_000233",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 33,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_benign_000234",
+          "label": "benign",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 12,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_crypto_scam_000010",
+          "label": "crypto_scam",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 74,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_crypto_scam_000011",
+          "label": "crypto_scam",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 80,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_crypto_scam_000037",
+          "label": "crypto_scam",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 80,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_crypto_scam_000039",
+          "label": "crypto_scam",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 57,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000008",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 88,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000009",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 93,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000022",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 90,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000031",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 96,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000032",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "floor": [
+            "Suspicious",
+            "crypto_scam"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 76,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000038",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 95,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000040",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Malicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 99,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_fake_ecommerce_000051",
+          "label": "fake_ecommerce",
+          "fusion": [
+            "Suspicious",
+            "fake_ecommerce"
+          ],
+          "floor": [
+            "Suspicious",
+            "fake_ecommerce"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 79,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000018",
+          "label": "malware_delivery",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 54,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000023",
+          "label": "malware_delivery",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 80,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000036",
+          "label": "malware_delivery",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 45,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000042",
+          "label": "malware_delivery",
+          "fusion": [
+            "Legitimate",
+            "benign"
+          ],
+          "floor": [
+            "Legitimate",
+            "benign"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 37,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000045",
+          "label": "malware_delivery",
+          "fusion": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "floor": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 80,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000048",
+          "label": "malware_delivery",
+          "fusion": [
+            "Malicious",
+            "malware_delivery"
+          ],
+          "floor": [
+            "Malicious",
+            "malware_delivery"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 92,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000050",
+          "label": "malware_delivery",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 88,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000052",
+          "label": "malware_delivery",
+          "fusion": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "floor": [
+            "Suspicious",
+            "malware_delivery"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 79,
+          "language": "mixed"
+        },
+        {
+          "sample_id": "c2_malware_delivery_000087",
+          "label": "malware_delivery",
+          "fusion": [
+            "Malicious",
+            "malware_delivery"
+          ],
+          "floor": [
+            "Malicious",
+            "malware_delivery"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 100,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000012",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 92,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000015",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 88,
+          "language": "other"
+        },
+        {
+          "sample_id": "c2_phishing_000031",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 92,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000040",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 82,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000046",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 85,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000048",
+          "label": "phishing",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 79,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000063",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 97,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000071",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 86,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000093",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 88,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000095",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 84,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000103",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 89,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000106",
+          "label": "phishing",
+          "fusion": [
+            "Suspicious",
+            "phishing"
+          ],
+          "floor": [
+            "Suspicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 68,
+          "language": "en"
+        },
+        {
+          "sample_id": "c2_phishing_000115",
+          "label": "phishing",
+          "fusion": [
+            "Malicious",
+            "phishing"
+          ],
+          "floor": [
+            "Malicious",
+            "phishing"
+          ],
+          "raised": false,
+          "status": "ok",
+          "risk": 92,
+          "language": "en"
+        }
+      ]
+    }
+  ],
+  "calibration": {
+    "dataset_version": "v0.3",
+    "created_at": "2026-10-17T21:04:36+05:30",
+    "fusion_strategy": "weighted",
+    "fusion_arms": [
+      "dom",
+      "behavior",
+      "text_tfidf",
+      "text_xlmr"
+    ],
+    "fusion_weights": {
+      "dom": 0.1,
+      "behavior": 0.3,
+      "text_tfidf": 0.2,
+      "text_xlmr": 0.4
+    },
+    "fusion_fingerprint": "2f5904d1b159765e3819b4d99671e28c36530abbf55d2ddbac1cbcfc57bba762",
+    "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+    "oof_pages": 391,
+    "reproduces_9a_threshold": true,
+    "part_9a_threshold": 0.1824664,
+    "rule": "Malicious if P(benign) < malicious_below_p_benign (largest cut-off with OOF benign FPR <= 2%); Suspicious if P(benign) < suspicious_below_p_benign (smallest cut-off with OOF threat recall >= 95%); else Legitimate"
+  }
+}

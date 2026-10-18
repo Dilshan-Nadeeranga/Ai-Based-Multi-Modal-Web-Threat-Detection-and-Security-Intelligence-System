@@ -1,20 +1,34 @@
 """Public API routes: Part 2 preprocessing, Part 3 DOM features, Part 5 content,
-Part 6A text prediction, Part 7 JS analysis, Part 8 behavioral intent, Part 9 (stub).
+Part 6A text prediction, Part 7 JS analysis, Part 8 behavioral intent, and the unified
+Part 9 B-1 ``POST /api/v1/analyze`` (URL or HTML -> verdict).
 
 Part 9: Preliminary tri-modal output (fusion + FastAPI).
 """
 
 from __future__ import annotations
 
+import json
+import math
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
 
-from c2_analyzer.api.dependencies import get_text_models
+from c2_analyzer.api.dependencies import (
+    AnalysisEngine,
+    get_engine,
+    get_ingest_service,
+    get_rate_limiter,
+    get_result_cache,
+    get_text_models,
+)
+from c2_analyzer.api.guards import RateLimiter, ResultCache
 from c2_analyzer.behavior.pipeline import behavior_for_html
 from c2_analyzer.content.extractor import content_for_html
 from c2_analyzer.dom.pipeline import dom_features_for_html
+from c2_analyzer.fusion.live_fetch import analyze_config
+from c2_analyzer.fusion.orchestrator import BudgetExceeded
+from c2_analyzer.ingest.service import IngestService
 from c2_analyzer.js_analyzer.pipeline import js_analysis_for_html
 from c2_analyzer.nlp.inference import TextModelRegistry
 from c2_analyzer.preprocessing.pipeline import preprocess_html
@@ -259,11 +273,98 @@ def text_prediction(request: ContentRequest, models: TextModelsDep) -> TextPredi
     return models.get().predict(text.page_text, page_language=text.language.language)
 
 
-@router.post("/api/v1/analyze", response_model=AnalysisResponse, tags=["analysis (Part 9)"])
-def analyze(request: AnalysisRequest) -> AnalysisResponse:
-    """Analyze raw HTML and return the unified tri-modal result."""
-    # TODO (Part 9): return get_orchestrator().analyze(request)
-    raise HTTPException(status_code=501, detail="Not implemented yet (Part 9)")
+EngineDep = Annotated[AnalysisEngine, Depends(get_engine)]  # tests override get_engine
+CacheDep = Annotated[ResultCache, Depends(get_result_cache)]
+HistoryDep = Annotated[IngestService, Depends(get_ingest_service)]  # Part 9 B-2
+
+
+def require_json(request: Request) -> None:
+    """415 unless the body is declared as JSON (the contract is JSON only)."""
+    content_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
+    if content_type != "application/json":
+        raise HTTPException(status_code=415, detail="send the request as application/json")
+
+
+def client_id(request: Request) -> str:
+    """Who is calling (rate-limit key): the socket peer, or X-Forwarded-For when trusted."""
+    if analyze_config()["rate_limit"].get("trust_forwarded_for"):
+        forwarded = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        if forwarded:
+            return forwarded
+    return request.client.host if request.client else "unknown"
+
+
+def rate_limit(
+    request: Request, limiter: Annotated[RateLimiter, Depends(get_rate_limiter)]
+) -> None:
+    """429 + Retry-After when one client sends too many analyses (protects the fetcher)."""
+    wait = limiter.check(client_id(request))
+    if wait is not None:
+        raise HTTPException(
+            status_code=429,
+            detail="too many analyses from this client - slow down",
+            headers={"Retry-After": str(max(1, math.ceil(wait)))},
+        )
+
+
+def _json(model_or_dict, status_code: int = 200) -> Response:
+    text = model_or_dict if isinstance(model_or_dict, str) else json.dumps(model_or_dict)
+    return Response(text, status_code=status_code, media_type="application/json")
+
+
+@router.post(
+    "/api/v1/analyze",
+    response_model=AnalysisResponse,
+    tags=["analysis (Part 9)"],
+    summary="URL or HTML -> verdict, threat class, risk score, findings (schema c2.analysis.v1)",
+    dependencies=[Depends(require_json), Depends(rate_limit)],
+    responses={
+        413: {"description": "html larger than 5 MB (or request body larger than 5 MB)"},
+        415: {"description": "body is not application/json"},
+        422: {"description": "invalid input (no url / html, url not http(s), > 2,048 chars)"},
+        429: {"description": "rate limit per client exceeded (Retry-After header)"},
+        503: {"description": "models could not be loaded (see GET /ready)"},
+        504: {"description": "time budget exceeded - body = the partial AnalysisResponse"},
+    },
+)
+def analyze(
+    body: AnalysisRequest, engine: EngineDep, cache: CacheDep, history: HistoryDep
+) -> Response:
+    """Analyze a page end to end (Part 9 B-1).
+
+    - ``{"url": ...}``: C2 fetches the page itself, statically and safely (no JS, no
+      sub-resources, private / internal addresses refused, 5 MB / 5 redirects / timeout).
+    - ``{"html": ..., "url"?: ...}``: analyze this HTML (paste / test mode, no fetch).
+
+    Then Part 2 -> 3 -> 5A -> 6A -> 7 -> 8 -> the 9A fusion model -> verdict tiers +
+    evidence floor. ``status`` says whether a verdict was possible (ok / inconclusive /
+    unreachable / error); a failing model arm only sets ``degraded``. Repeated url checks
+    within the cache TTL answer from memory with ``cached: true``.
+
+    Every answered check is also stored in the scan history (Part 9 B-2, source = the
+    request's ``source``); a storage problem is logged and never fails the analysis.
+    """
+    limit = int(analyze_config()["input"]["max_html_bytes"])
+    if body.html is not None and len(body.html.encode("utf-8", errors="ignore")) > limit:
+        raise HTTPException(status_code=413, detail=f"html larger than {limit // 2**20} MB")
+    if body.mode == "url":
+        hit = cache.get(body.url)
+        if hit is not None:
+            answer = {**hit, "cached": True, "request_id": body.request_id}
+            history.record_user_check(body, AnalysisResponse.model_validate(answer))
+            return _json(answer)
+    try:
+        orchestrator = engine.get()
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail=f"models not loaded: {error}") from None
+    try:
+        result = orchestrator.analyze(body)
+    except BudgetExceeded as late:
+        return _json(late.response.model_dump_json(), status_code=504)
+    if body.mode == "url" and result.status in ("ok", "inconclusive"):
+        cache.put(result.model_dump(mode="json"), body.url, result.input.final_url)
+    history.record_user_check(body, result)
+    return _json(result.model_dump_json())
 
 
 @router.post("/analyze-html", tags=["analysis (Part 9)"])
