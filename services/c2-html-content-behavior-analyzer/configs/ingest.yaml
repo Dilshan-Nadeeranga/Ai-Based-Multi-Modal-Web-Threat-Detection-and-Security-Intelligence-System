@@ -1,0 +1,31 @@
+# Automatic ThreatRadar ingestion (Part 9 Batch B-2): POST /api/v1/ingest + background worker
+#   src/c2_analyzer/store/       SQLite results store (data/c2_results.db, RESULTS_DB in .env)
+#   src/c2_analyzer/ingest/      enqueue + dedupe, worker, live events, review queue, pull, stats
+#   src/c2_analyzer/api/ingest_routes.py   ingest + read APIs for the team frontend
+# Secrets / switches (INGEST_API_KEY, INGEST_WORKER_ENABLED, RESULTS_DB) live in .env.
+
+ingest:
+  max_urls_per_call: 500       # POST /api/v1/ingest body limit (more -> 422)
+  max_queue_depth: 10000       # queued jobs; beyond this new URLs are rejected ("queue full")
+  dedupe_ttl_hours: 24         # same normalized URL analyzed within this -> reuse the result
+  skip_allow_listed: true      # configs/threatradar_rules.yaml allow_list -> rejected, no fetch
+
+# The worker analyzes queued jobs with the 9B-1 engine (url mode, safe static fetch).
+worker:
+  concurrency: 2               # jobs analyzed at the same time
+  jobs_per_second: 1.0         # start at most this many jobs per second (politeness + CPU)
+  max_attempts: 3              # transient fetch errors (timeout, 5xx, 429, connection) retried
+  backoff_seconds: 30          # wait before attempt n+1 = backoff_seconds * 2^(n-1) ...
+  backoff_max_seconds: 900     # ... capped here
+  job_time_budget_seconds: 45  # whole job (fetch + all models); over -> failed, not retried
+  idle_poll_seconds: 2.0       # how often an idle worker looks for new jobs
+
+# Results that need a person before anything else happens (never auto-added to training).
+review:
+  suspicious_min_risk: 70      # Suspicious with risk >= this is queued; Malicious always
+
+read_api:
+  default_limit: 50
+  max_limit: 200
+  sse_heartbeat_seconds: 15    # keep-alive comment on /api/v1/feed/stream
+  top_n: 10                    # top domains / brands in /api/v1/stats/overview

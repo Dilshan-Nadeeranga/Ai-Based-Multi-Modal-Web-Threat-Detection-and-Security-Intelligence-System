@@ -11,10 +11,14 @@ from functools import lru_cache
 
 from c2_analyzer.api.dev_data import DevDataset
 from c2_analyzer.api.guards import RateLimiter, ResultCache
-from c2_analyzer.config import Settings, get_settings
+from c2_analyzer.config import Settings, get_settings, resolve_path
 from c2_analyzer.fusion.live_fetch import analyze_config
 from c2_analyzer.fusion.orchestrator import Orchestrator
+from c2_analyzer.ingest.events import EventBus
+from c2_analyzer.ingest.service import IngestService
+from c2_analyzer.ingest.worker import IngestWorker
 from c2_analyzer.nlp.inference import TextModelRegistry
+from c2_analyzer.store.repository import ResultsStore
 
 
 def settings_dependency() -> Settings:
@@ -116,3 +120,31 @@ def get_rate_limiter() -> RateLimiter:
 def get_orchestrator() -> Orchestrator:
     """Return the shared Orchestrator (loaded on first use)."""
     return get_engine().get()
+
+
+# ---- Part 9 B-2: results store, live feed, ingestion service + worker ------------------
+
+
+@lru_cache
+def get_results_store() -> ResultsStore:
+    """The shared results database (RESULTS_DB, default data/c2_results.db)."""
+    return ResultsStore(resolve_path(get_settings().results_db))
+
+
+@lru_cache
+def get_event_bus() -> EventBus:
+    return EventBus()
+
+
+@lru_cache
+def get_ingest_service() -> IngestService:
+    """Queue + history bookkeeping. Tests replace it with ``dependency_overrides``."""
+    return IngestService(get_results_store(), get_event_bus())
+
+
+@lru_cache
+def get_worker() -> IngestWorker:
+    """The background worker (started by the app lifespan when INGEST_WORKER_ENABLED)."""
+    return IngestWorker(
+        get_ingest_service(), get_engine(), enabled=get_settings().ingest_worker_enabled
+    )

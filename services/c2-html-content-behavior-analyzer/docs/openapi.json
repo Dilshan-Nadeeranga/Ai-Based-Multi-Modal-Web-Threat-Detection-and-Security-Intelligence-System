@@ -333,7 +333,7 @@
           "analysis (Part 9)"
         ],
         "summary": "URL or HTML -> verdict, threat class, risk score, findings (schema c2.analysis.v1)",
-        "description": "Analyze a page end to end (Part 9 B-1).\n\n- ``{\"url\": ...}``: C2 fetches the page itself, statically and safely (no JS, no\n  sub-resources, private / internal addresses refused, 5 MB / 5 redirects / timeout).\n- ``{\"html\": ..., \"url\"?: ...}``: analyze this HTML (paste / test mode, no fetch).\n\nThen Part 2 -> 3 -> 5A -> 6A -> 7 -> 8 -> the 9A fusion model -> verdict tiers +\nevidence floor. ``status`` says whether a verdict was possible (ok / inconclusive /\nunreachable / error); a failing model arm only sets ``degraded``. Repeated url checks\nwithin the cache TTL answer from memory with ``cached: true``.",
+        "description": "Analyze a page end to end (Part 9 B-1).\n\n- ``{\"url\": ...}``: C2 fetches the page itself, statically and safely (no JS, no\n  sub-resources, private / internal addresses refused, 5 MB / 5 redirects / timeout).\n- ``{\"html\": ..., \"url\"?: ...}``: analyze this HTML (paste / test mode, no fetch).\n\nThen Part 2 -> 3 -> 5A -> 6A -> 7 -> 8 -> the 9A fusion model -> verdict tiers +\nevidence floor. ``status`` says whether a verdict was possible (ok / inconclusive /\nunreachable / error); a failing model arm only sets ``degraded``. Repeated url checks\nwithin the cache TTL answer from memory with ``cached: true``.\n\nEvery answered check is also stored in the scan history (Part 9 B-2, source = the\nrequest's ``source``); a storage problem is logged and never fails the analysis.",
         "operationId": "analyze_api_v1_analyze_post",
         "requestBody": {
           "content": {
@@ -396,6 +396,397 @@
           }
         }
       }
+    },
+    "/api/v1/ingest": {
+      "post": {
+        "tags": [
+          "ingest (Part 9B-2)"
+        ],
+        "summary": "ThreatRadar pushes new URLs -> queued for background analysis (202)",
+        "description": "Queue up to 500 URLs. Invalid / allow-listed URLs are listed in ``rejected`` (the\nrest is still accepted); a URL analysed in the last 24 h or already queued counts as a\nduplicate and reuses that result. Results: ``GET /api/v1/scans`` and the live feed.",
+        "operationId": "ingest_api_v1_ingest_post",
+        "parameters": [
+          {
+            "name": "X-C2-Ingest-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-C2-Ingest-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or invalid X-C2-Ingest-Key"
+          },
+          "415": {
+            "description": "body is not application/json"
+          },
+          "422": {
+            "description": "invalid body (no urls, more than the per-call limit)"
+          },
+          "503": {
+            "description": "ingest disabled (INGEST_API_KEY not set)"
+          }
+        }
+      }
+    },
+    "/api/v1/scans": {
+      "get": {
+        "tags": [
+          "dashboard (Part 9B-2)"
+        ],
+        "summary": "Scan history, newest first (defanged URLs, cursor pagination)",
+        "description": "Finished scans (``verdict=none`` = no verdict: unreachable / inconclusive).",
+        "operationId": "scans_api_v1_scans_get",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "user",
+                    "threatradar_push",
+                    "threatradar_pull",
+                    "api"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          },
+          {
+            "name": "verdict",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "Legitimate",
+                    "Suspicious",
+                    "Malicious",
+                    "none"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Verdict"
+            }
+          },
+          {
+            "name": "threat_class",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Threat Class"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD or ISO 8601 (UTC)",
+              "title": "Since"
+            },
+            "description": "YYYY-MM-DD or ISO 8601 (UTC)"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "text in URL / domain",
+              "title": "Q"
+            },
+            "description": "text in URL / domain"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{1,18}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scans/{scan_id}": {
+      "get": {
+        "tags": [
+          "dashboard (Part 9B-2)"
+        ],
+        "summary": "One stored analysis (c2.analysis.v1, URLs / domains defanged)",
+        "operationId": "scan_detail_api_v1_scans__scan_id__get",
+        "parameters": [
+          {
+            "name": "scan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Scan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "unknown scan, or no result yet (queued / failed)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stats/overview": {
+      "get": {
+        "tags": [
+          "dashboard (Part 9B-2)"
+        ],
+        "summary": "Totals by verdict / class / source / language, top domains / brands, series",
+        "operationId": "stats_overview_api_v1_stats_overview_get",
+        "parameters": [
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "24h",
+                "7d",
+                "30d"
+              ],
+              "type": "string",
+              "default": "24h",
+              "title": "Window"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feed/stream": {
+      "get": {
+        "tags": [
+          "dashboard (Part 9B-2)"
+        ],
+        "summary": "Live feed: one Server-Sent Event (event: scan) per finished scan",
+        "description": "Use from the browser with ``new EventSource(\".../api/v1/feed/stream\")`` and listen\nfor ``scan`` events; data = {id, url (defanged), verdict, threat_class, risk_score,\nsource, created_at}.",
+        "operationId": "feed_stream_api_v1_feed_stream_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/event-stream": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research/summary": {
+      "get": {
+        "tags": [
+          "dashboard (Part 9B-2)"
+        ],
+        "summary": "Read-only research numbers: dataset, ablation + CIs, operating points, models",
+        "description": "Read from the reports earlier Parts wrote (nothing is recomputed).",
+        "operationId": "research_api_v1_research_summary_get",
+        "parameters": [
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^v\\d+\\.\\d+$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Research Api V1 Research Summary Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -451,6 +842,13 @@
             "type": "boolean",
             "title": "Raises Verdict",
             "default": false
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceStep"
+            },
+            "type": "array",
+            "title": "Steps"
           }
         },
         "type": "object",
@@ -1311,6 +1709,24 @@
           }
         ]
       },
+      "CountItem": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "count"
+        ],
+        "title": "CountItem"
+      },
       "CssSummary": {
         "properties": {
           "inline_style_blocks_count": {
@@ -1878,6 +2294,47 @@
           "code"
         ],
         "title": "EventHandler"
+      },
+      "EvidenceStep": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "line": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "code"
+        ],
+        "title": "EvidenceStep",
+        "description": "One numbered line of a behavior finding's source -> sink chain (Part 8)."
       },
       "Explanation": {
         "properties": {
@@ -2555,6 +3012,116 @@
           "text"
         ],
         "title": "Heading"
+      },
+      "IngestItem": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 8192,
+            "title": "Url",
+            "description": "http(s) URL, <= 2,048 characters"
+          },
+          "source_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "IngestItem"
+      },
+      "IngestRequest": {
+        "properties": {
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/IngestItem"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Urls"
+          },
+          "source": {
+            "type": "string",
+            "const": "threatradar_push",
+            "title": "Source",
+            "default": "threatradar_push"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "urls"
+        ],
+        "title": "IngestRequest",
+        "description": "Body of ``POST /api/v1/ingest``.",
+        "examples": [
+          {
+            "source": "threatradar_push",
+            "urls": [
+              {
+                "source_ref": {
+                  "channel": "lk_deals",
+                  "message_id": 4521
+                },
+                "url": "https://paypa1-secure-login.com/verify"
+              },
+              {
+                "source_ref": {
+                  "post_id": "1abcde",
+                  "subreddit": "CryptoScams"
+                },
+                "url": "https://usdt-double.xyz/"
+              }
+            ]
+          }
+        ]
+      },
+      "IngestResponse": {
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "title": "Accepted"
+          },
+          "duplicates": {
+            "type": "integer",
+            "title": "Duplicates"
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/RejectedUrl"
+            },
+            "type": "array",
+            "title": "Rejected"
+          },
+          "job_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Job Ids"
+          },
+          "queue_depth": {
+            "type": "integer",
+            "title": "Queue Depth",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "accepted",
+          "duplicates"
+        ],
+        "title": "IngestResponse",
+        "description": "202: the URLs are queued; results appear in /api/v1/scans and the live feed."
       },
       "InlineScript": {
         "properties": {
@@ -3951,6 +4518,156 @@
         "title": "ReadyResponse",
         "description": "``GET /ready``: are the models loaded (and which)."
       },
+      "RejectedUrl": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "index",
+          "url",
+          "reason"
+        ],
+        "title": "RejectedUrl"
+      },
+      "ScanList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScanSummary"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "ScanList"
+      },
+      "ScanSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "final_domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Domain"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "threat_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threat Class"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "user",
+              "threatradar_push",
+              "threatradar_pull",
+              "api"
+            ],
+            "title": "Source"
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo",
+            "default": false
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "status",
+          "source",
+          "created_at"
+        ],
+        "title": "ScanSummary",
+        "description": "One row of ``GET /api/v1/scans`` (and the live feed event)."
+      },
       "ScriptInfo": {
         "properties": {
           "index": {
@@ -4083,6 +4800,29 @@
         ],
         "title": "ScriptInfo",
         "description": "One analysed piece of JavaScript (an inline script, a handler or a javascript: URL)."
+      },
+      "SeriesPoint": {
+        "properties": {
+          "t": {
+            "type": "string",
+            "title": "T"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "flagged": {
+            "type": "integer",
+            "title": "Flagged"
+          }
+        },
+        "type": "object",
+        "required": [
+          "t",
+          "total",
+          "flagged"
+        ],
+        "title": "SeriesPoint"
       },
       "SinkHit": {
         "properties": {
@@ -4283,6 +5023,205 @@
         ],
         "title": "SourceHit",
         "description": "Sensitive data read by page-own code."
+      },
+      "SourceRef": {
+        "properties": {
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel"
+          },
+          "message_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Id"
+          },
+          "subreddit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subreddit"
+          },
+          "post_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Post Id"
+          },
+          "reasons": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasons"
+          }
+        },
+        "type": "object",
+        "title": "SourceRef",
+        "description": "Where ThreatRadar saw the URL (all optional, stored as given, shown to reviewers)."
+      },
+      "StatsOverview": {
+        "properties": {
+          "window": {
+            "type": "string",
+            "title": "Window"
+          },
+          "since": {
+            "type": "string",
+            "title": "Since"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "duplicates_skipped": {
+            "type": "integer",
+            "title": "Duplicates Skipped"
+          },
+          "by_verdict": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Verdict"
+          },
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Status"
+          },
+          "by_threat_class": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Threat Class"
+          },
+          "by_source": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Source"
+          },
+          "by_language": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Language"
+          },
+          "top_domains": {
+            "items": {
+              "$ref": "#/components/schemas/CountItem"
+            },
+            "type": "array",
+            "title": "Top Domains"
+          },
+          "top_brands": {
+            "items": {
+              "$ref": "#/components/schemas/CountItem"
+            },
+            "type": "array",
+            "title": "Top Brands"
+          },
+          "series_bucket": {
+            "type": "string",
+            "enum": [
+              "hour",
+              "day"
+            ],
+            "title": "Series Bucket"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPoint"
+            },
+            "type": "array",
+            "title": "Series"
+          },
+          "queue": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Queue"
+          },
+          "review": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Review"
+          },
+          "worker": {
+            "$ref": "#/components/schemas/WorkerStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window",
+          "since",
+          "generated_at",
+          "total",
+          "duplicates_skipped",
+          "by_verdict",
+          "by_status",
+          "by_threat_class",
+          "by_source",
+          "by_language",
+          "top_domains",
+          "top_brands",
+          "series_bucket",
+          "series",
+          "queue",
+          "review",
+          "worker"
+        ],
+        "title": "StatsOverview",
+        "description": "``GET /api/v1/stats/overview``."
       },
       "Stylesheet": {
         "properties": {
@@ -4613,6 +5552,81 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WorkerStatus": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "running": {
+            "type": "boolean",
+            "title": "Running"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "concurrency": {
+            "type": "integer",
+            "title": "Concurrency"
+          },
+          "jobs_per_second": {
+            "type": "number",
+            "title": "Jobs Per Second"
+          },
+          "in_flight": {
+            "type": "integer",
+            "title": "In Flight",
+            "default": 0
+          },
+          "processed": {
+            "type": "integer",
+            "title": "Processed",
+            "default": 0
+          },
+          "retried": {
+            "type": "integer",
+            "title": "Retried",
+            "default": 0
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed",
+            "default": 0
+          },
+          "last_finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Finished At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "running",
+          "state",
+          "concurrency",
+          "jobs_per_second"
+        ],
+        "title": "WorkerStatus"
       },
       "c2_analyzer__schemas__behavior__EvidenceItem": {
         "properties": {

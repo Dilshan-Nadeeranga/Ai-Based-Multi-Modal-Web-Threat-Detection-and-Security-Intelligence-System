@@ -125,6 +125,15 @@ class AnalysisInput(BaseModel):
     html_bytes: int | None = None
 
 
+class EvidenceStep(BaseModel):
+    """One numbered line of a behavior finding's source -> sink chain (Part 8)."""
+
+    kind: str  # flow_step / source / sink / detection / html / script
+    line: int | None = None
+    code: str  # PII-masked, tags stripped, <= 120 chars
+    note: str | None = None
+
+
 class AnalysisFinding(BaseModel):
     """One human-readable reason, ranked by severity."""
 
@@ -135,6 +144,9 @@ class AnalysisFinding(BaseModel):
     detail: str  # plain English
     evidence: str | None = None  # short PII-masked snippet or a URL domain, never raw HTML
     raises_verdict: bool = False  # an evidence-floor rule that fired
+    # Part 9 B-2 (dashboard): behavior findings carry their evidence chain (<= 8 steps,
+    # in order); empty for every other finding. Optional, so older clients are unaffected.
+    steps: list[EvidenceStep] = Field(default_factory=list)
 
 
 class ArmResult(BaseModel):

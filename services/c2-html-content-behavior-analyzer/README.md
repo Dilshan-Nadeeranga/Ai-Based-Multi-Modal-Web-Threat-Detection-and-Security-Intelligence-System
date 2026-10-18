@@ -26,7 +26,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 | 6 | XLM-R content classification (6A: page level) | `nlp/` | `train_xlmr.py`, `evaluate_xlmr.py` |
 | 7 | Static JavaScript intent analyzer | `js_analyzer/` | `analyze_js.py` |
 | 8 | Behavioral intent mapping (sources → sinks) | `behavior/` | `map_behavior.py` |
-| 9 | Tri-modal fusion + ablation (9A) · URL analysis engine + `/api/v1/analyze` (9B-1) | `fusion/`, `api/` | `run_ablation.py`, `calibrate_verdict.py`, `evaluate_verdict.py`, `export_openapi.py`, `run_api.py` |
+| 9 | Tri-modal fusion + ablation (9A) · URL analysis engine + `/api/v1/analyze` (9B-1) · ThreatRadar ingestion, results store, dashboard APIs (9B-2) | `fusion/`, `api/`, `ingest/`, `store/` | `run_ablation.py`, `calibrate_verdict.py`, `evaluate_verdict.py`, `export_openapi.py`, `run_api.py`, `pull_threatradar.py`, `review_live.py`, `demo_ingest.py` |
 
 ## Setup
 
@@ -707,6 +707,33 @@ v0.3 operating points (`reports/verdict/v0.3_operating_points.md`; flagged = Sus
 
 The evidence floor fired on 0 benign and 14 threat OOF pages and raised no verdict on v0.3 (the models already flag those pages) - it is a backstop for pages the models miss. Live engine = stored 9A test probabilities (max |Δp| ≤ 1e-6). Latency on this laptop (CPU, warm, html mode, 68 test pages): with XLM-R p50 586 ms / p95 1.3 s (model load 7.8 s), without XLM-R p50 202 ms / p95 1.0 s. A url-mode request adds the fetch time.
 
+## ThreatRadar ingestion & dashboard APIs
+
+Part 9 Batch B-2: **ThreatRadar pushes newly found URLs, C2 analyses them in the background and keeps the results for the team dashboard.** Teammate guide (exact request, retry rule, env vars, Node.js snippet): [`docs/threatradar_integration.md`](docs/threatradar_integration.md).
+
+```bash
+# .env: INGEST_API_KEY=<long random secret, shared with ThreatRadar>, INGEST_WORKER_ENABLED=true
+python scripts/run_api.py                                       # API + background worker
+curl -s -X POST http://127.0.0.1:8002/api/v1/ingest -H "Content-Type: application/json" \
+     -H "X-C2-Ingest-Key: <secret>" \
+     -d '{"source": "threatradar_push", "urls": [{"url": "https://x.example/", "source_ref": {"channel": "c", "message_id": 1}}]}'
+curl -s "http://127.0.0.1:8002/api/v1/scans?verdict=Malicious&limit=20"
+curl -s "http://127.0.0.1:8002/api/v1/stats/overview?window=24h"
+
+python scripts/pull_threatradar.py --dir ..\..\ingestion\threat-radar\backend\data   # daily backup pull
+python scripts/review_live.py review --reviewer <name>          # confirm / relabel / reject high-risk results
+python scripts/review_live.py export                            # -> data/feeds/live_review_urls.csv (manual-feed format)
+python scripts/demo_ingest.py [--count 20 --no-xlmr | --clear]  # demo history from the v0.3 test pages
+```
+
+- **Push → queue → worker.** `POST /api/v1/ingest` (≤ 500 URLs, `X-C2-Ingest-Key` checked in constant time; no key configured → 503) validates each URL (http/https, ≤ 2,048 chars; allow-listed sites from `threatradar_rules.yaml` skipped), queues it and answers **202** at once. A bad URL is listed in `rejected` and does not fail the batch. The **worker** is an asyncio task inside the API process (it shares the loaded models: XLM-R is not loaded twice) and analyses the queue with the 9B-1 engine: 2 at a time, 1 job start/s, 45 s per job. Transient fetch errors (timeout, connection, 5xx, 429) are retried with exponential backoff (3 attempts), while 404 / SSRF refusals are final. Jobs left `running` by a crash are re-queued on start (the queue lives in SQLite, not in memory).
+- **Dedupe.** The same normalized URL analysed in the last 24 h (with a page verdict) or still queued → a `skipped_duplicate` job that reuses that result. The daily **pull** queues only URLs C2 has *never* seen (same Part 1 parsers as `collect.py import --feed threatradar`, no keyword rule needed).
+- **Results store** (`store/`, SQLite `data/c2_results.db`, git-ignored, WAL, schema migrations via `PRAGMA user_version`): `scan_jobs`, `scan_results` (full AnalysisResponse JSON, never HTML), `review_queue`. Users' `/api/v1/analyze` checks are stored too (source = the request's `source`); a storage error never fails `/analyze`.
+- **Never auto-trained on.** Malicious results, and Suspicious ones with risk ≥ 70 (`configs/ingest.yaml`), go to the review queue. Only labels a person **confirms** are exported, as `url,label,language_hint,source,notes` rows (Telegram / Reddit → `social_media_report`, otherwise `other`; notes carry the analysis id). They enter the dataset through the normal Part 1 pipeline. Feeding the model's own verdicts back as labels would turn its mistakes into "truth".
+- **Read APIs** (CORS from `CORS_ORIGINS`): `GET /api/v1/scans` (filters `source, verdict (none = no verdict), threat_class, since, q`, cursor pagination), `GET /api/v1/scans/{id}` (stored AnalysisResponse), `GET /api/v1/stats/overview?window=24h|7d|30d` (by verdict / status / class / source / language, top flagged domains + imitated brands, per-hour series (per day for 30d), queue, review queue, worker), `GET /api/v1/feed/stream` (Server-Sent Events, `event: scan` per finished scan), `GET /api/v1/research/summary` (dataset, ablation rows with bootstrap CIs, operating points, model versions, read from existing reports only). **Every URL / domain is defanged** (`hxxps://example[.]com`) and no page HTML ever leaves C2.
+
+Demo on this laptop (`demo_ingest.py`, 68 v0.3 test pages, 4 arms, 53 s): 28 Legitimate / 14 Suspicious / 26 Malicious, 32 items in the review queue.
+
 ## API
 
 | Method | Path | Status |
@@ -720,6 +747,11 @@ The evidence floor fired on 0 benign and 14 threat OOF pages and raised no verdi
 | POST | `/api/v1/text-prediction` | ✅ Part 6A: same body → `TextPrediction` (Part 2 → 5A page_text → fine-tuned XLM-R + TF-IDF baseline: predicted class + probability per class, XLM-R token count / truncation). A model not trained yet answers `available: false` + "model not available" (still 200) |
 | POST | `/api/v1/behavior` | ✅ Part 8: same body → `BehaviorResult` (sources, sinks, flows with evidence chains, findings with severity and message, beh_v1 intent vector, risk score). Runs Part 2 + 7 + 8; nothing is executed or downloaded |
 | POST | `/api/v1/analyze` | ✅ Part 9 B-1: `{"url": ...}` (C2 fetches safely) or `{"html": ..., "url"?: ...}` → `AnalysisResponse` (`c2.analysis.v1`: verdict, threat class, risk score, findings, modalities, explanation). See **Analyze API** above |
+| POST | `/api/v1/ingest` | ✅ Part 9 B-2: ThreatRadar push (`X-C2-Ingest-Key`), ≤ 500 URLs → 202 `{accepted, duplicates, rejected[], job_ids}`. See **ThreatRadar ingestion** above |
+| GET | `/api/v1/scans`, `/api/v1/scans/{id}` | ✅ Part 9 B-2: scan history (filters, cursor pagination) / one stored analysis, URLs defanged |
+| GET | `/api/v1/stats/overview` | ✅ Part 9 B-2: dashboard numbers for `window=24h\|7d\|30d` |
+| GET | `/api/v1/feed/stream` | ✅ Part 9 B-2: live feed (Server-Sent Events) |
+| GET | `/api/v1/research/summary` | ✅ Part 9 B-2: research-page numbers read from the existing reports |
 | POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}`; the gateway should switch to `/api/v1/analyze` (Batch B-2) |
 | GET | `/api/v1/dev/...`, `/inspector` | developer only – see below (404 unless `APP_ENV=development`) |
 
@@ -775,6 +807,7 @@ data/
   raw/<label>/      collected HTML (git-ignored)
   metadata/         dataset_schema.json, manual_urls_template.csv, manifests/ (tracked); metadata.csv, candidates.csv, review/ (git-ignored)
   feeds/            downloaded feed files (git-ignored)
+  c2_results.db     Part 9 B-2 scan history + queue + review queue (SQLite, git-ignored)
   tmp/              pages being saved by the collector (git-ignored, emptied automatically)
   interim/          after dedup (git-ignored)
   processed/        parsed_html/<version>/ (Part 2 JSON + TXT), dom_features, text, js, behavior (git-ignored)

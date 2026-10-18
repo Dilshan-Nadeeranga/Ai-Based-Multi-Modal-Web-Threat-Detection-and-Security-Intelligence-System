@@ -377,6 +377,7 @@ class ThreatRadarRow:
     fields: dict[str, str]  # THREATRADAR_FIELDS read by the keyword rules ("url" added later)
     context: str  # "channel @x message_id=12" - goes into the notes
     mimic_brand: str | None = None  # ThreatRadar's brand_mimicry reason (domain filter)
+    ref: dict = field(default_factory=dict)  # channel / message_id / subreddit / ... (Part 9B-2)
 
 
 @dataclass
@@ -429,6 +430,7 @@ def _telegram_rows(path: Path) -> Iterator[ThreatRadarRow]:
             day=_parse_day(row.get("date")),
             fields={"channel": channel},
             context=f"channel @{channel or '?'} message_id={row.get('message_id') or '?'}",
+            ref=_ref(channel=channel, message_id=row.get("message_id")),
         )
 
 
@@ -442,6 +444,7 @@ def _reddit_rows(path: Path) -> Iterator[ThreatRadarRow]:
             day=_parse_day(row.get("date")),
             fields={"title": row.get("title", "")},
             context=f"r/{row.get('subreddit') or '?'} post_id={row.get('post_id') or '?'}",
+            ref=_ref(subreddit=row.get("subreddit"), post_id=row.get("post_id")),
         )
 
 
@@ -467,7 +470,13 @@ def _domain_filter_rows(path: Path) -> Iterator[ThreatRadarRow]:
             fields={"matched_keywords": keywords},
             context=f"{path.name} reasons={','.join(reasons) or '?'}",
             mimic_brand=mimic,
+            ref=_ref(reasons=reasons or None),
         )
+
+
+def _ref(**values) -> dict:
+    """Non-empty source facts of a row (what the Part 9B-2 pull stores as source_ref)."""
+    return {key: value for key, value in values.items() if value}
 
 
 _ROW_READERS = {
@@ -533,10 +542,27 @@ def import_threatradar(
 
     result = ThreatRadarImport()
     seen = {normalize_url(url) for url in known_urls if url}
+    for row, file_name, metadata_source in read_threatradar_rows(data_dir, sources, rules, result):
+        _consider(row, file_name, metadata_source, since, limit, seen, rules, result)
+    return result
+
+
+def read_threatradar_rows(
+    data_dir: Path,
+    sources: Iterable[str],
+    rules: ThreatRadarRules,
+    result: ThreatRadarImport,
+) -> Iterator[tuple[ThreatRadarRow, str, str]]:
+    """Every row of the ThreatRadar outputs: (row, file name, metadata source).
+
+    Shared by the dataset import above and the Part 9B-2 backup pull. Missing files go to
+    ``result.missing_files``, unreadable ones to ``result.rejected``; ``result.read``
+    counts rows per source. Nothing is filtered here.
+    """
     for source in sources:
         spec = rules.sources[source]
         for pattern in spec["files"]:
-            paths = sorted(data_dir.glob(pattern))
+            paths = sorted(Path(data_dir).glob(pattern))
             if not paths:
                 result.missing_files.append(f"{source}: {pattern}")
             for path in paths:
@@ -547,8 +573,7 @@ def import_threatradar(
                     continue
                 for row in rows:
                     result.read[source] += 1
-                    _consider(row, path.name, spec["source"], since, limit, seen, rules, result)
-    return result
+                    yield row, path.name, spec["source"]
 
 
 def _consider(

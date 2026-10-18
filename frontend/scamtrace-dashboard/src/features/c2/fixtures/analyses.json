@@ -1,0 +1,951 @@
+{
+ "benign_sinhala": {
+  "analysis_id": "1e5e98c380f74fa59eb41d3ff5e17791",
+  "request_id": "c2_benign_000118",
+  "schema_version": "c2.analysis.v1",
+  "analyzed_at": "2026-10-18T08:01:42.558044+05:30",
+  "source": "user",
+  "cached": false,
+  "input": {
+   "mode": "html",
+   "submitted_url": "hxxps://www[.]lankadeepa[.]lk/latest_news/%E0%B6%A2%E0%B7%80%E0%B6%B4-%E0%B6%AF%E0%B7%85%E0%B6%AF-%E0%B6%B8%E0%B6%BD%E0%B6%9C%E0%B7%80%E0%B6%A7-%E0%B6%B6%E0%B6%B8%E0%B6%B6-%E0%B6%9C%E0%B7%84%E0%B7%80-%E0%B6%B1/1-699130",
+   "final_url": null,
+   "redirect_hosts": [],
+   "http_status": null,
+   "content_type": null,
+   "html_bytes": 90928
+  },
+  "status": "ok",
+  "status_reason": null,
+  "verdict": "Legitimate",
+  "threat_class": "benign",
+  "risk_score": 14,
+  "class_probabilities": {
+   "benign": 0.861264,
+   "phishing": 0.037999,
+   "fake_ecommerce": 0.045715,
+   "crypto_scam": 0.024265,
+   "malware_delivery": 0.030757
+  },
+  "page_language": "si",
+  "findings": [
+   {
+    "id": "behavior.anti_analysis.several",
+    "modality": "behavior",
+    "severity": "medium",
+    "title": "Anti-analysis",
+    "detail": "Anti-analysis (2 techniques): right-click blocked, text selection blocked.",
+    "evidence": "document.addEventListener('contextmenu', function(event) { event.preventDefault(); })",
+    "raises_verdict": false,
+    "steps": [
+     {
+      "kind": "detection",
+      "line": 3,
+      "code": "document.addEventListener('contextmenu', function(event) { event.preventDefault(); })",
+      "note": "contextmenu_listener"
+     },
+     {
+      "kind": "detection",
+      "line": 13,
+      "code": "document.addEventListener('selectstart', function(event) { event.preventDefault(); })",
+      "note": "selection"
+     }
+    ]
+   },
+   {
+    "id": "dom.form_action_empty_or_js",
+    "modality": "dom",
+    "severity": "medium",
+    "title": "1 form(s) with an empty, '#' or javascript: action",
+    "detail": "Forms whose action is empty, \"#\" or javascript: - the data is handled by JavaScript (often sent elsewhere) instead of a visible target.",
+    "evidence": null,
+    "raises_verdict": false,
+    "steps": []
+   },
+   {
+    "id": "fusion.verdict",
+    "modality": "fusion",
+    "severity": "info",
+    "title": "Fused models: Legitimate (benign 86%)",
+    "detail": "4 model arm(s) combined; P(benign) = 0.86 (Malicious below 0.18, Suspicious below 0.51).",
+    "evidence": null,
+    "raises_verdict": false,
+    "steps": []
+   }
+  ],
+  "findings_total": 3,
+  "findings_omitted": 0,
+  "modalities": {
+   "dom": {
+    "status": "ok",
+    "reason": null,
+    "summary": "1 structural finding(s) (0 high); DOM model: benign 77%",
+    "top_evidence": [
+     "1 form(s) with an empty, '#' or javascript: action"
+    ],
+    "arms": [
+     {
+      "arm": "dom",
+      "display": "DOM-only",
+      "status": "ok",
+      "reason": null,
+      "predicted": "benign",
+      "probabilities": {
+       "benign": 0.772447,
+       "phishing": 0.058142,
+       "fake_ecommerce": 0.066832,
+       "crypto_scam": 0.041741,
+       "malware_delivery": 0.060838
+      },
+      "fusion_weight": 0.1
+     }
+    ]
+   },
+   "content": {
+    "status": "ok",
+    "reason": null,
+    "summary": "language si (79%); 2997 chars of model text; Text TF-IDF: benign 91%; Text XLM-R: benign 86%; Text XLM-R input truncated (975 tokens)",
+    "top_evidence": [],
+    "arms": [
+     {
+      "arm": "text_tfidf",
+      "display": "Text TF-IDF",
+      "status": "ok",
+      "reason": null,
+      "predicted": "benign",
+      "probabilities": {
+       "benign": 0.905278,
+       "phishing": 0.02737,
+       "fake_ecommerce": 0.015674,
+       "crypto_scam": 0.031261,
+       "malware_delivery": 0.020417
+      },
+      "fusion_weight": 0.2
+     },
+     {
+      "arm": "text_xlmr",
+      "display": "Text XLM-R",
+      "status": "ok",
+      "reason": null,
+      "predicted": "benign",
+      "probabilities": {
+       "benign": 0.861402,
+       "phishing": 0.019276,
+       "fake_ecommerce": 0.071139,
+       "crypto_scam": 0.023416,
+       "malware_delivery": 0.024767
+      },
+      "fusion_weight": 0.4
+     }
+    ]
+   },
+   "behavior": {
+    "status": "ok",
+    "reason": null,
+    "summary": "47 script(s), 2 source->sink flow(s), 1 finding(s); behavior risk 10; behavior model: benign 86%",
+    "top_evidence": [
+     "Anti-analysis (2 techniques): right-click blocked, text selection blocked."
+    ],
+    "arms": [
+     {
+      "arm": "behavior",
+      "display": "Behavior-only",
+      "status": "ok",
+      "reason": null,
+      "predicted": "benign",
+      "probabilities": {
+       "benign": 0.861341,
+       "phishing": 0.063335,
+       "fake_ecommerce": 0.024804,
+       "crypto_scam": 0.014909,
+       "malware_delivery": 0.035611
+      },
+      "fusion_weight": 0.3
+     }
+    ]
+   }
+  },
+  "explanation": {
+   "verdict_source": "fusion",
+   "explained_class": "benign",
+   "method": "renormalized late-fusion weight x arm probability",
+   "arm_contributions": {
+    "dom": 0.0772,
+    "behavior": 0.2584,
+    "text_tfidf": 0.1811,
+    "text_xlmr": 0.3446
+   },
+   "driving_arm": "text_xlmr",
+   "top_features": [
+    {
+     "arm": "behavior",
+     "feature": "library_script_count",
+     "value": 3.0,
+     "contribution": 0.08426963303566046,
+     "text": "library_script_count = 3 pushes towards benign"
+    },
+    {
+     "arm": "behavior",
+     "feature": "external_script_count",
+     "value": 33.0,
+     "contribution": 0.08166721878213241,
+     "text": "Number of references [external_script_count] = 33 pushes towards benign"
+    },
+    {
+     "arm": "behavior",
+     "feature": "inline_script_count",
+     "value": 48.0,
+     "contribution": 0.07822445726229034,
+     "text": "Number of inline blocks with code (J... [inline_script_count] = 48 pushes towards benign"
+    },
+    {
+     "arm": "dom",
+     "feature": "internal_link_count",
+     "value": 70.0,
+     "contribution": 0.19481048268973936,
+     "text": "Web links to the page's own registrable domai... [internal_link_count] = 70 pushes towards benign"
+    },
+    {
+     "arm": "dom",
+     "feature": "link_count",
+     "value": 122.0,
+     "contribution": 0.0762605416504394,
+     "text": "Number of links [link_count] = 122 pushes towards benign"
+    }
+   ],
+   "evidence_floor_rules": [],
+   "arms_used": [
+    "dom",
+    "behavior",
+    "text_tfidf",
+    "text_xlmr"
+   ],
+   "thresholds": {
+    "arms": "dom+behavior+text_tfidf+text_xlmr",
+    "malicious_below_p_benign": 0.182466,
+    "suspicious_below_p_benign": 0.511482,
+    "malicious_min_risk": 82,
+    "suspicious_min_risk": 49
+   }
+  },
+  "degraded": false,
+  "warnings": [
+   "Sinhala page: the text models have limited Sinhala training data - rely more on the DOM and behavior evidence."
+  ],
+  "model_versions": {
+   "analyzer": "0.1.0",
+   "schema": "c2.analysis.v1",
+   "dataset": "v0.3",
+   "dom": "random_forest@2026-10-14T23:47:12+05:30",
+   "behavior": "random_forest@2026-10-15T06:55:21+05:30",
+   "text_tfidf": "tfidf_logreg@2026-10-16T20:04:02+05:30",
+   "text_xlmr": "xlm-roberta-base fine-tuned (seed 43)",
+   "fusion": "weighted@2026-10-16T23:19:15+05:30",
+   "verdict_thresholds": "2026-10-17T21:04:36+05:30"
+  },
+  "timings_ms": {
+   "preprocess": 50.1,
+   "quality": 20.1,
+   "dom_features": 12.2,
+   "dom_model": 202.4,
+   "content": 67.7,
+   "text_models": 398.1,
+   "js_analysis": 21.6,
+   "behavior": 19.8,
+   "behavior_model": 31.6,
+   "fusion": 0.1,
+   "total": 825.1
+  }
+ },
+ "phishing_zimbra": {
+  "analysis_id": "d0b53c80f9ee4571a5cce2ad770d3e36",
+  "request_id": "c2_phishing_000081",
+  "schema_version": "c2.analysis.v1",
+  "analyzed_at": "2026-10-18T08:01:42.943471+05:30",
+  "source": "user",
+  "cached": false,
+  "input": {
+   "mode": "html",
+   "submitted_url": "hxxps://it-corp[.]netlify[.]app/",
+   "final_url": null,
+   "redirect_hosts": [],
+   "http_status": null,
+   "content_type": null,
+   "html_bytes": 25071
+  },
+  "status": "ok",
+  "status_reason": null,
+  "verdict": "Malicious",
+  "threat_class": "phishing",
+  "risk_score": 94,
+  "class_probabilities": {
+   "benign": 0.063966,
+   "phishing": 0.817016,
+   "fake_ecommerce": 0.038506,
+   "crypto_scam": 0.034447,
+   "malware_delivery": 0.046066
+  },
+  "page_language": "en",
+  "findings": [
+   {
+    "id": "dom.form_action_to_known_form_service",
+    "modality": "dom",
+    "severity": "high",
+    "title": "Form posts to form-collection service submit-form[.]com",
+    "detail": "A form posts to a free form-to-email service (submit-form[.]com, formspree, getform, ...), a common phishing-kit shortcut.",
+    "evidence": "submit-form[.]com",
+    "raises_verdict": true,
+    "steps": []
+   },
+   {
+    "id": "dom.password_form_external_action",
+    "modality": "dom",
+    "severity": "high",
+    "title": "Password form submits to external domain submit-form[.]com",
+    "detail": "A form containing a password field submits to an external domain - one of the strongest structural phishing signals.",
+    "evidence": "submit-form[.]com",
+    "raises_verdict": true,
+    "steps": []
+   },
+   {
+    "id": "dom.has_external_form_action",
+    "modality": "dom",
+    "severity": "high",
+    "title": "Form submits to an external domain (submit-form[.]com)",
+    "detail": "At least one form submits its data to another site.",
+    "evidence": "submit-form[.]com",
+    "raises_verdict": false,
+    "steps": []
+   },
+   {
+    "id": "fusion.verdict",
+    "modality": "fusion",
+    "severity": "high",
+    "title": "Fused models: Malicious (phishing 82%)",
+    "detail": "4 model arm(s) combined; P(benign) = 0.06 (Malicious below 0.18, Suspicious below 0.51).",
+    "evidence": null,
+    "raises_verdict": false,
+    "steps": []
+   },
+   {
+    "id": "dom.external_link_ratio",
+    "modality": "dom",
+    "severity": "medium",
+    "title": "100% of web links point to other domains (top zimbra[.]com)",
+    "detail": "External web links divided by all web links (internal + external).",
+    "evidence": "zimbra[.]com",
+    "raises_verdict": false,
+    "steps": []
+   },
+   {
+    "id": "dom.sensitive_field_count",
+    "modality": "dom",
+    "severity": "medium",
+    "title": "1 field(s) ask for secrets (password, OTP/PIN, card)",
+    "detail": "Fields for secrets that a scammer can use directly - password + OTP/PIN + card fields.",
+    "evidence": null,
+    "raises_verdict": false,
+    "steps": []
+   },
+   {
+    "id": "content.text_model",
+    "modality": "content",
+    "severity": "medium",
+    "title": "Page text reads like a phishing page",
+    "detail": "The multilingual text models classify the visible text as a threat (Text TF-IDF 86% phishing, Text XLM-R 84% phishing).",
+    "evidence": "Zimbra Web Client Sign In",
+    "raises_verdict": false,
+    "steps": []
+   },
+   {
+    "id": "behavior.credential_access.read",
+    "modality": "behavior",
+    "severity": "low",
+    "title": "Credential access",
+    "detail": "Page code reads 18 credential field value(s) (loginForm.username, #username, getElement(\"newPassword\"), oldPasswordInput and 2 more).",
+    "evidence": "loginForm.username.value",
+    "raises_verdict": false,
+    "steps": [
+     {
+      "kind": "source",
+      "line": 233,
+      "code": "loginForm.username.value",
+      "note": "credential_input: loginForm.username (credential-like name)"
+     },
+     {
+      "kind": "source",
+      "line": 257,
+      "code": "getElement(\"username\").value",
+      "note": "credential_input: #username = username field"
+     },
+     {
+      "kind": "source",
+      "line": 380,
+      "code": "getElement(\"newPassword\").value",
+      "note": "credential_input: getElement(\"newPassword\") (credential-like name)"
+     },
+     {
+      "kind": "source",
+      "line": 416,
+      "code": "oldPasswordInput.value",
+      "note": "credential_input: oldPasswordInput (credential-like name)"
+     },
+     {
+      "kind": "source",
+      "line": 500,
+      "code": "newPasswordInput.value",
+      "note": "credential_input: newPasswordInput (credential-like name)"
+     },
+     {
+      "kind": "source",
+      "line": 562,
+      "code": "newPasswordInput.value",
+      "note": "credential_input: newPasswordInput (credential-like name)"
+     }
+    ]
+   }
+  ],
+  "findings_total": 8,
+  "findings_omitted": 0,
+  "modalities": {
+   "dom": {
+    "status": "ok",
+    "reason": null,
+    "summary": "5 structural finding(s) (3 high); DOM model: phishing 82%",
+    "top_evidence": [
+     "Form submits to an external domain (submit-form[.]com)",
+     "Password form submits to external domain submit-form[.]com",
+     "Form posts to form-collection service submit-form[.]com"
+    ],
+    "arms": [
+     {
+      "arm": "dom",
+      "display": "DOM-only",
+      "status": "ok",
+      "reason": null,
+      "predicted": "phishing",
+      "probabilities": {
+       "benign": 0.039107,
+       "phishing": 0.824289,
+       "fake_ecommerce": 0.045251,
+       "crypto_scam": 0.013037,
+       "malware_delivery": 0.078317
+      },
+      "fusion_weight": 0.1
+     }
+    ]
+   },
+   "content": {
+    "status": "ok",
+    "reason": null,
+    "summary": "language en (85%); 1408 chars of model text; Text TF-IDF: phishing 86%; Text XLM-R: phishing 84%",
+    "top_evidence": [
+     "Zimbra Web Client Sign In"
+    ],
+    "arms": [
+     {
+      "arm": "text_tfidf",
+      "display": "Text TF-IDF",
+      "status": "ok",
+      "reason": null,
+      "predicted": "phishing",
+      "probabilities": {
+       "benign": 0.069193,
+       "phishing": 0.860943,
+       "fake_ecommerce": 0.027239,
+       "crypto_scam": 0.024039,
+       "malware_delivery": 0.018586
+      },
+      "fusion_weight": 0.2
+     },
+     {
+      "arm": "text_xlmr",
+      "display": "Text XLM-R",
+      "status": "ok",
+      "reason": null,
+      "predicted": "phishing",
+      "probabilities": {
+       "benign": 0.055097,
+       "phishing": 0.838187,
+       "fake_ecommerce": 0.030663,
+       "crypto_scam": 0.020332,
+       "malware_delivery": 0.055721
+      },
+      "fusion_weight": 0.4
+     }
+    ]
+   },
+   "behavior": {
+    "status": "ok",
+    "reason": null,
+    "summary": "7 script(s), 3 source->sink flow(s), 1 finding(s); behavior risk 3; behavior model: phishing 76%",
+    "top_evidence": [
+     "Page code reads 18 credential field value(s) (loginForm.username, #username, getElement(\"newPassword\"), oldPasswordInput and 2 more)."
+    ],
+    "arms": [
+     {
+      "arm": "behavior",
+      "display": "Behavior-only",
+      "status": "ok",
+      "reason": null,
+      "predicted": "phishing",
+      "probabilities": {
+       "benign": 0.080592,
+       "phishing": 0.757078,
+       "fake_ecommerce": 0.054225,
+       "crypto_scam": 0.067343,
+       "malware_delivery": 0.040763
+      },
+      "fusion_weight": 0.3
+     }
+    ]
+   }
+  },
+  "explanation": {
+   "verdict_source": "fusion",
+   "explained_class": "phishing",
+   "method": "renormalized late-fusion weight x arm probability",
+   "arm_contributions": {
+    "dom": 0.0824,
+    "behavior": 0.2271,
+    "text_tfidf": 0.1722,
+    "text_xlmr": 0.3353
+   },
+   "driving_arm": "text_xlmr",
+   "top_features": [
+    {
+     "arm": "behavior",
+     "feature": "external_script_count",
+     "value": 0.0,
+     "contribution": 0.058708404204896404,
+     "text": "Number of references [external_script_count] = 0 pushes towards phishing"
+    },
+    {
+     "arm": "behavior",
+     "feature": "credential_access_count",
+     "value": 18.0,
+     "contribution": 0.052360898745671666,
+     "text": "credential_access_count = 18 pushes towards phishing"
+    },
+    {
+     "arm": "behavior",
+     "feature": "inline_script_count",
+     "value": 1.0,
+     "contribution": 0.050133989456143474,
+     "text": "Number of inline blocks with code (J... [inline_script_count] = 1 pushes towards phishing"
+    },
+    {
+     "arm": "dom",
+     "feature": "internal_link_count",
+     "value": 0.0,
+     "contribution": 0.14382968838190047,
+     "text": "Web links to the page's own registrable domai... [internal_link_count] = 0 pushes towards phishing"
+    },
+    {
+     "arm": "dom",
+     "feature": "inputs_total",
+     "value": 6.0,
+     "contribution": 0.07377267643289946,
+     "text": "All input/select/textarea fields, inside or o... [inputs_total] = 6 pushes towards phishing"
+    }
+   ],
+   "evidence_floor_rules": [
+    "dom.password_form_external_action",
+    "dom.password_form_to_form_service"
+   ],
+   "arms_used": [
+    "dom",
+    "behavior",
+    "text_tfidf",
+    "text_xlmr"
+   ],
+   "thresholds": {
+    "arms": "dom+behavior+text_tfidf+text_xlmr",
+    "malicious_below_p_benign": 0.182466,
+    "suspicious_below_p_benign": 0.511482,
+    "malicious_min_risk": 82,
+    "suspicious_min_risk": 49
+   }
+  },
+  "degraded": false,
+  "warnings": [],
+  "model_versions": {
+   "analyzer": "0.1.0",
+   "schema": "c2.analysis.v1",
+   "dataset": "v0.3",
+   "dom": "random_forest@2026-10-14T23:47:12+05:30",
+   "behavior": "random_forest@2026-10-15T06:55:21+05:30",
+   "text_tfidf": "tfidf_logreg@2026-10-16T20:04:02+05:30",
+   "text_xlmr": "xlm-roberta-base fine-tuned (seed 43)",
+   "fusion": "weighted@2026-10-16T23:19:15+05:30",
+   "verdict_thresholds": "2026-10-17T21:04:36+05:30"
+  },
+  "timings_ms": {
+   "preprocess": 5.0,
+   "quality": 3.3,
+   "dom_features": 2.5,
+   "dom_model": 30.6,
+   "content": 4.8,
+   "text_models": 246.2,
+   "js_analysis": 9.8,
+   "behavior": 28.7,
+   "behavior_model": 30.7,
+   "fusion": 0.1,
+   "total": 362.7
+  }
+ },
+ "crypto_scam": {
+  "analysis_id": "1465fc0e77224975872ea927dcde9a85",
+  "request_id": "c2_crypto_scam_000011",
+  "schema_version": "c2.analysis.v1",
+  "analyzed_at": "2026-10-18T08:01:43.777722+05:30",
+  "source": "user",
+  "cached": false,
+  "input": {
+   "mode": "html",
+   "submitted_url": "hxxps://digitalapexminingtech[.]com/",
+   "final_url": null,
+   "redirect_hosts": [],
+   "http_status": null,
+   "content_type": null,
+   "html_bytes": 75306
+  },
+  "status": "ok",
+  "status_reason": null,
+  "verdict": "Malicious",
+  "threat_class": "crypto_scam",
+  "risk_score": 86,
+  "class_probabilities": {
+   "benign": 0.135778,
+   "phishing": 0.131289,
+   "fake_ecommerce": 0.0512,
+   "crypto_scam": 0.622122,
+   "malware_delivery": 0.059611
+  },
+  "page_language": "en",
+  "findings": [
+   {
+    "id": "fusion.verdict",
+    "modality": "fusion",
+    "severity": "high",
+    "title": "Fused models: Malicious (crypto_scam 62%)",
+    "detail": "4 model arm(s) combined; P(benign) = 0.14 (Malicious below 0.18, Suspicious below 0.51).",
+    "evidence": null,
+    "raises_verdict": false,
+    "steps": []
+   },
+   {
+    "id": "dom.inputs_outside_forms_count",
+    "modality": "dom",
+    "severity": "medium",
+    "title": "1 input field(s) outside any form (data likely sent by JavaScript)",
+    "detail": "Fields not inside any form - typical of kits that collect data with JavaScript instead of a normal form submit.",
+    "evidence": null,
+    "raises_verdict": false,
+    "steps": []
+   },
+   {
+    "id": "dom.javascript_url_count",
+    "modality": "dom",
+    "severity": "medium",
+    "title": "1 javascript: URL(s)",
+    "detail": "Links/actions using javascript: URLs - clicks that run code instead of navigating.",
+    "evidence": null,
+    "raises_verdict": false,
+    "steps": []
+   },
+   {
+    "id": "content.text_model",
+    "modality": "content",
+    "severity": "medium",
+    "title": "Page text reads like a crypto_scam page",
+    "detail": "The multilingual text models classify the visible text as a threat (Text TF-IDF 87% crypto_scam, Text XLM-R 92% crypto_scam).",
+    "evidence": "Digital Apex | Your trading journey starts here",
+    "raises_verdict": false,
+    "steps": []
+   },
+   {
+    "id": "content.urgency",
+    "modality": "content",
+    "severity": "low",
+    "title": "Urgent / alarming wording",
+    "detail": "1 text segment(s) pressure the visitor (deadline, suspension, warning) - a common scam tactic.",
+    "evidence": "Our KYC verification and Google Authenticator features fortify your account against unauthorized access. Trust in our platform to protect your digital holdings…",
+    "raises_verdict": false,
+    "steps": []
+   }
+  ],
+  "findings_total": 5,
+  "findings_omitted": 0,
+  "modalities": {
+   "dom": {
+    "status": "ok",
+    "reason": null,
+    "summary": "2 structural finding(s) (0 high); DOM model: phishing 38%",
+    "top_evidence": [
+     "1 input field(s) outside any form (data likely sent by JavaScript)",
+     "1 javascript: URL(s)"
+    ],
+    "arms": [
+     {
+      "arm": "dom",
+      "display": "DOM-only",
+      "status": "ok",
+      "reason": null,
+      "predicted": "phishing",
+      "probabilities": {
+       "benign": 0.142601,
+       "phishing": 0.376925,
+       "fake_ecommerce": 0.099281,
+       "crypto_scam": 0.211771,
+       "malware_delivery": 0.169421
+      },
+      "fusion_weight": 0.1
+     }
+    ]
+   },
+   "content": {
+    "status": "ok",
+    "reason": null,
+    "summary": "language en (84%); 2996 chars of model text; Text TF-IDF: crypto_scam 87%; Text XLM-R: crypto_scam 92%; Text XLM-R input truncated (725 tokens)",
+    "top_evidence": [
+     "Our KYC verification and Google Authenticator features fortify your account against unauthorized access. Trust in our platform to protect your digital holdings…",
+     "Digital Apex | Your trading journey starts here"
+    ],
+    "arms": [
+     {
+      "arm": "text_tfidf",
+      "display": "Text TF-IDF",
+      "status": "ok",
+      "reason": null,
+      "predicted": "crypto_scam",
+      "probabilities": {
+       "benign": 0.04584,
+       "phishing": 0.050224,
+       "fake_ecommerce": 0.022828,
+       "crypto_scam": 0.867971,
+       "malware_delivery": 0.013137
+      },
+      "fusion_weight": 0.2
+     },
+     {
+      "arm": "text_xlmr",
+      "display": "Text XLM-R",
+      "status": "ok",
+      "reason": null,
+      "predicted": "crypto_scam",
+      "probabilities": {
+       "benign": 0.033136,
+       "phishing": 0.023608,
+       "fake_ecommerce": 0.011795,
+       "crypto_scam": 0.919108,
+       "malware_delivery": 0.012353
+      },
+      "fusion_weight": 0.4
+     }
+    ]
+   },
+   "behavior": {
+    "status": "ok",
+    "reason": null,
+    "summary": "7 script(s), 0 source->sink flow(s), 0 finding(s); behavior risk 0; behavior model: benign 33%",
+    "top_evidence": [],
+    "arms": [
+     {
+      "arm": "behavior",
+      "display": "Behavior-only",
+      "status": "ok",
+      "reason": null,
+      "predicted": "benign",
+      "probabilities": {
+       "benign": 0.330317,
+       "phishing": 0.24703,
+       "fake_ecommerce": 0.106627,
+       "crypto_scam": 0.199026,
+       "malware_delivery": 0.117001
+      },
+      "fusion_weight": 0.3
+     }
+    ]
+   }
+  },
+  "explanation": {
+   "verdict_source": "fusion",
+   "explained_class": "crypto_scam",
+   "method": "renormalized late-fusion weight x arm probability",
+   "arm_contributions": {
+    "dom": 0.0212,
+    "behavior": 0.0597,
+    "text_tfidf": 0.1736,
+    "text_xlmr": 0.3676
+   },
+   "driving_arm": "text_xlmr",
+   "top_features": [
+    {
+     "arm": "behavior",
+     "feature": "page_own_js_chars",
+     "value": 13405.0,
+     "contribution": 0.03636235623075999,
+     "text": "page_own_js_chars = 13405 pushes towards benign"
+    },
+    {
+     "arm": "dom",
+     "feature": "internal_link_count",
+     "value": 19.0,
+     "contribution": 0.0821426078391097,
+     "text": "Web links to the page's own registrable domai... [internal_link_count] = 19 pushes towards phishing"
+    },
+    {
+     "arm": "behavior",
+     "feature": "library_script_count",
+     "value": 0.0,
+     "contribution": -0.02310519729940564,
+     "text": "library_script_count = 0 pushes away from benign"
+    },
+    {
+     "arm": "behavior",
+     "feature": "xhr_count",
+     "value": 4.0,
+     "contribution": 0.021639073475375165,
+     "text": "xhr_count = 4 pushes towards benign"
+    },
+    {
+     "arm": "dom",
+     "feature": "external_link_ratio",
+     "value": 0.3214,
+     "contribution": 0.040282986101456766,
+     "text": "External web links divided by all web links (... [external_link_ratio] = 0.3214 pushes towards phishing"
+    }
+   ],
+   "evidence_floor_rules": [],
+   "arms_used": [
+    "dom",
+    "behavior",
+    "text_tfidf",
+    "text_xlmr"
+   ],
+   "thresholds": {
+    "arms": "dom+behavior+text_tfidf+text_xlmr",
+    "malicious_below_p_benign": 0.182466,
+    "suspicious_below_p_benign": 0.511482,
+    "malicious_min_risk": 82,
+    "suspicious_min_risk": 49
+   }
+  },
+  "degraded": false,
+  "warnings": [],
+  "model_versions": {
+   "analyzer": "0.1.0",
+   "schema": "c2.analysis.v1",
+   "dataset": "v0.3",
+   "dom": "random_forest@2026-10-14T23:47:12+05:30",
+   "behavior": "random_forest@2026-10-15T06:55:21+05:30",
+   "text_tfidf": "tfidf_logreg@2026-10-16T20:04:02+05:30",
+   "text_xlmr": "xlm-roberta-base fine-tuned (seed 43)",
+   "fusion": "weighted@2026-10-16T23:19:15+05:30",
+   "verdict_thresholds": "2026-10-17T21:04:36+05:30"
+  },
+  "timings_ms": {
+   "preprocess": 184.4,
+   "quality": 11.5,
+   "dom_features": 9.7,
+   "dom_model": 26.9,
+   "content": 25.6,
+   "text_models": 353.5,
+   "js_analysis": 9.1,
+   "behavior": 11.5,
+   "behavior_model": 31.4,
+   "fusion": 0.1,
+   "total": 664.9
+  }
+ },
+ "unreachable": {
+  "analysis_id": "fb978989473d4082a3c1c0a79b09a9e5",
+  "request_id": null,
+  "schema_version": "c2.analysis.v1",
+  "analyzed_at": "2026-10-18T08:01:44.115384+05:30",
+  "source": "user",
+  "cached": false,
+  "input": {
+   "mode": "url",
+   "submitted_url": "hxxps://c2-demo-unreachable[.]invalid/login",
+   "final_url": null,
+   "redirect_hosts": [],
+   "http_status": null,
+   "content_type": null,
+   "html_bytes": null
+  },
+  "status": "unreachable",
+  "status_reason": "ConnectError: [Errno 11001] getaddrinfo failed",
+  "verdict": null,
+  "threat_class": null,
+  "risk_score": null,
+  "class_probabilities": {},
+  "page_language": null,
+  "findings": [
+   {
+    "id": "fetch.unreachable",
+    "modality": "fetch",
+    "severity": "info",
+    "title": "The page could not be fetched",
+    "detail": "ConnectError: [Errno 11001] getaddrinfo failed. Scam pages are often taken down quickly; no verdict is given for a page C2 could not see.",
+    "evidence": "c2-demo-unreachable[.]invalid",
+    "raises_verdict": false,
+    "steps": []
+   }
+  ],
+  "findings_total": 1,
+  "findings_omitted": 0,
+  "modalities": {
+   "dom": {
+    "status": "skipped",
+    "reason": "the page could not be fetched",
+    "summary": null,
+    "top_evidence": [],
+    "arms": []
+   },
+   "content": {
+    "status": "skipped",
+    "reason": "the page could not be fetched",
+    "summary": null,
+    "top_evidence": [],
+    "arms": []
+   },
+   "behavior": {
+    "status": "skipped",
+    "reason": "the page could not be fetched",
+    "summary": null,
+    "top_evidence": [],
+    "arms": []
+   }
+  },
+  "explanation": {
+   "verdict_source": "none",
+   "explained_class": null,
+   "method": null,
+   "arm_contributions": {},
+   "driving_arm": null,
+   "top_features": [],
+   "evidence_floor_rules": [],
+   "arms_used": [],
+   "thresholds": {}
+  },
+  "degraded": false,
+  "warnings": [],
+  "model_versions": {
+   "analyzer": "0.1.0",
+   "schema": "c2.analysis.v1",
+   "dataset": "v0.3",
+   "dom": "random_forest@2026-10-14T23:47:12+05:30",
+   "behavior": "random_forest@2026-10-15T06:55:21+05:30",
+   "text_tfidf": "tfidf_logreg@2026-10-16T20:04:02+05:30",
+   "text_xlmr": "xlm-roberta-base fine-tuned (seed 43)",
+   "fusion": "weighted@2026-10-16T23:19:15+05:30",
+   "verdict_thresholds": "2026-10-17T21:04:36+05:30"
+  },
+  "timings_ms": {
+   "fetch": 324.7,
+   "total": 324.8
+  }
+ }
+}

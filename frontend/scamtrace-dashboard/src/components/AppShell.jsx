@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   LogOut,
   Menu,
+  Radar,
   ScanSearch,
   ShieldCheck,
   UserRound,
@@ -19,6 +20,7 @@ import Logo from './Logo.jsx'
 const NAV_LINKS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { to: '/url-analyzer', label: 'Threat Analysis', icon: ScanSearch },
+  { to: '/c2', label: 'C2 · Content & Behavior', icon: Radar },
   { to: '/social-visual-analysis', label: 'Social Visual Analysis', icon: Images },
   { to: '/code-audit', label: 'Repository Audit', icon: Code, end: true },
   { to: '/history', label: 'History', icon: History },

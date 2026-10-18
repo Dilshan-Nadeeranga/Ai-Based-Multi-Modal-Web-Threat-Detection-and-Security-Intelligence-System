@@ -19,11 +19,13 @@ import re
 
 from c2_analyzer.content.extractor import content_rules, has_urgency
 from c2_analyzer.dom.dictionary import specs as dom_specs
-from c2_analyzer.schemas.analysis import SEVERITY_RANK, AnalysisFinding
+from c2_analyzer.schemas.analysis import SEVERITY_RANK, AnalysisFinding, EvidenceStep
 from c2_analyzer.schemas.behavior import BehaviorResult
 from c2_analyzer.schemas.content import PageText
 from c2_analyzer.schemas.dom import DomResult
 from c2_analyzer.utils.pii import mask_pii
+
+MAX_CHAIN_STEPS = 8  # evidence chain lines shown per behavior finding (dashboard)
 
 MODALITY_ORDER = {"fetch": 0, "behavior": 1, "dom": 2, "content": 3, "fusion": 4}
 TAG = re.compile(r"<[^>]{0,500}>")
@@ -89,6 +91,16 @@ def behavior_findings(
                 title=finding.name,
                 detail=safe_evidence(finding.message, 400) or finding.name,
                 evidence=evidence,
+                steps=[
+                    EvidenceStep(
+                        kind=item.kind,
+                        line=item.line,
+                        code=safe_evidence(item.code, 120) or "",
+                        note=safe_evidence(item.note, 80),
+                    )
+                    for item in finding.evidence[:MAX_CHAIN_STEPS]
+                    if item.code
+                ],
             )
         )
     return findings, keys

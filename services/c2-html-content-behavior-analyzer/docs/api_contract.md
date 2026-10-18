@@ -667,3 +667,11 @@ Response - no verdict for a page C2 could not see (not cached, a later retry fet
   `POST /api/v1/analyze` with `{"url": ...}` (Part 9 Batch B-2).
 - One worker process: the cache and rate limit are in memory (a shared store would be needed
   with several workers).
+
+## Addendum (Part 9 B-2): behavior evidence chain
+
+Every finding now has an optional `steps` list (empty except for `modality: "behavior"`): the
+Part 8 source → sink evidence chain, at most 8 entries `{kind, line, code, note}` in order
+(`kind` = source / sink / flow_step / detection / html / script; `code` is PII-masked, tags
+stripped, ≤ 120 chars). Older clients can ignore it; the team dashboard shows it as numbered steps.
+

@@ -7,6 +7,7 @@ import Logo from './Logo.jsx'
 const USER_LINKS = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/url-analyzer', label: 'Threat Analysis' },
+  { to: '/c2', label: 'C2 · Content & Behavior' },
   { to: '/social-visual-analysis', label: 'Social Visual Analysis' },
   { to: '/code-audit', label: 'Repository Audit', end: true },
   { to: '/history', label: 'History' },

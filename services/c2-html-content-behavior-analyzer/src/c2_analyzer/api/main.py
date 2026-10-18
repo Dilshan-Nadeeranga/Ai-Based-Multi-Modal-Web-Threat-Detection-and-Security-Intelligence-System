@@ -5,6 +5,9 @@ Part 9: Preliminary tri-modal output (fusion + FastAPI).
 ``create_app`` builds the app for one environment:
 - always: ``GET /health`` (liveness), ``GET /ready`` (models loaded + versions), the
   public part endpoints and ``POST /api/v1/analyze`` (Part 9 B-1);
+- always (Part 9 B-2): ``POST /api/v1/ingest`` (ThreatRadar, shared-secret header) and
+  the read APIs for the team frontend (scans, stats, live feed, research summary); the
+  background ingest worker starts with the app (warm-up on, INGEST_WORKER_ENABLED);
 - only when APP_ENV=development: the developer inspector (``/inspector``) and
   its ``/api/v1/dev/...`` endpoints. They are not registered at all otherwise,
   so a deployed service answers 404 for them (nothing to misconfigure later).
@@ -22,7 +25,8 @@ from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from c2_analyzer import __version__
-from c2_analyzer.api.dependencies import get_engine
+from c2_analyzer.api.dependencies import get_engine, get_worker
+from c2_analyzer.api.ingest_routes import router as ingest_router
 from c2_analyzer.api.routes import router
 from c2_analyzer.api.security import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from c2_analyzer.config import get_settings, load_yaml_config
@@ -38,9 +42,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Load tldextract's bundled suffix list now (~0.4 s), not inside the first request.
     domain_method()
     # Part 9 B-1: load every model once, in the background (GET /ready reports progress).
+    worker = None
     if app.state.warm_up:
         resolve_engine(app).start()
+        # Part 9 B-2: the ingest worker analyses queued ThreatRadar URLs in this process.
+        if get_settings().ingest_worker_enabled:
+            worker = app.dependency_overrides.get(get_worker, get_worker)()
+            await worker.start()
     yield
+    if worker is not None:
+        await worker.stop()
 
 
 def resolve_engine(app: FastAPI):
@@ -120,6 +131,7 @@ def create_app(app_env: str | None = None, warm_up: bool = True) -> FastAPI:
         )
 
     app.include_router(router)
+    app.include_router(ingest_router)
     if env == "development":
         from c2_analyzer.api.dev_routes import inspector_router
         from c2_analyzer.api.dev_routes import router as dev_router

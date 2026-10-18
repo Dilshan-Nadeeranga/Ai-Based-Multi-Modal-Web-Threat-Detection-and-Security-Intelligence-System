@@ -75,3 +75,8 @@ models/**/*.bin
 *.pt
 *.pkl
 *.joblib
+# Part 9 B-2 results store (scan history with live URLs) - never commit
+data/c2_results.db
+data/c2_results.db-*
+data/*.db
+data/*.db-*

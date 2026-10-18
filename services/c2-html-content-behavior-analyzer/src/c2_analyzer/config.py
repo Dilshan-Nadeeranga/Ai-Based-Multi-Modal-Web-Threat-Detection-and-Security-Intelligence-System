@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,6 +32,11 @@ class Settings(BaseSettings):
     xlmr_enabled: bool = True
     # Comma-separated browser origins allowed to call the API (team frontend). Empty = none.
     cors_origins: str = ""
+    # Part 9 B-2 (ThreatRadar ingestion): SQLite results store, shared secret for
+    # POST /api/v1/ingest (empty = ingest disabled, 503), background worker on/off.
+    results_db: Path = Path("data/c2_results.db")
+    ingest_api_key: SecretStr = SecretStr("")
+    ingest_worker_enabled: bool = True
 
     @property
     def cors_origin_list(self) -> list[str]:

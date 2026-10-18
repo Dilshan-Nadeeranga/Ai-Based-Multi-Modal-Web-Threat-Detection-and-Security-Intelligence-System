@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from c2_analyzer.api.dependencies import (
     AnalysisEngine,
     get_engine,
+    get_ingest_service,
     get_rate_limiter,
     get_result_cache,
     get_text_models,
@@ -27,6 +28,7 @@ from c2_analyzer.content.extractor import content_for_html
 from c2_analyzer.dom.pipeline import dom_features_for_html
 from c2_analyzer.fusion.live_fetch import analyze_config
 from c2_analyzer.fusion.orchestrator import BudgetExceeded
+from c2_analyzer.ingest.service import IngestService
 from c2_analyzer.js_analyzer.pipeline import js_analysis_for_html
 from c2_analyzer.nlp.inference import TextModelRegistry
 from c2_analyzer.preprocessing.pipeline import preprocess_html
@@ -273,6 +275,7 @@ def text_prediction(request: ContentRequest, models: TextModelsDep) -> TextPredi
 
 EngineDep = Annotated[AnalysisEngine, Depends(get_engine)]  # tests override get_engine
 CacheDep = Annotated[ResultCache, Depends(get_result_cache)]
+HistoryDep = Annotated[IngestService, Depends(get_ingest_service)]  # Part 9 B-2
 
 
 def require_json(request: Request) -> None:
@@ -324,7 +327,9 @@ def _json(model_or_dict, status_code: int = 200) -> Response:
         504: {"description": "time budget exceeded - body = the partial AnalysisResponse"},
     },
 )
-def analyze(body: AnalysisRequest, engine: EngineDep, cache: CacheDep) -> Response:
+def analyze(
+    body: AnalysisRequest, engine: EngineDep, cache: CacheDep, history: HistoryDep
+) -> Response:
     """Analyze a page end to end (Part 9 B-1).
 
     - ``{"url": ...}``: C2 fetches the page itself, statically and safely (no JS, no
@@ -335,6 +340,9 @@ def analyze(body: AnalysisRequest, engine: EngineDep, cache: CacheDep) -> Respon
     evidence floor. ``status`` says whether a verdict was possible (ok / inconclusive /
     unreachable / error); a failing model arm only sets ``degraded``. Repeated url checks
     within the cache TTL answer from memory with ``cached: true``.
+
+    Every answered check is also stored in the scan history (Part 9 B-2, source = the
+    request's ``source``); a storage problem is logged and never fails the analysis.
     """
     limit = int(analyze_config()["input"]["max_html_bytes"])
     if body.html is not None and len(body.html.encode("utf-8", errors="ignore")) > limit:
@@ -342,7 +350,9 @@ def analyze(body: AnalysisRequest, engine: EngineDep, cache: CacheDep) -> Respon
     if body.mode == "url":
         hit = cache.get(body.url)
         if hit is not None:
-            return _json({**hit, "cached": True, "request_id": body.request_id})
+            answer = {**hit, "cached": True, "request_id": body.request_id}
+            history.record_user_check(body, AnalysisResponse.model_validate(answer))
+            return _json(answer)
     try:
         orchestrator = engine.get()
     except RuntimeError as error:
@@ -353,6 +363,7 @@ def analyze(body: AnalysisRequest, engine: EngineDep, cache: CacheDep) -> Respon
         return _json(late.response.model_dump_json(), status_code=504)
     if body.mode == "url" and result.status in ("ok", "inconclusive"):
         cache.put(result.model_dump(mode="json"), body.url, result.input.final_url)
+    history.record_user_check(body, result)
     return _json(result.model_dump_json())
 
 
