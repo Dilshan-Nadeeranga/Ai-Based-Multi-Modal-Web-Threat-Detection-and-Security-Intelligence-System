@@ -272,6 +272,7 @@ class ExplainableRiskAssessment(BaseModel):
     risk_score: float = Field(..., ge=0.0, le=100.0, description="Normalized multi-channel risk score (0-100)")
     classification: str = Field(..., description="Categorical risk classification (Low Risk, Suspicious, Medium Risk, High Risk Scam)")
     risk_level: str = Field(..., description="Standardized risk level compatible with gateway")
+    verdict: str = Field("SAFE", description="Final operational verdict: SAFE, SUSPICIOUS, PHISHING, or MALICIOUS")
     engine_version: str = Field("c1-explainable-risk-v1.0.0", description="Scoring engine algorithm version")
     model_version: Optional[str] = Field(None, description="Active ML classifier version or algorithm")
     analysis_timestamp: str = Field(..., description="ISO 8601 UTC timestamp when scoring took place")
@@ -305,6 +306,7 @@ class CompleteUrlDomainAnalysisResult(BaseModel):
     url: str
     score: float = Field(..., ge=0.0, le=100.0, description="Overall consolidated risk score (0-100)")
     risk_level: str = Field(..., description="Risk label: Low Risk, Suspicious, Medium Risk, High Risk Scam")
+    verdict: str = Field("SAFE", description="Final operational verdict: SAFE, SUSPICIOUS, PHISHING, or MALICIOUS")
     features: UrlLexicalFeatures = Field(..., description="Extracted lexical and structural features")
     domain_intelligence: DomainIntelligenceReport = Field(..., description="Domain registration, DNS, and reputation intelligence")
     threat_infrastructure: Optional[ThreatInfrastructureReport] = Field(None, description="DGA and redirect chain intelligence")
