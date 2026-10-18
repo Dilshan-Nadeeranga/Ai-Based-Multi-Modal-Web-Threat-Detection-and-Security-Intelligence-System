@@ -1,8 +1,16 @@
+import { ChevronRight } from 'lucide-react'
 import SeverityBadge from './SeverityBadge.jsx'
 
-/** Table of security findings. Rows are clickable. */
+/** Table of security findings. Rows open the finding in the side panel. */
 export default function FindingTable({ findings, onSelect, selectedId }) {
   if (!findings || findings.length === 0) return null
+
+  function handleKeyDown(event, findingId) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onSelect(findingId)
+    }
+  }
 
   return (
     <div className="ca-table-wrap">
@@ -16,6 +24,7 @@ export default function FindingTable({ findings, onSelect, selectedId }) {
             <th>File</th>
             <th>Line</th>
             <th>Status</th>
+            <th><span className="sr-only">Details</span></th>
           </tr>
         </thead>
         <tbody>
@@ -26,6 +35,9 @@ export default function FindingTable({ findings, onSelect, selectedId }) {
                 finding.finding_id === selectedId ? 'ca-table__row--selected' : ''
               }
               onClick={() => onSelect(finding.finding_id)}
+              onKeyDown={(event) => handleKeyDown(event, finding.finding_id)}
+              tabIndex={0}
+              aria-label={`View details: ${finding.title}`}
             >
               <td><SeverityBadge severity={finding.severity} /></td>
               <td className="ca-table__title">{finding.title}</td>
@@ -34,6 +46,9 @@ export default function FindingTable({ findings, onSelect, selectedId }) {
               <td className="ca-table__file">{finding.file_path}</td>
               <td>{finding.start_line}</td>
               <td>{finding.status}</td>
+              <td className="ca-table__view">
+                View <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </td>
             </tr>
           ))}
         </tbody>

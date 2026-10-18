@@ -415,7 +415,7 @@ class SocialAnalysisService:
 
     # ------------------------------------------------------------- analyze
     def analyze(self, *, platform: str, post_text: str, image_file: BinaryIO | None, image_filename: str | None,
-                embedded_url: str | None) -> dict:
+                embedded_url: str | None, on_step: Callable[[dict], None] | None = None) -> dict:
         platform = (platform or "other").strip().lower()
         if platform not in PLATFORMS:
             raise AnalysisInputError(f"platform must be one of: {', '.join(PLATFORMS)}")
@@ -429,28 +429,37 @@ class SocialAnalysisService:
             raise AnalysisInputError("Provide post text, a post image or an embedded URL.")
 
         with self._run_lock:
-            return self._run(platform, post_text, image_file, image_filename, embedded_url)
+            return self._run(platform, post_text, image_file, image_filename, embedded_url, on_step)
 
     def _run(self, platform: str, post_text: str, image_file: BinaryIO | None, image_filename: str | None,
-             embedded_url: str | None) -> dict:
+             embedded_url: str | None, on_step: Callable[[dict], None] | None = None) -> dict:
         steps: list[dict] = []
+
+        def emit(event: dict) -> None:
+            if on_step is not None:
+                on_step(dict(event))
+
+        def finish(entry: dict) -> None:
+            steps.append(entry)
+            emit(entry)
 
         def step(key: str, label: str, fn: Callable[[], Any], skip_reason: str | None = None) -> Any:
             if skip_reason:
-                steps.append({"key": key, "label": label, "status": "skipped", "detail": skip_reason, "duration_ms": 0})
+                finish({"key": key, "label": label, "status": "skipped", "detail": skip_reason, "duration_ms": 0})
                 return None
+            emit({"key": key, "label": label, "status": "running", "detail": None, "duration_ms": 0})
             started = time.perf_counter()
             try:
                 value = fn()
-                steps.append({"key": key, "label": label, "status": "done", "detail": None,
-                              "duration_ms": round((time.perf_counter() - started) * 1000)})
+                finish({"key": key, "label": label, "status": "done", "detail": None,
+                        "duration_ms": round((time.perf_counter() - started) * 1000)})
                 return value
             except ModelsUnavailableError:
                 raise
             except Exception as exc:  # noqa: BLE001 - one failing stage must not hide the others
                 logger.exception("Stage %s failed", key)
-                steps.append({"key": key, "label": label, "status": "failed", "detail": str(exc)[:300],
-                              "duration_ms": round((time.perf_counter() - started) * 1000)})
+                finish({"key": key, "label": label, "status": "failed", "detail": str(exc)[:300],
+                        "duration_ms": round((time.perf_counter() - started) * 1000)})
                 return None
 
         models = self.models
@@ -462,6 +471,7 @@ class SocialAnalysisService:
             if pre and not pre.get("valid"):
                 steps[-1]["status"] = "failed"
                 steps[-1]["detail"] = pre["validation"]["error"]
+                emit(steps[-1])
 
             ocr = step("ocr", "OCR extraction", lambda: self._ocr(image), None if image else "no valid image")
             text_clean = clean_text(post_text)
@@ -898,6 +908,30 @@ class SocialAnalysisService:
 
 
 # --------------------------------------------------------------- results
+
+def dataset_overview() -> dict:
+    """Saved summaries of the C3 datasets other than the multimodal dataset (read-only)."""
+    stats = SERVICE_ROOT / "data" / "statistics"
+    brand = _read_json(stats / "brand_dataset_statistics.json")
+    yolo = _read_json(stats / "logo_yolo_dataset_statistics.json")
+    text = _read_json(stats / "text_baseline_metrics.json")
+    category = _read_json(stats / "threat_category_metrics.json")
+    misinfo = _read_json(stats / "misinformation_metrics.json")
+    binary_names = {"0": "legitimate", "1": "scam"}
+    return {
+        "brand_reference": {k: brand.get(k) for k in (
+            "generated_at", "brands_in_catalog", "primary_logos_on_disk", "normalized_logos_on_disk", "screenshots_on_disk",
+            "logo_annotations", "logo_boxes", "split_counts", "categories")} if brand else None,
+        "logo_detector": {k: yolo.get(k) for k in (
+            "created_at", "classes", "counts", "dom_page_labels", "dom_box_kinds_note", "synthetic_brands_by_split")} if yolo else None,
+        "training_splits": {
+            "text_baseline": {split: {binary_names.get(k, k): v for k, v in counts.items()}
+                              for split, counts in (text.get("label_counts") or {}).items()} or None,
+            "threat_category": category.get("label_counts"),
+            "misinformation": misinfo.get("label_counts"),
+        },
+    }
+
 
 def model_results() -> dict:
     """Saved evaluation metrics from the C3 experiments (read-only)."""

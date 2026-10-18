@@ -32,6 +32,7 @@ import SocialVisualAnalysis from './features/social-visual/pages/SocialVisualAna
 // C4 — Code Quality & Vulnerability Auditor
 import AuditProgress from './features/code-audit/pages/AuditProgress.jsx'
 import PatchReview from './features/code-audit/pages/PatchReview.jsx'
+import ProjectScan from './features/code-audit/pages/ProjectScan.jsx'
 import RepositoryAudit from './features/code-audit/pages/RepositoryAudit.jsx'
 import VulnerabilityReport from './features/code-audit/pages/VulnerabilityReport.jsx'
 
@@ -74,6 +75,7 @@ function App() {
 
         {/* C4 — Code Quality & Vulnerability Auditor */}
         <Route path="/code-audit" element={protect(<RepositoryAudit />)} />
+        <Route path="/code-audit/scans/:scanId" element={protect(<ProjectScan />)} />
         <Route path="/code-audit/progress" element={protect(<AuditProgress />)} />
         <Route path="/code-audit/report" element={protect(<VulnerabilityReport />)} />
         <Route path="/code-audit/patches" element={protect(<PatchReview />)} />

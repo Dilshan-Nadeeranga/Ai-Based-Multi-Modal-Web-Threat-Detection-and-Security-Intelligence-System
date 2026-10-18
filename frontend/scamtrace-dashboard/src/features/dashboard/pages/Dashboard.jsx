@@ -106,7 +106,7 @@ function toActivity(analyses, scans) {
     status: item.status,
     risk: null,
     date: item.created_at,
-    to: `/code-audit/report?scan=${encodeURIComponent(item.scan_id)}`,
+    to: `/code-audit/scans/${encodeURIComponent(item.scan_id)}`,
     action: 'View Report',
   }))
   return [...fromAnalyses, ...fromScans].sort((a, b) => new Date(b.date) - new Date(a.date))

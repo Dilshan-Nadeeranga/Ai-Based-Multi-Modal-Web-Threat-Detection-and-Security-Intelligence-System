@@ -1028,6 +1028,179 @@
   color: var(--ca-heading);
 }
 
+/* ------------------------- Finding slide-over panel ------------------- */
+
+.ca-table tbody tr:focus-visible {
+  outline: 2px solid #0074dd;
+  outline-offset: -2px;
+}
+
+.ca-table__view {
+  white-space: nowrap;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ca-text-muted);
+}
+
+.ca-table__view svg {
+  display: inline-block;
+  vertical-align: -3px;
+  transition: transform 0.15s;
+}
+
+.ca-table tbody tr:hover .ca-table__view,
+.ca-table__row--selected .ca-table__view {
+  color: var(--ca-accent);
+}
+
+.ca-table tbody tr:hover .ca-table__view svg {
+  transform: translateX(2px);
+}
+
+.ca-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ca-drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  background: rgba(0, 11, 91, 0.28);
+  cursor: default;
+  animation: ca-fade-in 0.2s ease-out;
+}
+
+.ca-drawer__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(760px, 100%);
+  height: 100%;
+  background: #ffffff;
+  box-shadow: -12px 0 40px rgba(0, 11, 91, 0.18);
+  outline: none;
+  animation: ca-slide-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ca-drawer__header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 24px 18px;
+  border-bottom: 1px solid var(--ca-border);
+  background: #ffffff;
+}
+
+.ca-drawer__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.ca-drawer__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ca-drawer__position {
+  min-width: 64px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ca-text-muted);
+}
+
+.ca-drawer__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--ca-border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ca-heading);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ca-drawer__icon-btn:hover:not(:disabled) {
+  background: var(--ca-surface-2);
+  border-color: var(--ca-border-strong);
+}
+
+.ca-drawer__icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ca-drawer__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ca-heading);
+}
+
+.ca-drawer__location {
+  margin: 0;
+  font-family: Consolas, ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--ca-text-muted);
+  word-break: break-all;
+}
+
+.ca-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 24px 32px;
+}
+
+.ca-finding h5 {
+  margin: 14px 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ca-text-muted);
+}
+
+@keyframes ca-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes ca-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ca-drawer__panel,
+  .ca-drawer__backdrop {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .ca-drawer__header,
+  .ca-drawer__body {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
 @media (max-width: 640px) {
   .ca-page {
     padding: 24px 16px 48px;

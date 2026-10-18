@@ -333,6 +333,62 @@ describe("ScamTrace ownership", () => {
     assert.equal(submit.status, 502); // C4 unreachable in tests: controlled error, nothing recorded
     assert.equal((await request("POST", "/api/code-audit", { cookie: owner.cookie, body: {} })).status, 400);
   });
+
+  test("code-audit projects group the owner's scans by repository", async () => {
+    const owner = await registerAndLogin("projowner");
+    const other = await registerAndLogin("projother");
+    const insert = (scanId, url, minutesAgo) => query(
+      `INSERT INTO code_audit_scans (scan_id, user_id, repository_url, status, created_at)
+       VALUES ($1, $2, $3, 'completed', now() - make_interval(mins => $4))`,
+      [scanId, owner.user.id, url, minutesAgo]
+    );
+    await insert("SCAN-PROJTEST01", "https://github.com/example/alpha", 30);
+    await insert("SCAN-PROJTEST02", "https://github.com/example/alpha", 5);
+    await insert("SCAN-PROJTEST03", "https://github.com/example/beta", 10);
+
+    assert.equal((await request("GET", "/api/code-audit/projects")).status, 401);
+    const mine = await request("GET", "/api/code-audit/projects", { cookie: owner.cookie });
+    assert.equal(mine.status, 200);
+    assert.equal(mine.body.projects.length, 2);
+    const [alpha, beta] = mine.body.projects;
+    assert.equal(alpha.name, "alpha");
+    assert.equal(alpha.latest_scan_id, "SCAN-PROJTEST02");
+    assert.deepEqual(alpha.scans.map((s) => s.scan_id), ["SCAN-PROJTEST02", "SCAN-PROJTEST01"]);
+    assert.equal(beta.scans.length, 1);
+
+    const theirs = await request("GET", "/api/code-audit/projects", { cookie: other.cookie });
+    assert.equal(theirs.body.projects.length, 0);
+  });
+
+  test("code-audit project delete removes only the owner's scans for that repository", async () => {
+    const owner = await registerAndLogin("delowner");
+    const other = await registerAndLogin("delother");
+    const insert = (scanId, userId, url) => query(
+      `INSERT INTO code_audit_scans (scan_id, user_id, repository_url, status) VALUES ($1, $2, $3, 'completed')`,
+      [scanId, userId, url]
+    );
+    await insert("SCAN-DELTEST01", owner.user.id, "https://github.com/example/gamma");
+    await insert("SCAN-DELTEST02", owner.user.id, "https://github.com/Example/Gamma/");
+    await insert("SCAN-DELTEST03", owner.user.id, "https://github.com/example/delta");
+    await insert("SCAN-DELTEST04", other.user.id, "https://github.com/example/gamma");
+
+    assert.equal((await request("DELETE", "/api/code-audit/projects/SCAN-DELTEST01")).status, 401);
+    assert.equal(
+      (await request("DELETE", "/api/code-audit/projects/SCAN-DELTEST01", { cookie: other.cookie })).status, 404
+    );
+    assert.equal(
+      (await request("DELETE", "/api/code-audit/projects/SCAN-NOPE", { cookie: owner.cookie })).status, 404
+    );
+
+    const removed = await request("DELETE", "/api/code-audit/projects/SCAN-DELTEST01", { cookie: owner.cookie });
+    assert.equal(removed.status, 200);
+    assert.equal(removed.body.deleted_scans, 2);
+
+    const mine = await request("GET", "/api/code-audit/projects", { cookie: owner.cookie });
+    assert.deepEqual(mine.body.projects.map((p) => p.name), ["delta"]);
+    const theirs = await request("GET", "/api/code-audit/projects", { cookie: other.cookie });
+    assert.equal(theirs.body.projects.length, 1);
+  });
 });
 
 describe("hardening", () => {
