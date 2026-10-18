@@ -1,31 +1,313 @@
-/* C2 "threat-hunting console" look. Every selector is prefixed .c2- so nothing leaks into
-   other members' pages. No flashing; all motion is switched off for prefers-reduced-motion. */
+/* C2 theming. Every colour used by the C2 section is a token below, scoped to the C2 root
+   ([data-c2-theme] on .c2-console), so nothing leaks into other members' pages.
+   - light (default): matches the team dashboard — st-surface page, white cards, navy text,
+     st-blue accent, soft navy shadows; verdict colours are the 700-ish shades on 50 tints (WCAG AA).
+   - dark: the original "threat-hunting console" (values are the Tailwind shades it used before).
+   The scan.log terminal is dark in BOTH themes (--c2-term-*), like a code block on a light page.
+   No flashing; all motion is switched off for prefers-reduced-motion. */
 
-.c2-console {
-  background-color: #020617;
-  background-image:
-    radial-gradient(ellipse at 20% -10%, rgba(34, 211, 238, 0.08), transparent 55%),
-    linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
-  background-size: 100% 100%, 28px 28px, 28px 28px;
-  color: #e2e8f0;
-  color-scheme: dark;
+.c2-console[data-c2-theme='light'] {
+  color-scheme: light;
+  /* page + texture */
+  --c2-bg: #fbf8ff;
+  --c2-bg-glow: transparent;
+  --c2-grid-line: rgba(7, 28, 140, 0.025);
+  --c2-scanline: transparent;
+  --c2-text-base: #0d1841;
+  /* surfaces */
+  --c2-header-bg: #ffffff;
+  --c2-panel-bg: #ffffff;
+  --c2-panel-shadow: 0 1px 2px rgba(7, 28, 140, 0.05), 0 1px 8px rgba(7, 28, 140, 0.04);
+  --c2-inset: #f8f7ff;
+  --c2-inset-70: #f8f7ff;
+  --c2-field: #ffffff;
+  --c2-field-deep: #ffffff;
+  --c2-track: #ececff;
+  --c2-chip-bg: #f3f2ff;
+  --c2-chip-ring: #dcdcf0;
+  --c2-hover: #f3f2ff;
+  --c2-row-hover: #f6f5ff;
+  --c2-code-bg: #f3f2ff;
+  /* borders */
+  --c2-border: #e4e7ff;
+  --c2-border-soft: #ececff;
+  --c2-border-strong: #c6c5d5;
+  --c2-border-stronger: #a9aabe;
+  /* text (all >= 4.5:1 on white and on --c2-inset) */
+  --c2-fg-max: #000b5b;
+  --c2-fg-strong: #000b5b;
+  --c2-fg-hi: #0d1841;
+  --c2-fg: #1f2750;
+  --c2-fg-2: #3a3f5c;
+  --c2-fg-muted: #4f5168;
+  --c2-fg-faint: #5c5e72;
+  --c2-fg-ghost: #707285;
+  /* accent (info) = dashboard blues */
+  --c2-accent: #005bb0;
+  --c2-accent-hi: #071c8c;
+  --c2-accent-ink: #0a3d7a;
+  --c2-accent-icon: #0074dd;
+  --c2-accent-solid: #0074dd;
+  --c2-accent-solid-hover: #005bb0;
+  --c2-on-accent: #ffffff;
+  --c2-accent-80: rgba(0, 116, 221, 0.8);
+  --c2-accent-70: rgba(0, 116, 221, 0.7);
+  --c2-accent-tint: #eaf2fd;
+  --c2-accent-tint-2: #dbe8fb;
+  --c2-accent-tint-faint: #f3f8fe;
+  --c2-accent-ring: #a8c8ff;
+  --c2-accent-ring-soft: #d6e3ff;
+  --c2-accent-line: #6ea8ec;
+  --c2-accent-glow: 0 1px 2px rgba(0, 91, 176, 0.25), 0 2px 8px rgba(0, 116, 221, 0.18);
+  --c2-sweep: rgba(0, 116, 221, 0.1);
+  --c2-focus: #0074dd;
+  --c2-selection-bg: #d6e3ff;
+  --c2-selection-fg: #000b5b;
+  /* verdict: Malicious */
+  --c2-mal: #b91c1c;
+  --c2-mal-hi: #991b1b;
+  --c2-mal-70: #c24141;
+  --c2-mal-solid: #dc2626;
+  --c2-mal-tint: #fef2f2;
+  --c2-mal-tint-2: #fee2e2;
+  --c2-mal-ring-strong: #f87171;
+  --c2-mal-ring: #fca5a5;
+  --c2-mal-ring-soft: #fecaca;
+  /* verdict: Suspicious */
+  --c2-sus: #b45309;
+  --c2-sus-hi: #92400e;
+  --c2-sus-hi-90: #9a4a12;
+  --c2-sus-ink: #78350f;
+  --c2-sus-solid: #d97706;
+  --c2-sus-dot: #d97706;
+  --c2-sus-line: #d97706;
+  --c2-sus-tint: #fffbeb;
+  --c2-sus-ring-strong: #fbbf24;
+  --c2-sus-ring: #fcd34d;
+  --c2-sus-ring-soft: #fde68a;
+  /* verdict: Legitimate */
+  --c2-ok: #047857;
+  --c2-ok-hi: #065f46;
+  --c2-ok-solid: #059669;
+  --c2-ok-dot: #10b981;
+  --c2-ok-tint: #ecfdf5;
+  --c2-ok-ring-strong: #6ee7b7;
+  --c2-ok-ring: #a7f3d0;
+  --c2-ok-ring-soft: #d1fae5;
+  /* severity "high" (orange) + extra chart hue */
+  --c2-high: #c2410c;
+  --c2-high-solid: #ea580c;
+  --c2-high-tint: #fff7ed;
+  --c2-high-ring: #fdba74;
+  --c2-violet: #7c3aed;
+  --c2-violet-80: rgba(124, 58, 237, 0.8);
+  /* neutral / no verdict */
+  --c2-neutral-solid: #8b8da0;
+  --c2-neutral-tint: #f3f4f8;
+  --c2-neutral-tint-2: #eceef4;
+  --c2-neutral-ring: #c6c5d5;
+  --c2-neutral-ring-soft: #dcdbe6;
+  /* switches */
+  --c2-switch-off: #c6c5d5;
+  --c2-switch-off-ring: #b3b2c6;
+  --c2-switch-on: #d97706;
+  --c2-switch-on-ring: #b45309;
+  --c2-demo-chip-bg: #b45309;
+  --c2-demo-chip-fg: #ffffff;
+  /* charts + diagram */
+  --c2-chart-grid: #e4e7ff;
+  --c2-chart-axis: #5c5e72;
+  --c2-chart-label: #3a3f5c;
+  --c2-chart-label-strong: #000b5b;
+  --c2-chart-value: #0d1841;
+  --c2-chart-whisker: #0d1841;
+  --c2-chart-1: #0074dd;
+  --c2-chart-2: #7c3aed;
+  --c2-chart-3: #059669;
+  --c2-spark-line: #005bb0;
+  --c2-spark-fill: rgba(0, 116, 221, 0.12);
+  --c2-spark-flag: #dc2626;
+  --c2-gauge-track: #ececff;
+  --c2-gauge-glow: none;
+  --c2-dg-box: #ffffff;
+  --c2-dg-sub: #4f5168;
+  --c2-dg-arrow: #8b8da0;
+  --c2-dg-input: #0891b2;
+  --c2-dg-dom: #0284c7;
+  --c2-dg-content: #7c3aed;
+  --c2-dg-behavior: #db2777;
+  --c2-dg-fusion: #059669;
+  --c2-dg-verdict: #d97706;
+  /* scan.log terminal: dark navy panel inside the light page */
+  --c2-term-bg: #0d1841;
+  --c2-term-border: #0d1841;
+  --c2-term-rule: rgba(255, 255, 255, 0.1);
+  --c2-term-muted: #a8b3d6;
+  --c2-term-text: #a7f3d0;
 }
 
-/* faint static scanlines on panels (texture only, never animated) */
+.c2-console[data-c2-theme='dark'] {
+  color-scheme: dark;
+  --c2-bg: #020617;
+  --c2-bg-glow: rgba(34, 211, 238, 0.08);
+  --c2-grid-line: rgba(148, 163, 184, 0.045);
+  --c2-scanline: rgba(255, 255, 255, 0.018);
+  --c2-text-base: #e2e8f0;
+  --c2-header-bg: rgba(2, 6, 23, 0.8);
+  --c2-panel-bg: rgba(15, 23, 42, 0.82);
+  --c2-panel-shadow: 0 0 0 1px rgba(34, 211, 238, 0.03);
+  --c2-inset: rgba(15, 23, 42, 0.6);
+  --c2-inset-70: rgba(15, 23, 42, 0.7);
+  --c2-field: #0f172a;
+  --c2-field-deep: #020617;
+  --c2-track: #1e293b;
+  --c2-chip-bg: rgba(30, 41, 59, 0.8);
+  --c2-chip-ring: rgba(71, 85, 105, 0.6);
+  --c2-hover: #1e293b;
+  --c2-row-hover: rgba(30, 41, 59, 0.5);
+  --c2-code-bg: rgba(0, 0, 0, 0.5);
+  --c2-border: #1e293b;
+  --c2-border-soft: rgba(30, 41, 59, 0.7);
+  --c2-border-strong: #334155;
+  --c2-border-stronger: #475569;
+  --c2-fg-max: #ffffff;
+  --c2-fg-strong: #f8fafc;
+  --c2-fg-hi: #f1f5f9;
+  --c2-fg: #e2e8f0;
+  --c2-fg-2: #cbd5e1;
+  --c2-fg-muted: #94a3b8;
+  --c2-fg-faint: #64748b;
+  --c2-fg-ghost: #475569;
+  --c2-accent: #67e8f9;
+  --c2-accent-hi: #a5f3fc;
+  --c2-accent-ink: #cffafe;
+  --c2-accent-icon: #22d3ee;
+  --c2-accent-solid: #22d3ee;
+  --c2-accent-solid-hover: #67e8f9;
+  --c2-on-accent: #020617;
+  --c2-accent-80: rgba(34, 211, 238, 0.8);
+  --c2-accent-70: rgba(34, 211, 238, 0.7);
+  --c2-accent-tint: rgba(34, 211, 238, 0.1);
+  --c2-accent-tint-2: rgba(34, 211, 238, 0.15);
+  --c2-accent-tint-faint: rgba(34, 211, 238, 0.05);
+  --c2-accent-ring: rgba(34, 211, 238, 0.4);
+  --c2-accent-ring-soft: rgba(34, 211, 238, 0.3);
+  --c2-accent-line: rgba(34, 211, 238, 0.5);
+  --c2-accent-glow: 0 0 18px rgba(34, 211, 238, 0.35);
+  --c2-sweep: rgba(34, 211, 238, 0.16);
+  --c2-focus: #67e8f9;
+  --c2-selection-bg: rgba(34, 211, 238, 0.35);
+  --c2-selection-fg: #f8fafc;
+  --c2-mal: #fca5a5;
+  --c2-mal-hi: #fecaca;
+  --c2-mal-70: rgba(252, 165, 165, 0.7);
+  --c2-mal-solid: #f87171;
+  --c2-mal-tint: rgba(239, 68, 68, 0.1);
+  --c2-mal-tint-2: rgba(239, 68, 68, 0.15);
+  --c2-mal-ring-strong: rgba(248, 113, 113, 0.6);
+  --c2-mal-ring: rgba(248, 113, 113, 0.5);
+  --c2-mal-ring-soft: rgba(248, 113, 113, 0.4);
+  --c2-sus: #fcd34d;
+  --c2-sus-hi: #fde68a;
+  --c2-sus-hi-90: rgba(253, 230, 138, 0.9);
+  --c2-sus-ink: #fef3c7;
+  --c2-sus-solid: #fbbf24;
+  --c2-sus-dot: #fcd34d;
+  --c2-sus-line: #fcd34d;
+  --c2-sus-tint: rgba(251, 191, 36, 0.1);
+  --c2-sus-ring-strong: rgba(251, 191, 36, 0.5);
+  --c2-sus-ring: rgba(251, 191, 36, 0.4);
+  --c2-sus-ring-soft: rgba(251, 191, 36, 0.3);
+  --c2-ok: #6ee7b7;
+  --c2-ok-hi: #a7f3d0;
+  --c2-ok-solid: #34d399;
+  --c2-ok-dot: #6ee7b7;
+  --c2-ok-tint: rgba(52, 211, 153, 0.1);
+  --c2-ok-ring-strong: rgba(52, 211, 153, 0.5);
+  --c2-ok-ring: rgba(52, 211, 153, 0.4);
+  --c2-ok-ring-soft: rgba(52, 211, 153, 0.3);
+  --c2-high: #fdba74;
+  --c2-high-solid: #fb923c;
+  --c2-high-tint: rgba(249, 115, 22, 0.15);
+  --c2-high-ring: rgba(251, 146, 60, 0.4);
+  --c2-violet: #a78bfa;
+  --c2-violet-80: rgba(167, 139, 250, 0.8);
+  --c2-neutral-solid: #94a3b8;
+  --c2-neutral-tint: rgba(100, 116, 139, 0.1);
+  --c2-neutral-tint-2: rgba(100, 116, 139, 0.15);
+  --c2-neutral-ring: rgba(100, 116, 139, 0.5);
+  --c2-neutral-ring-soft: rgba(100, 116, 139, 0.4);
+  --c2-switch-off: #334155;
+  --c2-switch-off-ring: #475569;
+  --c2-switch-on: rgba(251, 191, 36, 0.8);
+  --c2-switch-on-ring: #fcd34d;
+  --c2-demo-chip-bg: #fcd34d;
+  --c2-demo-chip-fg: #020617;
+  --c2-chart-grid: #1e293b;
+  --c2-chart-axis: #94a3b8;
+  --c2-chart-label: #cbd5e1;
+  --c2-chart-label-strong: #f8fafc;
+  --c2-chart-value: #e2e8f0;
+  --c2-chart-whisker: #f8fafc;
+  --c2-chart-1: #38bdf8;
+  --c2-chart-2: #a78bfa;
+  --c2-chart-3: #34d399;
+  --c2-spark-line: #22d3ee;
+  --c2-spark-fill: rgba(34, 211, 238, 0.14);
+  --c2-spark-flag: #f87171;
+  --c2-gauge-track: #1e293b;
+  --c2-gauge-glow: drop-shadow(0 0 4px color-mix(in srgb, currentColor 40%, transparent));
+  --c2-dg-box: #0f172a;
+  --c2-dg-sub: #94a3b8;
+  --c2-dg-arrow: #475569;
+  --c2-dg-input: #22d3ee;
+  --c2-dg-dom: #38bdf8;
+  --c2-dg-content: #a78bfa;
+  --c2-dg-behavior: #f472b6;
+  --c2-dg-fusion: #34d399;
+  --c2-dg-verdict: #fbbf24;
+  --c2-term-bg: rgba(0, 0, 0, 0.7);
+  --c2-term-border: #1e293b;
+  --c2-term-rule: #1e293b;
+  --c2-term-muted: #94a3b8;
+  --c2-term-text: #a7f3d0;
+}
+
+.c2-console {
+  background-color: var(--c2-bg);
+  background-image:
+    radial-gradient(ellipse at 20% -10%, var(--c2-bg-glow), transparent 55%),
+    linear-gradient(var(--c2-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--c2-grid-line) 1px, transparent 1px);
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+  color: var(--c2-text-base);
+}
+
+/* cards; dark mode adds faint static scanlines (texture only, never animated) */
 .c2-panel {
-  background-color: rgba(15, 23, 42, 0.82);
-  background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px);
+  background-color: var(--c2-panel-bg);
+  background-image: repeating-linear-gradient(0deg, var(--c2-scanline) 0 1px, transparent 1px 3px);
+  box-shadow: var(--c2-panel-shadow);
 }
 
 .c2-console :focus-visible {
-  outline: 2px solid #67e8f9;
+  outline: 2px solid var(--c2-focus);
   outline-offset: 2px;
 }
 
 .c2-console ::selection {
-  background: rgba(34, 211, 238, 0.35);
-  color: #f8fafc;
+  background: var(--c2-selection-bg);
+  color: var(--c2-selection-fg);
+}
+
+/* primary button: soft shadow in light, cyan glow in dark */
+.c2-accent-glow {
+  box-shadow: var(--c2-accent-glow);
+}
+
+/* risk gauge arc: soft glow in dark mode only (stroke = currentColor) */
+.c2-gauge-arc {
+  filter: var(--c2-gauge-glow);
 }
 
 /* terminal log: a soft cursor (opacity fade, slow; not a flash) */
@@ -38,7 +320,7 @@
 
 /* a pipeline stage that is running: a slow sweeping highlight */
 .c2-stage-running {
-  background-image: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.16), transparent);
+  background-image: linear-gradient(90deg, transparent, var(--c2-sweep), transparent);
   background-size: 200% 100%;
   animation: c2-sweep 1.8s linear infinite;
 }

@@ -30,16 +30,16 @@ function NoVerdictState({ result }) {
   if (!config) return null
   const Icon = config.icon
   return (
-    <div className="flex items-start gap-4 rounded-xl border border-slate-700 bg-slate-900/70 p-5">
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-400/30">
+    <div className="flex items-start gap-4 rounded-xl border border-[color:var(--c2-border-strong)] bg-[color:var(--c2-inset-70)] p-5">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color:var(--c2-accent-tint)] text-[color:var(--c2-accent)] ring-1 ring-[color:var(--c2-accent-ring-soft)]">
         <Icon className="h-6 w-6" aria-hidden="true" />
       </span>
       <div className="min-w-0">
-        <h3 className="text-lg font-semibold text-slate-50">{config.title}</h3>
+        <h3 className="text-lg font-semibold text-[color:var(--c2-fg-strong)]">{config.title}</h3>
         {result.status_reason && (
-          <p className="mt-1 font-mono text-sm text-amber-200">{defangText(result.status_reason)}</p>
+          <p className="mt-1 font-mono text-sm text-[color:var(--c2-sus-hi)]">{defangText(result.status_reason)}</p>
         )}
-        <p className="mt-2 max-w-3xl text-sm text-slate-300">{config.text}</p>
+        <p className="mt-2 max-w-3xl text-sm text-[color:var(--c2-fg-2)]">{config.text}</p>
       </div>
     </div>
   )
@@ -56,7 +56,7 @@ function Header({ result }) {
         <div className="flex flex-wrap items-center gap-3">
           <VerdictBadge verdict={result.verdict} size="lg" label={result.verdict ? null : `No verdict · ${result.status}`} />
           {result.threat_class && (
-            <span className="text-lg font-semibold text-slate-100">
+            <span className="text-lg font-semibold text-[color:var(--c2-fg-hi)]">
               {result.verdict === 'Legitimate' ? 'No threat class' : CLASS_LABELS[result.threat_class] || result.threat_class}
             </span>
           )}
@@ -81,16 +81,16 @@ function Header({ result }) {
           {result.explanation?.verdict_source === 'evidence_floor' && <Chip tone="red">verdict raised by rule evidence</Chip>}
         </div>
         {floor.length > 0 && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[color:var(--c2-fg-muted)]">
             Rule evidence that a statistical model may not talk away:{' '}
-            <span className="font-mono text-red-200">{floor.join(' · ')}</span>
+            <span className="font-mono text-[color:var(--c2-mal-hi)]">{floor.join(' · ')}</span>
           </p>
         )}
         {result.warnings?.length > 0 && (
           <ul className="flex flex-col gap-1">
             {result.warnings.map((warning, index) => (
-              <li key={index} className="flex gap-2 rounded-md bg-amber-400/10 px-2 py-1 text-sm text-amber-100 ring-1 ring-amber-400/30">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
+              <li key={index} className="flex gap-2 rounded-md bg-[color:var(--c2-sus-tint)] px-2 py-1 text-sm text-[color:var(--c2-sus-ink)] ring-1 ring-[color:var(--c2-sus-ring-soft)]">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--c2-sus)]" aria-hidden="true" />
                 {defangText(warning)}
               </li>
             ))}
@@ -135,11 +135,11 @@ export default function ResultView({ result }) {
             <ArmContributions explanation={result.explanation} modalities={result.modalities} />
             {topFeatures.length > 0 && (
               <details className="mt-3 text-sm">
-                <summary className="cursor-pointer text-cyan-300 hover:text-cyan-100">Top input features ({topFeatures.length})</summary>
-                <ul className="mt-2 flex flex-col gap-1 text-slate-300">
+                <summary className="cursor-pointer text-[color:var(--c2-accent)] hover:text-[color:var(--c2-accent-ink)]">Top input features ({topFeatures.length})</summary>
+                <ul className="mt-2 flex flex-col gap-1 text-[color:var(--c2-fg-2)]">
                   {topFeatures.slice(0, 8).map((feature, index) => (
                     <li key={index} className="font-mono text-xs">
-                      <span className="text-slate-500">[{feature.arm}]</span> {defangText(feature.text)}
+                      <span className="text-[color:var(--c2-fg-faint)]">[{feature.arm}]</span> {defangText(feature.text)}
                     </li>
                   ))}
                 </ul>
@@ -149,7 +149,7 @@ export default function ResultView({ result }) {
         </div>
       )}
 
-      <p className="font-mono text-[0.6875rem] text-slate-500">
+      <p className="font-mono text-[0.6875rem] text-[color:var(--c2-fg-faint)]">
         analysis {result.analysis_id} · {formatTime(result.analyzed_at)} · schema {result.schema_version}
         {result.model_versions?.fusion ? ` · fusion ${result.model_versions.fusion}` : ''}
       </p>

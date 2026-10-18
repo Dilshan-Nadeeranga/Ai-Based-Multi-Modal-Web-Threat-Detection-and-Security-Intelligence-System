@@ -1,9 +1,10 @@
 import { Suspense } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { Activity, FlaskConical, History, Radar, ScanSearch } from 'lucide-react'
+import { Activity, FlaskConical, History, Moon, Radar, ScanSearch, Sun } from 'lucide-react'
 import AppShell from '../../../components/AppShell.jsx'
 import { C2_BASE_URL } from '../api/c2Api.js'
 import DemoModeProvider from '../context/DemoModeProvider.jsx'
+import { useC2Theme } from '../hooks/useC2Theme.js'
 import { useDemoMode } from '../hooks/useDemoMode.js'
 import { StateBox } from './ui.jsx'
 import '../c2.css'
@@ -16,24 +17,24 @@ const TABS = [
 ]
 
 const BACKEND = {
-  checking: { text: 'checking C2…', dot: 'bg-slate-400' },
-  online: { text: 'C2 API online', dot: 'bg-emerald-400' },
-  loading: { text: 'C2 loading models…', dot: 'bg-amber-300' },
-  degraded: { text: 'C2 models not usable', dot: 'bg-amber-300' },
-  offline: { text: 'C2 API offline', dot: 'bg-red-400' },
+  checking: { text: 'checking C2…', dot: 'bg-[color:var(--c2-neutral-solid)]' },
+  online: { text: 'C2 API online', dot: 'bg-[color:var(--c2-ok-solid)]' },
+  loading: { text: 'C2 loading models…', dot: 'bg-[color:var(--c2-sus-dot)]' },
+  degraded: { text: 'C2 models not usable', dot: 'bg-[color:var(--c2-sus-dot)]' },
+  offline: { text: 'C2 API offline', dot: 'bg-[color:var(--c2-mal-solid)]' },
 }
 
 function DemoSwitch() {
   const { demo, setDemo } = useDemoMode()
   return (
-    <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-200">
+    <label className="flex cursor-pointer items-center gap-2 text-sm text-[color:var(--c2-fg)]">
       <span>Demo mode</span>
       <button
         type="button"
         role="switch"
         aria-checked={demo}
         onClick={() => setDemo(!demo)}
-        className={`relative h-6 w-11 rounded-full ring-1 transition ${demo ? 'bg-amber-400/80 ring-amber-300' : 'bg-slate-700 ring-slate-600'}`}
+        className={`relative h-6 w-11 rounded-full ring-1 transition ${demo ? 'bg-[color:var(--c2-switch-on)] ring-[color:var(--c2-switch-on-ring)]' : 'bg-[color:var(--c2-switch-off)] ring-[color:var(--c2-switch-off-ring)]'}`}
       >
         <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${demo ? 'left-[1.375rem]' : 'left-0.5'}`} />
         <span className="sr-only">Use bundled demo data</span>
@@ -42,33 +43,56 @@ function DemoSwitch() {
   )
 }
 
-function SectionHeader() {
+function ThemeSwitch({ theme, onChange }) {
+  const dark = theme === 'dark'
+  return (
+    <div className="flex items-center gap-2 text-sm text-[color:var(--c2-fg)]">
+      <span aria-hidden="true" className={dark ? 'text-[color:var(--c2-fg-faint)]' : 'font-medium'}>Light</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={dark}
+        aria-label="Dark theme"
+        onClick={() => onChange(dark ? 'light' : 'dark')}
+        className={`relative h-6 w-11 rounded-full ring-1 transition ${dark ? 'bg-[color:var(--c2-accent-80)] ring-[color:var(--c2-accent-ring)]' : 'bg-[color:var(--c2-switch-off)] ring-[color:var(--c2-switch-off-ring)]'}`}
+      >
+        <span className={`absolute top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-slate-700 shadow transition-all ${dark ? 'left-[1.375rem]' : 'left-0.5'}`}>
+          {dark ? <Moon className="h-3 w-3" aria-hidden="true" /> : <Sun className="h-3 w-3" aria-hidden="true" />}
+        </span>
+      </button>
+      <span aria-hidden="true" className={dark ? 'font-medium' : 'text-[color:var(--c2-fg-faint)]'}>Dark</span>
+    </div>
+  )
+}
+
+function SectionHeader({ theme, onThemeChange }) {
   const { demo, reason, backend, recheck } = useDemoMode()
   const status = BACKEND[backend.state] || BACKEND.checking
   const xlmr = backend.ready?.xlmr_enabled
   return (
-    <div className="border-b border-slate-800 bg-slate-950/80">
+    <div className="border-b border-[color:var(--c2-border)] bg-[color:var(--c2-header-bg)]">
       <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3 px-4 pt-4 md:px-6">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-400/40">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color:var(--c2-accent-tint)] text-[color:var(--c2-accent)] ring-1 ring-[color:var(--c2-accent-ring)]">
             <Radar className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <h1 className="font-mono text-lg font-semibold tracking-tight text-slate-50">C2 · Content &amp; Behavior</h1>
-            <p className="text-xs text-slate-400">DOM structure · multilingual text (en / si / ta) · static JS behavior → one verdict</p>
+            <h1 className="font-mono text-lg font-semibold tracking-tight text-[color:var(--c2-fg-strong)]">C2 · Content &amp; Behavior</h1>
+            <p className="text-xs text-[color:var(--c2-fg-muted)]">DOM structure · multilingual text (en / si / ta) · static JS behavior → one verdict</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <button
             type="button"
             onClick={recheck}
-            className="flex items-center gap-2 rounded-md px-2 py-1 font-mono text-xs text-slate-300 hover:bg-slate-800"
+            className="flex items-center gap-2 rounded-md px-2 py-1 font-mono text-xs text-[color:var(--c2-fg-2)] hover:bg-[color:var(--c2-hover)]"
             title={`${C2_BASE_URL}${backend.detail ? ` — ${backend.detail}` : ''} (click to re-check)`}
           >
             <span className={`h-2 w-2 rounded-full ${status.dot}`} aria-hidden="true" />
             {status.text}
-            {backend.state === 'online' && xlmr !== undefined && <span className="text-slate-500">· {xlmr ? '4 arms' : '3 arms'}</span>}
+            {backend.state === 'online' && xlmr !== undefined && <span className="text-[color:var(--c2-fg-faint)]">· {xlmr ? '4 arms' : '3 arms'}</span>}
           </button>
+          <ThemeSwitch theme={theme} onChange={onThemeChange} />
           <DemoSwitch />
         </div>
       </div>
@@ -80,7 +104,7 @@ function SectionHeader() {
             end={end}
             className={({ isActive }) =>
               `flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium ${
-                isActive ? 'border-cyan-400 text-cyan-200' : 'border-transparent text-slate-400 hover:text-slate-100'
+                isActive ? 'border-[color:var(--c2-accent-solid)] text-[color:var(--c2-accent-hi)]' : 'border-transparent text-[color:var(--c2-fg-muted)] hover:text-[color:var(--c2-fg-hi)]'
               }`
             }
           >
@@ -90,9 +114,9 @@ function SectionHeader() {
         ))}
       </nav>
       {demo && (
-        <div role="status" className="border-t border-amber-400/30 bg-amber-400/10">
-          <p className="mx-auto max-w-[1400px] px-4 py-1.5 font-mono text-xs text-amber-100 md:px-6">
-            <strong className="mr-2 rounded bg-amber-300 px-1.5 py-0.5 text-slate-950">DEMO DATA</strong>
+        <div role="status" className="border-t border-[color:var(--c2-sus-ring-soft)] bg-[color:var(--c2-sus-tint)]">
+          <p className="mx-auto max-w-[1400px] px-4 py-1.5 font-mono text-xs text-[color:var(--c2-sus-ink)] md:px-6">
+            <strong className="mr-2 rounded bg-[color:var(--c2-demo-chip-bg)] px-1.5 py-0.5 text-[color:var(--c2-demo-chip-fg)]">DEMO DATA</strong>
             {reason === 'auto'
               ? `C2 API not available (${backend.detail || 'offline'}) — showing recorded C2 results bundled with the dashboard.`
               : 'Showing recorded C2 results bundled with the dashboard (real model output, captured earlier).'}
@@ -103,13 +127,14 @@ function SectionHeader() {
   )
 }
 
-/** C2 section: team AppShell (light sidebar) → dark console with its own tabs. */
+/** C2 section: team AppShell → C2 area with its own tabs; light by default, dark console optional. */
 export default function C2Layout() {
+  const [theme, setTheme] = useC2Theme()
   return (
     <AppShell title="C2 · Content & Behavior">
       <DemoModeProvider>
-        <div className="c2-console min-h-[calc(100vh-70px)] font-inter">
-          <SectionHeader />
+        <div className="c2-console min-h-[calc(100vh-70px)] font-inter" data-c2-theme={theme}>
+          <SectionHeader theme={theme} onThemeChange={setTheme} />
           <div className="mx-auto max-w-[1400px] px-4 py-5 md:px-6">
             <Suspense fallback={<StateBox state="loading" message="Loading…" />}>
               <Outlet />
