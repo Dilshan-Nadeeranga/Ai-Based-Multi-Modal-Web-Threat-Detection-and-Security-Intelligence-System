@@ -214,6 +214,8 @@ def _parser() -> argparse.ArgumentParser:
                              "(default: unknown + provisional, fill in per post)")
     parser.add_argument("--label-status", choices=[LabelStatus.VERIFIED.value, LabelStatus.PROVISIONAL.value],
                         default=LabelStatus.VERIFIED.value, help="Status for generated labels (default verified)")
+    parser.add_argument("--platform", action="append", default=[],
+                        help="Only convert these platform folders (repeatable; default: all)")
     parser.add_argument("-v", "--verbose", action="store_true", help="Show INFO logs")
     return parser
 
@@ -231,7 +233,10 @@ def main(argv: list[str] | None = None) -> int:
 
     counts = {"new": 0, "exists": 0, "empty": 0, "failed": 0}
     seen_images: dict[str, str] = {}
+    only = {p.lower() for p in args.platform}
     for platform, label, category_dir, post in iter_posts(manual_dir):
+        if only and platform not in only:
+            continue
         reference = f"{platform}/{category_dir}/{post.name}"
         try:
             status, target, parsed = convert_post(platform, label, post, out, reference, scam_type, label_status)
