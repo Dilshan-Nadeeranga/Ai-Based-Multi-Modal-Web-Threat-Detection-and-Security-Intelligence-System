@@ -1,44 +1,43 @@
 import RemediationSuggestion from './RemediationSuggestion.jsx'
-import SeverityBadge from './SeverityBadge.jsx'
+
+function formatCategory(category) {
+  if (!category) return '—'
+  return String(category).replaceAll('_', ' ')
+}
+
+function detectorLabel(source) {
+  if (source === 'SEMGREP') return 'Semgrep'
+  if (source === 'AST_CODE_QUALITY') return 'AST Code Quality'
+  if (source === 'CUSTOM_WEB_SECURITY_RULE') return 'Custom Web Rule'
+  return source || '—'
+}
 
 /** Details of a single finding (shown inside FindingDrawer). */
 export default function FindingDetails({ finding }) {
   if (!finding) return null
 
+  const lineLabel = finding.end_line && finding.end_line !== finding.start_line
+    ? `${finding.start_line}–${finding.end_line}`
+    : String(finding.start_line)
+
   return (
     <div className="ca-finding">
-      <dl className="ca-detail__grid">
-        <div>
-          <dt>Severity</dt>
-          <dd><SeverityBadge severity={finding.severity} /></dd>
-        </div>
+      <dl className="ca-detail__grid ca-detail__grid--meta">
         <div>
           <dt>Category</dt>
-          <dd>{finding.category}</dd>
+          <dd>{formatCategory(finding.category)}</dd>
         </div>
         <div>
           <dt>CWE</dt>
           <dd>{(finding.cwe || []).join(', ') || '—'}</dd>
         </div>
         <div>
-          <dt>File</dt>
-          <dd className="ca-detail__file">{finding.file_path}</dd>
-        </div>
-        <div>
           <dt>Line</dt>
-          <dd>{finding.start_line}</dd>
+          <dd>{lineLabel}</dd>
         </div>
         <div>
           <dt>Detected By</dt>
-          <dd>
-            {finding.source === 'SEMGREP'
-              ? 'Semgrep'
-              : finding.source === 'AST_CODE_QUALITY'
-                ? 'AST Code Quality'
-                : finding.source === 'CUSTOM_WEB_SECURITY_RULE'
-                  ? 'Custom Web Rule'
-                  : finding.source}
-          </dd>
+          <dd>{detectorLabel(finding.source)}</dd>
         </div>
       </dl>
 
@@ -112,9 +111,19 @@ export default function FindingDetails({ finding }) {
             </div>
           </dl>
           {finding.ast_context.calls?.length > 0 && (
-            <p className="ca-context__calls">
-              Calls: {finding.ast_context.calls.join(', ')}
-            </p>
+            <div className="ca-context__calls">
+              <h5 className="ca-context__calls-title">
+                Calls
+                <span className="ca-context__calls-count">{finding.ast_context.calls.length}</span>
+              </h5>
+              <ul className="ca-context__calls-list">
+                {finding.ast_context.calls.map((call, index) => (
+                  <li key={`${call}-${index}`} className="ca-context__call" title={call}>
+                    <code>{call}</code>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       )}

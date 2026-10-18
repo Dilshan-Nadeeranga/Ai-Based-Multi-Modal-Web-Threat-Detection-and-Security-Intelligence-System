@@ -65,21 +65,27 @@ export default function RemediationSuggestion({ findingId }) {
 
       {suggestion && (
         <>
-          <p className="ca-remediation__status">
-            <ValidationBadge status={suggestion.validation_status} />
-            <span>
-              {suggestion.review_decision
-                ? `Analyst decision: ${suggestion.review_decision} (not applied)`
-                : 'Not reviewed by an analyst'}
-            </span>
+          <div className="ca-remediation__meta">
+            <div className="ca-remediation__status">
+              <ValidationBadge status={suggestion.validation_status} />
+              {suggestion.llm_confidence && (
+                <span className="ca-badge ca-badge--confidence">
+                  Model confidence: {suggestion.llm_confidence}
+                </span>
+              )}
+              {suggestion.review_decision && (
+                <span className="ca-remediation__review-state">
+                  Decision: {suggestion.review_decision}
+                </span>
+              )}
+            </div>
             <Link
-              className="ca-review__open"
+              className="ca-form__button ca-remediation__review-btn"
               to={`/code-audit/remediations/${encodeURIComponent(suggestion.remediation_id)}/review`}
             >
-              Open Analyst Review →
+              Open Analyst Review
             </Link>
-            {suggestion.llm_confidence && <span>Model confidence: {suggestion.llm_confidence}</span>}
-          </p>
+          </div>
 
           <h5>Summary</h5>
           <p>{suggestion.summary}</p>
@@ -121,11 +127,12 @@ export default function RemediationSuggestion({ findingId }) {
             />
           )}
 
-          <p className="ca-detail__note">
-            AI-generated remediation suggestion
-            {suggestion.review_decision ? '' : ' — not reviewed by an analyst'}. It has not been
-            applied to the repository.
-          </p>
+          <div className="ca-remediation__note" role="note">
+            <span className="ca-remediation__note-label">Note</span>
+            <p>
+              AI-generated remediation suggestion. It has not been applied to the repository.
+            </p>
+          </div>
         </>
       )}
     </div>

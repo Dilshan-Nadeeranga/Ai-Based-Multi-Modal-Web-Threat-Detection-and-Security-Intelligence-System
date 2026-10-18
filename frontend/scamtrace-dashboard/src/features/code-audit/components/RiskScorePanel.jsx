@@ -12,20 +12,6 @@ const REASONS = {
   NO_ANALYST_DECISION: 'No analyst decision',
 }
 
-function Disclaimer({ model }) {
-  return (
-    <div className="ca-risk__disclaimer" role="note">
-      <strong>Preliminary Research Model</strong>
-      {model && ` · ${model.model_name} v${model.model_version} · ${model.status} · not validated`}
-      <p>
-        This score is an experimental repository-level risk indicator for PP1. It is not a CVSS
-        score, exploit probability, or validated industry-standard metric. Projected results assume
-        validated and analyst-accepted remediation candidates are subsequently applied.
-      </p>
-    </div>
-  )
-}
-
 function Reduction({ value }) {
   const lower = value > 0
   const text = value === 0
@@ -85,19 +71,16 @@ function RiskScoreView({ scanId }) {
         ) : (
           <p className="ca-loading">Calculating preliminary risk score…</p>
         )}
-        <Disclaimer />
       </section>
     )
   }
 
-  const { before, projected_after: after, breakdown, model } = assessment
+  const { before, projected_after: after, breakdown } = assessment
   const reasons = Object.entries(breakdown.unresolved_reasons)
 
   return (
     <section className="ca-summary ca-risk">
       <h2 className="ca-summary__title">Preliminary Risk / Exploitability Score</h2>
-      <Disclaimer model={model} />
-
       {before.total_security_findings === 0 && (
         <p className="ca-empty">
           No scored security findings for this scan — the index reflects code health only.
@@ -116,12 +99,6 @@ function RiskScoreView({ scanId }) {
         <RiskScoreCard snapshot={after} />
         <Reduction value={assessment.projected_risk_reduction} />
       </div>
-
-      <p className="ca-detail__note">
-        PROJECTED AFTER-REMEDIATION removes only findings whose candidate patch passed validation
-        (PASSED or PASSED_WITH_WARNINGS) and was ACCEPTED by an analyst. Nothing has been applied to
-        the repository; code health is kept unchanged.
-      </p>
 
       <details className="ca-risk__breakdown">
         <summary>

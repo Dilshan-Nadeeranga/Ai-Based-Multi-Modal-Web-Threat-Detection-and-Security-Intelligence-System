@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { submitReviewDecision } from '../api/codeAuditApi.js'
+import { applyAcceptedPatch, submitReviewDecision } from '../api/codeAuditApi.js'
 
 const QUICK_REASONS = [
   'Security issue remains',
@@ -23,8 +23,53 @@ function formatDuration(seconds) {
   return `${minutes} min ${seconds % 60} s`
 }
 
-/** Read-only summary of a recorded analyst decision. */
-export function ReviewOutcome({ review }) {
+function PatchApplication({ review, remediationId, onDecided }) {
+  const [applying, setApplying] = useState(false)
+  const [error, setError] = useState(null)
+
+  if (review.decision !== 'ACCEPTED') {
+    return <dd>Not applied — the patch was rejected</dd>
+  }
+  if (review.patch_applied) {
+    return (
+      <dd>
+        <span className="ca-badge ca-badge--completed">PATCH APPLIED</span>{' '}
+        to the stored copy: <span className="ca-detail__file">{review.patch_target_file}</span>
+        {review.patch_start_line && ` · lines ${review.patch_start_line}–${review.patch_end_line}`}
+        {review.patch_applied_at && ` · ${formatDate(review.patch_applied_at)}`}
+        <br />
+        <span className="ca-detail__note">The GitHub repository itself was not changed.</span>
+      </dd>
+    )
+  }
+
+  async function retry() {
+    setApplying(true)
+    setError(null)
+    try {
+      onDecided(await applyAcceptedPatch(remediationId))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setApplying(false)
+    }
+  }
+
+  return (
+    <dd>
+      <span className="ca-badge ca-badge--failed">NOT APPLIED</span>{' '}
+      {review.patch_application_message || 'The patch has not been applied to the stored copy yet.'}
+      <br />
+      <button type="button" className="ca-form__button ca-review__accept mt-2" onClick={retry} disabled={applying}>
+        {applying ? 'Applying patch…' : 'Apply patch again'}
+      </button>
+      {error && <p className="ca-error" role="alert">{error}</p>}
+    </dd>
+  )
+}
+
+/** Summary of a recorded analyst decision and the patch application result. */
+export function ReviewOutcome({ review, remediationId, onDecided }) {
   return (
     <dl className="ca-detail__grid ca-review__outcome">
       <div>
@@ -55,7 +100,7 @@ export function ReviewOutcome({ review }) {
       </div>
       <div>
         <dt>Patch Application</dt>
-        <dd>NOT APPLIED — no code changes applied to the repository</dd>
+        <PatchApplication review={review} remediationId={remediationId} onDecided={onDecided} />
       </div>
       <div>
         <dt>Review ID</dt>
@@ -66,8 +111,8 @@ export function ReviewOutcome({ review }) {
 }
 
 /**
- * Human Accept / Reject decision with confirmation. Only records the decision;
- * it never calls an LLM and never applies, commits or deploys the patch.
+ * Human Accept / Reject decision with confirmation. Accepting also applies the patch to
+ * the project's stored repository copy; it never calls an LLM and never commits or pushes.
  */
 export default function PatchActions({ remediationId, policy, validationStatus, review, onDecided }) {
   const [pending, setPending] = useState(null) // 'ACCEPTED' | 'REJECTED' while confirming
@@ -77,7 +122,7 @@ export default function PatchActions({ remediationId, policy, validationStatus, 
   const [error, setError] = useState(null)
 
   if (review && review.decision !== 'PENDING') {
-    return <ReviewOutcome review={review} />
+    return <ReviewOutcome review={review} remediationId={remediationId} onDecided={onDecided} />
   }
 
   function open(decision) {
@@ -159,7 +204,8 @@ export default function PatchActions({ remediationId, policy, validationStatus, 
         </button>
       </div>
       <p className="ca-detail__note">
-        Accepting records your decision only. It does not modify the GitHub repository.
+        Accepting records your decision and applies the patch to the project&apos;s stored copy of the
+        repository. It does not modify the GitHub repository.
       </p>
       {error && <p className="ca-error" role="alert">{error}</p>}
 
@@ -169,11 +215,20 @@ export default function PatchActions({ remediationId, policy, validationStatus, 
             <h4 id="ca-dialog-title">
               {pending === 'ACCEPTED' ? 'Accept this remediation suggestion?' : 'Reject remediation?'}
             </h4>
-            <p>
-              This will record your analyst decision.
-              <br />
-              It will NOT modify the repository.
-            </p>
+            {pending === 'ACCEPTED' ? (
+              <p>
+                This will record your analyst decision and apply the patch to the code in the
+                project&apos;s stored copy of the repository.
+                <br />
+                It will NOT change the GitHub repository.
+              </p>
+            ) : (
+              <p>
+                This will record your analyst decision.
+                <br />
+                No code will be changed.
+              </p>
+            )}
             {pending === 'REJECTED' && (
               <>
                 <label className="ca-form__label" htmlFor="ca-reject-quick">Reason (optional)</label>
@@ -211,7 +266,9 @@ export default function PatchActions({ remediationId, policy, validationStatus, 
                 onClick={confirm}
                 disabled={submitting}
               >
-                {submitting ? 'Saving decision…' : pending === 'ACCEPTED' ? 'Confirm Accept' : 'Confirm Reject'}
+                {submitting
+                  ? pending === 'ACCEPTED' ? 'Applying patch…' : 'Saving decision…'
+                  : pending === 'ACCEPTED' ? 'Accept & Apply Patch' : 'Confirm Reject'}
               </button>
             </div>
           </div>
