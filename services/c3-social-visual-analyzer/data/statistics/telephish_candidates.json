@@ -1,0 +1,97 @@
+{
+  "source": "TelePhish (Erfan et al., PST 2025)",
+  "source_url": "https://github.com/minaerfan/TelePhish",
+  "licence": "academic research and education only; no redistribution (text kept in gitignored data/raw/)",
+  "label_status": "provisional rule-based pre-labels; reviewed=false until confirmed in telephish_review.csv",
+  "rules": {
+    "brand_impersonation": "phishing; names a catalog brand; flagged link not on the brand's own domains; link imitates the brand (high) or lure word in text (medium)",
+    "financial_scam": "phishing; >= 2 investment/giveaway signals (>= 3 = high); not brand_impersonation",
+    "malware": "malicious and not phishing; executable/archive link (high) or download/crack/mod/cheat text (medium)",
+    "excluded_false_positive_domains": [
+      "bnbchain.org",
+      "cheelee.io",
+      "cheelee.us",
+      "lu.ma",
+      "metamask.app.link"
+    ],
+    "excluded_official_channels": [
+      "AtheneNetwork_Official",
+      "BinanceTurkish",
+      "BingXOfficial",
+      "BitMartExchange",
+      "BoinkersOfficial2",
+      "BybitEnglish",
+      "ChainGPT",
+      "CheeleeCommunity_EN",
+      "ISPYN_official2",
+      "LBank_en",
+      "White_Bit",
+      "binanceexchange",
+      "officialstaynex"
+    ]
+  },
+  "counts": {
+    "flagged_en": 1765,
+    "excluded_official_channel": 1636,
+    "short_or_duplicate": 35,
+    "excluded_false_positive_domain": 1,
+    "excluded_as_uncertain_by_review": 11
+  },
+  "review": {
+    "decisions_file": "data/annotations/telephish_review_decisions.json",
+    "reviewer": "assistant pre-review (AI-assisted); confirm or change in data/raw/telephish/telephish_review.csv",
+    "excluded_uncertain": [
+      "TP_012298",
+      "TP_012300",
+      "TP_012304",
+      "TP_012309",
+      "TP_012312",
+      "TP_012320",
+      "TP_012323",
+      "TP_012336",
+      "TP_012341",
+      "TP_012344",
+      "TP_012477"
+    ]
+  },
+  "candidates": {
+    "brand_impersonation": {
+      "total": 5,
+      "reviewed": 5
+    },
+    "financial_scam": {
+      "total": 7,
+      "reviewed": 7
+    }
+  },
+  "brand_impersonation_by_brand": {
+    "Gate.io": 1,
+    "Blum": 1,
+    "MELANIA token": 1,
+    "Arrington & Company": 1,
+    "BingX": 1
+  },
+  "sample_ids": {
+    "brand_impersonation": [
+      "TP_012362",
+      "TP_037888",
+      "TP_039432",
+      "TP_044432",
+      "TP_044605"
+    ],
+    "financial_scam": [
+      "TP_004782",
+      "TP_004790",
+      "TP_004816",
+      "TP_012625",
+      "TP_012658",
+      "TP_037887",
+      "TP_012581"
+    ]
+  },
+  "outputs": {
+    "candidates": "data/raw/telephish/telephish_candidates.jsonl",
+    "review_sheet": "data/raw/telephish/telephish_review.csv"
+  },
+  "created_at": "2026-10-18T08:59:22.954616+00:00"
+}
