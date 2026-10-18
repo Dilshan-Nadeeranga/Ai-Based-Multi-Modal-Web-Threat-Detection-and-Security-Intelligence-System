@@ -6,38 +6,38 @@
     "test": 0.15
   },
   "unit": "sample_id (stratified by source_dataset + label; identical texts kept together)",
-  "total": 419,
+  "total": 438,
   "duplicate_texts": 0,
   "counts": {
     "train": {
-      "legit": 146,
-      "scam": 147,
-      "total": 293
+      "legit": 153,
+      "scam": 153,
+      "total": 306
     },
     "val": {
-      "legit": 31,
-      "scam": 32,
-      "total": 63
+      "legit": 33,
+      "scam": 33,
+      "total": 66
     },
     "test": {
-      "legit": 32,
-      "scam": 31,
-      "total": 63
+      "legit": 33,
+      "scam": 33,
+      "total": 66
     }
   },
   "by_source": {
-    "manual|0": 9,
-    "manual|1": 10,
+    "manual|0": 19,
+    "manual|1": 19,
     "Phish360 (Multimodal-Phishing-Benchmarks)|0": 100,
     "Phish360 (Multimodal-Phishing-Benchmarks)|1": 100,
     "DIFrauD job_scams|0": 100,
     "DIFrauD job_scams|1": 100
   },
   "combine_modes": {
-    "post_plus_ocr": 17,
-    "post_only_ocr_duplicate": 2,
-    "post_only": 400
+    "post_plus_ocr": 30,
+    "post_only_ocr_duplicate": 3,
+    "post_only": 405
   },
   "excluded": "Rows without verified is_scam label (e.g. Fakeddit not_annotated)",
-  "created_at": "2026-10-14T06:00:08.701094+00:00"
+  "created_at": "2026-10-18T17:40:38.688590+00:00"
 }

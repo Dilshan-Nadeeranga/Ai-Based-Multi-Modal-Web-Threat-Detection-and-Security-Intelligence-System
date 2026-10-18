@@ -17,6 +17,7 @@ Writes:
 Usage:
   python scripts/prepare_text_baseline.py
   python scripts/prepare_text_baseline.py --seed 42 --no-ocr
+  python scripts/prepare_text_baseline.py --keep-existing   # add new samples without moving existing ones
 """
 
 from __future__ import annotations
@@ -161,13 +162,32 @@ def run_ocr(images: list[str], engine) -> tuple[str, float | None]:
     return "\n".join(texts), confidence
 
 
-def stratified_split(rows: list[dict], seed: int, train: float, val: float) -> dict[str, str]:
-    """Split by (source, label); identical texts stay in the same split."""
+def previous_splits() -> dict[str, str]:
+    if not DATASET.exists():
+        return {}
+    rows = (json.loads(line) for line in DATASET.read_text(encoding="utf-8").splitlines() if line.strip())
+    return {row["sample_id"]: row["split"] for row in rows}
+
+
+def stratified_split(rows: list[dict], seed: int, train: float, val: float,
+                     keep: dict[str, str] | None = None) -> dict[str, str]:
+    """Split by (source, label); identical texts stay in the same split.
+
+    With ``keep``, rows already assigned there keep their split (and so do identical texts); only the remaining
+    rows are split, per (source, label) group, with the same ratios.
+    """
+    keep = keep or {}
+    assignment: dict[str, str] = {row["sample_id"]: keep[row["sample_id"]] for row in rows if row["sample_id"] in keep}
+    by_hash = {row["text_hash"]: assignment[row["sample_id"]] for row in rows if row["sample_id"] in assignment}
     groups: dict[tuple, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
     for row in rows:
+        if row["sample_id"] in assignment:
+            continue
+        if row["text_hash"] in by_hash:
+            assignment[row["sample_id"]] = by_hash[row["text_hash"]]
+            continue
         groups[(row["source_dataset"], row["label"])][row["text_hash"]].append(row["sample_id"])
     rng = random.Random(seed)
-    assignment: dict[str, str] = {}
     for key in sorted(groups):
         clusters = [groups[key][h] for h in sorted(groups[key])]
         rng.shuffle(clusters)
@@ -188,7 +208,10 @@ def main() -> None:
     parser.add_argument("--train", type=float, default=0.70)
     parser.add_argument("--val", type=float, default=0.15)
     parser.add_argument("--no-ocr", action="store_true", help="Do not run Tesseract on images")
+    parser.add_argument("--keep-existing", action="store_true",
+                        help="Keep the split of rows already in text_baseline_dataset.jsonl; only new rows are assigned")
     args = parser.parse_args()
+    keep = previous_splits() if args.keep_existing else None
 
     ensure_status()
     engine = None
@@ -245,7 +268,7 @@ def main() -> None:
     mark_checklist("Clean OCR text", True)
     mark_checklist("Combine/compare post and OCR text", True)
 
-    assignment = stratified_split(rows, args.seed, args.train, args.val)
+    assignment = stratified_split(rows, args.seed, args.train, args.val, keep)
     now = datetime.now(timezone.utc).isoformat()
     for row in rows:
         row["split"] = assignment[row["sample_id"]]
