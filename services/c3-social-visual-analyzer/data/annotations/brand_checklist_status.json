@@ -1,6 +1,6 @@
 {
   "title": "Brand Reference + Annotation Dataset",
-  "done_count": 13,
+  "done_count": 11,
   "total": 13,
   "items": [
     {
@@ -9,11 +9,11 @@
     },
     {
       "item": "Collect legitimate brand logos",
-      "done": true
+      "done": false
     },
     {
       "item": "Collect official website screenshots",
-      "done": true
+      "done": false
     },
     {
       "item": "Record official brand names",
@@ -56,5 +56,5 @@
       "done": true
     }
   ],
-  "updated_at": "2026-10-13T19:59:31.355782+00:00"
+  "updated_at": "2026-10-18T06:12:15.493352+00:00"
 }

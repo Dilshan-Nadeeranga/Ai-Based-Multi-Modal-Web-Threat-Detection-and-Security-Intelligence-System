@@ -3,10 +3,13 @@
 Sources (official domain only — never Zenodo phishing assets):
   1. Clearbit Logo API: https://logo.clearbit.com/{domain}
   2. Google favicon service (fallback): sz=128
+  3. Icons declared by the official homepage (apple-touch-icon / icon links), then its header logo
+  4. Wikidata "logo image" (P154), only for the item whose official website (P856) matches the domain
 
 Usage:
   python scripts/collect_brand_logos.py
   python scripts/collect_brand_logos.py --dry-run
+  python scripts/collect_brand_logos.py --only-missing   # brands that already have a logo are left untouched
 """
 
 from __future__ import annotations
@@ -15,9 +18,11 @@ import argparse
 import hashlib
 import io
 import json
+import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urljoin
 
 try:
     import truststore
@@ -68,7 +73,8 @@ def validate_image(raw: bytes) -> tuple[bytes, str, int, int]:
     with Image.open(io.BytesIO(raw)) as image:
         image.load()
         width, height = image.size
-        if min(width, height) < MIN_SIDE:
+        wordmark = max(width, height) >= 120 and min(width, height) >= 24
+        if min(width, height) < MIN_SIDE and not wordmark:
             raise ValueError(f"too small {width}x{height}")
         if image.mode in ("RGBA", "P") or "A" in image.getbands():
             image = image.convert("RGBA")
@@ -117,12 +123,74 @@ def candidate_urls(domain: str, brand_id: str) -> list[str]:
     ]
 
 
-def download_logo(domain: str, brand_id: str, client: httpx.Client) -> tuple[bytes, str, int, int, str]:
+def official_site_icons(website: str, client: httpx.Client) -> list[str]:
+    """Icons the official homepage declares (apple-touch-icon / icon links), largest first, then its header logo."""
+    try:
+        response = client.get(website, follow_redirects=True)
+    except httpx.HTTPError:
+        return []
+    host = response.url.host
+    found: list[tuple[int, str]] = []
+    for tag in re.findall(r"<link\b[^>]*>", response.text, re.I):
+        rel = re.search(r'rel=["\']([^"\']+)["\']', tag, re.I)
+        href = re.search(r'href=["\']([^"\']+)["\']', tag, re.I)
+        if not rel or not href or "icon" not in rel.group(1).lower():
+            continue
+        sizes = re.search(r'sizes=["\'](\d+)x\d+["\']', tag, re.I)
+        size = int(sizes.group(1)) if sizes else (180 if "apple" in rel.group(1).lower() else 32)
+        found.append((size, urljoin(str(response.url), href.group(1))))
+    header_logo = next((urljoin(str(response.url), src) for src in re.findall(r'<img[^>]+src=["\']([^"\']+)["\']', response.text, re.I)
+                        if "logo" in src.lower() and httpx.URL(urljoin(str(response.url), src)).host == host), None)
+    return [url for _, url in sorted(found, reverse=True)] + ([header_logo] if header_logo else [])
+
+
+def _same_site(host: str, domain: str) -> bool:
+    if host == domain or host.endswith("." + domain) or domain.endswith("." + host):
+        return True
+    # e.g. sbi.co.in (Wikidata) vs onlinesbi.sbi (dataset): same organisation label.
+    return host.split(".")[0] in domain.split(".")
+
+
+def wikidata_logo(names: list[str], domain: str, client: httpx.Client) -> list[str]:
+    """Wikidata "logo image" (P154) of the item whose official website (P856) is on ``domain``."""
+    api = "https://www.wikidata.org/w/api.php"
+    seen: set[str] = set()
+    try:
+        for name in names:
+            hits = client.get(api, params={"action": "wbsearchentities", "search": name, "language": "en",
+                                           "format": "json", "limit": 5}).json().get("search", [])
+            for hit in hits:
+                if hit["id"] in seen:
+                    continue
+                seen.add(hit["id"])
+                claims = client.get(api, params={"action": "wbgetentities", "ids": hit["id"], "props": "claims",
+                                                 "format": "json"}).json()["entities"][hit["id"]].get("claims", {})
+                sites = [c["mainsnak"].get("datavalue", {}).get("value", "") for c in claims.get("P856", [])]
+                hosts = [httpx.URL(site).host.removeprefix("www.") for site in sites if site.startswith("http")]
+                logos = [c["mainsnak"].get("datavalue", {}).get("value") for c in claims.get("P154", [])]
+                if logos and any(_same_site(host, domain) for host in hosts):
+                    return [f"https://commons.wikimedia.org/wiki/Special:FilePath/{logo.replace(' ', '_')}?width=256"
+                            for logo in logos if logo]
+    except (httpx.HTTPError, KeyError, ValueError):
+        return []
+    return []
+
+
+def download_logo(domain: str, brand_id: str, client: httpx.Client,
+                  website: str | None = None, names: list[str] | None = None) -> tuple[bytes, str, int, int, str]:
     errors: list[str] = []
     best: tuple[bytes, str, int, int, str] | None = None
-    for url in candidate_urls(domain, brand_id):
+    candidates = candidate_urls(domain, brand_id)
+    if website:
+        candidates += official_site_icons(website, client)
+    if names:
+        candidates += wikidata_logo(names, domain, client)
+    for url in candidates:
         try:
             raw = fetch(url, client)
+            if raw.lstrip()[:200].lower().startswith((b"<svg", b"<?xml")) and b"<svg" in raw[:2000].lower():
+                # Vector logo (e.g. Simple Icons); normalize_brand_logos.py rasterizes it.
+                return raw, ".svg", 256, 256, url
             payload, ext, width, height = validate_image(raw)
             score = width * height
             if best is None or score > best[2] * best[3]:
@@ -153,7 +221,7 @@ def main() -> None:
             brand_id = row["brand_id"]
             domain = row.get("official_domain") or ""
             existing = LOGOS / f"{brand_id}_primary.png"
-            if args.only_missing and existing.is_file() and existing.stat().st_size > 800:
+            if args.only_missing and (existing.is_file() or row.get("reference_images")):
                 ok += 1
                 continue
             if not domain:
@@ -164,7 +232,9 @@ def main() -> None:
                 print(f"[dry-run] {brand_id} <- {domain}")
                 continue
             try:
-                payload, ext, width, height, source = download_logo(domain, brand_id, client)
+                names = [n for n in [row.get("display_name"), *(row.get("aliases") or [])] if n]
+                payload, ext, width, height, source = download_logo(domain, brand_id, client, row.get("official_website"),
+                                                                    names)
                 name = f"{brand_id}_primary{ext}"
                 path = LOGOS / name
                 path.write_bytes(payload)

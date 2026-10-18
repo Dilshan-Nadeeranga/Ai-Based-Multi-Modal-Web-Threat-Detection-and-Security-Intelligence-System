@@ -94,7 +94,7 @@ DETECTOR_CONF = 0.25
 SHORTENERS = {"itl.ink", "bit.ly", "bitly.com", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "is.gd", "v.gd", "buff.ly", "rebrand.ly",
               "s.id", "short.gy", "qrco.de", "clck.ru",
               "cutt.ly", "shorturl.at", "lnkd.in", "fb.me", "tiny.cc", "rb.gy", "t.ly"}
-AMBIGUOUS_BRANDS = {"apple", "steam", "chase", "amazon"}
+AMBIGUOUS_BRANDS = {"apple", "steam", "chase", "amazon", "orange", "square", "discord", "ups", "aruba", "bt"}
 SEVERITY = {"low": 1, "medium": 2, "high": 3}
 
 _URL = re.compile(r"(?:https?://|www\.)[^\s<>\"']+", re.IGNORECASE)

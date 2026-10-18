@@ -10,6 +10,7 @@ Writes:
 Usage:
   python scripts/split_brand_dataset.py
   python scripts/split_brand_dataset.py --seed 42 --train 0.7 --val 0.15 --test 0.15
+  python scripts/split_brand_dataset.py --keep-existing   # only new brands are assigned; old ones keep their split
 """
 
 from __future__ import annotations
@@ -65,21 +66,27 @@ def main() -> None:
     parser.add_argument("--train", type=float, default=0.70)
     parser.add_argument("--val", type=float, default=0.15)
     parser.add_argument("--test", type=float, default=0.15)
+    parser.add_argument("--keep-existing", action="store_true",
+                        help="Keep the split of brands already in brand_splits.jsonl and only assign new brands")
     args = parser.parse_args()
 
     rows = [row for row in load_catalog() if row.get("status") != "duplicate_logo" and row.get("normalized_image")]
     brands = sorted(row["brand_id"] for row in rows)
+    assignment: dict[str, str] = {}
+    if args.keep_existing and SPLIT_JSONL.exists():
+        previous = [json.loads(line) for line in SPLIT_JSONL.read_text(encoding="utf-8").splitlines() if line.strip()]
+        assignment = {item["brand_id"]: item["split"] for item in previous if item["brand_id"] in brands}
     rng = random.Random(args.seed)
-    shuffled = brands[:]
+    shuffled = [brand_id for brand_id in brands if brand_id not in assignment]
     rng.shuffle(shuffled)
 
     n_train, n_val, n_test = allocate(len(shuffled), args.train, args.val, args.test)
-    train_ids = shuffled[:n_train]
-    val_ids = shuffled[n_train : n_train + n_val]
-    test_ids = shuffled[n_train + n_val :]
-    assignment = {brand_id: "train" for brand_id in train_ids}
-    assignment.update({brand_id: "val" for brand_id in val_ids})
-    assignment.update({brand_id: "test" for brand_id in test_ids})
+    assignment.update({brand_id: "train" for brand_id in shuffled[:n_train]})
+    assignment.update({brand_id: "val" for brand_id in shuffled[n_train : n_train + n_val]})
+    assignment.update({brand_id: "test" for brand_id in shuffled[n_train + n_val :]})
+    train_ids = [b for b in brands if assignment[b] == "train"]
+    val_ids = [b for b in brands if assignment[b] == "val"]
+    test_ids = [b for b in brands if assignment[b] == "test"]
 
     now = datetime.now(timezone.utc).isoformat()
     by_id = {row["brand_id"]: row for row in rows}

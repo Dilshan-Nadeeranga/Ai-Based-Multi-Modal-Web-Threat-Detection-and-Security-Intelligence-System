@@ -1,40 +1,42 @@
 {
-  "generated_at": "2026-10-13T19:59:31.354828+00:00",
-  "brands_in_catalog": 24,
-  "classes": 24,
-  "primary_logos_on_disk": 24,
-  "normalized_logos_on_disk": 24,
-  "screenshots_on_disk": 24,
-  "catalog_with_primary_file": 24,
-  "catalog_with_normalized_file": 24,
-  "catalog_with_screenshot_file": 24,
-  "logo_annotations": 24,
-  "logo_boxes": 24,
-  "brands_in_splits": 24,
+  "generated_at": "2026-10-18T06:12:15.492448+00:00",
+  "brands_in_catalog": 92,
+  "classes": 92,
+  "primary_logos_on_disk": 91,
+  "normalized_logos_on_disk": 91,
+  "screenshots_on_disk": 81,
+  "catalog_with_primary_file": 91,
+  "catalog_with_normalized_file": 91,
+  "catalog_with_screenshot_file": 81,
+  "logo_annotations": 90,
+  "logo_boxes": 90,
+  "brands_in_splits": 90,
   "split_counts": {
-    "train": 17,
-    "val": 4,
-    "test": 3
+    "train": 63,
+    "val": 14,
+    "test": 13
   },
   "categories": {
-    "Finance": 8,
+    "Finance": 46,
+    "Computers Electronics and Technology": 11,
+    "Telecommunications": 9,
+    "Other": 8,
+    "eCommerce and Shopping": 5,
+    "Shipping and Logistics": 5,
     "Social Media Networks": 4,
-    "Computers Electronics and Technology": 3,
-    "eCommerce and Shopping": 2,
-    "Email": 2,
-    "Shipping and Logistics": 2,
-    "Other": 2,
-    "Telecommunications": 1
+    "Email": 4
   },
   "status_counts": {
-    "normalized": 24
+    "normalized": 90,
+    "metadata_only": 1,
+    "duplicate_logo": 1
   },
-  "bbox_area_px_min": 2304,
+  "bbox_area_px_min": 2112,
   "bbox_area_px_max": 65536,
-  "bbox_area_px_mean": 23376.75,
+  "bbox_area_px_mean": 28710.12,
   "checklist": {
     "title": "Brand Reference + Annotation Dataset",
-    "done_count": 12,
+    "done_count": 11,
     "total": 13,
     "items": [
       {
@@ -43,11 +45,11 @@
       },
       {
         "item": "Collect legitimate brand logos",
-        "done": true
+        "done": false
       },
       {
         "item": "Collect official website screenshots",
-        "done": true
+        "done": false
       },
       {
         "item": "Record official brand names",
@@ -87,9 +89,9 @@
       },
       {
         "item": "Generate brand dataset statistics",
-        "done": false
+        "done": true
       }
     ],
-    "updated_at": "2026-10-13T19:59:31.265453+00:00"
+    "updated_at": "2026-10-18T06:12:15.399567+00:00"
   }
 }
