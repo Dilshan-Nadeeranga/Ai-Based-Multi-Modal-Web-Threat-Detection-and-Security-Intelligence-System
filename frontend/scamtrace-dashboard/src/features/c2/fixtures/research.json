@@ -1,0 +1,1003 @@
+{
+ "version": "v0.3",
+ "dataset": {
+  "version": "v0.3",
+  "created_at": "2026-10-14T22:46:34+05:30",
+  "total": 459,
+  "counts_per_label": {
+   "benign": 227,
+   "phishing": 87,
+   "fake_ecommerce": 57,
+   "crypto_scam": 29,
+   "malware_delivery": 59
+  },
+  "counts_per_language": {
+   "en": 427,
+   "si": 10,
+   "ta": 4,
+   "mixed": 0,
+   "unknown": 18
+  },
+  "fingerprint": "7a620c3b7ea05f42747d1a418a0663befa62a7c6ade6335f4557b52fda77cc26",
+  "label_by_language": {
+   "benign": {
+    "en": 208,
+    "unknown": 5,
+    "si": 10,
+    "ta": 4
+   },
+   "crypto_scam": {
+    "en": 22,
+    "unknown": 7
+   },
+   "fake_ecommerce": {
+    "en": 57
+   },
+   "malware_delivery": {
+    "en": 57,
+    "unknown": 2
+   },
+   "phishing": {
+    "en": 83,
+    "unknown": 4
+   }
+  }
+ },
+ "ablation": {
+  "classes": [
+   "benign",
+   "phishing",
+   "fake_ecommerce",
+   "crypto_scam",
+   "malware_delivery"
+  ],
+  "arms_available": [
+   "dom",
+   "behavior",
+   "text_tfidf",
+   "text_xlmr"
+  ],
+  "benign_fpr_target": 0.02,
+  "bootstrap": {
+   "n_resamples": 1000,
+   "seed": 42,
+   "confidence": 0.95
+  },
+  "rows": [
+   {
+    "key": "dom",
+    "row": "dom",
+    "title": "DOM-only",
+    "group": "single",
+    "arms": [
+     "dom"
+    ],
+    "strategy": "single arm",
+    "selected_for_row": true,
+    "cv_macro_f1_mean": 0.7006009011107482,
+    "cv_macro_f1_std": 0.07717277879953352,
+    "test_macro_f1": 0.7861111111111111,
+    "test_macro_f1_ci": [
+     0.651710525852065,
+     0.8910793877930074
+    ],
+    "test_accuracy": 0.8235294117647058,
+    "test_roc_auc": 0.9679060562297066,
+    "test_benign_fpr": 0.17647058823529413,
+    "threshold": 0.095085,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.6174891774891775,
+    "threat_recall_at_threshold": 0.5
+   },
+   {
+    "key": "behavior",
+    "row": "behavior",
+    "title": "Behavior-only",
+    "group": "single",
+    "arms": [
+     "behavior"
+    ],
+    "strategy": "single arm",
+    "selected_for_row": true,
+    "cv_macro_f1_mean": 0.6198821254374565,
+    "cv_macro_f1_std": 0.07778488901007173,
+    "test_macro_f1": 0.6823368869936034,
+    "test_macro_f1_ci": [
+     0.5512338358813222,
+     0.8048543662430759
+    ],
+    "test_accuracy": 0.7352941176470589,
+    "test_roc_auc": 0.8607863239902874,
+    "test_benign_fpr": 0.20588235294117646,
+    "threshold": 0.101512,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.4357898878614991,
+    "threat_recall_at_threshold": 0.29411764705882354
+   },
+   {
+    "key": "text_tfidf",
+    "row": "text_tfidf",
+    "title": "Text TF-IDF",
+    "group": "single",
+    "arms": [
+     "text_tfidf"
+    ],
+    "strategy": "single arm",
+    "selected_for_row": true,
+    "cv_macro_f1_mean": 0.7061932778174577,
+    "cv_macro_f1_std": 0.06518235573950669,
+    "test_macro_f1": 0.7176993681103271,
+    "test_macro_f1_ci": [
+     0.5690819173369915,
+     0.8409773647598275
+    ],
+    "test_accuracy": 0.8088235294117647,
+    "test_roc_auc": 0.9622718423398278,
+    "test_benign_fpr": 0.058823529411764705,
+    "threshold": 0.16697,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.6551448551448552,
+    "threat_recall_at_threshold": 0.5294117647058824
+   },
+   {
+    "key": "text_xlmr",
+    "row": "text_xlmr",
+    "title": "Text XLM-R",
+    "group": "single",
+    "arms": [
+     "text_xlmr"
+    ],
+    "strategy": "single arm",
+    "selected_for_row": true,
+    "cv_macro_f1_mean": 0.6798955005574416,
+    "cv_macro_f1_std": 0.04080275821198674,
+    "test_macro_f1": 0.6567445887445887,
+    "test_macro_f1_ci": [
+     0.5142516554747837,
+     0.7764519728174191
+    ],
+    "test_accuracy": 0.7058823529411765,
+    "test_roc_auc": 0.922188070284553,
+    "test_benign_fpr": 0.23529411764705882,
+    "threshold": 0.12001,
+    "benign_fpr_at_threshold": 0.058823529411764705,
+    "macro_f1_at_threshold": 0.6369338731443995,
+    "threat_recall_at_threshold": 0.7058823529411765
+   },
+   {
+    "key": "dom+behavior:mean",
+    "row": "dom+behavior",
+    "title": "DOM+Behavior",
+    "group": "pair",
+    "arms": [
+     "dom",
+     "behavior"
+    ],
+    "strategy": "Late fusion - mean",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.6849635039367461,
+    "cv_macro_f1_std": 0.06391782078633575,
+    "test_macro_f1": 0.7386515697375192,
+    "test_macro_f1_ci": [
+     0.6036570547660353,
+     0.8642329435565854
+    ],
+    "test_accuracy": 0.8088235294117647,
+    "test_roc_auc": 0.9529711454884741,
+    "test_benign_fpr": 0.14705882352941177,
+    "threshold": 0.119127,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.520477683236304,
+    "threat_recall_at_threshold": 0.4411764705882353
+   },
+   {
+    "key": "dom+behavior:weighted",
+    "row": "dom+behavior",
+    "title": "DOM+Behavior",
+    "group": "pair",
+    "arms": [
+     "dom",
+     "behavior"
+    ],
+    "strategy": "Late fusion - weighted",
+    "selected_for_row": true,
+    "cv_macro_f1_mean": 0.7005150296079969,
+    "cv_macro_f1_std": 0.07693031014883295,
+    "test_macro_f1": 0.7861111111111111,
+    "test_macro_f1_ci": [
+     0.651710525852065,
+     0.8910793877930074
+    ],
+    "test_accuracy": 0.8235294117647058,
+    "test_roc_auc": 0.9670891328212103,
+    "test_benign_fpr": 0.17647058823529413,
+    "threshold": 0.108301,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.5496103896103897,
+    "threat_recall_at_threshold": 0.5
+   },
+   {
+    "key": "dom+behavior:stacking",
+    "row": "dom+behavior",
+    "title": "DOM+Behavior",
+    "group": "pair",
+    "arms": [
+     "dom",
+     "behavior"
+    ],
+    "strategy": "Stacking - LogReg",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.6677256299124592,
+    "cv_macro_f1_std": 0.07329582345007477,
+    "test_macro_f1": 0.7449999999999999,
+    "test_macro_f1_ci": [
+     0.6226345292448091,
+     0.8599823460160048
+    ],
+    "test_accuracy": 0.7794117647058824,
+    "test_roc_auc": 0.964595280436571,
+    "test_benign_fpr": 0.2647058823529412,
+    "threshold": 0.059777867000042624,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.6961612227435012,
+    "threat_recall_at_threshold": 0.6764705882352942
+   },
+   {
+    "key": "dom+behavior:hybrid",
+    "row": "dom+behavior",
+    "title": "DOM+Behavior",
+    "group": "pair",
+    "arms": [
+     "dom",
+     "behavior"
+    ],
+    "strategy": "Hybrid - XGBoost",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.6641173279170491,
+    "cv_macro_f1_std": 0.11685296619562612,
+    "test_macro_f1": 0.7711797672592274,
+    "test_macro_f1_ci": [
+     0.6155216367276743,
+     0.8993490276166083
+    ],
+    "test_accuracy": 0.8382352941176471,
+    "test_roc_auc": 0.9712543689774863,
+    "test_benign_fpr": 0.08823529411764706,
+    "threshold": 0.041644465178251266,
+    "benign_fpr_at_threshold": 0.029411764705882353,
+    "macro_f1_at_threshold": 0.6568912882804717,
+    "threat_recall_at_threshold": 0.5588235294117647
+   },
+   {
+    "key": "dom+text:mean",
+    "row": "dom+text",
+    "title": "DOM+Text (TF-IDF + XLM-R)",
+    "group": "pair",
+    "arms": [
+     "dom",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Late fusion - mean",
+    "selected_for_row": true,
+    "cv_macro_f1_mean": 0.7605272940180864,
+    "cv_macro_f1_std": 0.05398685412422379,
+    "test_macro_f1": 0.8358957517578208,
+    "test_macro_f1_ci": [
+     0.7039151177268224,
+     0.9328193446932618
+    ],
+    "test_accuracy": 0.8676470588235294,
+    "test_roc_auc": 0.9745305628588776,
+    "test_benign_fpr": 0.058823529411764705,
+    "threshold": 0.16063,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.7575720770457612,
+    "threat_recall_at_threshold": 0.7647058823529411
+   },
+   {
+    "key": "dom+text:weighted",
+    "row": "dom+text",
+    "title": "DOM+Text (TF-IDF + XLM-R)",
+    "group": "pair",
+    "arms": [
+     "dom",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Late fusion - weighted",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.7497050648942671,
+    "cv_macro_f1_std": 0.06812960329151606,
+    "test_macro_f1": 0.8358957517578208,
+    "test_macro_f1_ci": [
+     0.7039151177268224,
+     0.9328193446932618
+    ],
+    "test_accuracy": 0.8676470588235294,
+    "test_roc_auc": 0.9748405196264468,
+    "test_benign_fpr": 0.058823529411764705,
+    "threshold": 0.1510281,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.762017316017316,
+    "threat_recall_at_threshold": 0.7352941176470589
+   },
+   {
+    "key": "dom+text:stacking",
+    "row": "dom+text",
+    "title": "DOM+Text (TF-IDF + XLM-R)",
+    "group": "pair",
+    "arms": [
+     "dom",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Stacking - LogReg",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.7334239970098186,
+    "cv_macro_f1_std": 0.08338657355982475,
+    "test_macro_f1": 0.7853726665491372,
+    "test_macro_f1_ci": [
+     0.6624779733276611,
+     0.8855362318840581
+    ],
+    "test_accuracy": 0.8235294117647058,
+    "test_roc_auc": 0.9570712141849281,
+    "test_benign_fpr": 0.14705882352941177,
+    "threshold": 0.06184442603557846,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.7613333333333334,
+    "threat_recall_at_threshold": 0.7941176470588235
+   },
+   {
+    "key": "dom+text:hybrid",
+    "row": "dom+text",
+    "title": "DOM+Text (TF-IDF + XLM-R)",
+    "group": "pair",
+    "arms": [
+     "dom",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Hybrid - XGBoost",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.7540761435129836,
+    "cv_macro_f1_std": 0.04193170617720296,
+    "test_macro_f1": 0.8001978204217011,
+    "test_macro_f1_ci": [
+     0.6694426856524043,
+     0.8998719565887828
+    ],
+    "test_accuracy": 0.8235294117647058,
+    "test_roc_auc": 0.9689076281841095,
+    "test_benign_fpr": 0.14705882352941177,
+    "threshold": 0.06954433768987656,
+    "benign_fpr_at_threshold": 0.029411764705882353,
+    "macro_f1_at_threshold": 0.8192063492063493,
+    "threat_recall_at_threshold": 0.8529411764705882
+   },
+   {
+    "key": "behavior+text:mean",
+    "row": "behavior+text",
+    "title": "Behavior+Text (TF-IDF + XLM-R)",
+    "group": "pair",
+    "arms": [
+     "behavior",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Late fusion - mean",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.7519504663818388,
+    "cv_macro_f1_std": 0.060822690725096634,
+    "test_macro_f1": 0.8038970288970291,
+    "test_macro_f1_ci": [
+     0.6647473465123221,
+     0.9134930236581803
+    ],
+    "test_accuracy": 0.8529411764705882,
+    "test_roc_auc": 0.9569905063535569,
+    "test_benign_fpr": 0.058823529411764705,
+    "threshold": 0.22395433333333328,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.7256140350877193,
+    "threat_recall_at_threshold": 0.7647058823529411
+   },
+   {
+    "key": "behavior+text:weighted",
+    "row": "behavior+text",
+    "title": "Behavior+Text (TF-IDF + XLM-R)",
+    "group": "pair",
+    "arms": [
+     "behavior",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Late fusion - weighted",
+    "selected_for_row": true,
+    "cv_macro_f1_mean": 0.7565941964835773,
+    "cv_macro_f1_std": 0.05037862374777891,
+    "test_macro_f1": 0.7949299251473165,
+    "test_macro_f1_ci": [
+     0.6543665266106443,
+     0.9061737107921318
+    ],
+    "test_accuracy": 0.8382352941176471,
+    "test_roc_auc": 0.9489872945665494,
+    "test_benign_fpr": 0.08823529411764706,
+    "threshold": 0.1822828,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.72007326007326,
+    "threat_recall_at_threshold": 0.7058823529411765
+   },
+   {
+    "key": "behavior+text:stacking",
+    "row": "behavior+text",
+    "title": "Behavior+Text (TF-IDF + XLM-R)",
+    "group": "pair",
+    "arms": [
+     "behavior",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Stacking - LogReg",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.7426060471989337,
+    "cv_macro_f1_std": 0.06307957974139569,
+    "test_macro_f1": 0.7549830678540073,
+    "test_macro_f1_ci": [
+     0.6141709615986832,
+     0.8670718834305791
+    ],
+    "test_accuracy": 0.7941176470588235,
+    "test_roc_auc": 0.9410744835757023,
+    "test_benign_fpr": 0.14705882352941177,
+    "threshold": 0.0828160991666204,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.7852757288373727,
+    "threat_recall_at_threshold": 0.8529411764705882
+   },
+   {
+    "key": "behavior+text:hybrid",
+    "row": "behavior+text",
+    "title": "Behavior+Text (TF-IDF + XLM-R)",
+    "group": "pair",
+    "arms": [
+     "behavior",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Hybrid - XGBoost",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.7402536767075919,
+    "cv_macro_f1_std": 0.04798563211943609,
+    "test_macro_f1": 0.7820833333333332,
+    "test_macro_f1_ci": [
+     0.6487722440957735,
+     0.8878017944903394
+    ],
+    "test_accuracy": 0.8088235294117647,
+    "test_roc_auc": 0.9578872579223457,
+    "test_benign_fpr": 0.20588235294117646,
+    "threshold": 0.06293654441833496,
+    "benign_fpr_at_threshold": 0.058823529411764705,
+    "macro_f1_at_threshold": 0.8276984126984127,
+    "threat_recall_at_threshold": 0.8823529411764706
+   },
+   {
+    "key": "tri:mean",
+    "row": "tri",
+    "title": "DOM+Behavior+Text (TF-IDF + XLM-R)",
+    "group": "tri",
+    "arms": [
+     "dom",
+     "behavior",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Late fusion - mean",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.7556802076950595,
+    "cv_macro_f1_std": 0.07514640416217808,
+    "test_macro_f1": 0.8358957517578208,
+    "test_macro_f1_ci": [
+     0.7039151177268224,
+     0.9328193446932618
+    ],
+    "test_accuracy": 0.8676470588235294,
+    "test_roc_auc": 0.97224034792789,
+    "test_benign_fpr": 0.058823529411764705,
+    "threshold": 0.18782574999999999,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.7195337995337995,
+    "threat_recall_at_threshold": 0.7352941176470589
+   },
+   {
+    "key": "tri:weighted",
+    "row": "tri",
+    "title": "DOM+Behavior+Text (TF-IDF + XLM-R)",
+    "group": "tri",
+    "arms": [
+     "dom",
+     "behavior",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Late fusion - weighted",
+    "selected_for_row": true,
+    "cv_macro_f1_mean": 0.7677825830400922,
+    "cv_macro_f1_std": 0.07330507818707904,
+    "test_macro_f1": 0.7949299251473165,
+    "test_macro_f1_ci": [
+     0.6543665266106443,
+     0.9061737107921318
+    ],
+    "test_accuracy": 0.8382352941176471,
+    "test_roc_auc": 0.9621474953367878,
+    "test_benign_fpr": 0.08823529411764706,
+    "threshold": 0.1824664,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.7256140350877193,
+    "threat_recall_at_threshold": 0.7647058823529411
+   },
+   {
+    "key": "tri:stacking",
+    "row": "tri",
+    "title": "DOM+Behavior+Text (TF-IDF + XLM-R)",
+    "group": "tri",
+    "arms": [
+     "dom",
+     "behavior",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Stacking - LogReg",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.7475265400379778,
+    "cv_macro_f1_std": 0.08365942262714077,
+    "test_macro_f1": 0.7828517543003934,
+    "test_macro_f1_ci": [
+     0.6541487644039566,
+     0.8841619414119687
+    ],
+    "test_accuracy": 0.8235294117647058,
+    "test_roc_auc": 0.947698077467629,
+    "test_benign_fpr": 0.11764705882352941,
+    "threshold": 0.06556689010405478,
+    "benign_fpr_at_threshold": 0.0,
+    "macro_f1_at_threshold": 0.7894248094248095,
+    "threat_recall_at_threshold": 0.8235294117647058
+   },
+   {
+    "key": "tri:hybrid",
+    "row": "tri",
+    "title": "DOM+Behavior+Text (TF-IDF + XLM-R)",
+    "group": "tri",
+    "arms": [
+     "dom",
+     "behavior",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "strategy": "Hybrid - XGBoost",
+    "selected_for_row": false,
+    "cv_macro_f1_mean": 0.7487893472565286,
+    "cv_macro_f1_std": 0.04022775051524886,
+    "test_macro_f1": 0.8105630033049389,
+    "test_macro_f1_ci": [
+     0.6796102903887284,
+     0.9085102234551661
+    ],
+    "test_accuracy": 0.8382352941176471,
+    "test_roc_auc": 0.9689979281583696,
+    "test_benign_fpr": 0.14705882352941177,
+    "threshold": 0.10202472656965256,
+    "benign_fpr_at_threshold": 0.029411764705882353,
+    "macro_f1_at_threshold": 0.8192063492063493,
+    "threat_recall_at_threshold": 0.8529411764705882
+   }
+  ],
+  "final": {
+   "key": "tri:weighted",
+   "row": "tri",
+   "title": "DOM+Behavior+Text (TF-IDF + XLM-R)",
+   "group": "tri",
+   "arms": [
+    "dom",
+    "behavior",
+    "text_tfidf",
+    "text_xlmr"
+   ],
+   "strategy": "Late fusion - weighted",
+   "selected_for_row": true,
+   "cv_macro_f1_mean": 0.7677825830400922,
+   "cv_macro_f1_std": 0.07330507818707904,
+   "test_macro_f1": 0.7949299251473165,
+   "test_macro_f1_ci": [
+    0.6543665266106443,
+    0.9061737107921318
+   ],
+   "test_accuracy": 0.8382352941176471,
+   "test_roc_auc": 0.9621474953367878,
+   "test_benign_fpr": 0.08823529411764706,
+   "threshold": 0.1824664,
+   "benign_fpr_at_threshold": 0.0,
+   "macro_f1_at_threshold": 0.7256140350877193,
+   "threat_recall_at_threshold": 0.7647058823529411
+  },
+  "comparison": {
+   "final": "tri:weighted",
+   "vs_best_single_by_cv": {
+    "single": "text_tfidf",
+    "point": 0.07723055703698944,
+    "ci_low": -0.018876588209194974,
+    "ci_high": 0.20081738208599914,
+    "bootstrap_mean": 0.07967032678985057,
+    "bootstrap_std": 0.05546035077341904,
+    "includes_zero": true,
+    "share_a_better": 0.941
+   },
+   "vs_best_single_on_test": {
+    "single": "dom",
+    "point": 0.008818814036205436,
+    "ci_low": -0.1356884507635792,
+    "ci_high": 0.1410413833793791,
+    "bootstrap_mean": 0.012002082834484128,
+    "bootstrap_std": 0.07002640135008575,
+    "includes_zero": true,
+    "share_a_better": 0.579
+   }
+  }
+ },
+ "operating_points": {
+  "calibration": {
+   "dataset_version": "v0.3",
+   "created_at": "2026-10-17T21:04:36+05:30",
+   "fusion_strategy": "weighted",
+   "fusion_arms": [
+    "dom",
+    "behavior",
+    "text_tfidf",
+    "text_xlmr"
+   ],
+   "fusion_weights": {
+    "dom": 0.1,
+    "behavior": 0.3,
+    "text_tfidf": 0.2,
+    "text_xlmr": 0.4
+   },
+   "fusion_fingerprint": "2f5904d1b159765e3819b4d99671e28c36530abbf55d2ddbac1cbcfc57bba762",
+   "split_fingerprint": "7d9ae69bbae3f5c699c022eb4ef74334ac49c4e95d68f30f9d480c9e55324f4f",
+   "oof_pages": 391,
+   "reproduces_9a_threshold": true,
+   "part_9a_threshold": 0.1824664,
+   "rule": "Malicious if P(benign) < malicious_below_p_benign (largest cut-off with OOF benign FPR <= 2%); Suspicious if P(benign) < suspicious_below_p_benign (smallest cut-off with OOF threat recall >= 95%); else Legitimate"
+  },
+  "oof": {
+   "rules_fired": {
+    "dom.password_form_external_action": {
+     "benign": 0,
+     "threat": 2
+    },
+    "dom.password_form_to_form_service": {
+     "benign": 0,
+     "threat": 2
+    },
+    "behavior.credential_exfiltration": {
+     "benign": 0,
+     "threat": 10
+    },
+    "behavior.keylogging_network": {
+     "benign": 0,
+     "threat": 0
+    },
+    "behavior.clipboard_crypto_swap": {
+     "benign": 0,
+     "threat": 0
+    },
+    "behavior.clickfix": {
+     "benign": 0,
+     "threat": 0
+    },
+    "behavior.auto_risky_download": {
+     "benign": 0,
+     "threat": 0
+    },
+    "fetch.executable_download": {
+     "benign": 0,
+     "threat": 0
+    }
+   },
+   "all arms": {
+    "arms": [
+     "dom",
+     "behavior",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "thresholds": {
+     "arms": "dom+behavior+text_tfidf+text_xlmr",
+     "malicious_below_p_benign": 0.182466,
+     "suspicious_below_p_benign": 0.511482,
+     "malicious_min_risk": 82,
+     "suspicious_min_risk": 49
+    },
+    "fusion_only": {
+     "n_benign": 193,
+     "n_threat": 198,
+     "benign_fpr_flagged": 0.2538860103626943,
+     "benign_fpr_malicious": 0.015544041450777202,
+     "threat_recall_flagged": 0.9545454545454546,
+     "threat_recall_malicious": 0.6262626262626263,
+     "threat_class_accuracy": 0.8095238095238095,
+     "no_verdict": 0,
+     "recall_per_class": {
+      "phishing": 0.9594594594594594,
+      "fake_ecommerce": 0.9387755102040817,
+      "crypto_scam": 1.0,
+      "malware_delivery": 0.94
+     }
+    },
+    "with_floor": {
+     "n_benign": 193,
+     "n_threat": 198,
+     "benign_fpr_flagged": 0.2538860103626943,
+     "benign_fpr_malicious": 0.015544041450777202,
+     "threat_recall_flagged": 0.9545454545454546,
+     "threat_recall_malicious": 0.6262626262626263,
+     "threat_class_accuracy": 0.8095238095238095,
+     "no_verdict": 0,
+     "recall_per_class": {
+      "phishing": 0.9594594594594594,
+      "fake_ecommerce": 0.9387755102040817,
+      "crypto_scam": 1.0,
+      "malware_delivery": 0.94
+     }
+    },
+    "floor_raised": {
+     "benign_pages": 0,
+     "threat_pages": 0,
+     "benign_examples": []
+    }
+   },
+   "without XLM-R": {
+    "arms": [
+     "dom",
+     "behavior",
+     "text_tfidf"
+    ],
+    "thresholds": {
+     "arms": "dom+behavior+text_tfidf",
+     "malicious_below_p_benign": 0.196758,
+     "suspicious_below_p_benign": 0.500517,
+     "malicious_min_risk": 81,
+     "suspicious_min_risk": 50
+    },
+    "fusion_only": {
+     "n_benign": 193,
+     "n_threat": 198,
+     "benign_fpr_flagged": 0.23316062176165803,
+     "benign_fpr_malicious": 0.015544041450777202,
+     "threat_recall_flagged": 0.9545454545454546,
+     "threat_recall_malicious": 0.5858585858585859,
+     "threat_class_accuracy": 0.7724867724867724,
+     "no_verdict": 0,
+     "recall_per_class": {
+      "phishing": 0.9594594594594594,
+      "fake_ecommerce": 0.9387755102040817,
+      "crypto_scam": 1.0,
+      "malware_delivery": 0.94
+     }
+    },
+    "with_floor": {
+     "n_benign": 193,
+     "n_threat": 198,
+     "benign_fpr_flagged": 0.23316062176165803,
+     "benign_fpr_malicious": 0.015544041450777202,
+     "threat_recall_flagged": 0.9545454545454546,
+     "threat_recall_malicious": 0.5858585858585859,
+     "threat_class_accuracy": 0.7724867724867724,
+     "no_verdict": 0,
+     "recall_per_class": {
+      "phishing": 0.9594594594594594,
+      "fake_ecommerce": 0.9387755102040817,
+      "crypto_scam": 1.0,
+      "malware_delivery": 0.94
+     }
+    },
+    "floor_raised": {
+     "benign_pages": 0,
+     "threat_pages": 0,
+     "benign_examples": []
+    }
+   }
+  },
+  "test": [
+   {
+    "xlmr": true,
+    "arms": [
+     "dom",
+     "behavior",
+     "text_tfidf",
+     "text_xlmr"
+    ],
+    "thresholds": {
+     "arms": "dom+behavior+text_tfidf+text_xlmr",
+     "malicious_below_p_benign": 0.182466,
+     "suspicious_below_p_benign": 0.511482,
+     "malicious_min_risk": 82,
+     "suspicious_min_risk": 49
+    },
+    "load_seconds": 7.8,
+    "latency_ms": {
+     "p50": 586.0,
+     "p95": 1306.5,
+     "mean": 599.1,
+     "max": 2348.1
+    },
+    "statuses": {
+     "ok": 68
+    },
+    "fusion_only": {
+     "n_benign": 34,
+     "n_threat": 34,
+     "benign_fpr_flagged": 0.23529411764705882,
+     "benign_fpr_malicious": 0.0,
+     "threat_recall_flagged": 0.9411764705882353,
+     "threat_recall_malicious": 0.7647058823529411,
+     "threat_class_accuracy": 0.875,
+     "no_verdict": 0,
+     "recall_per_class": {
+      "phishing": 1.0,
+      "fake_ecommerce": 1.0,
+      "crypto_scam": 1.0,
+      "malware_delivery": 0.7777777777777778
+     }
+    },
+    "with_floor": {
+     "n_benign": 34,
+     "n_threat": 34,
+     "benign_fpr_flagged": 0.23529411764705882,
+     "benign_fpr_malicious": 0.0,
+     "threat_recall_flagged": 0.9411764705882353,
+     "threat_recall_malicious": 0.7647058823529411,
+     "threat_class_accuracy": 0.875,
+     "no_verdict": 0,
+     "recall_per_class": {
+      "phishing": 1.0,
+      "fake_ecommerce": 1.0,
+      "crypto_scam": 1.0,
+      "malware_delivery": 0.7777777777777778
+     }
+    },
+    "floor_raised": {
+     "benign_pages": 0,
+     "threat_pages": 0,
+     "benign_examples": []
+    }
+   },
+   {
+    "xlmr": false,
+    "arms": [
+     "dom",
+     "behavior",
+     "text_tfidf"
+    ],
+    "thresholds": {
+     "arms": "dom+behavior+text_tfidf",
+     "malicious_below_p_benign": 0.196758,
+     "suspicious_below_p_benign": 0.500517,
+     "malicious_min_risk": 81,
+     "suspicious_min_risk": 50
+    },
+    "load_seconds": 0.4,
+    "latency_ms": {
+     "p50": 202.4,
+     "p95": 1022.2,
+     "mean": 300.1,
+     "max": 2249.5
+    },
+    "statuses": {
+     "ok": 68
+    },
+    "fusion_only": {
+     "n_benign": 34,
+     "n_threat": 34,
+     "benign_fpr_flagged": 0.35294117647058826,
+     "benign_fpr_malicious": 0.029411764705882353,
+     "threat_recall_flagged": 0.9411764705882353,
+     "threat_recall_malicious": 0.5882352941176471,
+     "threat_class_accuracy": 0.875,
+     "no_verdict": 0,
+     "recall_per_class": {
+      "phishing": 1.0,
+      "fake_ecommerce": 1.0,
+      "crypto_scam": 1.0,
+      "malware_delivery": 0.7777777777777778
+     }
+    },
+    "with_floor": {
+     "n_benign": 34,
+     "n_threat": 34,
+     "benign_fpr_flagged": 0.35294117647058826,
+     "benign_fpr_malicious": 0.029411764705882353,
+     "threat_recall_flagged": 0.9411764705882353,
+     "threat_recall_malicious": 0.5882352941176471,
+     "threat_class_accuracy": 0.875,
+     "no_verdict": 0,
+     "recall_per_class": {
+      "phishing": 1.0,
+      "fake_ecommerce": 1.0,
+      "crypto_scam": 1.0,
+      "malware_delivery": 0.7777777777777778
+     }
+    },
+    "floor_raised": {
+     "benign_pages": 0,
+     "threat_pages": 0,
+     "benign_examples": []
+    }
+   }
+  ]
+ },
+ "models": {
+  "fusion": {
+   "name": "C2 tri-modal fusion model (Part 9A)",
+   "created_at": "2026-10-16T23:19:15+05:30",
+   "strategy": "Late fusion - weighted",
+   "weights": {
+    "dom": 0.1,
+    "behavior": 0.3,
+    "text_tfidf": 0.2,
+    "text_xlmr": 0.4
+   },
+   "cv_mean": {
+    "macro_f1": 0.7677825830400922,
+    "weighted_f1": 0.7987529317943467,
+    "accuracy": 0.8003894839337878,
+    "balanced_accuracy": 0.7526313218944798,
+    "roc_auc_ovr_macro": 0.9321237658829226,
+    "benign_fpr": 0.10890688259109313,
+    "f1_benign": 0.8559721105905845,
+    "f1_phishing": 0.722769744160178,
+    "f1_fake_ecommerce": 0.7788888888888889,
+    "f1_crypto_scam": 0.7557575757575759,
+    "f1_malware_delivery": 0.7255245958032335
+   },
+   "test": {
+    "macro_f1": 0.7949299251473165,
+    "weighted_f1": 0.8309334101533591,
+    "accuracy": 0.8382352941176471,
+    "balanced_accuracy": 0.8154725992961287,
+    "roc_auc_ovr_macro": 0.9621474953367878,
+    "benign_fpr": 0.08823529411764706,
+    "macro_precision": 0.8321428571428571,
+    "macro_recall": 0.8154725992961287
+   }
+  },
+  "arms": {
+   "dom": {
+    "part": "Part 4",
+    "model_display": "Random Forest",
+    "model_trained_at": "2026-10-14T23:47:12+05:30"
+   },
+   "behavior": {
+    "part": "Part 8",
+    "model_display": "Random Forest",
+    "model_trained_at": "2026-10-15T06:55:21+05:30"
+   },
+   "text_tfidf": {
+    "part": "Part 6A",
+    "model_display": "TF-IDF char 2-5 + LogReg",
+    "model_trained_at": "2026-10-16T20:04:02+05:30"
+   },
+   "text_xlmr": {
+    "part": "Part 6A",
+    "model_display": "XLM-R (fine-tuned)",
+    "seed": 43,
+    "base_model": "xlm-roberta-base"
+   }
+  }
+ },
+ "missing": []
+}

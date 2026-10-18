@@ -1,0 +1,72 @@
+/* C2 "threat-hunting console" look. Every selector is prefixed .c2- so nothing leaks into
+   other members' pages. No flashing; all motion is switched off for prefers-reduced-motion. */
+
+.c2-console {
+  background-color: #020617;
+  background-image:
+    radial-gradient(ellipse at 20% -10%, rgba(34, 211, 238, 0.08), transparent 55%),
+    linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+  color: #e2e8f0;
+  color-scheme: dark;
+}
+
+/* faint static scanlines on panels (texture only, never animated) */
+.c2-panel {
+  background-color: rgba(15, 23, 42, 0.82);
+  background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px);
+}
+
+.c2-console :focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 2px;
+}
+
+.c2-console ::selection {
+  background: rgba(34, 211, 238, 0.35);
+  color: #f8fafc;
+}
+
+/* terminal log: a soft cursor (opacity fade, slow; not a flash) */
+.c2-cursor::after {
+  content: '▍';
+  margin-left: 2px;
+  color: #67e8f9;
+  animation: c2-fade 1.6s ease-in-out infinite;
+}
+
+/* a pipeline stage that is running: a slow sweeping highlight */
+.c2-stage-running {
+  background-image: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.16), transparent);
+  background-size: 200% 100%;
+  animation: c2-sweep 1.8s linear infinite;
+}
+
+.c2-enter {
+  animation: c2-enter 0.35s ease-out both;
+}
+
+@keyframes c2-fade {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+
+@keyframes c2-sweep {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@keyframes c2-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c2-console *,
+  .c2-console *::before,
+  .c2-console *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

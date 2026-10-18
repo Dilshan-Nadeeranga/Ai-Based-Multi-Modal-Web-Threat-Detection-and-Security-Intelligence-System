@@ -26,7 +26,7 @@ It returns one unified JSON result: `verdict`, `risk_score`, per-modality result
 | 6 | XLM-R content classification (6A: page level) | `nlp/` | `train_xlmr.py`, `evaluate_xlmr.py` |
 | 7 | Static JavaScript intent analyzer | `js_analyzer/` | `analyze_js.py` |
 | 8 | Behavioral intent mapping (sources → sinks) | `behavior/` | `map_behavior.py` |
-| 9 | Tri-modal fusion + ablation (9A) · unified API (9B, next) | `fusion/`, `api/` | `run_ablation.py`, `run_api.py` |
+| 9 | Tri-modal fusion + ablation (9A) · URL analysis engine + `/api/v1/analyze` (9B-1) · ThreatRadar ingestion, results store, dashboard APIs (9B-2) | `fusion/`, `api/`, `ingest/`, `store/` | `run_ablation.py`, `calibrate_verdict.py`, `evaluate_verdict.py`, `export_openapi.py`, `run_api.py`, `pull_threatradar.py`, `review_live.py`, `demo_ingest.py` |
 
 ## Setup
 
@@ -73,6 +73,7 @@ python scripts/collect.py download --feed openphish             # optional helpe
 python scripts/collect.py import --feed openphish --file data/feeds/openphish.txt
 python scripts/collect.py import --feed tranco --file data/feeds/tranco_top1m.csv.zip --top 1000 --sample 60
 python scripts/collect.py import --feed manual --file data/feeds/manual_urls.csv   # template: data/metadata/manual_urls_template.csv
+python scripts/collect.py import --feed threatradar --dir ../../ingestion/threat-radar/backend/data   # see "Importing from ThreatRadar"
 python scripts/collect.py fetch --label phishing --limit 60     # static mode (default)
 python scripts/collect.py retry-failed                          # failed URLs, max 3 attempts
 python scripts/collect.py progress                              # samples per label x language vs configs/collection_targets.yaml
@@ -105,6 +106,59 @@ The container only sees `data/`, runs as a non-root user and blocks downloads, m
 - **Never commit `data/raw/` or the URL lists.** `data/raw/`, `data/feeds/`, `data/metadata/candidates.csv`, `data/metadata/metadata.csv` and `data/metadata/review/` are git-ignored because they contain live scam pages and URLs. Only `dataset_schema.json`, the templates and `manifests/` (no URLs) are tracked.
 - Windows Defender quarantines many phishing pages. The collector writes pages only inside this project's `data/` folder (`data/tmp/` while saving, then `data/raw/`), never the system Temp folder, so a Defender exclusion for this project's `data\` folder is enough. Never exclude the whole project, your user folder or Temp. Pages Defender still removes are marked `blocked_by_antivirus`; files quarantined later show up as "file not found" in `build_metadata.py validate`.
 - The fetcher never submits forms, never downloads linked resources, and refuses `localhost`/private-network addresses.
+
+### Importing from ThreatRadar
+
+ThreatRadar (`ingestion/threat-radar`, a teammate's service) scrapes Telegram channels, subreddits and newly registered domains. The `threatradar` feed reads its output folder directly, so you don't have to edit any CSVs by hand. ThreatRadar's files are only read, never changed:
+
+| ThreatRadar file (under `backend/data/`) | rows | C2 `source` |
+|---|---|---|
+| `scraped/urls_only.csv` (Telegram) | `domain,url,channel,date,message_id,...` | `social_media_report` |
+| `scraped/reddit_urls_only.csv` (Reddit) | `domain,url,subreddit,date,post_id,score,title` | `social_media_report` |
+| `filtered/filtered_domains_*.json` (domain filter) | `domains[]` with `reasons`, `matchedKeywords`, `mimicBrand` | `other` |
+
+ThreatRadar does not label anything, so each URL gets a **weak suggested label** from `configs/threatradar_rules.yaml`. The first rule that matches wins:
+1. brand mimicry (ThreatRadar's `brand_mimicry:` reason, or a brand from the config inside a host that is not allow-listed, e.g. `paypal-verify.xyz`) → `phishing`;
+2. crypto/investment/airdrop/USDT/profit keywords → `crypto_scam`;
+3. shop/sale/discount/store keywords → `fake_ecommerce`;
+4. download/apk/crack/update keywords → `malware_delivery`.
+
+A row that matches no rule is **skipped**: the importer never guesses `benign`.
+- Keywords are substrings (a domain has no word breaks) and are only searched in the fields that config lists for each source. For Telegram that is the URL and the channel name; for Reddit, the URL and the post title, not the subreddit (otherwise r/CryptoScams would label every link); for the domain filter, the domain and ThreatRadar's matched keywords.
+- Each note reads `ThreatRadar <source>: <reason> — check label; <channel @x message_id=… | r/sub post_id=… | file + reasons>; seen <date>`. The note travels to `metadata.csv` with the page.
+- `language_hint` is `si` or `ta` if the channel name, post title or matched keyword contains Sinhala or Tamil script. Otherwise it is `unknown`; the fetch step then detects the language from the page itself.
+- Bare domains become `https://<domain>/`. URLs are normalized and compared with `candidates.csv`, with `metadata.csv` (`source_url` and `final_url`) and with each other.
+- Well-known legitimate domains and their subdomains are skipped. That allow-list is in the same config file; free hosts such as `*.github.io` are not covered by it.
+- A missing file is reported and skipped; it does not stop the import.
+
+End to end, run from this folder. ThreatRadar is at `../../ingestion/threat-radar`:
+
+```bash
+# 1. queue the URLs (add --since YYYY-MM-DD for new rows only, --sources telegram,reddit,domain_filter, --limit N)
+python scripts/collect.py import --feed threatradar --dir ../../ingestion/threat-radar/backend/data --since 2026-10-01
+#    prints: rows read per source, imported per suggested label, skipped (duplicate / allow-listed / no rule matched)
+
+# 2. fetch per label (static mode; 2xx HTML pages only)
+python scripts/collect.py fetch --label phishing --limit 60
+python scripts/collect.py fetch --label crypto_scam --limit 60
+python scripts/collect.py fetch --label fake_ecommerce --limit 60
+python scripts/collect.py fetch --label malware_delivery --limit 60
+python scripts/collect.py failures                     # why some were skipped / failed
+
+# 3. quality flags + near-duplicate clusters
+python scripts/deduplicate.py all
+
+# 4. review: the suggested labels are WEAK, so confirm or relabel every ThreatRadar page
+python scripts/review_labels.py review --reviewer <your name> --only-flagged
+python scripts/review_labels.py review --reviewer <your name> --label crypto_scam   # repeat per label
+
+# 5. statistics, then freeze the new version (never overwrites an existing one)
+python scripts/dataset_stats.py stats
+python scripts/dataset_stats.py freeze --version v0.4 --notes "v0.3 + ThreatRadar imports (reviewed)"
+python scripts/dataset_stats.py verify --version v0.4
+```
+
+Later parts keep reading the version they name (for example v0.3) until you rerun them with `--version v0.4`.
 
 ## Cleaning & verifying the dataset
 
@@ -465,7 +519,7 @@ If the Hugging Face download fails with `CERTIFICATE_VERIFY_FAILED` on Windows (
 
 ## Fusion & ablation
 
-Part 9A: the **tri-modal fusion** of the three single-modality arms (DOM, behavior, text) and the **ablation study** that compares every arm, every pair and the fusion on the same shared split. (Part 9B - the public `/api/v1/analyze` and the gateway integration - comes next.)
+Part 9A: the **tri-modal fusion** of the three single-modality arms (DOM, behavior, text) and the **ablation study** that compares every arm, every pair and the fusion on the same shared split. (Part 9 B-1 - the public `/api/v1/analyze` - is described under **Analyze API**; the gateway integration is B-2.)
 
 ```bash
 python scripts/run_ablation.py --version v0.3                  # OOF per arm + fusion + ablation (~1 min)
@@ -621,19 +675,84 @@ v0.3 (459 pages, 5 classes), from `reports/behavior/v0.3_summary.md`:
 | DOM-only (Part 4) | Random Forest | 0.786 | 17.6 % |
 | Behavior-only (Part 7+8) | Random Forest | 0.682 | 20.6 % |
 
+## Analyze API
+
+Part 9 Batch B-1: **one call from a URL (or HTML) to a verdict.** A user (team frontend) or ThreatRadar submits a URL; C2 fetches the page itself, runs the whole tri-modal pipeline and answers with a verdict (Legitimate / Suspicious / Malicious), the threat class, a 0–100 risk score and plain-English findings. Contract + 3 example responses for teammates: [`docs/api_contract.md`](docs/api_contract.md) (OpenAPI: `docs/openapi.json`, regenerate with `python scripts/export_openapi.py`).
+
+```bash
+python scripts/calibrate_verdict.py --version v0.3   # tier thresholds -> configs/verdict.yaml (after every run_ablation.py)
+python scripts/evaluate_verdict.py --version v0.3    # OOF + 68 test pages, latency -> reports/verdict/v0.3_operating_points.md
+python scripts/run_api.py                            # loads every model once at start-up (GET /ready)
+
+curl -s -X POST http://127.0.0.1:8002/api/v1/analyze -H "Content-Type: application/json" \
+     -d '{"url": "https://example.com/", "source": "user"}'
+curl -s -X POST http://127.0.0.1:8002/api/v1/analyze -H "Content-Type: application/json" \
+     -d '{"html": "<form action=\"https://x.example/p\"><input type=password></form>", "url": "https://bank.example/"}'
+```
+
+- **Safe live fetch** (`fusion/live_fetch.py`, reusing Part 1's `StaticFetcher` - not a second fetcher). Why C2 fetches safely: the URL is attacker-controlled. One static GET, no JavaScript, no forms, no images / scripts / CSS; http / https only; 10 s timeout + 15 s whole-download cap, 5 redirects, 5 MB streamed, HTML only. **SSRF guard**: localhost, private, link-local and reserved addresses are refused for the submitted URL, every redirect hop and every address a hostname **resolves** to (`resolve_dns`; residual risk = DNS rebinding between the check and the connect, documented). A URL path / final URL ending in an executable / archive / installer extension (the `url_filters.yaml` lists), or a response with such a content type / `Content-Disposition: attachment`, is **never downloaded** → finding "URL serves a .exe file instead of a webpage" + evidence floor (malware_delivery, at least Suspicious). Other non-HTML → `inconclusive`; DNS / timeout / refused / TLS / 4xx / 5xx → `unreachable` (no verdict). Part 1's quality rules mark bot challenges, parking, suspended-hosting, error and empty pages `inconclusive` (evidence still returned) - unless the page asks for a password (placeholders never do; phishing lures say "account suspended" all the time).
+- **Orchestrator** (`fusion/orchestrator.py`): Part 2 → 3 → 5A → 6A (TF-IDF + XLM-R) → 7 → 8 → the saved 9A fusion model, each through its public function, on ONE parsed page; every step timed (`timings_ms`) and checked against the 30 s budget (504 with the partial result). **Graceful degradation**: a part that raises or a model that is missing is reported as `failed` / `skipped` with the reason; the late-fusion weights are renormalized over the arms that answered, the thresholds calibrated for exactly that arm subset are used, and `degraded: true`. Models are loaded once (background thread at start-up; `XLMR_ENABLED=false` → 3 arms, no torch).
+- **Verdict** (`fusion/verdict.py`, `configs/verdict.yaml`): risk_score = round(100 × (1 − P(benign))). **Malicious** below the 9A threshold (≤ 2 % OOF benign FPR), **Suspicious** below the cut-off where ≥ 95 % of OOF threat pages are caught, else **Legitimate**; threat_class = the most probable non-benign class. Thresholds are fitted on the 9A out-of-fold fused probabilities for **every subset of arms** (`fusion/calibration.py`; the full set reproduces 9A's threshold exactly). **Evidence floor**: password form → external domain / form-collection service, credential exfiltration, keylogging to the network, clipboard crypto swap, ClickFix, automatic risky download, executable URL → at least Suspicious, the rule is named; the floor never lowers a verdict.
+- **Response** (`schemas/analysis.py`, `c2.analysis.v1`): status, verdict, threat_class, risk_score, class probabilities, page language, ≤ 10 findings ranked by severity (PII-masked evidence, never raw HTML), per-modality status / summary / arms, explanation (arm contributions, top features, rules), degraded, warnings (e.g. Sinhala / Tamil text-model caveat), model versions, timings.
+- **API guards** (`api/guards.py`): in-memory cache per normalized URL (10 min, `cached: true`; unreachable results are not cached), per-client rate limit (30 / min → 429 + Retry-After), JSON only (415), url ≤ 2,048 chars and http(s) (422), html ≤ 5 MB (413), CORS only for `CORS_ORIGINS`. `GET /health` = liveness, `GET /ready` = models loaded + versions (503 while loading / broken).
+- **Inspector**: tab "Unified Result (Part 9)" = the AnalysisResponse of the selected sample (html mode) or pasted HTML, plus a **Check a URL** box (url mode, fetched by the server): verdict badge, risk gauge, threat class, findings with severity colours, modality chips, warnings - text only.
+
+v0.3 operating points (`reports/verdict/v0.3_operating_points.md`; flagged = Suspicious or Malicious):
+
+| | benign FPR flagged | benign → Malicious | threat recall flagged | threat recall Malicious |
+|---|---|---|---|---|
+| OOF 391, 4 arms (design targets) | 25.4 % | 1.6 % | 95.5 % | 62.6 % |
+| **test 68, 4 arms (live engine)** | **23.5 %** | **0.0 %** | **94.1 %** | **76.5 %** |
+| test 68, 3 arms (no XLM-R) | 35.3 % | 2.9 % | 94.1 % | 58.8 % |
+
+The evidence floor fired on 0 benign and 14 threat OOF pages and raised no verdict on v0.3 (the models already flag those pages) - it is a backstop for pages the models miss. Live engine = stored 9A test probabilities (max |Δp| ≤ 1e-6). Latency on this laptop (CPU, warm, html mode, 68 test pages): with XLM-R p50 586 ms / p95 1.3 s (model load 7.8 s), without XLM-R p50 202 ms / p95 1.0 s. A url-mode request adds the fetch time.
+
+## ThreatRadar ingestion & dashboard APIs
+
+Part 9 Batch B-2: **ThreatRadar pushes newly found URLs, C2 analyses them in the background and keeps the results for the team dashboard.** Teammate guide (exact request, retry rule, env vars, Node.js snippet): [`docs/threatradar_integration.md`](docs/threatradar_integration.md).
+
+```bash
+# .env: INGEST_API_KEY=<long random secret, shared with ThreatRadar>, INGEST_WORKER_ENABLED=true
+python scripts/run_api.py                                       # API + background worker
+curl -s -X POST http://127.0.0.1:8002/api/v1/ingest -H "Content-Type: application/json" \
+     -H "X-C2-Ingest-Key: <secret>" \
+     -d '{"source": "threatradar_push", "urls": [{"url": "https://x.example/", "source_ref": {"channel": "c", "message_id": 1}}]}'
+curl -s "http://127.0.0.1:8002/api/v1/scans?verdict=Malicious&limit=20"
+curl -s "http://127.0.0.1:8002/api/v1/stats/overview?window=24h"
+
+python scripts/pull_threatradar.py --dir ..\..\ingestion\threat-radar\backend\data   # daily backup pull
+python scripts/review_live.py review --reviewer <name>          # confirm / relabel / reject high-risk results
+python scripts/review_live.py export                            # -> data/feeds/live_review_urls.csv (manual-feed format)
+python scripts/demo_ingest.py [--count 20 --no-xlmr | --clear]  # demo history from the v0.3 test pages
+```
+
+- **Push → queue → worker.** `POST /api/v1/ingest` (≤ 500 URLs, `X-C2-Ingest-Key` checked in constant time; no key configured → 503) validates each URL (http/https, ≤ 2,048 chars; allow-listed sites from `threatradar_rules.yaml` skipped), queues it and answers **202** at once. A bad URL is listed in `rejected` and does not fail the batch. The **worker** is an asyncio task inside the API process (it shares the loaded models: XLM-R is not loaded twice) and analyses the queue with the 9B-1 engine: 2 at a time, 1 job start/s, 45 s per job. Transient fetch errors (timeout, connection, 5xx, 429) are retried with exponential backoff (3 attempts), while 404 / SSRF refusals are final. Jobs left `running` by a crash are re-queued on start (the queue lives in SQLite, not in memory).
+- **Dedupe.** The same normalized URL analysed in the last 24 h (with a page verdict) or still queued → a `skipped_duplicate` job that reuses that result. The daily **pull** queues only URLs C2 has *never* seen (same Part 1 parsers as `collect.py import --feed threatradar`, no keyword rule needed).
+- **Results store** (`store/`, SQLite `data/c2_results.db`, git-ignored, WAL, schema migrations via `PRAGMA user_version`): `scan_jobs`, `scan_results` (full AnalysisResponse JSON, never HTML), `review_queue`. Users' `/api/v1/analyze` checks are stored too (source = the request's `source`); a storage error never fails `/analyze`.
+- **Never auto-trained on.** Malicious results, and Suspicious ones with risk ≥ 70 (`configs/ingest.yaml`), go to the review queue. Only labels a person **confirms** are exported, as `url,label,language_hint,source,notes` rows (Telegram / Reddit → `social_media_report`, otherwise `other`; notes carry the analysis id). They enter the dataset through the normal Part 1 pipeline. Feeding the model's own verdicts back as labels would turn its mistakes into "truth".
+- **Read APIs** (CORS from `CORS_ORIGINS`): `GET /api/v1/scans` (filters `source, verdict (none = no verdict), threat_class, since, q`, cursor pagination), `GET /api/v1/scans/{id}` (stored AnalysisResponse), `GET /api/v1/stats/overview?window=24h|7d|30d` (by verdict / status / class / source / language, top flagged domains + imitated brands, per-hour series (per day for 30d), queue, review queue, worker), `GET /api/v1/feed/stream` (Server-Sent Events, `event: scan` per finished scan), `GET /api/v1/research/summary` (dataset, ablation rows with bootstrap CIs, operating points, model versions, read from existing reports only). **Every URL / domain is defanged** (`hxxps://example[.]com`) and no page HTML ever leaves C2.
+
+Demo on this laptop (`demo_ingest.py`, 68 v0.3 test pages, 4 arms, 53 s): 28 Legitimate / 14 Suspicious / 26 Malicious, 32 items in the review queue.
+
 ## API
 
 | Method | Path | Status |
 |---|---|---|
-| GET | `/health` | ✅ returns `{"status": "ok", "service": "c2"}` |
+| GET | `/health` | ✅ returns `{"status": "ok", "service": "c2"}` (liveness) |
+| GET | `/ready` | ✅ Part 9 B-1: 200 + arms / model versions once every model is loaded, 503 while loading or broken |
 | POST | `/api/v1/dom-features` | ✅ Part 3: same body → `DomResult` (52-feature vector in dictionary order + evidence). No `url` → `base_url_known = 0` and external features 0 |
 | POST | `/api/v1/preprocess` | ✅ Part 2: body `{"html": "...", "url": "..." or null}` → `ParsedPage` JSON (same as the stored files). `url` is never fetched. Body > 5 MB → `413` |
 | POST | `/api/v1/js-analysis` | ✅ Part 7: same body → `JsAnalysisResult` (detections with line numbers / arguments / masked snippets, scripts with obfuscation stats, external scripts, js_v1 features). Nothing is executed or downloaded |
 | POST | `/api/v1/content` | ✅ Part 5: same body → `PageText` (segments per field with language, page language + confidence + method, model-ready `page_text`). Text is prepared, nothing is classified |
 | POST | `/api/v1/text-prediction` | ✅ Part 6A: same body → `TextPrediction` (Part 2 → 5A page_text → fine-tuned XLM-R + TF-IDF baseline: predicted class + probability per class, XLM-R token count / truncation). A model not trained yet answers `available: false` + "model not available" (still 200) |
 | POST | `/api/v1/behavior` | ✅ Part 8: same body → `BehaviorResult` (sources, sinks, flows with evidence chains, findings with severity and message, beh_v1 intent vector, risk score). Runs Part 2 + 7 + 8; nothing is executed or downloaded |
-| POST | `/api/v1/analyze` | stub (501) – body `{"html": "...", "url": "..."}` |
-| POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}` |
+| POST | `/api/v1/analyze` | ✅ Part 9 B-1: `{"url": ...}` (C2 fetches safely) or `{"html": ..., "url"?: ...}` → `AnalysisResponse` (`c2.analysis.v1`: verdict, threat class, risk score, findings, modalities, explanation). See **Analyze API** above |
+| POST | `/api/v1/ingest` | ✅ Part 9 B-2: ThreatRadar push (`X-C2-Ingest-Key`), ≤ 500 URLs → 202 `{accepted, duplicates, rejected[], job_ids}`. See **ThreatRadar ingestion** above |
+| GET | `/api/v1/scans`, `/api/v1/scans/{id}` | ✅ Part 9 B-2: scan history (filters, cursor pagination) / one stored analysis, URLs defanged |
+| GET | `/api/v1/stats/overview` | ✅ Part 9 B-2: dashboard numbers for `window=24h\|7d\|30d` |
+| GET | `/api/v1/feed/stream` | ✅ Part 9 B-2: live feed (Server-Sent Events) |
+| GET | `/api/v1/research/summary` | ✅ Part 9 B-2: research-page numbers read from the existing reports |
+| POST | `/analyze-html` | stub (501) – compatibility route for `backend/api-gateway`, which currently sends `{"url": ...}`; the gateway should switch to `/api/v1/analyze` (Batch B-2) |
 | GET | `/api/v1/dev/...`, `/inspector` | developer only – see below (404 unless `APP_ENV=development`) |
 
 The gateway reaches C2 through its `C2_URL` env var (e.g. `http://localhost:8002`). Swagger UI with example requests: `/docs`. Every response carries `X-Content-Type-Options: nosniff`.
@@ -688,6 +807,7 @@ data/
   raw/<label>/      collected HTML (git-ignored)
   metadata/         dataset_schema.json, manual_urls_template.csv, manifests/ (tracked); metadata.csv, candidates.csv, review/ (git-ignored)
   feeds/            downloaded feed files (git-ignored)
+  c2_results.db     Part 9 B-2 scan history + queue + review queue (SQLite, git-ignored)
   tmp/              pages being saved by the collector (git-ignored, emptied automatically)
   interim/          after dedup (git-ignored)
   processed/        parsed_html/<version>/ (Part 2 JSON + TXT), dom_features, text, js, behavior (git-ignored)

@@ -1260,7 +1260,7 @@ registerTab({
   async render(ctx, box) {
     const title = "Fusion (Part 9A)";
     if (ctx.kind !== "sample") {
-      fill(box, section(title, el("p", { cls: "muted", text: "Shown for dataset samples (stored per-arm probabilities). A fused verdict for pasted HTML comes with /api/v1/analyze (Part 9 Batch B)." })));
+      fill(box, section(title, el("p", { cls: "muted", text: "Shown for dataset samples (stored per-arm probabilities). For pasted HTML see the Unified Result tab (/api/v1/analyze)." })));
       return;
     }
     fill(box, el("p", { cls: "muted", text: "Loading the fusion model's decision…" }));
@@ -1318,16 +1318,201 @@ registerTab({
   },
 });
 
-// ---- Future parts (disabled placeholders) -------------------------------------------------
+// ---- Unified result (Part 9 B-1: POST /api/v1/analyze) ----------------------------------
 
-// Part 6A lives in the Content tab ("Text model (Part 6)" card); Part 6B (intent level)
-// is postponed until the scam-text corpus has enough real texts. The unified /analyze
-// result is Part 9 Batch B.
-for (const [id, title] of [
-  ["unified", "Unified Result (Part 9B)"],
-]) {
-  registerTab({ id, title, enabled: false, render() {} });
+// Samples: GET /api/v1/dev/samples/{id}/analysis (the sample's HTML + page URL, html mode).
+// Pasted HTML: POST /api/v1/analyze {html, url}. "Check a URL": POST /api/v1/analyze {url}
+// - the C2 server fetches it (static, SSRF-guarded); the browser never opens the URL.
+// Every value is shown with textContent (el()/badge()) - findings are page-derived text.
+const analysisCache = new WeakMap();
+const VERDICT_KIND = { Legitimate: "ok", Suspicious: "warn", Malicious: "danger" };
+const STATUS_KIND = { ok: "ok", inconclusive: "warn", unreachable: "danger", error: "danger" };
+const STEP_KIND = { ok: "ok", failed: "danger", skipped: "warn" };
+const urlCheck = { url: "", result: null, error: null, busy: false };
+
+function analysisResult(ctx) {
+  return cached(analysisCache, ctx, () => {
+    if (ctx.kind === "sample") {
+      return api(`/api/v1/dev/samples/${encodeURIComponent(ctx.sampleId)}/analysis` + query({ version: ctx.version }))
+        .then((r) => r.data);
+    }
+    return api("/api/v1/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html: ctx.html || "", url: ctx.url || null, source: "api" }),
+    }).then((r) => r.data);
+  });
 }
+
+function verdictGauge(score) {
+  const value = typeof score === "number" ? Math.max(0, Math.min(100, score)) : null;
+  const kind = value === null ? "" : value >= 80 ? "danger" : value >= 50 ? "warn" : value > 0 ? "info" : "ok";
+  const fillBar = el("div", { cls: "gauge-fill " + kind });
+  fillBar.style.width = (value || 0).toFixed(0) + "%"; // a number, not page data
+  return el("div", { cls: "gauge-wrap" },
+    el("div", { cls: "gauge" }, fillBar),
+    el("span", { cls: "gauge-num", text: value === null ? "— / 100" : `${value} / 100` }),
+    el("span", { cls: "muted", text: "risk score = 100 × (1 − P(benign)) of the fused model" }));
+}
+
+function analysisFindingCard(f) {
+  return el("div", { cls: `card finding sev-${f.severity}` },
+    el("h3", {},
+      badge(f.severity.toUpperCase(), SEVERITY_BADGE[f.severity] || null),
+      badge(f.modality, "info"),
+      el("span", { text: f.title }),
+      f.raises_verdict ? badge("evidence floor", "danger") : null),
+    el("p", { cls: "finding-msg", text: f.detail }),
+    f.evidence ? el("p", {}, el("span", { cls: "muted", text: "Evidence: " }), el("code", { cls: "step-code", text: f.evidence })) : null);
+}
+
+function modalityChip(name, m) {
+  return badge(`${name}: ${m.status}`, STEP_KIND[m.status]);
+}
+
+function modalityCard(name, m) {
+  return el("div", { cls: "card" },
+    el("h3", {}, modalityChip(name, m)),
+    m.summary ? el("p", { text: m.summary }) : null,
+    m.reason ? el("p", { cls: "muted", text: m.reason }) : null,
+    (m.arms || []).length
+      ? table(["arm", "status", "predicted", "fusion weight", "note"], m.arms, (a) => [
+        el("span", { text: a.display }),
+        badge(a.status, STEP_KIND[a.status]),
+        a.predicted ? labelChip(a.predicted) : "—",
+        a.fusion_weight === null || a.fusion_weight === undefined ? "—" : fmtValue(a.fusion_weight),
+        el("span", { cls: "muted", text: show(a.reason) }),
+      ])
+      : null);
+}
+
+function renderAnalysis(r, box) {
+  const verdict = r.verdict
+    ? badge(r.verdict.toUpperCase(), VERDICT_KIND[r.verdict])
+    : badge("NO VERDICT", "warn");
+  fill(box, section("Verdict",
+    el("div", { cls: "card" },
+      el("h3", {},
+        verdict,
+        r.threat_class ? labelChip(r.threat_class) : null,
+        badge(`status: ${r.status}`, STATUS_KIND[r.status]),
+        r.degraded ? badge("degraded", "warn") : null,
+        r.cached ? badge("cached", "info") : null,
+        r.explanation && r.explanation.verdict_source === "evidence_floor" ? badge("raised by evidence floor", "danger") : null),
+      verdictGauge(r.risk_score),
+      r.status_reason ? el("p", { cls: "note", text: r.status_reason }) : null,
+      el("div", { cls: "chips" }, ["dom", "content", "behavior"].map((name) => modalityChip(name, r.modalities[name]))),
+      kv([
+        ["Input", `${r.input.mode} mode`],
+        ["Submitted URL", urlText(r.input.submitted_url)],
+        ["Final URL", urlText(r.input.final_url)],
+        ["Redirect hosts", (r.input.redirect_hosts || []).join(" → ") || "—"],
+        ["HTTP status / type", `${show(r.input.http_status)} · ${show(r.input.content_type)}`],
+        ["Page language", show(r.page_language)],
+        ["Total time", `${show(r.timings_ms && r.timings_ms.total)} ms`],
+      ]))));
+
+  if ((r.warnings || []).length) {
+    fill(box, section("Warnings", el("ul", {}, r.warnings.map((w) => el("li", { cls: "note", text: w })))));
+  }
+
+  fill(box, section(`Findings (${fmtInt(r.findings.length)} of ${fmtInt(r.findings_total)})`,
+    r.findings.length ? r.findings.map(analysisFindingCard) : el("p", { cls: "muted", text: "No findings." }),
+    r.findings_omitted ? el("p", { cls: "muted", text: `${r.findings_omitted} less important finding(s) not shown.` }) : null));
+
+  const probabilities = Object.entries(r.class_probabilities || {}).sort((a, b) => b[1] - a[1]);
+  if (probabilities.length) {
+    const b = bars(probabilities, fmtPct);
+    b.classList.add("wide");
+    const e = r.explanation || {};
+    const contributions = Object.entries(e.arm_contributions || {}).sort((a, b) => b[1] - a[1]);
+    const t = e.thresholds || {};
+    fill(box, section("Fused probabilities and explanation", b,
+      el("p", { cls: "muted", text: `Tiers for arms ${show(t.arms)}: Malicious if P(benign) < ${fmtValue(t.malicious_below_p_benign)} (risk ≥ ${show(t.malicious_min_risk)}), Suspicious if P(benign) < ${fmtValue(t.suspicious_below_p_benign)} (risk ≥ ${show(t.suspicious_min_risk)}).` }),
+      contributions.length
+        ? table([`arm → "${show(e.explained_class)}"`, "weight × probability"], contributions, ([arm, v]) => [el("span", { text: arm }), fmtValue(v)])
+        : null,
+      (e.top_features || []).length
+        ? table(["arm", "top input", "contribution"], e.top_features, (d) => [el("span", { text: d.arm }), el("span", { text: d.text }), signed(d.contribution)])
+        : null));
+  }
+
+  fill(box, section("Modalities", ["dom", "content", "behavior"].map((name) => modalityCard(name, r.modalities[name]))));
+  fill(box, section("Model versions and timings",
+    kv(Object.entries(r.model_versions || {}).map(([k, v]) => [k, show(v)])),
+    kv(Object.entries(r.timings_ms || {}).map(([k, v]) => [k, `${v} ms`]))));
+}
+
+function urlCheckBox(onDone) {
+  const input = el("input", { attrs: { type: "url", placeholder: "Page address (http or https) - fetched by the C2 server, never opened here", "aria-label": "URL to check", maxlength: 2048 } });
+  input.value = urlCheck.url;
+  const button = el("button", { cls: "primary", text: urlCheck.busy ? "Checking…" : "Check URL", attrs: { type: "submit", disabled: urlCheck.busy } });
+  const form = el("form", { cls: "url-check", attrs: { autocomplete: "off" } }, input, button);
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const url = input.value.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      urlCheck.error = "Enter a page address starting with http or https.";
+      onDone();
+      return;
+    }
+    Object.assign(urlCheck, { url, busy: true, error: null, result: null });
+    onDone();
+    try {
+      const { data } = await api("/api/v1/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, source: "user" }),
+      });
+      urlCheck.result = data;
+    } catch (error) {
+      urlCheck.error = error.status === 429 ? "Rate limit reached - wait a minute." : "Check failed: " + error.message;
+    } finally {
+      urlCheck.busy = false;
+      onDone();
+    }
+  });
+  return section("Check a URL (live fetch by C2)", form,
+    urlCheck.error ? el("div", { cls: "error-box", text: urlCheck.error }) : null);
+}
+
+registerTab({
+  id: "unified",
+  title: "Unified Result (Part 9)",
+  noContext: true,
+  async render(ctx, box) {
+    const rerender = () => { if (box.isConnected) renderPanel(); };
+    fill(box, urlCheckBox(rerender));
+    if (urlCheck.result) {
+      const urlBox = el("div", { cls: "card" });
+      fill(box, section(`URL result: ${urlCheck.url}`), urlBox);
+      renderAnalysis(urlCheck.result, urlBox);
+    }
+    if (!ctx) {
+      fill(box, el("p", { cls: "muted", text: "Pick a sample or paste HTML to see its unified result (html mode)." }));
+      return;
+    }
+    const pageBox = el("div", {});
+    fill(box, section(ctx.kind === "sample" ? `This sample (html mode, ${ctx.sampleId})` : "Pasted HTML (html mode)"), pageBox);
+    fill(pageBox, el("p", { cls: "muted", text: "Running the full pipeline (first call loads the models)…" }));
+    let r;
+    try {
+      r = await analysisResult(ctx);
+    } catch (error) {
+      if (state.ctx !== ctx || !pageBox.isConnected) return;
+      fill(clear(pageBox), el("div", { cls: "error-box", text: "Analysis failed: " + error.message }));
+      return;
+    }
+    if (state.ctx !== ctx || !pageBox.isConnected) return;
+    clear(pageBox);
+    if (ctx.kind === "sample" && ctx.label) {
+      const flagged = r.verdict && r.verdict !== "Legitimate";
+      const right = (ctx.label === "benign") === !flagged;
+      fill(pageBox, el("p", {}, "Dataset label: ", labelChip(ctx.label), " ", badge(right ? "verdict agrees" : "verdict disagrees", right ? "ok" : "danger")));
+    }
+    renderAnalysis(r, pageBox);
+  },
+});
 
 // ---------------------------------------------------------------------------
 // Rendering the tabs and the page header
@@ -1336,7 +1521,7 @@ for (const [id, title] of [
 function renderTabs() {
   const nav = clear($("tabs"));
   for (const tab of TABS) {
-    const usable = tab.enabled && state.ctx && tab.available(state.ctx);
+    const usable = tab.enabled && (state.ctx ? tab.available(state.ctx) : Boolean(tab.noContext));
     const button = el("button", {
       cls: tab.enabled ? "" : "future",
       text: tab.title,
@@ -1350,12 +1535,13 @@ function renderTabs() {
 
 function renderPanel() {
   const panel = clear($("panel"));
-  if (!state.ctx) {
+  const current = TABS.find((t) => t.id === state.activeTab);
+  if (!state.ctx && !(current && current.noContext)) {
     panel.append(el("p", { cls: "empty", text: "Nothing selected yet." }));
     return;
   }
-  let tab = TABS.find((t) => t.id === state.activeTab);
-  if (!tab || !tab.enabled || !tab.available(state.ctx)) tab = TABS[0];
+  let tab = current;
+  if (!tab || !tab.enabled || (state.ctx ? !tab.available(state.ctx) : !tab.noContext)) tab = TABS[0];
   state.activeTab = tab.id;
   // A broken tab must not break the inspector (same idea as Part 2's isolated steps).
   // render() may be async (tabs that fetch more data return a Promise).

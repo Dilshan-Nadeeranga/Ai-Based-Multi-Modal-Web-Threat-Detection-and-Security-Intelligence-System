@@ -1,0 +1,15 @@
+{
+  "sourceFile": "domains_2026-10-13.txt",
+  "filteredAt": "2026-10-13T00:00:00.000Z",
+  "totalScanned": 1000,
+  "matchedCount": 5,
+  "keywordCount": 3,
+  "brandsChecked": 37,
+  "domains": [
+    {"domain": "g00gle-login.example", "reasons": ["brand_mimicry:google"], "matchedKeywords": [], "mimicBrand": "google", "mimicType": "homoglyph"},
+    {"domain": "airdrop-claim.example", "reasons": ["keyword"], "matchedKeywords": ["airdrop"]},
+    {"domain": "secure-portal.example", "reasons": ["keyword"], "matchedKeywords": ["secure"]},
+    {"domain": "accounts.google.com", "reasons": ["keyword"], "matchedKeywords": ["account"]},
+    {"domain": "apk-update.example", "reasons": ["keyword"], "matchedKeywords": ["apk"]}
+  ]
+}

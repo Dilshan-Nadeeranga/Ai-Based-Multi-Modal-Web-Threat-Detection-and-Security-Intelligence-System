@@ -1,0 +1,7 @@
+domain,url,channel,date,message_id,views,has_photo
+usdt-double.example,https://usdt-double.example/join,cryptosignals_lk,2026-10-10T08:00:00+00:00,101,500,False
+t.me,https://t.me/joinchat/abc,cryptosignals_lk,2026-10-10T08:01:00+00:00,102,10,False
+plain-site.example,https://plain-site.example/,news_channel,2026-10-11T09:00:00+00:00,103,1,False
+lanka-gain.example,https://lanka-gain.example/,ශ්‍රී_ලංකා_ආයෝජන,2026-10-11T10:00:00+00:00,104,30,True
+paypal-verify.example,https://paypal-verify.example/login,alerts,2026-10-12T11:00:00+00:00,105,7,False
+freebies-shop.example,,deals_lk,2026-09-01T12:00:00+00:00,106,3,False

@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections import Counter
+from datetime import date
 from pathlib import Path
 
 import httpx
@@ -27,8 +29,13 @@ from c2_analyzer.dataset.collection import (
 from c2_analyzer.dataset.feeds import (
     FEED_URLS,
     FEEDS,
+    SKIP_ALLOW_LISTED,
+    SKIP_DUPLICATE,
+    SKIP_NO_RULE,
+    THREATRADAR_SOURCES,
     download_feed,
     import_feed,
+    import_threatradar,
     prune_candidates,
 )
 from c2_analyzer.dataset.fetcher import make_fetcher
@@ -41,6 +48,8 @@ EXAMPLES = """examples:
   python scripts/collect.py import --feed tranco --file data/feeds/tranco_top1m.csv.zip \\
       --top 1000 --sample 60
   python scripts/collect.py import --feed manual --file data/feeds/manual_urls.csv
+  python scripts/collect.py import --feed threatradar \
+      --dir ../../ingestion/threat-radar/backend/data --since 2026-10-01
   python scripts/collect.py fetch --label phishing --limit 60
   python scripts/collect.py retry-failed
   python scripts/collect.py progress
@@ -68,9 +77,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     imp = commands.add_parser("import", help="add candidate URLs from a local feed file")
     imp.add_argument("--feed", required=True, choices=FEEDS)
-    imp.add_argument("--file", type=Path, required=True)
+    imp.add_argument("--file", type=Path, help="the feed file (every feed except threatradar)")
     imp.add_argument("--top", type=int, help="tranco: use the top N domains (default from config)")
     imp.add_argument("--sample", type=int, help="tranco: random sample of N from the top N")
+    imp.add_argument(
+        "--dir", type=Path, help="threatradar: ingestion/threat-radar/backend/data folder"
+    )
+    imp.add_argument("--since", type=parse_day, help="threatradar: only rows on/after YYYY-MM-DD")
+    imp.add_argument(
+        "--sources", type=parse_sources, default=THREATRADAR_SOURCES,
+        help=f"threatradar: comma list of {','.join(THREATRADAR_SOURCES)} (default all)",
+    )  # fmt: skip
+    imp.add_argument("--limit", type=int, help="threatradar: import at most N new candidates")
 
     for name, help_text in (
         ("fetch", "fetch pending candidates and register the pages"),
@@ -104,6 +122,23 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def parse_day(text: str) -> date:
+    try:
+        return date.fromisoformat(text)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(f"expected YYYY-MM-DD, got {text!r}") from error
+
+
+def parse_sources(text: str) -> tuple[str, ...]:
+    names = tuple(name.strip() for name in text.split(",") if name.strip())
+    unknown = [name for name in names if name not in THREATRADAR_SOURCES]
+    if unknown or not names:
+        raise argparse.ArgumentTypeError(
+            f"unknown source(s) {unknown}; choose from {','.join(THREATRADAR_SOURCES)}"
+        )
+    return names
+
+
 def print_reasons(reasons, title: str) -> None:
     """Print reason codes, most common first (e.g. "non_html_content: 31")."""
     if reasons:
@@ -118,7 +153,15 @@ def cmd_download(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_import(args: argparse.Namespace, candidates: CandidateStore) -> int:
+def cmd_import(
+    args: argparse.Namespace, candidates: CandidateStore, metadata: MetadataStore
+) -> int:
+    if args.feed == "threatradar":
+        return cmd_import_threatradar(args, candidates, metadata)
+    if args.file is None:
+        raise ValueError(f"--file is required for --feed {args.feed}")
+    if args.dir or args.since or args.limit is not None:
+        raise ValueError("--dir, --since, --sources and --limit are only for --feed threatradar")
     result = import_feed(args.feed, args.file, top=args.top, sample=args.sample)
     added, already = candidates.add_many(result.candidates)
     candidates.save()
@@ -131,6 +174,52 @@ def cmd_import(args: argparse.Namespace, candidates: CandidateStore) -> int:
             print(f"    {line}")
         if len(result.rejected) > 10:
             print(f"    ... and {len(result.rejected) - 10} more")
+    return 0
+
+
+def cmd_import_threatradar(
+    args: argparse.Namespace, candidates: CandidateStore, metadata: MetadataStore
+) -> int:
+    if args.dir is None:
+        raise ValueError("--dir is required for --feed threatradar")
+    known = list(candidates.df["url"])
+    for column in ("source_url", "final_url"):
+        if column in metadata.df.columns:
+            known.extend(url for url in metadata.df[column] if url)
+    result = import_threatradar(
+        args.dir,
+        since=args.since,
+        sources=args.sources,
+        limit=args.limit,
+        known_urls=known,
+    )
+    added, already = candidates.add_many(result.candidates)
+    candidates.save()
+
+    print(f"ThreatRadar import from {args.dir}")
+    read = ", ".join(f"{source} {result.read[source]}" for source in args.sources)
+    print(f"Rows read: {read}")
+    for missing in result.missing_files:
+        print(f"  not found (skipped): {missing}")
+    print(f"Imported {added} new candidate(s) (suggested labels are WEAK - check in review):")
+    labels = Counter(candidate.suggested_label for candidate in result.candidates)
+    for label in get_labels():
+        if labels[label]:
+            print(f"  {label}: {labels[label]}")
+    skipped = result.filtered + Counter({SKIP_DUPLICATE: already})
+    print(f"Skipped {sum(skipped.values())}:")
+    for reason in (SKIP_DUPLICATE, SKIP_ALLOW_LISTED, SKIP_NO_RULE):
+        print(f"  {reason}: {skipped.pop(reason, 0)}")
+    for reason, count in skipped.most_common():
+        print(f"  {reason}: {count}")
+    if result.rejected:
+        print(f"Rejected {len(result.rejected)} invalid row(s):")
+        for line in result.rejected[:10]:
+            print(f"  {line}")
+        if len(result.rejected) > 10:
+            print(f"  ... and {len(result.rejected) - 10} more")
+    if added:
+        print("Next: python scripts/collect.py fetch --label <label> --limit <N>")
     return 0
 
 
@@ -258,7 +347,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "download":
             return cmd_download(args)
         if args.command == "import":
-            return cmd_import(args, candidates)
+            return cmd_import(args, candidates, metadata)
         if args.command in ("fetch", "retry-failed"):
             return cmd_fetch(args, candidates, metadata)
         if args.command == "failures":

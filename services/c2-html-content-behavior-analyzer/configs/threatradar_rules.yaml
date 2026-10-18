@@ -1,0 +1,152 @@
+# ThreatRadar import (Part 1, collection): scripts/collect.py import --feed threatradar --dir ...
+# ThreatRadar (ingestion/threat-radar) scrapes Telegram channels, subreddits and newly
+# registered domain lists. Its outputs carry NO label, so every imported URL gets a WEAK
+# suggested label from the rules below and a "check label" note. Nothing here is a
+# ground truth: the label is confirmed in review (scripts/review_labels.py).
+#
+# Matching: text is NFC-normalized and case-folded; keywords are SUBSTRINGS, because
+# domains have no word boundaries ("usdtprofit.xyz"). Keep keywords specific enough.
+# A row that matches no rule is SKIPPED - we never guess "benign".
+
+# Where each ThreatRadar output lives (relative to --dir = ingestion/threat-radar/backend/data),
+# which metadata `source` it gets, and which fields the keyword rules look at.
+sources:
+  telegram:
+    files: [scraped/urls_only.csv]          # domain,url,channel,date,message_id,views,has_photo
+    source: social_media_report
+    match_fields: [url, channel]            # no post text in urls_only.csv; the channel name is a cue
+  reddit:
+    files: [scraped/reddit_urls_only.csv]   # domain,url,subreddit,date,post_id,score,title
+    source: social_media_report
+    match_fields: [url, title]              # subreddit NOT used: r/CryptoScams would label every link
+  domain_filter:
+    files: [filtered/filtered_domains_*.json]   # {filteredAt, domains: [{domain, reasons, matchedKeywords, mimicBrand?}]}
+    source: other
+    match_fields: [url, matched_keywords]
+
+# Rules, FIRST MATCH WINS (order = priority).
+#   mimicry: true  -> ThreatRadar's brand_mimicry reason, or a brand below inside a host
+#                     that is not allow-listed (paypal-secure.xyz) = look-alike.
+#   keywords       -> any keyword found in the source's match_fields.
+rules:
+  - label: phishing
+    name: brand look-alike
+    mimicry: true
+    keywords: []
+  - label: crypto_scam
+    name: crypto/investment keyword
+    keywords:
+      - crypto
+      - bitcoin
+      - btc
+      - usdt
+      - tether
+      - binance
+      - airdrop
+      - invest
+      - profit
+      - trading
+      - forex
+      - mining
+      - wallet
+      - token
+      - doubling
+      - ක්‍රිප්ටෝ        # crypto (si)
+      - ආයෝජන          # investment (si)
+      - லாபம்           # profit (ta)
+      - முதலீடு          # investment (ta)
+  - label: fake_ecommerce
+    name: shop/sale keyword
+    keywords:
+      - shop
+      - sale
+      - discount
+      - store
+      - outlet
+      - clearance
+      - වට්ටම්           # discount (si)
+      - தள்ளுபடி          # discount (ta)
+  - label: malware_delivery
+    name: download/apk keyword
+    keywords:
+      - download
+      - apk
+      - crack
+      - update
+      - setup.exe
+      - keygen
+
+# Brands checked for look-alike hosts (same idea as ThreatRadar's domainFilter.js, plus
+# Sri Lankan targets). Matched as substrings of the host, after the allow-list check.
+brands:
+  - google
+  - gmail
+  - microsoft
+  - outlook
+  - office365
+  - apple
+  - icloud
+  - amazon
+  - facebook
+  - instagram
+  - whatsapp
+  - paypal
+  - netflix
+  - binance
+  - coinbase
+  - metamask
+  - telegram
+  - dialog
+  - mobitel
+  - hutch
+  - sampath
+  - commercialbank
+  - peoplesbank
+  - hnb
+  - bankofceylon
+  - daraz
+
+# Well-known legitimate REGISTRABLE domains (subdomains included) that are skipped.
+# No other allow-list exists in C2. Free hosting (github.io, pages.dev, ...) is a public
+# suffix, so "evil.github.io" is NOT covered by github.com. URL shorteners are NOT listed:
+# they often hide scams (the fetcher follows the redirect).
+allow_list:
+  - google.com
+  - google.lk
+  - youtube.com
+  - youtu.be
+  - gmail.com
+  - microsoft.com
+  - live.com
+  - office.com
+  - apple.com
+  - icloud.com
+  - amazon.com
+  - facebook.com
+  - fb.com
+  - instagram.com
+  - whatsapp.com
+  - wa.me
+  - telegram.org
+  - t.me
+  - reddit.com
+  - redd.it
+  - redditmedia.com
+  - x.com
+  - twitter.com
+  - linkedin.com
+  - tiktok.com
+  - wikipedia.org
+  - github.com
+  - paypal.com
+  - netflix.com
+  - binance.com
+  - coinbase.com
+  - metamask.io
+  - daraz.lk
+  - dialog.lk
+  - mobitel.lk
+  - hutch.lk
+  - gov.lk
+  - cbsl.gov.lk
+  - imgur.com
