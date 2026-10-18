@@ -1,0 +1,40 @@
+{
+  "experiment": "Add TelePhish (Erfan et al., PST 2025) Telegram messages to the C3 text models",
+  "source_url": "https://github.com/minaerfan/TelePhish",
+  "comparison_set": "original text_baseline test split only (63 rows, identical in every run); model, seed and hyperparameters unchanged",
+  "data": {
+    "phishing": "100 English messages flagged as phishing by VirusTotal, near-duplicates removed, likely false-positive domains excluded (see telephish_import_phishing.json)",
+    "legitimate": "100 English messages with no VirusTotal phishing/malicious flag, same group-category counts as the phishing sample (see telephish_import_legitimate.json)",
+    "split": "70 / 15 / 15 per label, seed 42",
+    "storage": "message text only in gitignored data/raw/telephish/ (licence: academic use, no redistribution)"
+  },
+  "runs": {
+    "baseline (no TelePhish)": {
+      "binary": {"accuracy": 0.8095, "precision_scam": 0.8065, "recall_scam": 0.8065, "f1_scam": 0.8065},
+      "category": {"accuracy": 0.7619, "macro_f1": 0.8135,
+                   "per_class_f1": {"legitimate": 0.7812, "phishing": 0.8276, "financial_scam": 0.6452, "data_theft": 1.0}}
+    },
+    "+100 TelePhish phishing": {
+      "binary": {"accuracy": 0.7619, "precision_scam": 0.7, "recall_scam": 0.9032, "f1_scam": 0.7887},
+      "binary_false_alarms_on_legitimate": "12 (baseline 6)",
+      "category": {"accuracy": 0.6825, "macro_f1": 0.5157,
+                   "per_class_f1": {"legitimate": 0.7018, "phishing": 0.75, "financial_scam": 0.6111, "data_theft": 0.0}}
+    },
+    "+100 TelePhish phishing +100 matched TelePhish legitimate": {
+      "binary": {"accuracy": 0.7143, "precision_scam": 0.7826, "recall_scam": 0.5806, "f1_scam": 0.6667},
+      "binary_full_test_incl_telephish": {"n": 93, "accuracy": 0.7419, "precision_scam": 0.8438, "recall_scam": 0.587, "f1_scam": 0.6923},
+      "binary_test_accuracy_by_source": {"DIFrauD job_scams": 0.6667, "Phish360": 0.7667, "TelePhish": 0.8, "manual": 0.6667},
+      "category": {"accuracy": 0.6984, "macro_f1": 0.5243,
+                   "per_class_f1": {"legitimate": 0.7188, "phishing": 0.7333, "financial_scam": 0.6452, "data_theft": 0.0}}
+    }
+  },
+  "decision": "kept the baseline models: both TelePhish runs scored lower on the original test rows",
+  "notes": [
+    "TelePhish labels come from VirusTotal URL flags (provisional). 503 of the 768 English 'phishing' messages were flagged only because of the Cheelee project's own domains and were excluded as likely false positives; some remaining 'phishing' messages are exchange promotions.",
+    "Phishing-only data raised scam recall but doubled false alarms on legitimate posts (class imbalance and a 'Telegram/crypto style = scam' shortcut).",
+    "Adding matched legitimate Telegram messages removed that shortcut but lowered recall on the original email and job-ad sources (domain shift between Telegram chat and the original text sources).",
+    "Category macro F1 is dominated by data_theft, which has one test sample (1.0 vs 0.0); accuracy is the fairer comparison.",
+    "Small test set: each difference corresponds to a few posts."
+  ],
+  "created_at": "2026-10-18T08:40:00+00:00"
+}

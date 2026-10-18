@@ -65,8 +65,11 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
 
 
-def category_rows(labels: list[str]) -> dict[str, list[dict]]:
+def category_rows(labels: list[str], extra: list[Path] | None = None) -> dict[str, list[dict]]:
     rows = [json.loads(line) for line in DATASET.read_text(encoding="utf-8").splitlines() if line.strip()]
+    for path in extra or []:
+        rows += [dict(json.loads(line), extra_source=True) for line in path.read_text(encoding="utf-8").splitlines()
+                 if line.strip()]
     rows = [dict(row, y=labels.index(row["scam_type"]), group=row["scam_type"]) for row in rows if row["scam_type"] in labels]
     return {split: [row for row in rows if row["split"] == split] for split in ("train", "val", "test")}
 
@@ -164,13 +167,15 @@ def main() -> None:
     parser.add_argument("--max-length", type=int)
     parser.add_argument("--lr", type=float, default=3e-5)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--extra-jsonl", type=Path, action="append", default=[],
+                        help="Extra category rows (text_baseline_dataset format), e.g. TelePhish; kept out of Git")
     args = parser.parse_args()
 
     task = TASKS[args.task]
     labels = task["labels"]
     max_length = args.max_length or task["max_length"]
     set_seed(args.seed)
-    splits = category_rows(labels) if args.task == "category" else misinformation_rows(args.seed)
+    splits = category_rows(labels, args.extra_jsonl) if args.task == "category" else misinformation_rows(args.seed)
     run_name = args.model.split("/")[-1]
     output_dir = ROOT / "models" / task["models"] / run_name
     metrics_path = STATS_DIR / f"{task['models']}_metrics.json"
@@ -230,6 +235,13 @@ def main() -> None:
     for group in sorted({row["group"] for row in splits["test"]}):
         idx = [i for i, row in enumerate(splits["test"]) if row["group"] == group]
         by_group[group] = {"n": len(idx), "accuracy": round(float(np.mean([y_true[i] == y_pred[i] for i in idx])), 4)}
+    original = [i for i, row in enumerate(splits["test"]) if not row.get("extra_source")]
+    test_original = (scores([y_true[i] for i in original], [y_pred[i] for i in original], labels)
+                     if args.extra_jsonl else None)
+    by_source: dict[str, dict] = {}
+    for source in sorted({row.get("source_dataset") or "unknown" for row in splits["test"]}):
+        idx = [i for i, row in enumerate(splits["test"]) if (row.get("source_dataset") or "unknown") == source]
+        by_source[source] = {"n": len(idx), "accuracy": round(float(np.mean([y_true[i] == y_pred[i] for i in idx])), 4)}
     errors = [{"sample_id": row["sample_id"], "true": labels[y_true[i]], "pred": labels[y_pred[i]],
                "confidence": round(max(probs[i]), 4)}
               for i, row in enumerate(splits["test"]) if y_true[i] != y_pred[i]]
@@ -241,7 +253,9 @@ def main() -> None:
                             "lr": args.lr, "seed": args.seed, "class_weights": [round(float(w), 4) for w in weights],
                             "device": "cpu"},
         "label_counts": counts, "best_epoch": best_epoch, "history": history,
-        "validation": val_scores, "test": test_scores, "test_by_group": by_group, "test_errors": errors,
+        "validation": val_scores, "test": test_scores, "test_original_rows": test_original,
+        "extra_sources": [str(p).replace("\\", "/") for p in args.extra_jsonl], "test_by_source": by_source,
+        "test_by_group": by_group, "test_errors": errors,
         "unlabelled_categories": ["brand_impersonation", "malware", "browser_abuse", "other_scam"] if args.task == "category" else [],
         "notes": ("Each scam class comes from a single source dataset (phishing: Phish360 emails, financial_scam: "
                   "DIFrauD job scams), so the model can partly learn source style; data_theft has 10 samples."
@@ -256,6 +270,9 @@ def main() -> None:
     print(f"[test] acc={test_scores['accuracy']} macro_f1={test_scores['macro']['f1']} per_class="
           f"{json.dumps({k: v['f1'] for k, v in test_scores['per_class'].items()})}")
     print(f"[test] confusion {test_scores['confusion_matrix']['rows_true_cols_pred']}")
+    if test_original:
+        print(f"[test original rows] acc={test_original['accuracy']} macro_f1={test_original['macro']['f1']} per_class="
+              f"{json.dumps({k: v['f1'] for k, v in test_original['per_class'].items()})}")
     print(f"Saved model to {output_dir}")
 
 

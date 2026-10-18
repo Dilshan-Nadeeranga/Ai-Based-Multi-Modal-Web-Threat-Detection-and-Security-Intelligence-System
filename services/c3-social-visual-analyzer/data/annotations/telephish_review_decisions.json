@@ -1,0 +1,29 @@
+{
+  "description": "Review decisions for TelePhish candidates produced by scripts/extract_telephish_candidates.py. Sample ids and categories only (no message text; TelePhish licence forbids redistribution).",
+  "reviewer": "assistant pre-review (AI-assisted); confirm or change in data/raw/telephish/telephish_review.csv",
+  "decisions": {
+    "TP_012362": {"category": "brand_impersonation", "brand": "Gate.io", "reason": "'Gate.io Gold Rush' sign-up on unrelated domain app.zhaqby.com"},
+    "TP_037888": {"category": "brand_impersonation", "brand": "Blum", "reason": "'Blum AirDrop, check your allocation' on unrelated domain 123financesolutions.com"},
+    "TP_039432": {"category": "brand_impersonation", "brand": "MELANIA token", "reason": "'Official MELANIA Token Airdrop' on lookalike melaniamemecoin.buzz (official site melaniameme.com)"},
+    "TP_044432": {"category": "brand_impersonation", "brand": "Arrington & Company", "reason": "'Official website' of an investment firm on ac-bot.com, 'sign up and get 8888USDT'"},
+    "TP_044605": {"category": "brand_impersonation", "brand": "BingX", "reason": "'Bingx Airdrop, you have been selected' on throwaway pages.dev site"},
+    "TP_012581": {"category": "financial_scam", "reason": "OKX88 gambling 'freebet' referral (Facebook only mentioned)"},
+    "TP_004782": {"category": "financial_scam", "reason": "deposit -> 'daily income' scheme on apolog-vip.com"},
+    "TP_004790": {"category": "financial_scam", "reason": "minimum deposit / withdrawal income scheme on shidasafa.com"},
+    "TP_004816": {"category": "financial_scam", "reason": "'Launched today, 1st withdraw is a success' scheme on nmdc1.cc"},
+    "TP_012625": {"category": "financial_scam", "reason": "'Free Solana giveaway, receive 0.3 SOL'"},
+    "TP_012658": {"category": "financial_scam", "reason": "'Get free $10 first airdrop' shortened link"},
+    "TP_037887": {"category": "financial_scam", "reason": "'Free NFT, exchange for $1250 USDC' on 123financesolutions.com"},
+    "TP_012298": {"category": "uncertain", "reason": "CATGM mining-game referral; spam, scam not verifiable from text"},
+    "TP_012304": {"category": "uncertain", "reason": "CATGM mining-game referral"},
+    "TP_012309": {"category": "uncertain", "reason": "CATGM mining-game referral"},
+    "TP_012312": {"category": "uncertain", "reason": "CATGM mining-game referral"},
+    "TP_012341": {"category": "uncertain", "reason": "CATGM mining-game referral"},
+    "TP_012300": {"category": "uncertain", "reason": "Hamster Kombat airdrop promotion (real game); referral link"},
+    "TP_012336": {"category": "uncertain", "reason": "Hamster Kombat airdrop promotion (real game); referral link"},
+    "TP_012320": {"category": "uncertain", "reason": "Pixel mining-bot NFT referral"},
+    "TP_012323": {"category": "uncertain", "reason": "Pixel mining-bot NFT referral"},
+    "TP_012477": {"category": "uncertain", "reason": "Pixel mining-bot NFT referral"},
+    "TP_012344": {"category": "uncertain", "reason": "Kryptoera mining-bot referral"}
+  }
+}

@@ -62,8 +62,11 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
 
 
-def load_rows() -> dict[str, list[dict]]:
+def load_rows(extra: list[Path] | None = None) -> dict[str, list[dict]]:
     rows = [json.loads(line) for line in DATASET.read_text(encoding="utf-8").splitlines() if line.strip()]
+    for path in extra or []:
+        rows += [dict(json.loads(line), extra_source=True) for line in path.read_text(encoding="utf-8").splitlines()
+                 if line.strip()]
     return {split: [row for row in rows if row["split"] == split] for split in ("train", "val", "test")}
 
 
@@ -150,10 +153,12 @@ def main() -> None:
     parser.add_argument("--max-length", type=int, default=256)
     parser.add_argument("--lr", type=float, default=3e-5)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--extra-jsonl", type=Path, action="append", default=[],
+                        help="Extra rows in the text_baseline_dataset format (e.g. data/raw/telephish/...); kept out of Git")
     args = parser.parse_args()
 
     set_seed(args.seed)
-    splits = load_rows()
+    splits = load_rows(args.extra_jsonl)
     run_name = args.model.split("/")[-1]
     output_dir = MODELS_DIR / run_name
     STATS_DIR.mkdir(parents=True, exist_ok=True)
@@ -224,6 +229,8 @@ def main() -> None:
         part = scores([y_true[i] for i in idx], [y_pred[i] for i in idx])
         by_source[source] = {"n": len(idx), "accuracy": part["accuracy"], "f1_scam": part["f1_scam"],
                              "confusion_matrix": part["confusion_matrix"]["rows_true_cols_pred"]}
+    original = [i for i, row in enumerate(splits["test"]) if not row.get("extra_source")]
+    test_original = scores([y_true[i] for i in original], [y_pred[i] for i in original]) if args.extra_jsonl else None
     errors = [
         {"sample_id": row["sample_id"], "source_dataset": row["source_dataset"], "label": y_true[i],
          "pred": y_pred[i], "p_scam": round(p_scam[i], 4)}
@@ -239,6 +246,8 @@ def main() -> None:
         "history": history,
         "validation": val_scores,
         "test": test_scores,
+        "test_original_rows": test_original,
+        "extra_sources": [str(p).replace("\\", "/") for p in args.extra_jsonl],
         "test_by_source": by_source,
         "test_errors": errors,
         "label_counts": {split: dict(Counter(row["label"] for row in rows)) for split, rows in splits.items()},
@@ -256,6 +265,8 @@ def main() -> None:
     print(f"[test] {json.dumps({k: test_scores[k] for k in ('accuracy', 'precision_scam', 'recall_scam', 'f1_scam')})}")
     print(f"[test] confusion (rows=true legit/scam, cols=pred) {test_scores['confusion_matrix']['rows_true_cols_pred']}")
     print(f"[test] by source {json.dumps({k: (v['n'], v['accuracy']) for k, v in by_source.items()})}")
+    if test_original:
+        print(f"[test original rows] {json.dumps({k: test_original[k] for k in ('accuracy', 'precision_scam', 'recall_scam', 'f1_scam')})}")
     print(f"Saved model to {output_dir}")
 
 

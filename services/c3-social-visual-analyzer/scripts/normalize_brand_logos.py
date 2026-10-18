@@ -14,6 +14,7 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import io
 import json
@@ -115,6 +116,10 @@ def fit_square(image: Image.Image, size: int = CANVAS) -> Image.Image:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--only-missing", action="store_true",
+                        help="Leave already-normalized brands untouched (they still take part in the duplicate check)")
+    args = parser.parse_args()
     LOGOS.mkdir(parents=True, exist_ok=True)
     rows = load_catalog()
     normalized: dict[str, dict] = {}
@@ -122,6 +127,15 @@ def main() -> None:
 
     for row in rows:
         brand_id = row["brand_id"]
+        done = ROOT / row["normalized_image"] if row.get("normalized_image") else None
+        if args.only_missing and done and done.is_file():
+            with Image.open(done) as kept_image:
+                kept_image = kept_image.convert("RGB")
+                hash_sets[brand_id] = {"sha256": row.get("normalized_sha256"), "phash": imagehash.phash(kept_image),
+                                       "ahash": imagehash.average_hash(kept_image), "dhash": imagehash.dhash(kept_image),
+                                       "colorhash": imagehash.colorhash(kept_image)}
+            normalized[brand_id] = row
+            continue
         source = primary_path(brand_id)
         if not source:
             print(f"[fail] {brand_id}: no primary logo")

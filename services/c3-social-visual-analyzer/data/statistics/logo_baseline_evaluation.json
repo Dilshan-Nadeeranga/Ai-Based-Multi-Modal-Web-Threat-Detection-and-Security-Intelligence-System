@@ -3,7 +3,7 @@
   "clip": "openai/clip-vit-base-patch16",
   "det_conf": 0.25,
   "iou_match": 0.5,
-  "brand_threshold": 0.78,
+  "brand_threshold": 0.79,
   "threshold_selection": "max F1 on val (synthetic detected boxes + dom phishing pages)",
   "yolo_metrics": {
     "val": {
@@ -101,23 +101,23 @@
     "synthetic_gt_crop": {
       "top1": 0.9554,
       "n": 112,
-      "precision": 0.972,
-      "recall": 0.9286,
-      "f1": 0.9498
+      "precision": 0.9623,
+      "recall": 0.9107,
+      "f1": 0.9358
     },
     "synthetic_detected": {
       "top1": 0.9767,
       "n": 86,
-      "precision": 0.988,
-      "recall": 0.9535,
-      "f1": 0.9704
+      "precision": 0.9878,
+      "recall": 0.9419,
+      "f1": 0.9643
     },
     "dom_page": {
-      "top1": 0.7333,
+      "top1": 0.6226,
       "n": 55,
-      "precision": 0.6364,
-      "recall": 0.7,
-      "f1": 0.6667
+      "precision": 0.7381,
+      "recall": 0.5849,
+      "f1": 0.6526
     }
   },
   "dataset": {
@@ -127,13 +127,16 @@
     "accepted_brands": {
       "facebook": 1,
       "whatsapp": 1,
-      "apple": 22,
-      "adobe": 7,
+      "nationstrust": 5,
+      "apple": 8,
+      "bperbanca": 5,
       "google": 1,
-      "amazon": 3,
-      "coinbase": 2,
-      "linkedin": 1,
-      "netflix": 1
+      "dialogaxiata": 5,
+      "ndbbank": 5,
+      "office365": 2,
+      "govau": 3,
+      "biglobe": 2,
+      "swisspost": 1
     }
   },
   "post_web_pairs": [
@@ -149,9 +152,9 @@
       "web_best_brand": "whatsapp",
       "web_best_cosine": 0.7255,
       "same_reference_brand": false,
-      "created_at": "2026-10-15T04:30:52.787216+00:00"
+      "created_at": "2026-10-18T06:14:29.810854+00:00"
     }
   ],
-  "runtime_seconds": 280.1,
-  "created_at": "2026-10-15T04:30:52.787216+00:00"
+  "runtime_seconds": 272.4,
+  "created_at": "2026-10-18T06:14:29.810854+00:00"
 }
