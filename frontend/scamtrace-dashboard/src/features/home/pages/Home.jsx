@@ -168,6 +168,7 @@ const MODULES = [
     title: 'HTML Content & Behavior Analyzer',
     text: 'Inspects the DOM structure of a page, classifies multilingual text (English, Sinhala and Tamil) for social-engineering intent, and statically analyzes JavaScript without executing it.',
     tags: ['DOM Structure', 'Multilingual NLP', 'Static JavaScript Analysis'],
+    to: '/c2',
   },
   {
     code: 'C3',
