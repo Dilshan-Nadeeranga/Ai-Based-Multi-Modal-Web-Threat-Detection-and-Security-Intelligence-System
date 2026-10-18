@@ -182,20 +182,72 @@ class ExplainableRiskScoringEngine:
         )
         contributing_factors.extend(contextual_factors)
 
+        # ---------------------------------------------------------------------
+        # 4b. Effective Risk Score & ML Alignment
+        # ---------------------------------------------------------------------
+        ml_prob_pct = (ml_res.malicious_probability * 100.0) if (ml_res and ml_res.is_model_loaded) else None
+        
+        # If ML probability exceeds 80%, ensure effective risk score reflects high-risk threshold
+        if ml_prob_pct is not None and ml_prob_pct >= 80.0:
+            effective_score = max(composite_score, ml_prob_pct)
+        else:
+            effective_score = composite_score if composite_score > 0 else (ml_prob_pct if ml_prob_pct is not None else 0.0)
+
         # Bound final score strictly between 0.0 and 100.0
-        final_risk_score = round(min(max(composite_score, 0.0), 100.0), 1)
+        final_risk_score = round(min(max(effective_score, 0.0), 100.0), 1)
 
         # ---------------------------------------------------------------------
-        # 5. Risk Categorization (Configurable Thresholds)
+        # 5. Final Verdict Determination (>80%, =80%, <80% Rules)
         # ---------------------------------------------------------------------
+        has_phishing = self._detect_phishing_evidence(
+            raw_url=raw_url,
+            lexical_features=lexical_features,
+            domain_report=domain_report,
+            infra_report=infra_report,
+        )
+        has_malware = self._detect_malware_evidence(
+            raw_url=raw_url,
+            lexical_features=lexical_features,
+            domain_report=domain_report,
+            infra_report=infra_report,
+        )
+
+        verdict = self._determine_final_verdict(
+            effective_score=final_risk_score,
+            has_phishing=has_phishing,
+            has_malware=has_malware,
+        )
+
+        # Classification and risk_level mapping (preserves gateway/threshold compatibility)
         if final_risk_score >= self.settings.risk_threshold_high:
             classification = "High Risk Scam"
+            risk_level = "High"
         elif final_risk_score >= self.settings.risk_threshold_medium:
             classification = "Medium Risk"
+            risk_level = "Medium"
         elif final_risk_score >= self.settings.risk_threshold_low:
             classification = "Suspicious"
+            risk_level = "Suspicious"
         else:
             classification = "Low Risk"
+            risk_level = "Low Risk"
+
+        # Document high-risk verdict factor if >80% policy applied
+        if final_risk_score > 80.0:
+            contributing_factors.append(
+                ContributingRiskFactor(
+                    factor_id="high_risk_verdict_policy",
+                    title=f"High-Risk Policy Verdict: {verdict}",
+                    category="verdict_policy",
+                    impact_score=round(max(0.0, final_risk_score - 80.0), 1),
+                    evidence=(
+                        f"Score ({final_risk_score:.1f}%) exceeds 80% boundary; "
+                        f"assigned {verdict} based on specific threat indicators."
+                    ),
+                    confidence="high",
+                    epistemic_type="heuristic",
+                )
+            )
 
         # Sort contributing factors by absolute impact magnitude
         contributing_factors.sort(key=lambda f: abs(f.impact_score), reverse=True)
@@ -203,7 +255,8 @@ class ExplainableRiskScoringEngine:
         return ExplainableRiskAssessment(
             risk_score=final_risk_score,
             classification=classification,
-            risk_level=classification,
+            risk_level=risk_level,
+            verdict=verdict,
             engine_version=self.settings.risk_engine_version,
             model_version=(ml_res.model_name if ml_res and ml_res.is_model_loaded else "none"),
             analysis_timestamp=timestamp_utc,
@@ -217,6 +270,162 @@ class ExplainableRiskScoringEngine:
             ),
             analysis_limitations=analysis_limitations,
         )
+
+    # =========================================================================
+    # Final Verdict & Indicator Classification Logic
+    # =========================================================================
+
+    def _determine_final_verdict(
+        self,
+        effective_score: float,
+        has_phishing: bool,
+        has_malware: bool,
+    ) -> str:
+        """Determine final operational verdict following research specifications:
+
+        1. Score > 80%: Final verdict MUST be MALICIOUS, PHISHING, or SUSPICIOUS.
+           Never SAFE.
+           - PHISHING: If phishing indicators detected (fake login, verification, credential stealing).
+           - MALICIOUS: If strong evidence indicates malware distribution or confirmed threat.
+           - SUSPICIOUS: If score > 80% but insufficient evidence to distinguish.
+        2. Score = 80%: Do not automatically classify as malicious. Apply standard classification.
+        3. Score < 80%: Use classification logic to determine SAFE, SUSPICIOUS, PHISHING, or MALICIOUS.
+        """
+        # Rule 1: High-Risk Score > 80% (Never SAFE)
+        if effective_score > 80.0:
+            if has_malware and not has_phishing:
+                return "MALICIOUS"
+            elif has_phishing and not has_malware:
+                return "PHISHING"
+            elif has_malware and has_phishing:
+                # If explicit malware dropper or verified threat feed, prioritize MALICIOUS
+                return "MALICIOUS"
+            else:
+                return "SUSPICIOUS"
+
+        # Rule 2: Exactly 80% (Standard rules, not automatically malicious)
+        elif effective_score == 80.0:
+            if has_malware:
+                return "MALICIOUS"
+            elif has_phishing:
+                return "PHISHING"
+            else:
+                return "SUSPICIOUS"
+
+        # Rule 3: Score < 80%
+        else:
+            if has_malware and effective_score >= 25.0:
+                return "MALICIOUS"
+            elif has_phishing and effective_score >= 25.0:
+                return "PHISHING"
+            elif effective_score >= self.settings.risk_threshold_low:  # >= 25.0
+                return "SUSPICIOUS"
+            else:
+                return "SAFE"
+
+    def _detect_phishing_evidence(
+        self,
+        raw_url: str,
+        lexical_features: UrlLexicalFeatures,
+        domain_report: DomainIntelligenceReport,
+        infra_report: ThreatInfrastructureReport,
+    ) -> bool:
+        """Identify specific phishing indicators:
+        - Sensitive login pages, fake account verification links, or credential-stealing patterns.
+        - Homoglyph or punycode brand imitation.
+        - Userinfo '@' delimiter spoofing.
+        - Newly registered domain (NRD) with credential/brand paths.
+        - Threat feed tagging phishing or credential harvesting.
+        """
+        # 1. Specific login, account verification, and credential-stealing keywords
+        phish_keywords = {
+            "login", "signin", "verify", "verification", "account",
+            "credential", "password", "auth", "authorize", "banking",
+            "bank", "confirm", "confirmation", "billing", "wallet",
+            "paypal", "appleid", "microsoft", "chase", "wellsfargo"
+        }
+        found_kw = set(k.lower() for k in (lexical_features.suspicious_keywords_found or []))
+        if found_kw.intersection(phish_keywords):
+            return True
+
+        # 2. Path patterns matching login, verify, auth, security
+        path_lower = (lexical_features.path or "").lower()
+        phish_path_patterns = (
+            "/login", "/signin", "/auth", "/verify", "/verification",
+            "/account", "/secure", "/banking", "/password", "/credential",
+            "/update-account", "/billing", "/confirm", "/session", "/checkpoint"
+        )
+        if any(p in path_lower for p in phish_path_patterns):
+            return True
+
+        # 3. Targeted brand spoofing via homoglyphs or Punycode
+        if lexical_features.has_homoglyphs or lexical_features.is_punycode:
+            return True
+
+        # 4. Userinfo '@' delimiter spoofing
+        if lexical_features.has_at_symbol:
+            return True
+
+        # 5. Newly registered domain (NRD) combined with suspicious TLD or shortener
+        if domain_report.registration.is_nrd and (
+            lexical_features.is_suspicious_tld or infra_report.redirect_chain.is_shortened
+        ):
+            return True
+
+        # 6. Reputation feed threat type
+        rep = domain_report.reputation
+        if rep.is_known_threat and rep.threat_type in (
+            "phishing", "credential_harvesting", "social_engineering", "scam"
+        ):
+            return True
+
+        return False
+
+    def _detect_malware_evidence(
+        self,
+        raw_url: str,
+        lexical_features: UrlLexicalFeatures,
+        domain_report: DomainIntelligenceReport,
+        infra_report: ThreatInfrastructureReport,
+    ) -> bool:
+        """Identify strong evidence indicating malware distribution or confirmed malicious threats:
+        - Executable or malware dropper file extensions/paths in URL (.exe, .bin, .sh, .scr, .bat, .apk, .msi, .dll, /bin.sh, /i).
+        - Threat intelligence feeds tagging malware, C2, botnet, trojan, dropper.
+        - Prohibited SSRF probe blocked during redirect resolution.
+        - Procedurally generated DGA domain algorithm (C2 rendezvous).
+        - Private IP address resolution leak or fast-flux botnet network.
+        """
+        # 1. Executable and dropper script file patterns in path
+        path_lower = (lexical_features.path or "").lower()
+        malware_extensions = (
+            ".exe", ".bin", ".sh", ".scr", ".bat", ".apk", ".msi", ".dll",
+            ".vbs", ".ps1", ".elf", ".jar", ".iso", ".cmd",
+            "/bin.sh", "/i", "/hiddenbin", "/mozi"
+        )
+        if any(path_lower.endswith(ext) or f"{ext}?" in path_lower or f"{ext}/" in path_lower for ext in malware_extensions):
+            return True
+
+        # 2. Known threat feed hits with malware/C2 tags
+        rep = domain_report.reputation
+        if rep.is_known_threat and (
+            rep.threat_type in ("malware", "malware_dropper", "c2", "botnet", "trojan", "ransomware", "payload_delivery", "exploit")
+            or not rep.threat_type
+        ):
+            return True
+
+        # 3. Prohibited SSRF probe blocked during redirect resolution
+        if infra_report.redirect_chain.ssrf_blocked:
+            return True
+
+        # 4. Procedural DGA domain generation (Command & Control)
+        if infra_report.dga.is_dga_suspected and infra_report.dga.dga_score >= 0.60:
+            return True
+
+        # 5. Fast-flux DNS botnet infrastructure or Private IP resolution
+        if domain_report.dns.is_fast_flux or domain_report.dns.is_private_ip_resolved:
+            return True
+
+        return False
 
     # =========================================================================
     # Individual Channel Evaluators
