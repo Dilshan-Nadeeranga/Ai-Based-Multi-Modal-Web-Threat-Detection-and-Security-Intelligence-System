@@ -1,0 +1,679 @@
+{
+  "version": "v0.3",
+  "n_cases": 33,
+  "n_pages": 31,
+  "n_confirmed": 0,
+  "errors": [],
+  "per_pattern": {
+    "credential_exfiltration": {
+      "any": {
+        "n_pos": 10,
+        "n_neg": 0,
+        "tp": 8,
+        "fp": 0,
+        "tpr": {
+          "k": 8,
+          "n": 10,
+          "rate": 0.8,
+          "ci95": [
+            0.4901624691221323,
+            0.9433178490622331
+          ],
+          "text": "8/10 = 80.0 % [49.0, 94.3]",
+          "measurable": true
+        },
+        "fpr": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        },
+        "precision": {
+          "k": 8,
+          "n": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6755924316585924,
+            1.0
+          ],
+          "text": "8/8 = 100.0 % [67.6, 100.0]",
+          "measurable": true
+        }
+      },
+      "high": {
+        "n_pos": 10,
+        "n_neg": 0,
+        "tp": 8,
+        "fp": 0,
+        "tpr": {
+          "k": 8,
+          "n": 10,
+          "rate": 0.8,
+          "ci95": [
+            0.4901624691221323,
+            0.9433178490622331
+          ],
+          "text": "8/10 = 80.0 % [49.0, 94.3]",
+          "measurable": true
+        },
+        "fpr": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        },
+        "precision": {
+          "k": 8,
+          "n": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6755924316585924,
+            1.0
+          ],
+          "text": "8/8 = 100.0 % [67.6, 100.0]",
+          "measurable": true
+        }
+      }
+    },
+    "keylogging": {
+      "any": {
+        "n_pos": 0,
+        "n_neg": 4,
+        "tp": 0,
+        "fp": 0,
+        "tpr": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        },
+        "fpr": {
+          "k": 0,
+          "n": 4,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.4898908403969213
+          ],
+          "text": "0/4 = 0.0 % [0.0, 49.0]",
+          "measurable": true
+        },
+        "precision": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        }
+      },
+      "high": {
+        "n_pos": 0,
+        "n_neg": 4,
+        "tp": 0,
+        "fp": 0,
+        "tpr": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        },
+        "fpr": {
+          "k": 0,
+          "n": 4,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.4898908403969213
+          ],
+          "text": "0/4 = 0.0 % [0.0, 49.0]",
+          "measurable": true
+        },
+        "precision": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        }
+      }
+    },
+    "forced_redirect": {
+      "any": {
+        "n_pos": 1,
+        "n_neg": 5,
+        "tp": 0,
+        "fp": 0,
+        "tpr": {
+          "k": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.7934506882081973
+          ],
+          "text": "0/1 = 0.0 % [0.0, 79.3]",
+          "measurable": false
+        },
+        "fpr": {
+          "k": 0,
+          "n": 5,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.43448246865939283
+          ],
+          "text": "0/5 = 0.0 % [0.0, 43.4]",
+          "measurable": true
+        },
+        "precision": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        }
+      },
+      "high": {
+        "n_pos": 1,
+        "n_neg": 5,
+        "tp": 0,
+        "fp": 0,
+        "tpr": {
+          "k": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.7934506882081973
+          ],
+          "text": "0/1 = 0.0 % [0.0, 79.3]",
+          "measurable": false
+        },
+        "fpr": {
+          "k": 0,
+          "n": 5,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.43448246865939283
+          ],
+          "text": "0/5 = 0.0 % [0.0, 43.4]",
+          "measurable": true
+        },
+        "precision": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        }
+      }
+    },
+    "clipboard_manipulation": {
+      "any": {
+        "n_pos": 1,
+        "n_neg": 2,
+        "tp": 0,
+        "fp": 0,
+        "tpr": {
+          "k": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.7934506882081973
+          ],
+          "text": "0/1 = 0.0 % [0.0, 79.3]",
+          "measurable": false
+        },
+        "fpr": {
+          "k": 0,
+          "n": 2,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.6576197760453506
+          ],
+          "text": "0/2 = 0.0 % [0.0, 65.8]",
+          "measurable": false
+        },
+        "precision": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        }
+      },
+      "high": {
+        "n_pos": 1,
+        "n_neg": 2,
+        "tp": 0,
+        "fp": 0,
+        "tpr": {
+          "k": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.7934506882081973
+          ],
+          "text": "0/1 = 0.0 % [0.0, 79.3]",
+          "measurable": false
+        },
+        "fpr": {
+          "k": 0,
+          "n": 2,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.6576197760453506
+          ],
+          "text": "0/2 = 0.0 % [0.0, 65.8]",
+          "measurable": false
+        },
+        "precision": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        }
+      }
+    },
+    "suspicious_download": {
+      "any": {
+        "n_pos": 0,
+        "n_neg": 3,
+        "tp": 0,
+        "fp": 0,
+        "tpr": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        },
+        "fpr": {
+          "k": 0,
+          "n": 3,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.5614970356393196
+          ],
+          "text": "0/3 = 0.0 % [0.0, 56.1]",
+          "measurable": true
+        },
+        "precision": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        }
+      },
+      "high": {
+        "n_pos": 0,
+        "n_neg": 3,
+        "tp": 0,
+        "fp": 0,
+        "tpr": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        },
+        "fpr": {
+          "k": 0,
+          "n": 3,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.5614970356393196
+          ],
+          "text": "0/3 = 0.0 % [0.0, 56.1]",
+          "measurable": true
+        },
+        "precision": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        }
+      }
+    },
+    "obfuscated_execution": {
+      "any": {
+        "n_pos": 1,
+        "n_neg": 0,
+        "tp": 1,
+        "fp": 0,
+        "tpr": {
+          "k": 1,
+          "n": 1,
+          "rate": 1.0,
+          "ci95": [
+            0.2065493117918027,
+            1.0
+          ],
+          "text": "1/1 = 100.0 % [20.7, 100.0]",
+          "measurable": false
+        },
+        "fpr": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        },
+        "precision": {
+          "k": 1,
+          "n": 1,
+          "rate": 1.0,
+          "ci95": [
+            0.2065493117918027,
+            1.0
+          ],
+          "text": "1/1 = 100.0 % [20.7, 100.0]",
+          "measurable": false
+        }
+      },
+      "high": {
+        "n_pos": 1,
+        "n_neg": 0,
+        "tp": 0,
+        "fp": 0,
+        "tpr": {
+          "k": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.7934506882081973
+          ],
+          "text": "0/1 = 0.0 % [0.0, 79.3]",
+          "measurable": false
+        },
+        "fpr": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        },
+        "precision": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        }
+      }
+    },
+    "anti_analysis": {
+      "any": {
+        "n_pos": 5,
+        "n_neg": 1,
+        "tp": 5,
+        "fp": 0,
+        "tpr": {
+          "k": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655175313406071,
+            1.0
+          ],
+          "text": "5/5 = 100.0 % [56.6, 100.0]",
+          "measurable": true
+        },
+        "fpr": {
+          "k": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.7934506882081973
+          ],
+          "text": "0/1 = 0.0 % [0.0, 79.3]",
+          "measurable": false
+        },
+        "precision": {
+          "k": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655175313406071,
+            1.0
+          ],
+          "text": "5/5 = 100.0 % [56.6, 100.0]",
+          "measurable": true
+        }
+      },
+      "high": {
+        "n_pos": 5,
+        "n_neg": 1,
+        "tp": 0,
+        "fp": 0,
+        "tpr": {
+          "k": 0,
+          "n": 5,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.43448246865939283
+          ],
+          "text": "0/5 = 0.0 % [0.0, 43.4]",
+          "measurable": true
+        },
+        "fpr": {
+          "k": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.7934506882081973
+          ],
+          "text": "0/1 = 0.0 % [0.0, 79.3]",
+          "measurable": false
+        },
+        "precision": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "ci95": [
+            null,
+            null
+          ],
+          "text": "n = 0",
+          "measurable": false
+        }
+      }
+    }
+  },
+  "overall": {
+    "any": {
+      "n_pos": 18,
+      "n_neg": 15,
+      "tp": 14,
+      "fp": 0,
+      "tpr": {
+        "k": 14,
+        "n": 18,
+        "rate": 0.7777777777777778,
+        "ci95": [
+          0.5478541549399641,
+          0.9099907195415445
+        ],
+        "text": "14/18 = 77.8 % [54.8, 91.0]",
+        "measurable": true
+      },
+      "fpr": {
+        "k": 0,
+        "n": 15,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.20388330359648707
+        ],
+        "text": "0/15 = 0.0 % [0.0, 20.4]",
+        "measurable": true
+      },
+      "precision": {
+        "k": 14,
+        "n": 14,
+        "rate": 1.0,
+        "ci95": [
+          0.7846891945970195,
+          0.9999999999999999
+        ],
+        "text": "14/14 = 100.0 % [78.5, 100.0]",
+        "measurable": true
+      }
+    },
+    "high": {
+      "n_pos": 18,
+      "n_neg": 15,
+      "tp": 8,
+      "fp": 0,
+      "tpr": {
+        "k": 8,
+        "n": 18,
+        "rate": 0.4444444444444444,
+        "ci95": [
+          0.24559518003796732,
+          0.6628358450657309
+        ],
+        "text": "8/18 = 44.4 % [24.6, 66.3]",
+        "measurable": true
+      },
+      "fpr": {
+        "k": 0,
+        "n": 15,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.20388330359648707
+        ],
+        "text": "0/15 = 0.0 % [0.0, 20.4]",
+        "measurable": true
+      },
+      "precision": {
+        "k": 8,
+        "n": 8,
+        "rate": 1.0,
+        "ci95": [
+          0.6755924316585924,
+          1.0
+        ],
+        "text": "8/8 = 100.0 % [67.6, 100.0]",
+        "measurable": true
+      }
+    }
+  },
+  "misses": [
+    {
+      "sample_id": "c2_phishing_000009",
+      "pattern": "credential_exfiltration",
+      "reason": "obfuscated string array builds a POST of email + password to a Telegram bot",
+      "other_patterns": []
+    },
+    {
+      "sample_id": "c2_phishing_000043",
+      "pattern": "credential_exfiltration",
+      "reason": "password -> buildReport -> sendToTelegram (Image beacon to a Telegram bot)",
+      "other_patterns": [
+        "credential_access",
+        "forced_redirect"
+      ]
+    },
+    {
+      "sample_id": "c2_malware_delivery_000023",
+      "pattern": "clipboard_manipulation",
+      "reason": "ClickFix: fake reCAPTCHA copies a hidden PowerShell download-and-run command via execCommand('copy')",
+      "other_patterns": []
+    },
+    {
+      "sample_id": "c2_benign_000009",
+      "pattern": "forced_redirect",
+      "reason": "meta refresh 0 s to another site (docs.github.com)",
+      "other_patterns": []
+    }
+  ],
+  "false_alarms": []
+}

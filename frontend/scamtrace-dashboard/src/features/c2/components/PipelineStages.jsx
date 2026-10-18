@@ -24,11 +24,11 @@ function stageOutcome(stage, result) {
 }
 
 const ICON = {
-  done: <CheckCircle2 className="h-4 w-4 text-emerald-300" aria-hidden="true" />,
-  running: <Loader2 className="h-4 w-4 animate-spin text-cyan-300 motion-reduce:animate-none" aria-hidden="true" />,
-  queued: <CircleDashed className="h-4 w-4 text-slate-500" aria-hidden="true" />,
-  skipped: <CircleSlash className="h-4 w-4 text-slate-400" aria-hidden="true" />,
-  failed: <XCircle className="h-4 w-4 text-amber-300" aria-hidden="true" />,
+  done: <CheckCircle2 className="h-4 w-4 text-[color:var(--c2-ok)]" aria-hidden="true" />,
+  running: <Loader2 className="h-4 w-4 animate-spin text-[color:var(--c2-accent)] motion-reduce:animate-none" aria-hidden="true" />,
+  queued: <CircleDashed className="h-4 w-4 text-[color:var(--c2-fg-faint)]" aria-hidden="true" />,
+  skipped: <CircleSlash className="h-4 w-4 text-[color:var(--c2-fg-muted)]" aria-hidden="true" />,
+  failed: <XCircle className="h-4 w-4 text-[color:var(--c2-sus)]" aria-hidden="true" />,
 }
 
 function useElapsed(running, startedAt) {
@@ -89,30 +89,31 @@ export default function PipelineStages({ running, startedAt, result, target }) {
             <li
               key={stage.id}
               className={`relative grid grid-cols-[1.5rem_1.25rem_1fr_auto] items-center gap-2 overflow-hidden rounded-md border px-2.5 py-1.5 ${
-                state === 'running' ? 'c2-stage-running border-cyan-400/50' : 'border-slate-800'
+                state === 'running' ? 'c2-stage-running border-[color:var(--c2-accent-line)]' : 'border-[color:var(--c2-border)]'
               } ${state === 'queued' ? 'opacity-60' : ''}`}
             >
-              <span className="font-mono text-xs text-slate-500">{String(index + 1).padStart(2, '0')}</span>
+              <span className="font-mono text-xs text-[color:var(--c2-fg-faint)]">{String(index + 1).padStart(2, '0')}</span>
               {ICON[shown]}
               <span className="min-w-0">
-                <span className="block text-sm font-medium text-slate-100">{stage.label}</span>
-                <span className="block truncate text-xs text-slate-400">{note}</span>
+                <span className="block text-sm font-medium text-[color:var(--c2-fg-hi)]">{stage.label}</span>
+                <span className="block truncate text-xs text-[color:var(--c2-fg-muted)]">{note}</span>
               </span>
-              <span className="font-mono text-xs text-slate-200">{ms !== null && ms !== undefined ? `${ms.toFixed(1)} ms` : ''}</span>
-              {width > 0 && <span className="absolute bottom-0 left-0 h-0.5 bg-cyan-400/70" style={{ width: `${width}%` }} aria-hidden="true" />}
+              <span className="font-mono text-xs text-[color:var(--c2-fg)]">{ms !== null && ms !== undefined ? `${ms.toFixed(1)} ms` : ''}</span>
+              {width > 0 && <span className="absolute bottom-0 left-0 h-0.5 bg-[color:var(--c2-accent-70)]" style={{ width: `${width}%` }} aria-hidden="true" />}
             </li>
           )
         })}
       </ol>
-      <div className="flex min-h-[17rem] flex-col rounded-lg border border-slate-800 bg-black/70">
-        <div className="flex items-center gap-1.5 border-b border-slate-800 px-3 py-1.5">
+      <div className="flex min-h-[17rem] flex-col rounded-lg border border-[color:var(--c2-term-border)] bg-[color:var(--c2-term-bg)]">
+        {/* terminal chrome: dark in both themes, so these fixed colours always sit on --c2-term-bg */}
+        <div className="flex items-center gap-1.5 border-b border-[color:var(--c2-term-rule)] px-3 py-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" aria-hidden="true" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-300/70" aria-hidden="true" />
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" aria-hidden="true" />
-          <span className="ml-2 font-mono text-[0.6875rem] text-slate-400">scan.log</span>
+          <span className="ml-2 font-mono text-[0.6875rem] text-[color:var(--c2-term-muted)]">scan.log</span>
         </div>
         <pre
-          className="flex-1 overflow-auto whitespace-pre-wrap break-words p-3 font-mono text-xs leading-relaxed text-emerald-200"
+          className="flex-1 overflow-auto whitespace-pre-wrap break-words p-3 font-mono text-xs leading-relaxed text-[color:var(--c2-term-text)]"
           aria-label="Scan log"
           tabIndex={0}
         >

@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { AlertTriangle, Check, Copy, Inbox, Loader2, RefreshCw } from 'lucide-react'
 import { defangUrl } from '../api/defang.js'
 
-/** Dark console panel with a mono section label. */
+/** C2 card (themed via c2.css tokens) with a mono section label. */
 export function Panel({ title, icon: Icon, actions, children, className = '', as: Tag = 'section' }) {
   return (
-    <Tag className={`c2-panel rounded-xl border border-slate-800 p-4 shadow-[0_0_0_1px_rgba(34,211,238,0.03)] ${className}`}>
+    <Tag className={`c2-panel rounded-xl border border-[color:var(--c2-border)] p-4 ${className}`}>
       {(title || actions) && (
         <header className="mb-3 flex items-center justify-between gap-3">
           {title && (
-            <h2 className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-cyan-300">
+            <h2 className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--c2-accent)]">
               {Icon && <Icon className="h-4 w-4" aria-hidden="true" />}
               {title}
             </h2>
@@ -24,11 +24,11 @@ export function Panel({ title, icon: Icon, actions, children, className = '', as
 
 export function Chip({ children, tone = 'slate', className = '', title }) {
   const tones = {
-    slate: 'bg-slate-800/80 text-slate-200 ring-slate-600/60',
-    cyan: 'bg-cyan-400/10 text-cyan-200 ring-cyan-400/40',
-    amber: 'bg-amber-400/10 text-amber-200 ring-amber-400/40',
-    red: 'bg-red-500/10 text-red-200 ring-red-400/50',
-    green: 'bg-emerald-400/10 text-emerald-200 ring-emerald-400/40',
+    slate: 'bg-[color:var(--c2-chip-bg)] text-[color:var(--c2-fg)] ring-[color:var(--c2-chip-ring)]',
+    cyan: 'bg-[color:var(--c2-accent-tint)] text-[color:var(--c2-accent-hi)] ring-[color:var(--c2-accent-ring)]',
+    amber: 'bg-[color:var(--c2-sus-tint)] text-[color:var(--c2-sus-hi)] ring-[color:var(--c2-sus-ring)]',
+    red: 'bg-[color:var(--c2-mal-tint)] text-[color:var(--c2-mal-hi)] ring-[color:var(--c2-mal-ring)]',
+    green: 'bg-[color:var(--c2-ok-tint)] text-[color:var(--c2-ok-hi)] ring-[color:var(--c2-ok-ring)]',
   }
   return (
     <span title={title} className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-xs ring-1 ${tones[tone]} ${className}`}>
@@ -40,18 +40,18 @@ export function Chip({ children, tone = 'slate', className = '', title }) {
 /** Loading / empty / error states, used by every view. */
 export function StateBox({ state, message, onRetry, children }) {
   const config = {
-    loading: { icon: Loader2, tone: 'text-cyan-300', text: message || 'Loading…', spin: true },
-    empty: { icon: Inbox, tone: 'text-slate-400', text: message || 'Nothing here yet.' },
-    error: { icon: AlertTriangle, tone: 'text-amber-300', text: message || 'Something went wrong.' },
+    loading: { icon: Loader2, tone: 'text-[color:var(--c2-accent)]', text: message || 'Loading…', spin: true },
+    empty: { icon: Inbox, tone: 'text-[color:var(--c2-fg-muted)]', text: message || 'Nothing here yet.' },
+    error: { icon: AlertTriangle, tone: 'text-[color:var(--c2-sus)]', text: message || 'Something went wrong.' },
   }[state]
   const Icon = config.icon
   return (
-    <div role={state === 'error' ? 'alert' : 'status'} className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-700 px-4 py-10 text-center">
+    <div role={state === 'error' ? 'alert' : 'status'} className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[color:var(--c2-border-strong)] px-4 py-10 text-center">
       <Icon className={`h-6 w-6 ${config.tone} ${config.spin ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
-      <p className="max-w-md text-sm text-slate-300">{config.text}</p>
+      <p className="max-w-md text-sm text-[color:var(--c2-fg-2)]">{config.text}</p>
       {children}
       {onRetry && (
-        <button type="button" onClick={onRetry} className="inline-flex items-center gap-1.5 rounded-md border border-slate-600 px-3 py-1.5 text-sm text-slate-200 hover:border-cyan-400 hover:text-cyan-200">
+        <button type="button" onClick={onRetry} className="inline-flex items-center gap-1.5 rounded-md border border-[color:var(--c2-border-stronger)] px-3 py-1.5 text-sm text-[color:var(--c2-fg)] hover:border-[color:var(--c2-accent-solid)] hover:text-[color:var(--c2-accent-hi)]">
           <RefreshCw className="h-4 w-4" aria-hidden="true" /> Try again
         </button>
       )}
@@ -74,7 +74,7 @@ export function CopyButton({ value, label = 'Copy' }) {
     <button
       type="button"
       onClick={copy}
-      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-slate-700 px-1.5 py-0.5 text-xs text-slate-300 hover:border-cyan-400 hover:text-cyan-200"
+      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-[color:var(--c2-border-strong)] px-1.5 py-0.5 text-xs text-[color:var(--c2-fg-2)] hover:border-[color:var(--c2-accent-solid)] hover:text-[color:var(--c2-accent-hi)]"
       aria-label={copied ? 'Copied' : `${label} (defanged)`}
       title="Copies the defanged text (not a clickable link)"
     >
@@ -89,7 +89,7 @@ export function DefangedUrl({ url, className = '', copy = true }) {
   const shown = defangUrl(url) || '—'
   return (
     <span className={`inline-flex min-w-0 max-w-full items-center gap-2 ${className}`}>
-      <span className="truncate font-mono text-sm text-cyan-100" title={shown}>
+      <span className="truncate font-mono text-sm text-[color:var(--c2-accent-ink)]" title={shown}>
         {shown}
       </span>
       {copy && url && <CopyButton value={shown} />}
@@ -99,7 +99,7 @@ export function DefangedUrl({ url, className = '', copy = true }) {
 
 export function SegmentedControl({ label, options, value, onChange }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg border border-slate-700 bg-slate-900 p-0.5">
+    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg border border-[color:var(--c2-border-strong)] bg-[color:var(--c2-field)] p-0.5">
       {options.map((option) => (
         <button
           key={option.value}
@@ -108,7 +108,7 @@ export function SegmentedControl({ label, options, value, onChange }) {
           aria-checked={value === option.value}
           onClick={() => onChange(option.value)}
           className={`rounded-md px-3 py-1 text-sm font-medium ${
-            value === option.value ? 'bg-cyan-400/15 text-cyan-200 ring-1 ring-cyan-400/40' : 'text-slate-300 hover:text-white'
+            value === option.value ? 'bg-[color:var(--c2-accent-tint-2)] text-[color:var(--c2-accent-hi)] ring-1 ring-[color:var(--c2-accent-ring)]' : 'text-[color:var(--c2-fg-2)] hover:text-[color:var(--c2-fg-max)]'
           }`}
         >
           {option.label}
@@ -120,13 +120,13 @@ export function SegmentedControl({ label, options, value, onChange }) {
 
 export function SelectField({ id, label, value, onChange, options }) {
   return (
-    <label htmlFor={id} className="flex flex-col gap-1 text-xs font-medium text-slate-400">
+    <label htmlFor={id} className="flex flex-col gap-1 text-xs font-medium text-[color:var(--c2-fg-muted)]">
       {label}
       <select
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-100 focus:border-cyan-400"
+        className="rounded-md border border-[color:var(--c2-border-strong)] bg-[color:var(--c2-field)] px-2 py-1.5 text-sm text-[color:var(--c2-fg-hi)] focus:border-[color:var(--c2-accent-solid)]"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

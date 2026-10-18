@@ -19,7 +19,7 @@ const FEED_MODE = {
   error: { text: 'feed unavailable', tone: 'red' },
 }
 const WORKER_TONE = { idle: 'green', busy: 'cyan', waiting_for_models: 'amber', stopped: 'slate', disabled: 'slate' }
-const CLASS_TONES = { phishing: 'bg-red-400', crypto_scam: 'bg-amber-400', fake_ecommerce: 'bg-violet-400', malware_delivery: 'bg-orange-400', benign: 'bg-emerald-400' }
+const CLASS_TONES = { phishing: 'bg-[color:var(--c2-mal-solid)]', crypto_scam: 'bg-[color:var(--c2-sus-solid)]', fake_ecommerce: 'bg-[color:var(--c2-violet)]', malware_delivery: 'bg-[color:var(--c2-high-solid)]', benign: 'bg-[color:var(--c2-ok-solid)]' }
 
 function Stats({ demo, period }) {
   const { data, error, loading, reload } = useAsyncData(
@@ -42,10 +42,10 @@ function Stats({ demo, period }) {
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatTile label={`Scans · ${period}`} value={data.total} sub={`${data.duplicates_skipped} duplicate(s) skipped`} />
-        <StatTile label="Malicious" value={verdicts.Malicious || 0} tone="text-red-300" />
-        <StatTile label="Suspicious" value={verdicts.Suspicious || 0} tone="text-amber-300" />
-        <StatTile label="Legitimate" value={verdicts.Legitimate || 0} tone="text-emerald-300" />
-        <StatTile label="No verdict" value={verdicts.none || 0} tone="text-slate-300" sub="unreachable / inconclusive" />
+        <StatTile label="Malicious" value={verdicts.Malicious || 0} tone="text-[color:var(--c2-mal)]" />
+        <StatTile label="Suspicious" value={verdicts.Suspicious || 0} tone="text-[color:var(--c2-sus)]" />
+        <StatTile label="Legitimate" value={verdicts.Legitimate || 0} tone="text-[color:var(--c2-ok)]" />
+        <StatTile label="No verdict" value={verdicts.none || 0} tone="text-[color:var(--c2-fg-2)]" sub="unreachable / inconclusive" />
       </div>
       <div className="grid gap-4 lg:grid-cols-4">
         <Panel title={`Scans per ${data.series_bucket}`} icon={BarChart3} className="lg:col-span-2">
@@ -66,8 +66,8 @@ function Stats({ demo, period }) {
         </Panel>
         <Panel title="By source / language" icon={Languages}>
           <CountBars counts={data.by_source} labels={SOURCE_LABELS} />
-          <div className="my-3 border-t border-slate-800" />
-          <CountBars counts={data.by_language} labels={LANGUAGE_LABELS} tone="bg-violet-400/80" />
+          <div className="my-3 border-t border-[color:var(--c2-border)]" />
+          <CountBars counts={data.by_language} labels={LANGUAGE_LABELS} tone="bg-[color:var(--c2-violet-80)]" />
         </Panel>
       </div>
       {data.top_domains?.length > 0 && (
@@ -76,14 +76,14 @@ function Stats({ demo, period }) {
             {data.top_domains.map((domain) => (
               <li key={domain.key}>
                 <Chip>
-                  {domain.key} <span className="text-slate-400">×{domain.count}</span>
+                  {domain.key} <span className="text-[color:var(--c2-fg-muted)]">×{domain.count}</span>
                 </Chip>
               </li>
             ))}
             {data.top_brands?.map((brand) => (
               <li key={`brand-${brand.key}`}>
                 <Chip tone="red">
-                  imitates “{brand.key}” <span className="text-red-300/70">×{brand.count}</span>
+                  imitates “{brand.key}” <span className="text-[color:var(--c2-mal-70)]">×{brand.count}</span>
                 </Chip>
               </li>
             ))}
@@ -105,8 +105,8 @@ export default function C2Feed() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-xl font-semibold text-slate-50">
-          <Activity className="h-5 w-5 text-cyan-300" aria-hidden="true" /> Live Threat Feed
+        <h2 className="flex items-center gap-2 text-xl font-semibold text-[color:var(--c2-fg-strong)]">
+          <Activity className="h-5 w-5 text-[color:var(--c2-accent)]" aria-hidden="true" /> Live Threat Feed
         </h2>
         <SegmentedControl
           label="Counter window"
@@ -125,20 +125,20 @@ export default function C2Feed() {
         icon={Radio}
         actions={
           <Chip tone={mode.tone}>
-            <span className={`h-1.5 w-1.5 rounded-full ${feed.mode === 'live' ? 'bg-emerald-300' : 'bg-current'}`} aria-hidden="true" />
+            <span className={`h-1.5 w-1.5 rounded-full ${feed.mode === 'live' ? 'bg-[color:var(--c2-ok-dot)]' : 'bg-current'}`} aria-hidden="true" />
             {mode.text}
           </Chip>
         }
       >
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <ScanFilters filters={filters} onChange={setFilters} idPrefix="c2-feed" />
-          <p className="text-xs text-slate-400" aria-live="polite">
+          <p className="text-xs text-[color:var(--c2-fg-muted)]" aria-live="polite">
             {visible.length} of {feed.items.length} shown
           </p>
         </div>
         {feed.mode === 'error' ? (
           <StateBox state="error" message={feed.error?.message}>
-            <p className="text-xs text-slate-400">Switch on Demo mode to show the recorded feed.</p>
+            <p className="text-xs text-[color:var(--c2-fg-muted)]">Switch on Demo mode to show the recorded feed.</p>
           </StateBox>
         ) : feed.mode === 'connecting' && !feed.items.length ? (
           <StateBox state="loading" message="Connecting to the live feed…" />
@@ -154,7 +154,7 @@ export default function C2Feed() {
             }
           />
         )}
-        {feed.error && feed.mode !== 'error' && <p className="mt-2 text-xs text-amber-300">Last refresh failed: {feed.error.message}</p>}
+        {feed.error && feed.mode !== 'error' && <p className="mt-2 text-xs text-[color:var(--c2-sus)]">Last refresh failed: {feed.error.message}</p>}
       </Panel>
     </div>
   )
