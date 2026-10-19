@@ -1,0 +1,129 @@
+{
+  "version": "PP1",
+  "frozen_at": "2026-10-18T18:50:11.849959+00:00",
+  "dataset": {
+    "files": {
+      "dataset_metadata.jsonl": {
+        "sha256": "e3e33d25e96ef457c0570be1387a0cfa86135d9b0e11a0187bbd18302f523749",
+        "rows": 1438,
+        "bytes": 2244420
+      },
+      "labels.jsonl": {
+        "sha256": "605e580a405d184e0dffaa9e2494e2d1adfed375f1ef7ecb51a9e5f6ea16f72e",
+        "rows": 1438,
+        "bytes": 492323
+      },
+      "text_baseline_dataset.jsonl": {
+        "sha256": "32656480ad6a58de2889f40cb3a00e17e71300fcca4bdba362248e7dacf77ff2",
+        "rows": 438,
+        "bytes": 1243405
+      },
+      "text_baseline_splits.json": {
+        "sha256": "ab4449bc4f21b728a117a94743b1d908a3e4d55d6dd1c97310d188b426418f22",
+        "rows": null,
+        "bytes": 989
+      },
+      "brand_catalog.jsonl": {
+        "sha256": "19cb3f4d5c2f05d7be94dc03d6621f86ebaced3e0d2e9ea8552dcc81f6f3000a",
+        "rows": 92,
+        "bytes": 133464
+      },
+      "brand_splits.jsonl": {
+        "sha256": "fd5724154422c347ca050921ba9c12ecd68e502a0e0199a87eea03b20fe73fc6",
+        "rows": 90,
+        "bytes": 24117
+      },
+      "logo_annotations.jsonl": {
+        "sha256": "06625d433968ede9bb2da1f70d9d5e0a2bfcf5ec4353482f2241cc6e185f57b2",
+        "rows": 90,
+        "bytes": 44275
+      },
+      "logo_boxes.jsonl": {
+        "sha256": "6e195fe9084b7acd762fb520e593b4403cdc837fe08b312b42c64aa8821eeaaf",
+        "rows": 90,
+        "bytes": 40592
+      },
+      "consistency_results.jsonl": {
+        "sha256": "821ee748a0b77bd63a3480c80d3a2ca0400109a71f1619ddd3117f1498900487",
+        "rows": 1438,
+        "bytes": 1591917
+      },
+      "risk_scores.jsonl": {
+        "sha256": "655e755257849c182ccc16d549367ced1a34ee267154602cacb7a65f720e23d2",
+        "rows": 1438,
+        "bytes": 1298707
+      },
+      "clip_brand_predictions.jsonl": {
+        "sha256": "6dc6e2cfe9c81f7b0db9a5621be33854bc491b75b14ae2d3e5483d58a46ad0f8",
+        "rows": 1023,
+        "bytes": 949309
+      }
+    },
+    "samples": 1438,
+    "scam_types": {
+      "legitimate": 219,
+      "data_theft": 11,
+      "phishing": 100,
+      "financial_scam": 100,
+      "brand_impersonation": 8
+    },
+    "binary": {
+      "legitimate": 219,
+      "scam": 219,
+      "not_annotated": 1000
+    },
+    "text_splits": {
+      "train": {
+        "legitimate": 153,
+        "data_theft": 7,
+        "phishing": 70,
+        "financial_scam": 70,
+        "brand_impersonation": 6
+      },
+      "val": {
+        "legitimate": 33,
+        "data_theft": 2,
+        "phishing": 15,
+        "financial_scam": 15,
+        "brand_impersonation": 1
+      },
+      "test": {
+        "legitimate": 33,
+        "data_theft": 2,
+        "phishing": 15,
+        "financial_scam": 15,
+        "brand_impersonation": 1
+      }
+    }
+  },
+  "models": {
+    "text_scam_model": {
+      "path": "models/text_baseline/distilbert-base-uncased/model.safetensors",
+      "sha256": "b1b6fc7b7b3fe4d01646d5ae78cc44675ed10cbba0d6f96722a5c7eba242e503",
+      "bytes": 267832560,
+      "modified": "2026-10-18T17:47:09.290529+00:00"
+    },
+    "threat_category_model": {
+      "path": "models/threat_category/distilbert-base-uncased/model.safetensors",
+      "sha256": "27331201125401f344091509a7d7227c506588b8af6eec5f6b3a0fc5b07090b0",
+      "bytes": 267838720,
+      "modified": "2026-10-15T13:08:44.377000+00:00"
+    },
+    "misinformation_model": {
+      "path": "models/misinformation/distilbert-base-uncased/model.safetensors",
+      "sha256": "4a99a3af82def7101f3034d275661155dacbae91036f996ada41c41406754e32",
+      "bytes": 267832560,
+      "modified": "2026-10-15T13:13:00.253628+00:00"
+    },
+    "logo_detector": {
+      "path": "models/logo_detector/yolo11n_logo_baseline_best.pt",
+      "sha256": "909a12f782a7ff1959d7e43a15a6d7dc0ca2586e3e915413e2d36217f6a055ef",
+      "bytes": 5490522,
+      "modified": "2026-10-15T04:28:07.065955+00:00"
+    }
+  },
+  "external_models": {
+    "clip_brand_model": "openai/clip-vit-base-patch16 (Hugging Face, zero-shot, not fine-tuned)"
+  },
+  "note": "Hashes identify the exact files evaluated; regenerate or retrain only with a new version name."
+}

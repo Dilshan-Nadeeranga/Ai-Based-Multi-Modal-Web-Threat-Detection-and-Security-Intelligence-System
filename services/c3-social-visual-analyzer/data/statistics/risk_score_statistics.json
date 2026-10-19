@@ -1,130 +1,130 @@
 {
-  "samples": 1419,
+  "samples": 1438,
   "level_counts": {
-    "LOW": 690,
-    "MEDIUM": 394,
-    "HIGH": 335
+    "LOW": 851,
+    "MEDIUM": 338,
+    "HIGH": 249
   },
   "level_counts_by_source": {
     "DIFrauD job_scams": {
-      "LOW": 96,
-      "HIGH": 98,
-      "MEDIUM": 6
+      "LOW": 100,
+      "MEDIUM": 8,
+      "HIGH": 92
     },
     "Fakeddit v2.0 multimodal_only_samples (train)": {
-      "LOW": 487,
-      "MEDIUM": 381,
-      "HIGH": 132
+      "LOW": 642,
+      "MEDIUM": 316,
+      "HIGH": 42
     },
     "Phish360 (Multimodal-Phishing-Benchmarks)": {
-      "LOW": 102,
-      "HIGH": 95,
-      "MEDIUM": 3
+      "LOW": 98,
+      "HIGH": 96,
+      "MEDIUM": 6
     },
     "manual": {
-      "LOW": 5,
-      "MEDIUM": 4,
-      "HIGH": 10
+      "LOW": 11,
+      "MEDIUM": 8,
+      "HIGH": 19
     }
   },
   "component_coverage": {
-    "text": 1419,
-    "ocr": 122,
-    "visual": 1019,
+    "text": 1438,
+    "ocr": 136,
+    "visual": 1037,
     "brand": 1019,
     "website": 1
   },
   "evaluation_test_split": {
-    "n": 63,
+    "n": 66,
     "levels_by_label": {
       "legit": {
-        "LOW": 25,
-        "MEDIUM": 2,
-        "HIGH": 5
+        "LOW": 28,
+        "MEDIUM": 1,
+        "HIGH": 4
       },
       "scam": {
         "LOW": 4,
         "MEDIUM": 3,
-        "HIGH": 24
+        "HIGH": 26
       }
     },
     "auc": {
       "text": {
-        "n": 63,
-        "auc": 0.8876
+        "n": 66,
+        "auc": 0.8825
       },
       "ocr": {
-        "n": 3,
+        "n": 6,
         "auc": 1.0
       },
       "visual": {
-        "n": 3,
-        "auc": 0.0
+        "n": 6,
+        "auc": 0.4444
       },
       "brand": {
         "n": 3,
         "auc": 0.0
       },
       "score": {
-        "n": 63,
-        "auc": 0.8936
+        "n": 66,
+        "auc": 0.888
       }
     },
-    "high_or_medium_recall_scam": 0.871,
-    "high_precision": 0.8276
+    "high_or_medium_recall_scam": 0.8788,
+    "high_precision": 0.8667
   },
   "evaluation_all_verified_optimistic": {
-    "n": 419,
+    "n": 438,
     "levels_by_label": {
       "legit": {
-        "LOW": 188,
-        "MEDIUM": 8,
-        "HIGH": 13
+        "LOW": 196,
+        "MEDIUM": 14,
+        "HIGH": 9
       },
       "scam": {
-        "LOW": 15,
-        "MEDIUM": 5,
-        "HIGH": 190
+        "LOW": 13,
+        "MEDIUM": 8,
+        "HIGH": 198
       }
     },
     "auc_score": {
-      "n": 419,
-      "auc": 0.9714
+      "n": 438,
+      "auc": 0.9702
     }
   },
   "manual_posts": {
-    "n": 19,
+    "n": 38,
     "levels_by_label": {
       "legit": {
-        "LOW": 5,
-        "MEDIUM": 4,
+        "LOW": 11,
+        "MEDIUM": 8,
         "HIGH": 0
       },
       "scam": {
         "LOW": 0,
         "MEDIUM": 0,
-        "HIGH": 10
+        "HIGH": 19
       }
     },
     "auc": {
       "text": {
-        "n": 19,
+        "n": 38,
         "auc": 1.0
       },
       "ocr": {
-        "n": 18,
-        "auc": 0.9375
+        "n": 32,
+        "auc": 0.9529
       },
       "visual": {
-        "n": 19,
-        "auc": 0.3222
+        "n": 37,
+        "auc": 0.4064
       },
       "brand": {
         "n": 19,
         "auc": 0.3556
       },
       "score": {
-        "n": 19,
+        "n": 38,
         "auc": 1.0
       }
     }
@@ -174,6 +174,6 @@
     "Text model saw the train split, so 'all verified' metrics are optimistic; use the test split.",
     "Fakeddit rows are not_annotated: their levels are not evaluated."
   ],
-  "runtime_seconds": 168.6,
-  "created_at": "2026-10-18T06:49:22.817643+00:00"
+  "runtime_seconds": 186.1,
+  "created_at": "2026-10-18T18:06:12.323261+00:00"
 }

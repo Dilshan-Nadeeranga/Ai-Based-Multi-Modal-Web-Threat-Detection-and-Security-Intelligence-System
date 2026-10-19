@@ -1,65 +1,69 @@
 {
-  "samples": 1419,
+  "samples": 1438,
   "coverage": {
-    "brand_domain:mismatch": 54,
-    "brand_domain:name_in_domain": 1,
-    "brand_domain:not_available": 1342,
-    "brand_domain:unverifiable": 22,
+    "brand_domain:mismatch": 55,
+    "brand_domain:name_in_domain": 4,
+    "brand_domain:not_available": 1353,
+    "brand_domain:official": 1,
+    "brand_domain:unverifiable": 25,
     "ocr_brand:computed": 43,
-    "ocr_brand:no_visual_brand": 3,
-    "ocr_brand:not_available": 1373,
-    "post_web_brand:computed": 1,
-    "post_web_brand:not_available": 1418,
+    "ocr_brand:no_visual_brand": 6,
+    "ocr_brand:not_available": 1389,
+    "post_web_brand:computed": 3,
+    "post_web_brand:not_available": 1435,
     "post_web_image:computed": 1,
-    "post_web_image:not_available": 1418,
+    "post_web_image:not_available": 1437,
     "text_brand:computed": 193,
-    "text_brand:no_visual_brand": 69,
-    "text_brand:not_available": 1157,
-    "text_image:computed": 1019,
-    "text_image:not_available": 400,
-    "text_ocr:computed": 122,
-    "text_ocr:not_available": 1297
+    "text_brand:no_visual_brand": 76,
+    "text_brand:not_available": 1169,
+    "text_image:computed": 1037,
+    "text_image:not_available": 401,
+    "text_ocr:computed": 136,
+    "text_ocr:not_available": 1302
   },
   "flag_counts": {
     "VISUAL_BRAND_UNMENTIONED": 187,
     "TEXT_IMAGE_LOW_ALIGNMENT": 58,
-    "BRAND_DOMAIN_MISMATCH": 54,
-    "TEXT_OCR_DIVERGENT": 14,
-    "UNRESOLVED_SHORT_LINK": 3,
-    "POST_WEBSITE_BRAND_CONFLICT": 1,
+    "BRAND_DOMAIN_MISMATCH": 55,
+    "TEXT_OCR_DIVERGENT": 15,
+    "UNRESOLVED_SHORT_LINK": 9,
+    "POST_WEBSITE_BRAND_CONFLICT": 2,
     "TEXT_VISUAL_BRAND_CONFLICT": 1
   },
-  "samples_with_flags": 302,
-  "brand_identity_mismatch": 56,
+  "samples_with_flags": 310,
+  "brand_identity_mismatch": 58,
   "verified_label_rates": {
     "legit": {
-      "n": 209,
-      "any_flag": 0.0574,
-      "brand_mismatch": 0.0431,
-      "high_flag": 0.0,
-      "POST_WEBSITE_BRAND_CONFLICT": 0.0048,
-      "VISUAL_BRAND_UNMENTIONED": 0.0144,
-      "BRAND_DOMAIN_MISMATCH": 0.0383
+      "n": 219,
+      "any_flag": 0.0685,
+      "brand_mismatch": 0.0457,
+      "high_flag": 0.0046,
+      "POST_WEBSITE_BRAND_CONFLICT": 0.0046,
+      "VISUAL_BRAND_UNMENTIONED": 0.0137,
+      "BRAND_DOMAIN_MISMATCH": 0.0411,
+      "UNRESOLVED_SHORT_LINK": 0.0091,
+      "TEXT_OCR_DIVERGENT": 0.0046
     },
     "scam": {
-      "n": 210,
-      "any_flag": 0.2429,
-      "brand_mismatch": 0.219,
-      "high_flag": 0.2048,
-      "VISUAL_BRAND_UNMENTIONED": 0.0143,
-      "UNRESOLVED_SHORT_LINK": 0.0143,
-      "BRAND_DOMAIN_MISMATCH": 0.219
+      "n": 219,
+      "any_flag": 0.2557,
+      "brand_mismatch": 0.2146,
+      "high_flag": 0.2009,
+      "VISUAL_BRAND_UNMENTIONED": 0.0137,
+      "UNRESOLVED_SHORT_LINK": 0.032,
+      "BRAND_DOMAIN_MISMATCH": 0.21,
+      "POST_WEBSITE_BRAND_CONFLICT": 0.0046
     }
   },
   "brand_mismatch_as_scam_signal": {
-    "precision": 0.8364,
-    "recall": 0.219,
+    "precision": 0.8246,
+    "recall": 0.2146,
     "note": "Verified rows only. Flags are evidence for review, not labels."
   },
   "text_image_cosine": {
-    "n": 1019,
-    "p10": 0.1983,
-    "median": 0.2839
+    "n": 1037,
+    "p10": 0.1993,
+    "median": 0.2855
   },
   "thresholds": {
     "text_image_low": 0.18,
@@ -72,6 +76,6 @@
     "clip": "openai/clip-vit-base-patch16",
     "visual_brand": "logo detector match (>=0.78) else CLIP zero-shot (accepted)"
   },
-  "runtime_seconds": 145.5,
-  "created_at": "2026-10-18T06:46:22.353728+00:00"
+  "runtime_seconds": 167.9,
+  "created_at": "2026-10-18T18:02:52.440766+00:00"
 }
