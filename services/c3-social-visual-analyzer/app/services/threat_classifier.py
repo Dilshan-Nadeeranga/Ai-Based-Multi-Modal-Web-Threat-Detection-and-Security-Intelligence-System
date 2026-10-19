@@ -60,6 +60,17 @@ KEYWORDS = {
 }
 
 
+_PROMOTIONAL = re.compile(
+    r"\b(giveaway|win|winners?|prize|raffle|contest|offer|discount|sale|deals?|promo(tion)?|coupon|voucher|gift ?cards?|"
+    r"cashback|free|sign ?up|register|order now|shop now|buy now|apply now|claim|reward|bonus|airdrop|"
+    r"usdt|rs\.?\s?\d|lkr\s?\d)\b|[$€£]\s?\d", re.IGNORECASE)
+
+
+def looks_promotional(text: str) -> bool:
+    """Promotions, ads and offer/scam lures: outside the news-headline domain the misinformation model was trained on."""
+    return bool(_PROMOTIONAL.search(text or ""))
+
+
 def _hits(category: str, texts: list[tuple[str, str]]) -> list[str]:
     found = []
     for source, text in texts:
