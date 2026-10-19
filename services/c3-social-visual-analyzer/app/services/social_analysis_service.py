@@ -40,7 +40,7 @@ from app.config import SERVICE_ROOT, Settings
 from app.exceptions import ServiceError
 from app.services.image_pipeline import ImagePipeline
 from app.services.image_preprocessor import convert_to_rgb, normalize_image, resize_image
-from app.services.threat_classifier import RULE_STRONG, classify
+from app.services.threat_classifier import RULE_STRONG, classify, looks_promotional
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +95,12 @@ SHORTENERS = {"itl.ink", "bit.ly", "bitly.com", "tinyurl.com", "t.co", "goo.gl",
               "s.id", "short.gy", "qrco.de", "clck.ru",
               "cutt.ly", "shorturl.at", "lnkd.in", "fb.me", "tiny.cc", "rb.gy", "t.ly"}
 AMBIGUOUS_BRANDS = {"apple", "steam", "chase", "amazon", "orange", "square", "discord", "ups", "aruba", "bt"}
+# Social networks are usually the venue of a post ("follow us on Instagram", the Facebook UI in a screenshot), not
+# the brand it claims to be; they only count as the post brand when the post uses account-lure wording.
+VENUE_BRANDS = {"facebook", "instagram", "whatsapp", "linkedin"}
+_PLATFORM_LURE = re.compile(r"\b(verif\w*|suspend\w*|disabled|deactivat\w*|security (team|check|alert|notice)|log ?in|"
+                            r"password|appeal|copyright|violat\w*|blue (tick|badge)|meta verified|recover\w*|unlock\w*|"
+                            r"support team|help ?cent(er|re)|whatsapp (gold|plus))\b", re.IGNORECASE)
 SEVERITY = {"low": 1, "medium": 2, "high": 3}
 
 _URL = re.compile(r"(?:https?://|www\.)[^\s<>\"']+", re.IGNORECASE)
@@ -679,11 +685,22 @@ class SocialAnalysisService:
             rows.append({"key": "text_ocr", "label": "Post Text ↔ OCR", "status": "not_available"})
 
         # brands
-        text_brands, ocr_brands = models.mentions(text), models.mentions(ocr)
-        logo_hit = max((d for d in post_logos if d.get("brand_id")), key=lambda d: d["similarity"], default=None)
+        platform_lure = bool(_PLATFORM_LURE.search(f"{text} {ocr}"))
+        ignored_venue: set[str] = set()
+
+        def claimable(brand_id: str) -> bool:
+            if brand_id in VENUE_BRANDS and not platform_lure:
+                ignored_venue.add(brand_id)
+                return False
+            return True
+
+        text_brands = [b for b in models.mentions(text) if claimable(b)]
+        ocr_brands = [b for b in models.mentions(ocr) if claimable(b)]
+        logo_hit = max((d for d in post_logos if d.get("brand_id") and claimable(d["brand_id"])),
+                       key=lambda d: d["similarity"], default=None)
         if logo_hit:
             visual_brand = {"brand_id": logo_hit["brand_id"], "similarity": logo_hit["similarity"], "method": "YOLO logo + CLIP match"}
-        elif post_clip and post_clip.get("predicted_brand"):
+        elif post_clip and post_clip.get("predicted_brand") and claimable(post_clip["predicted_brand"]):
             visual_brand = {"brand_id": post_clip["predicted_brand"], "similarity": post_clip["confidence"], "method": "CLIP zero-shot"}
         else:
             visual_brand = None
@@ -793,6 +810,7 @@ class SocialAnalysisService:
             "post_brand": post_brand, "visual_brand": visual_brand, "website_brand": website_brand,
             "domain_check": domain_check, "destination_domain": domain,
             "brands_in_text": text_brands, "brands_in_ocr": ocr_brands,
+            "ignored_venue_brands": sorted(ignored_venue),
         }
 
     def _fuse(self, text_threat: dict | None, visual_threat: float | None, post_clip: dict | None,
@@ -838,12 +856,18 @@ class SocialAnalysisService:
         combined = " ".join(filter(None, [text, ocr]))
         scam_scores = [v for v in ((text_threat or {}).get("post_text_score"), (text_threat or {}).get("ocr_text_score"))
                        if v is not None]
+        promotional = looks_promotional(combined)
         result = classify(
             category_probs=models.category_probabilities(combined),
-            misinformation_prob=models.misinformation_probability(text or ocr),
+            misinformation_prob=None if promotional else models.misinformation_probability(text or ocr),
             scam_probability=max(scam_scores) if scam_scores else None,
             post_text=text, ocr_text=ocr, embedded_url=url, capture=capture, consistency=consistency, risk=risk,
         )
+        if promotional and models.misinfo_model is not None:
+            for entry in result["categories"]:
+                if entry["category"] == "MISINFORMATION":
+                    entry["evidence"] = ["not scored: promotional / offer post, outside the news-headline data the "
+                                         "misinformation model was trained on"]
         result["models"] = {
             "category": "DistilBERT threat category (legitimate / phishing / financial_scam / data_theft)"
             if models.category_model is not None else None,

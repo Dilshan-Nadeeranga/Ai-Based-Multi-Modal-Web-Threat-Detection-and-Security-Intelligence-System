@@ -64,6 +64,14 @@ def test_misinformation_co_occurs():
     assert scam["primary"] == "MALWARE" and "MISINFORMATION" in detected(scam)
 
 
+def test_promotional_posts_are_outside_the_misinformation_domain():
+    from app.services.threat_classifier import looks_promotional
+
+    assert looks_promotional("Shop now at our Amazon store - 20% discount this week!")
+    assert looks_promotional("Get a $500 Kroger Gift Card! USA Citizen only")
+    assert not looks_promotional("Scientists confirm the moon is slowly turning into cheese, NASA hides the truth")
+
+
 def test_rules_still_work_without_text_models():
     result = run(category_probs=None, misinformation_prob=None, capture={"notification_requests": 2})
     assert result["primary"] == "BROWSER_ABUSE"
