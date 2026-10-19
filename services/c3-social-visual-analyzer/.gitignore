@@ -17,9 +17,6 @@ build/
 .vscode/
 *.local
 
-# Local-only documentation
-README.md
-
 # Dataset files: raw evidence, images and screenshots may be large or contain
 # suspicious material, so they stay out of Git. Folder placeholders (.gitkeep)
 # stay tracked. Annotation JSON/JSONL and statistics are small text records and
