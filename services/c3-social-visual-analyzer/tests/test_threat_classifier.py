@@ -65,11 +65,29 @@ def test_misinformation_co_occurs():
 
 
 def test_promotional_posts_are_outside_the_misinformation_domain():
-    from app.services.threat_classifier import looks_promotional
+    from app.services.threat_classifier import looks_brand_marketing, looks_promotional, misinformation_skip_reason
 
     assert looks_promotional("Shop now at our Amazon store - 20% discount this week!")
     assert looks_promotional("Get a $500 Kroger Gift Card! USA Citizen only")
     assert not looks_promotional("Scientists confirm the moon is slowly turning into cheese, NASA hides the truth")
+
+    ionos = (
+        'We\'re excited about this maximalism trend, and we\'ve got a hunch you\'ll be seeing much more of it in 2024. '
+        'What are your thoughts on this trend? See all our predicted web design trends here.'
+    )
+    assert looks_brand_marketing(ionos)
+    assert misinformation_skip_reason(ionos)
+    assert misinformation_skip_reason(
+        "Nice day at the office.",
+        {"domain_check": {"status": "official"}, "brand_identity_mismatch": {"detected": False}},
+    )
+    assert not misinformation_skip_reason(
+        "Scientists confirm the moon is slowly turning into cheese, NASA hides the truth",
+    )
+    assert not misinformation_skip_reason(
+        "Your PayPal account is locked",
+        {"domain_check": {"status": "lookalike"}, "brand_identity_mismatch": {"detected": True}},
+    )
 
 
 def test_rules_still_work_without_text_models():
