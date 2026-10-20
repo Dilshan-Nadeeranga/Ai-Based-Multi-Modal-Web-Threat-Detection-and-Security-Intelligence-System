@@ -205,16 +205,172 @@ $env:PYTHONIOENCODING="utf-8"
 - API docs: <http://127.0.0.1:8003/docs>
 - Dashboard page (ScamTrace frontend running on port 5173): <http://localhost:5173/social-visual-analysis>
 
-Run the tests:
+### Testing
+
+Run the full suite (quiet):
 
 ```powershell
+cd "services\c3-social-visual-analyzer"
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:LOCALAPPDATA\ms-playwright"
+$env:PYTHONIOENCODING="utf-8"
 .venv\Scripts\python.exe -m pytest -q
 ```
 
-Run the PP1 evaluation (metrics, confusion matrices, scenario tests):
+Verbose (show each test and skips):
 
 ```powershell
-.venv\Scripts\python.exe scripts\pp1_evaluation.py
+cd "services\c3-social-visual-analyzer"
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:LOCALAPPDATA\ms-playwright"
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe -m pytest -v
+```
+
+Stop on first failure:
+
+```powershell
+cd "services\c3-social-visual-analyzer"
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:LOCALAPPDATA\ms-playwright"
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe -m pytest -x
+```
+
+One test file:
+
+```powershell
+cd "services\c3-social-visual-analyzer"
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:LOCALAPPDATA\ms-playwright"
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe -m pytest tests\test_api.py -q
+```
+
+One test by name:
+
+```powershell
+cd "services\c3-social-visual-analyzer"
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:LOCALAPPDATA\ms-playwright"
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe -m pytest tests\test_threat_classifier.py -k "legitimate" -q
+```
+
+Skip OCR integration tests:
+
+```powershell
+cd "services\c3-social-visual-analyzer"
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:LOCALAPPDATA\ms-playwright"
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe -m pytest -q -m "not ocr_integration"
+```
+
+Only OCR integration (needs Tesseract installed):
+
+```powershell
+cd "services\c3-social-visual-analyzer"
+$env:PLAYWRIGHT_BROWSERS_PATH="$env:LOCALAPPDATA\ms-playwright"
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe -m pytest -q -m ocr_integration
+```
+
+List collected tests:
+
+```powershell
+cd "services\c3-social-visual-analyzer"
+.venv\Scripts\python.exe -m pytest --collect-only -q
+```
+
+Notes:
+
+- Config is in `pytest.ini` (`testpaths=tests`, marker `ocr_integration`).
+- OCR integration tests call the real Tesseract binary and are auto-skipped if it is not installed.
+- Capture-related tests need Playwright Chromium (`python -m playwright install chromium`).
+- There are ~30+ files under `tests/` covering API, schemas, fetchers, capture, OCR, threat classification, dataset helpers, and utilities.
+
+### How models are trained
+
+We fine-tune pretrained models on our labelled dataset (not train from scratch). Text uses
+**DistilBERT** (`distilbert-base-uncased`); logos use **YOLOv11n**. Categories with no labelled
+samples are assigned by **evidence rules** at inference. Risk fusion weights are hand-set, not learned.
+
+| Component | Approach | Labels / data | Output |
+|---|---|---|---|
+| Binary text scam | Fine-tune DistilBERT | legitimate vs scam · post text + OCR · `text_baseline_dataset.jsonl` (≈70/15/15, seed 42) | `models/text_baseline/` |
+| Threat category | Fine-tune DistilBERT (4 classes) | legitimate, phishing, financial_scam, data_theft | `models/threat_category/` |
+| Misinformation | Fine-tune DistilBERT (binary) | real / fake · Fakeddit titles in `dataset_metadata.jsonl` | `models/misinformation/` |
+| Logo detector | Train YOLOv11n (Ultralytics) | single class `logo` on brand reference boxes | `models/logo_detector/` |
+| Brand similarity | Pretrained CLIP (no fine-tune for PP1) | brand catalog logos / screenshots | predictions under `data/annotations/` |
+| Brand impersonation, malware, browser abuse, other_scam | Rules in live analyzer | no training samples for these classes | — |
+| Risk score | Late fusion (hand-set weights) | text / OCR / visual / website signals | — |
+
+Hybrid at runtime: DistilBERT for text categories we can label, YOLO for logos, CLIP for brand
+similarity, rules for rare scam types, then consistency checks and risk fusion.
+
+### Training models
+
+Weights land under `models/` (gitignored). Run from the service folder after the dataset and brand
+reference set exist:
+
+Binary scam vs legitimate text model:
+
+```powershell
+cd "services\c3-social-visual-analyzer"
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe scripts\prepare_text_baseline.py
+.venv\Scripts\python.exe scripts\train_text_baseline.py
+```
+
+Threat category (4-class) DistilBERT:
+
+```powershell
+cd "services\c3-social-visual-analyzer"
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe scripts\train_threat_category.py --task category
+```
+
+Misinformation DistilBERT:
+
+```powershell
+cd "services\c3-social-visual-analyzer"
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe scripts\train_threat_category.py --task misinformation
+```
+
+YOLO logo detector:
+
+```powershell
+cd "services\c3-social-visual-analyzer"
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe scripts\prepare_logo_yolo_dataset.py
+.venv\Scripts\python.exe scripts\train_logo_detector.py
+```
+
+Optional refresh after changing brands or labels (CLIP / similarity / consistency / risk — not ML retrain):
+
+```powershell
+cd "services\c3-social-visual-analyzer"
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe scripts\clip_brand_analysis.py
+.venv\Scripts\python.exe scripts\logo_similarity_analysis.py
+.venv\Scripts\python.exe scripts\cross_source_consistency.py
+.venv\Scripts\python.exe scripts\multimodal_risk_score.py
+```
+
+### Evaluation
+
+```powershell
+# PP1 metrics, confusion matrices, scenario checks → data/statistics + docs/pp1_evaluation.md
+python scripts\pp1_evaluation.py
+
+# Dataset sanity check
+python scripts\validate_dataset.py
+python scripts\generate_statistics.py
+```
+
+### Useful one-offs
+
+```powershell
+python scripts\convert_manual_posts.py --help
+python scripts\import_evidence.py --help
+python scripts\add_sample.py --help
+python scripts\<name>.py --help   # every script documents its flags
 ```
 
 ## 🔌 API Endpoints
