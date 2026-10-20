@@ -22,12 +22,15 @@ export function useC1Theme() {
   const [theme, setThemeState] = useState(readInitialTheme);
 
   const setTheme = useCallback((newTheme) => {
-    setThemeState(newTheme);
-    try {
-      localStorage.setItem(STORAGE_KEY, newTheme);
-    } catch {
-      // Private browsing fallback
-    }
+    setThemeState((prev) => {
+      const resolved = typeof newTheme === 'function' ? newTheme(prev) : newTheme;
+      try {
+        localStorage.setItem(STORAGE_KEY, resolved);
+      } catch {
+        // Private browsing fallback
+      }
+      return resolved;
+    });
   }, []);
 
   const toggleTheme = useCallback(() => {
