@@ -151,39 +151,6 @@ function getVerdictInfo(verdictStr, fallbackRiskLevel = 'SAFE') {
   return VERDICT_STYLES.SUSPICIOUS;
 }
 
-// Sample test URLs for instant demonstration
-const SAMPLE_PRESETS = [
-  {
-    label: 'Clean Domain',
-    url: 'https://google.com',
-    type: 'safe',
-    desc: 'Established domain with valid SSL and clean character distribution',
-  },
-  {
-    label: 'Commercial (Tracking Token)',
-    url: 'https://incarnage.com/?srsltid=AU7gw4Xh3ZyZaUEd7vknNJwSALGGys4-rUHXNgX9HwyRGK2QXX7UpLyN',
-    type: 'safe',
-    desc: 'High-entropy query parameter disambiguated by base-URL entropy (FP Reduction Novelty)',
-  },
-  {
-    label: 'PayPal Phishing Lookalike',
-    url: 'http://login.paypal.verify-account.com/auth',
-    type: 'danger',
-    desc: 'Suspicious brand keywords, high subdomain depth, unencrypted HTTP',
-  },
-  {
-    label: 'Malware Direct IP Host',
-    url: 'http://123.9.197.209:60402/bin.sh',
-    type: 'danger',
-    desc: 'Direct IP host, non-standard high port 60402, shell dropper script',
-  },
-  {
-    label: 'Shortener (Redirect Trace)',
-    url: 'https://tinyurl.com/5n7v48m2',
-    type: 'amber',
-    desc: 'Shortened URL requiring safe SSRF-protected redirection unmasking',
-  },
-];
 
 export default function UrlAnalyzer() {
   const { theme, toggleTheme, isDark } = useC1Theme();
@@ -372,6 +339,7 @@ export default function UrlAnalyzer() {
     },
   ];
 
+  const currentTab = TABS.find((t) => t.id === activeTab) || TABS[0];
 
   return (
     <C1ThemeContext.Provider value={{ theme, toggleTheme, isDark }}>
@@ -515,27 +483,6 @@ export default function UrlAnalyzer() {
                   </button>
                 </div>
 
-                {/* Sample Threat Vectors Presets */}
-                <div className="mt-3.5 flex flex-wrap items-center gap-1.5 text-xs">
-                  <span className={`text-[0.6875rem] font-bold uppercase tracking-wider mr-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Presets:
-                  </span>
-                  {SAMPLE_PRESETS.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleAnalyze(null, preset.url)}
-                      className={`rounded-lg px-2.5 py-1 font-mono text-[0.6875rem] border transition cursor-pointer ${
-                        isDark
-                          ? 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-cyan-500/50 hover:bg-slate-800 hover:text-white'
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-900'
-                      }`}
-                      title={preset.desc}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
               </form>
 
               {/* Error Banner */}
@@ -549,127 +496,6 @@ export default function UrlAnalyzer() {
               )}
             </header>
 
-            {/* ================================================================= */}
-            {/* 3. FOUR HIGHLY VISIBLE COLOR-CODED ANALYSIS TABS */}
-            {/* ================================================================= */}
-            <section className="space-y-2">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                  <span className={`font-mono text-xs font-bold uppercase tracking-widest ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                    4-Layer Security Intelligence Pipeline
-                  </span>
-                </div>
-                <span className={`text-[0.6875rem] font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Select tab to inspect layer telemetry
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {TABS.map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-                  const badgeText = tab.badgeText();
-                  const badgeClass = tab.badgeClass();
-
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl p-4 sm:p-5 text-left transition-all c1-tab-card cursor-pointer border ${
-                        isActive
-                          ? isDark
-                            ? 'bg-[#0f172a] shadow-xl ring-2'
-                            : 'bg-white shadow-lg ring-2'
-                          : isDark
-                          ? 'bg-[#0b1329]/90 border-slate-800/90 hover:border-slate-700'
-                          : 'bg-white border-slate-200 hover:border-slate-300 shadow-xs'
-                      }`}
-                      style={{
-                        borderColor: isActive ? tab.accentColor : undefined,
-                        boxShadow: isActive ? `0 8px 28px -4px ${tab.accentColor}35, 0 0 16px ${tab.accentColor}25` : undefined,
-                        ['--tw-ring-color']: isActive ? tab.accentColor : undefined,
-                      }}
-                    >
-                      {/* Top Accent Strip */}
-                      <div
-                        className="absolute top-0 left-0 right-0 h-1.5 transition-all duration-200"
-                        style={{
-                          backgroundColor: tab.accentColor,
-                          opacity: isActive ? 1 : 0.65,
-                        }}
-                      />
-
-                      <div>
-                        {/* Header row: Icon & Layer Number & Active Badge */}
-                        <div className="flex items-center justify-between pt-1">
-                          <span
-                            className="flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-200 shadow-xs"
-                            style={{
-                              backgroundColor: `${tab.accentColor}18`,
-                              color: tab.accentColor,
-                              borderColor: `${tab.accentColor}40`,
-                            }}
-                          >
-                            <Icon className="h-5 w-5" aria-hidden="true" />
-                          </span>
-
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className="font-mono text-[0.6875rem] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border"
-                              style={{
-                                color: tab.accentColor,
-                                borderColor: `${tab.accentColor}40`,
-                                backgroundColor: `${tab.accentColor}12`,
-                              }}
-                            >
-                              {tab.layerNumber}
-                            </span>
-                            {isActive && (
-                              <span
-                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[0.625rem] font-extrabold uppercase text-white shadow-xs"
-                                style={{ backgroundColor: tab.accentColor }}
-                              >
-                                <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                                Active
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Titles */}
-                        <div className="mt-3.5">
-                          <h3 className={`font-manrope text-sm sm:text-base font-extrabold tracking-tight transition-colors ${
-                            isActive
-                              ? isDark ? 'text-white' : 'text-slate-900'
-                              : isDark ? 'text-slate-200 group-hover:text-white' : 'text-slate-800 group-hover:text-slate-900'
-                          }`}>
-                            {tab.title}
-                          </h3>
-                          <p className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                            {tab.subtitle}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Real Status Badge Pill */}
-                      <div className={`mt-4 pt-3 border-t flex items-center justify-between ${isDark ? 'border-slate-800/60' : 'border-slate-100'}`}>
-                        <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-mono text-[0.6875rem] font-bold border transition ${badgeClass}`}>
-                          {badgeText}
-                        </span>
-                        <ArrowRight
-                          className={`h-4 w-4 transition-transform duration-200 ${
-                            isActive ? 'translate-x-1 opacity-100' : 'opacity-40 group-hover:translate-x-0.5 group-hover:opacity-80'
-                          }`}
-                          style={{ color: tab.accentColor }}
-                        />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
 
             {/* ================================================================= */}
             {/* LOADING STATE WITH MULTI-STEP PIPELINE */}
@@ -728,7 +554,7 @@ export default function UrlAnalyzer() {
                     Security Operations Console Ready
                   </h3>
                   <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                    Enter any suspected URL or select a sample preset above to execute multi-layer threat analysis.
+                    Enter any suspected URL or domain to execute multi-layer threat analysis.
                     Static inspection evaluates lexical patterns, DNS infrastructure, WHOIS/RDAP age, DGA likelihood,
                     and supervised machine learning without rendering malicious payloads.
                   </p>
@@ -761,21 +587,177 @@ export default function UrlAnalyzer() {
             )}
 
             {/* ================================================================= */}
-            {/* RESULT LOADED: SUMMARY STRIP, WEIGHTS NOVELTY, AND LAYER DETAILS */}
+            {/* RESULT LOADED: 4-LAYER INTELLIGENCE PIPELINE & DETAILED TELEMETRY */}
             {/* ================================================================= */}
             {!loading && result && (
               <div className="space-y-6">
 
-                {/* ========================================================= */}
-                {/* MAIN WEBPAGE CONTENT & 4-LAYER ANALYSIS DETAILS */}
-                {/* Primary analysis information, charts, and telemetry at the top */}
-                {/* ========================================================= */}
+                {/* ================================================================= */}
+                {/* 4-LAYER SECURITY INTELLIGENCE PIPELINE TABS */}
+                {/* ================================================================= */}
+                <section className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-2.5 w-2.5 rounded-full animate-pulse"
+                        style={{ backgroundColor: currentTab.accentColor }}
+                      />
+                      <span className={`font-mono text-xs font-bold uppercase tracking-widest ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                        4-Layer Security Intelligence Pipeline
+                      </span>
+                      <span
+                        className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-md border"
+                        style={{
+                          color: currentTab.accentColor,
+                          borderColor: `${currentTab.accentColor}50`,
+                          backgroundColor: `${currentTab.accentColor}15`,
+                        }}
+                      >
+                        {currentTab.layerNumber}: {currentTab.title}
+                      </span>
+                    </div>
+                    <span className={`text-[0.6875rem] font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Click any tab to view corresponding layer content
+                    </span>
+                  </div>
 
-              {/* ========================================================= */}
-              {/* TAB 1: URL LEXICAL ANALYSIS */}
-              {/* ========================================================= */}
-              {activeTab === 'tab1_lexical' && features && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                  <div role="tablist" aria-label="Security Intelligence Layers" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {TABS.map((tab) => {
+                      const Icon = tab.icon;
+                      const isActive = activeTab === tab.id;
+                      const badgeText = tab.badgeText();
+                      const badgeClass = tab.badgeClass();
+
+                      return (
+                        <button
+                          key={tab.id}
+                          id={`c1-tab-${tab.id}`}
+                          role="tab"
+                          aria-selected={isActive}
+                          aria-controls={`c1-panel-${tab.id}`}
+                          type="button"
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl p-4 sm:p-5 text-left transition-all c1-tab-card cursor-pointer border ${
+                            isActive
+                              ? isDark
+                                ? 'bg-[#0f172a] shadow-[0_0_28px_rgba(6,182,212,0.25)] border-2 text-white ring-2 ring-cyan-500/40'
+                                : 'bg-white shadow-xl border-2 text-slate-900 ring-4 ring-blue-500/20'
+                              : isDark
+                              ? 'bg-[#0b1329]/80 border-slate-800/80 hover:border-slate-700 hover:bg-[#0f172a]/70 opacity-75 hover:opacity-100 text-slate-300'
+                              : 'bg-slate-50/90 border-slate-200 hover:border-slate-300 hover:bg-white opacity-80 hover:opacity-100 shadow-xs text-slate-700'
+                          }`}
+                          style={{
+                            borderColor: isActive ? tab.accentColor : undefined,
+                            boxShadow: isActive
+                              ? `0 8px 28px -4px ${tab.accentColor}40, 0 0 20px ${tab.accentColor}30`
+                              : undefined,
+                          }}
+                        >
+                          {/* Top Accent Strip */}
+                          <div
+                            className="absolute top-0 left-0 right-0 h-1.5 transition-all duration-200"
+                            style={{
+                              backgroundColor: tab.accentColor,
+                              opacity: isActive ? 1 : 0.35,
+                            }}
+                          />
+
+                          <div>
+                            {/* Header row: Icon & Layer Number & Active Badge */}
+                            <div className="flex items-center justify-between pt-1">
+                              <span
+                                className="flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-200 shadow-xs"
+                                style={{
+                                  backgroundColor: isActive ? `${tab.accentColor}25` : `${tab.accentColor}12`,
+                                  color: tab.accentColor,
+                                  borderColor: isActive ? `${tab.accentColor}60` : `${tab.accentColor}30`,
+                                }}
+                              >
+                                <Icon className="h-5 w-5" aria-hidden="true" />
+                              </span>
+
+                              <div className="flex items-center gap-1.5">
+                                <span
+                                  className="font-mono text-[0.6875rem] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border"
+                                  style={{
+                                    color: isActive ? tab.accentColor : isDark ? '#94a3b8' : '#64748b',
+                                    borderColor: isActive ? `${tab.accentColor}50` : isDark ? '#334155' : '#e2e8f0',
+                                    backgroundColor: isActive ? `${tab.accentColor}15` : isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                                  }}
+                                >
+                                  {tab.layerNumber}
+                                </span>
+                                {isActive ? (
+                                  <span
+                                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[0.625rem] font-extrabold uppercase text-white shadow-xs"
+                                    style={{ backgroundColor: tab.accentColor }}
+                                  >
+                                    <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                                    Active
+                                  </span>
+                                ) : (
+                                  <span className="font-mono text-[0.625rem] text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Click to view
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Titles */}
+                            <div className="mt-3.5">
+                              <h3 className={`font-manrope text-sm sm:text-base font-extrabold tracking-tight transition-colors ${
+                                isActive
+                                  ? isDark ? 'text-white' : 'text-slate-900'
+                                  : isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-slate-900'
+                              }`}>
+                                {tab.title}
+                              </h3>
+                              <p className={`text-xs mt-1 leading-relaxed ${
+                                isActive
+                                  ? isDark ? 'text-slate-300' : 'text-slate-600'
+                                  : isDark ? 'text-slate-500' : 'text-slate-500'
+                              }`}>
+                                {tab.subtitle}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Real Status Badge Pill */}
+                          <div className={`mt-4 pt-3 border-t flex items-center justify-between ${
+                            isActive
+                              ? isDark ? 'border-slate-800' : 'border-slate-200'
+                              : isDark ? 'border-slate-800/60' : 'border-slate-100'
+                          }`}>
+                            <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-mono text-[0.6875rem] font-bold border transition ${
+                              isActive ? badgeClass : isDark ? 'bg-slate-900/80 text-slate-400 border-slate-800' : 'bg-slate-100 text-slate-600 border-slate-200'
+                            }`}>
+                              {badgeText}
+                            </span>
+                            <span className="flex items-center gap-1 text-[0.6875rem] font-mono font-semibold" style={{ color: tab.accentColor }}>
+                              {isActive ? 'Viewing' : 'Select'}
+                              <ArrowRight
+                                className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                                  isActive ? 'translate-x-0.5 opacity-100' : 'opacity-50 group-hover:translate-x-0.5 group-hover:opacity-90'
+                                }`}
+                              />
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                {/* ========================================================= */}
+                {/* TAB 1: URL LEXICAL ANALYSIS */}
+                {/* ========================================================= */}
+                {activeTab === 'tab1_lexical' && features && (
+                  <div
+                    id="c1-panel-tab1_lexical"
+                    role="tabpanel"
+                    aria-labelledby="c1-tab-tab1_lexical"
+                    className="space-y-6 animate-in fade-in duration-150"
+                  >
                   {/* Layer Header */}
                   <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-900/80 p-4 border border-slate-800">
                     <div className="flex items-center gap-3">
@@ -933,7 +915,12 @@ export default function UrlAnalyzer() {
               {/* TAB 2: DNS & NETWORK ANALYSIS */}
               {/* ========================================================= */}
               {activeTab === 'tab2_dns' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div
+                  id="c1-panel-tab2_dns"
+                  role="tabpanel"
+                  aria-labelledby="c1-tab-tab2_dns"
+                  className="space-y-6 animate-in fade-in duration-150"
+                >
                   {/* Layer Header */}
                   <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-900/80 p-4 border border-slate-800">
                     <div className="flex items-center gap-3">
@@ -1163,7 +1150,12 @@ export default function UrlAnalyzer() {
               {/* TAB 3: DOMAIN INTELLIGENCE & REPUTATION */}
               {/* ========================================================= */}
               {activeTab === 'tab3_domain' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div
+                  id="c1-panel-tab3_domain"
+                  role="tabpanel"
+                  aria-labelledby="c1-tab-tab3_domain"
+                  className="space-y-6 animate-in fade-in duration-150"
+                >
                   {/* Layer Header */}
                   <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-900/80 p-4 border border-slate-800">
                     <div className="flex items-center gap-3">
@@ -1351,7 +1343,12 @@ export default function UrlAnalyzer() {
               {/* TAB 4: RISK ASSESSMENT & FINAL VERDICT */}
               {/* ========================================================= */}
               {activeTab === 'tab4_verdict' && risk && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div
+                  id="c1-panel-tab4_verdict"
+                  role="tabpanel"
+                  aria-labelledby="c1-tab-tab4_verdict"
+                  className="space-y-6 animate-in fade-in duration-150"
+                >
                   {/* Executive Header with Radial Gauge & ML Comparison */}
                   <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Radial Score Gauge Card */}
@@ -1575,7 +1572,7 @@ export default function UrlAnalyzer() {
                       )}
                     </div>
 
-                    <h2 className="break-all font-manrope text-xl font-bold sm:text-2xl">
+                    <h2 className={`break-all font-manrope text-xl font-bold sm:text-2xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
                       {features?.hostname || result.url}
                     </h2>
 
@@ -1652,7 +1649,12 @@ export default function UrlAnalyzer() {
 
                 {/* Layer Status Pipeline Tracker */}
                 <div className={`border-t pt-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                  <LayerStatusPipeline result={result} isDark={isDark} />
+                  <LayerStatusPipeline
+                    result={result}
+                    isDark={isDark}
+                    activeTab={activeTab}
+                    onSelectTab={setActiveTab}
+                  />
                 </div>
               </SocCard>
 
