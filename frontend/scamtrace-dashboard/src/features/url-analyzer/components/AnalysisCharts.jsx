@@ -547,7 +547,7 @@ export function RadialScoreGauge({ score = 0, verdict = 'SAFE', isDark = true })
 // ---------------------------------------------------------------------------
 // 5. Chart 4 — Analysis Layer Status Tracker Pipeline
 // ---------------------------------------------------------------------------
-export function LayerStatusPipeline({ result, isDark = true }) {
+export function LayerStatusPipeline({ result, isDark = true, activeTab, onSelectTab }) {
   if (!result) return null;
 
   const features = result.features;
@@ -587,11 +587,18 @@ export function LayerStatusPipeline({ result, isDark = true }) {
   const l4Status = risk ? 'COMPLETED' : 'PENDING';
   const l4Detail = risk ? `Verdict: ${risk.verdict}` : 'Waiting';
 
+  const tabIdMap = {
+    '01': 'tab1_lexical',
+    '02': 'tab2_dns',
+    '03': 'tab3_domain',
+    '04': 'tab4_verdict',
+  };
+
   const layers = [
-    { num: '01', title: 'URL Lexical', status: l1Status, detail: l1Detail },
-    { num: '02', title: 'DNS & Network', status: l2Status, detail: l2Detail },
-    { num: '03', title: 'Domain & Intel', status: l3Status, detail: l3Detail },
-    { num: '04', title: 'Risk & Verdict', status: l4Status, detail: l4Detail },
+    { num: '01', title: 'URL Lexical', status: l1Status, detail: l1Detail, tabId: 'tab1_lexical' },
+    { num: '02', title: 'DNS & Network', status: l2Status, detail: l2Detail, tabId: 'tab2_dns' },
+    { num: '03', title: 'Domain & Intel', status: l3Status, detail: l3Detail, tabId: 'tab3_domain' },
+    { num: '04', title: 'Risk & Verdict', status: l4Status, detail: l4Detail, tabId: 'tab4_verdict' },
   ];
 
   return (
@@ -600,6 +607,7 @@ export function LayerStatusPipeline({ result, isDark = true }) {
         const isSuccess = l.status === 'COMPLETED';
         const isPartial = l.status === 'PARTIAL' || l.status === 'IP_HOST';
         const isUnavailable = l.status === 'UNAVAILABLE';
+        const isCurrentActive = activeTab === l.tabId;
 
         const badgeClass =
           isSuccess
@@ -610,17 +618,29 @@ export function LayerStatusPipeline({ result, isDark = true }) {
             ? isDark ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-amber-50 text-amber-800 border-amber-200'
             : isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-300';
 
+        const Tag = onSelectTab ? 'button' : 'div';
+
         return (
-          <div
+          <Tag
             key={l.num}
-            className={`flex items-center gap-2.5 rounded-lg p-2.5 border c1-kpi-card transition ${
-              isDark
+            type={onSelectTab ? 'button' : undefined}
+            onClick={onSelectTab ? () => onSelectTab(l.tabId) : undefined}
+            className={`flex items-center gap-2.5 rounded-lg p-2.5 border c1-kpi-card transition text-left ${
+              onSelectTab ? 'cursor-pointer hover:border-blue-500/50' : ''
+            } ${
+              isCurrentActive
+                ? isDark
+                  ? 'bg-slate-900 border-cyan-500 ring-1 ring-cyan-500/50 shadow-sm'
+                  : 'bg-blue-50/60 border-blue-500 ring-1 ring-blue-500/40 shadow-xs'
+                : isDark
                 ? 'bg-slate-900/80 border-slate-800'
                 : 'bg-white border-slate-200 shadow-xs'
             }`}
           >
             <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-mono text-xs font-bold ${
-              isDark ? 'bg-slate-800 text-cyan-400' : 'bg-blue-50 text-blue-700 border border-blue-200'
+              isCurrentActive
+                ? 'bg-blue-600 text-white'
+                : isDark ? 'bg-slate-800 text-cyan-400' : 'bg-blue-50 text-blue-700 border border-blue-200'
             }`}>
               {l.num}
             </span>
@@ -633,7 +653,7 @@ export function LayerStatusPipeline({ result, isDark = true }) {
               </div>
               <p className={`truncate font-mono text-[0.625rem] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{l.detail}</p>
             </div>
-          </div>
+          </Tag>
         );
       })}
     </div>
