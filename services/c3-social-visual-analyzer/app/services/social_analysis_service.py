@@ -40,7 +40,7 @@ from app.config import SERVICE_ROOT, Settings
 from app.exceptions import ServiceError
 from app.services.image_pipeline import ImagePipeline
 from app.services.image_preprocessor import convert_to_rgb, normalize_image, resize_image
-from app.services.threat_classifier import RULE_STRONG, classify, looks_promotional
+from app.services.threat_classifier import RULE_STRONG, classify, misinformation_skip_reason
 
 logger = logging.getLogger(__name__)
 
@@ -856,18 +856,17 @@ class SocialAnalysisService:
         combined = " ".join(filter(None, [text, ocr]))
         scam_scores = [v for v in ((text_threat or {}).get("post_text_score"), (text_threat or {}).get("ocr_text_score"))
                        if v is not None]
-        promotional = looks_promotional(combined)
+        skip_misinfo = misinformation_skip_reason(combined, consistency)
         result = classify(
             category_probs=models.category_probabilities(combined),
-            misinformation_prob=None if promotional else models.misinformation_probability(text or ocr),
+            misinformation_prob=None if skip_misinfo else models.misinformation_probability(text or ocr),
             scam_probability=max(scam_scores) if scam_scores else None,
             post_text=text, ocr_text=ocr, embedded_url=url, capture=capture, consistency=consistency, risk=risk,
         )
-        if promotional and models.misinfo_model is not None:
+        if skip_misinfo and models.misinfo_model is not None:
             for entry in result["categories"]:
                 if entry["category"] == "MISINFORMATION":
-                    entry["evidence"] = ["not scored: promotional / offer post, outside the news-headline data the "
-                                         "misinformation model was trained on"]
+                    entry["evidence"] = [f"not scored: {skip_misinfo}"]
         result["models"] = {
             "category": "DistilBERT threat category (legitimate / phishing / financial_scam / data_theft)"
             if models.category_model is not None else None,
