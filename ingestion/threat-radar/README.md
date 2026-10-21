@@ -108,3 +108,21 @@ node scripts/download.js dailyupdate text --dated
 ```
 
 Saves a dated file like `dailyupdate_2026-06-16.txt` to `backend/data/downloads/`.
+
+## Run ThreatRadar (quick)
+
+Backend (port 4000) — terminal 1:
+
+```powershell
+cd "ingestion\threat-radar\backend"
+npm run dev
+```
+
+Frontend (port 3000) — terminal 2:
+
+```powershell
+cd "ingestion\threat-radar\frontend"
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). Backend API: [http://localhost:4000](http://localhost:4000).

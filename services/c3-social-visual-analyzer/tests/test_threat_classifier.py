@@ -34,6 +34,27 @@ def test_data_theft_from_several_credential_requests():
     assert "DATA_THEFT" in detected(result)
 
 
+def test_gift_card_survey_lure_is_data_theft_and_brand_impersonation():
+    """Apple gift-card survey scams: brand mismatch is primary; data theft co-detects."""
+    post = (
+        "CONGRATULATIONS! YOU COULD WIN A $1,000 APPLE GIFT CARD! "
+        "Apple customers have a chance to receive an exclusive $1,000 gift card through our special "
+        "customer rewards survey! Answer 4 simple questions. Complete the 60-second survey. "
+        "Verify your eligibility. Claim your exclusive reward. Claim Your $1,000 Gift Card Now!"
+    )
+    consistency = {
+        "flags": [{"code": "BRAND_DOMAIN_MISMATCH", "severity": "high",
+                   "detail": "Apple is presented but the link goes to a non-Apple domain"}],
+        "brand_identity_mismatch": {"detected": True, "strength": "strong"},
+    }
+    result = run(post_text=post, consistency=consistency, misinformation_prob=None)
+    assert result["primary"] == "BRAND_IMPERSONATION"
+    assert "DATA_THEFT" in detected(result)
+    data = next(c for c in result["categories"] if c["category"] == "DATA_THEFT")
+    assert data["score"] >= 0.5
+    assert any("survey" in e.lower() or "harvest" in e.lower() for e in data["evidence"])
+
+
 def test_brand_impersonation_from_lookalike_domain():
     consistency = {"flags": [{"code": "LOOKALIKE_DOMAIN", "severity": "high", "detail": "paypa1.com imitates paypal.com"}],
                    "brand_identity_mismatch": {"detected": True, "strength": "strong"}}
