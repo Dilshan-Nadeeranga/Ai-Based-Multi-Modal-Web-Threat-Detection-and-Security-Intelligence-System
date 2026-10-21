@@ -153,6 +153,14 @@ export function getFinding(findingId) {
   )
 }
 
+/** GET /findings/{findingId}/context — grounded repository context built during the scan */
+export function getGroundedContext(findingId) {
+  return requestJson(
+    `${API_BASE_URL}/findings/${encodeURIComponent(findingId)}/context`,
+    'Unable to load the grounded context.'
+  )
+}
+
 async function postJson(url, fallbackMessage, body = undefined) {
   let response
   try {

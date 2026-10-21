@@ -1,3 +1,4 @@
+import GroundedContext from './GroundedContext.jsx'
 import RemediationSuggestion from './RemediationSuggestion.jsx'
 
 function formatCategory(category) {
@@ -127,6 +128,8 @@ export default function FindingDetails({ finding }) {
           )}
         </div>
       )}
+
+      {finding.context_id && <GroundedContext findingId={finding.finding_id} />}
 
       {finding.context_id ? (
         <RemediationSuggestion key={finding.finding_id} findingId={finding.finding_id} />
