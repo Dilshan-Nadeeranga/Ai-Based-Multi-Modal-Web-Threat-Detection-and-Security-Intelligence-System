@@ -1,27 +1,63 @@
 # ThreatRadar
 
-Download domain lists from [domains-monitor.com](https://domains-monitor.com/api/) — Next.js frontend + Express backend.
+Domain-list downloads from [domains-monitor.com](https://domains-monitor.com/api/), plus Telegram / Reddit watch tooling.  
+**Next.js** frontend (port 3000) + **Express** backend (port 4000).
+
+## Prerequisites
+
+- Node.js 20+
+- Copy env files before the first run (see [Configuration](#configuration))
 
 ## Local development
 
+Use **two terminals** — start the backend first, then the frontend.
+
+### 1. Backend (port 4000)
+
 ```powershell
-# Install all dependencies
-npm run install:all
+cd "ingestion\threat-radar\backend"
+copy .env.example .env
+# Edit .env — at least set DOMAINS_MONITOR_TOKEN if you use domain downloads
 
-# Start backend (port 4000)
-cd backend
-node server.js      # or: npm run dev
+npm install
+npm run dev
+```
 
-# Start frontend (port 3000)
-cd frontend
+- `npm run dev` — auto-reload (`node --watch server.js`)
+- `npm start` — production-style (`node server.js`)
+
+Health / API base: [http://localhost:4000](http://localhost:4000)  
+API routes are under `/api/...`.
+
+### 2. Frontend (port 3000)
+
+```powershell
+cd "ingestion\threat-radar\frontend"
+# Create .env.local (or .env) if missing:
+#   BACKEND_URL=http://localhost:4000
+
+npm install
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
+The Next.js app proxies `/api/*` to `BACKEND_URL` (see `frontend/next.config.ts`).  
+If you change `BACKEND_URL`, restart `npm run dev`.
+
+### Quick checklist
+
+| Piece | Directory | Command | URL |
+|---|---|---|---|
+| Backend | `ingestion\threat-radar\backend` | `npm run dev` | http://localhost:4000 |
+| Frontend | `ingestion\threat-radar\frontend` | `npm run dev` | http://localhost:3000 |
+
 ## Configuration
 
 ### Backend — `backend/.env`
+
+Copy from `backend/.env.example`. Minimum for domain downloads:
+
 ```env
 DOMAINS_MONITOR_TOKEN=your_token_here
 PORT=4000
@@ -31,10 +67,16 @@ DAILY_ZONE=dailyupdate
 DAILY_FORMAT=text
 ```
 
-### Frontend — `frontend/.env.local`
+Optional scrapers (Telegram / Reddit), database, and Backblaze settings are documented in `.env.example`.  
+Keep `SCRAPER_ENABLED=false` locally unless you intentionally run scrapers (`SCRAPER_ALLOW_LOCAL=true`).
+
+### Frontend — `frontend/.env.local` (or `frontend/.env`)
+
 ```env
 BACKEND_URL=http://localhost:4000
 ```
+
+`BACKEND_URL` is **server-only** (used by Next.js rewrites). It is not exposed to the browser.
 
 ## Deploy frontend to Netlify
 
@@ -61,7 +103,7 @@ The frontend proxies all `/api/*` requests through Netlify to your backend — t
 ## CLI download (manual)
 
 ```powershell
-cd backend
+cd "ingestion\threat-radar\backend"
 node scripts/download.js dailyupdate text --dated
 ```
 
